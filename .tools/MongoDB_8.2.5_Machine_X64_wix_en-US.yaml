@@ -1,0 +1,96 @@
+PackageIdentifier: MongoDB.Server
+PackageVersion: 8.2.5
+Moniker: mongodb-server
+Tags:
+- database
+- mongo
+- server
+PackageLocale: en-US
+Author: MongoDB Inc.
+Copyright: "\xA9 2023 MongoDB, Inc."
+CopyrightUrl: https://www.mongodb.com/licensing/server-side-public-license
+ShortDescription: MongoDB is a general purpose, document-based, distributed database
+  built for modern application developers and for the cloud era.
+License: Server Side Public License (SSPL)
+LicenseUrl: https://www.mongodb.com/licensing/server-side-public-license
+PackageName: MongoDB
+PackageUrl: https://www.mongodb.com/try/download/community
+PrivacyUrl: https://www.mongodb.com/legal/privacy-policy
+Publisher: MongoDB Inc.
+PublisherSupportUrl: https://support.mongodb.com/welcome
+PublisherUrl: https://www.mongodb.com/
+Installers:
+- Architecture: x64
+  InstallerType: wix
+  InstallerSha256: 02d42062a64b88b68b385dbd723fc2110ef2d43a83642324d94f2f2a6268befb
+  InstallerUrl: https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-8.2.5-signed.msi
+  Scope: machine
+  InstallerLocale: en-US
+  ReleaseDate: 2026-02-03
+  InstallerAbortsTerminal: false
+  InstallLocationRequired: false
+  RequireExplicitUpgrade: false
+  DisplayInstallWarnings: false
+  DownloadCommandProhibited: false
+  ArchiveBinariesDependOnPath: false
+  ProductCode: '{B6F3B6B3-E7E2-4003-8743-61BC971822E8}'
+  UpgradeBehavior: uninstallPrevious
+  AppsAndFeaturesEntries:
+  - DisplayName: MongoDB 8.2.5 2008R2Plus SSL (64 bit)
+    ProductCode: '{B6F3B6B3-E7E2-4003-8743-61BC971822E8}'
+    UpgradeCode: '{4A3B2E61-171C-E881-3470-E498E414225E}'
+  ExpectedReturnCodes:
+  - InstallerReturnCode: 87
+    ReturnResponse: invalidParameter
+  - InstallerReturnCode: 112
+    ReturnResponse: diskFull
+  - InstallerReturnCode: 1601
+    ReturnResponse: contactSupport
+  - InstallerReturnCode: 1602
+    ReturnResponse: cancelledByUser
+  - InstallerReturnCode: 1618
+    ReturnResponse: installInProgress
+  - InstallerReturnCode: 1623
+    ReturnResponse: systemNotSupported
+  - InstallerReturnCode: 1625
+    ReturnResponse: blockedByPolicy
+  - InstallerReturnCode: 1628
+    ReturnResponse: invalidParameter
+  - InstallerReturnCode: 1633
+    ReturnResponse: systemNotSupported
+  - InstallerReturnCode: 1638
+    ReturnResponse: alreadyInstalled
+  - InstallerReturnCode: 1639
+    ReturnResponse: invalidParameter
+  - InstallerReturnCode: 1640
+    ReturnResponse: blockedByPolicy
+  - InstallerReturnCode: 1641
+    ReturnResponse: rebootInitiated
+  - InstallerReturnCode: 1643
+    ReturnResponse: blockedByPolicy
+  - InstallerReturnCode: 1644
+    ReturnResponse: blockedByPolicy
+  - InstallerReturnCode: 1649
+    ReturnResponse: blockedByPolicy
+  - InstallerReturnCode: 1650
+    ReturnResponse: invalidParameter
+  - InstallerReturnCode: 1654
+    ReturnResponse: systemNotSupported
+  - InstallerReturnCode: 3010
+    ReturnResponse: rebootRequiredToFinish
+  InstallerSwitches:
+    Custom: ADDLOCAL=ServerService REBOOT=ReallySuppress
+    Silent: /quiet /norestart
+    SilentWithProgress: /passive /norestart
+    Log: /log "<LOGPATH>"
+    InstallLocation: TARGETDIR="<INSTALLPATH>"
+  InstallationMetadata:
+    DefaultInstallLocation: '%ProgramFiles%\MongoDB\Server\8.2'
+  InstallModes:
+  - interactive
+  - silent
+  - silentWithProgress
+  Platform:
+  - Windows.Desktop
+ManifestVersion: 1.12.0
+ManifestType: merged

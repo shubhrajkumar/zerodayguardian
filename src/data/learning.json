@@ -1,0 +1,15 @@
+{
+  "roadmapSteps": [
+    {"phase": "Phase 1", "title": "Foundations", "desc": "Networking basics, Linux fundamentals, aur security concepts.", "status": "beginner"},
+    {"phase": "Phase 2", "title": "Kali Linux Mastery", "desc": "Kali Linux setup, tools overview, aur first scans.", "status": "beginner"},
+    {"phase": "Phase 3", "title": "Nmap Deep Dive", "desc": "Port scanning, service detection, aur NSE scripts.", "status": "intermediate"},
+    {"phase": "Phase 4", "title": "Web Exploitation", "desc": "OWASP Top 10, SQL injection, XSS, aur more.", "status": "intermediate"},
+    {"phase": "Phase 5", "title": "Advanced Labs", "desc": "CTF challenges, real-world scenarios, aur bug bounty prep.", "status": "advanced"}
+  ],
+  "topics": [
+    {"icon": "Terminal", "title": "Kali Linux Guides", "desc": "Step-by-step Kali Linux tutorials for beginners."},
+    {"icon": "Globe", "title": "Web Exploitation", "desc": "Learn web app pentesting with practical examples."},
+    {"icon": "BookOpen", "title": "Nmap Mastery", "desc": "Network scanning se lekar advanced NSE scripting tak."},
+    {"icon": "FlaskConical", "title": "Practice Labs", "desc": "Hands-on labs aur CTF challenges for skill building."}
+  ]
+}

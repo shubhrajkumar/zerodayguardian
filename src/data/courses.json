@@ -1,0 +1,5 @@
+[
+  {"id":1,"title":"Intro to Ethical Hacking","difficulty":"Beginner","description":"Learn the basics of cybersecurity and ethical hacking.","progress":20},
+  {"id":2,"title":"Advanced Nmap Techniques","difficulty":"Intermediate","description":"Master port scanning and scripting with Nmap.","progress":0},
+  {"id":3,"title":"Web Exploitation Workshop","difficulty":"Advanced","description":"Hands-on web application penetration testing labs.","progress":0}
+]
