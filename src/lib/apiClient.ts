@@ -4,21 +4,31 @@ export const ACCESS_TOKEN_KEY = "neurobot_access_token";
 const REFRESH_BLOCK_KEY = "neurobot_refresh_block_until";
 
 const trimTrailingSlash = (value: string) => String(value || "").replace(/\/+$/, "");
+const isAbsoluteHttpUrl = (value: string) => /^https?:\/\//i.test(String(value || "").trim());
+const verboseApiLogging =
+  import.meta.env.DEV ||
+  String(import.meta.env.VITE_ENABLE_FIREBASE_DIAGNOSTICS || "").trim().toLowerCase() === "true";
+const logDebug = (...args: unknown[]) => {
+  if (!verboseApiLogging) return;
+  console.log(...args);
+};
+const logDebugError = (...args: unknown[]) => {
+  if (!verboseApiLogging) return;
+  console.error(...args);
+};
 
-const resolveDevApiBaseUrl = () => {
-  if (!import.meta.env.DEV) return "";
-
+const resolveApiBaseUrl = () => {
   const envBase = trimTrailingSlash(String(import.meta.env.VITE_API_BASE_URL || ""));
   if (envBase) return envBase;
   return "";
 };
 
-const DEV_API_BASE_URL = resolveDevApiBaseUrl();
+const API_BASE_URL = resolveApiBaseUrl();
 
 const resolveDevBackendOrigin = () => {
   if (!import.meta.env.DEV) return "";
   const explicitBase = trimTrailingSlash(String(import.meta.env.VITE_API_BASE_URL || ""));
-  if (explicitBase && /^https?:\/\//i.test(explicitBase)) return explicitBase.replace(/\/api$/i, "");
+  if (explicitBase && isAbsoluteHttpUrl(explicitBase)) return explicitBase.replace(/\/api$/i, "");
   const configuredPort = String(import.meta.env.VITE_NEUROBOT_PORT || "").trim();
   const port = configuredPort || "8787";
   return `http://127.0.0.1:${port}`;
@@ -29,9 +39,10 @@ const DEV_BACKEND_ORIGIN = resolveDevBackendOrigin();
 const withApiBaseUrl = (url: string) => {
   const normalizedUrl = String(url || "").trim();
   if (!normalizedUrl) return normalizedUrl;
-  if (/^https?:\/\//i.test(normalizedUrl)) return normalizedUrl;
-  if (!DEV_API_BASE_URL || !normalizedUrl.startsWith("/api")) return normalizedUrl;
-  return `${DEV_API_BASE_URL}${normalizedUrl}`;
+  if (isAbsoluteHttpUrl(normalizedUrl)) return normalizedUrl;
+  if (!API_BASE_URL || !normalizedUrl.startsWith("/api")) return normalizedUrl;
+  if (normalizedUrl.startsWith(API_BASE_URL)) return normalizedUrl;
+  return `${API_BASE_URL}${normalizedUrl}`;
 };
 
 export const getCookie = (name: string) => {
@@ -45,11 +56,11 @@ export const getCookie = (name: string) => {
 export const ensureCsrf = async () => {
   const existingToken = getCookie("neurobot_csrf");
   if (existingToken) {
-    console.log(`[CSRF] Using existing token: ${existingToken.substring(0, 8)}...`);
+    logDebug(`[CSRF] Using existing token: ${existingToken.substring(0, 8)}...`);
     return existingToken;
   }
   
-  console.log("[CSRF] No existing token found, fetching new CSRF token");
+  logDebug("[CSRF] No existing token found, fetching new CSRF token");
   
   try {
     const response = await fetch(withApiBaseUrl("/api/auth/csrf"), {
@@ -69,10 +80,10 @@ export const ensureCsrf = async () => {
       throw new Error("CSRF cookie was not set after fetching token");
     }
     
-    console.log(`[CSRF] Successfully fetched new token: ${token.substring(0, 8)}...`);
+    logDebug(`[CSRF] Successfully fetched new token: ${token.substring(0, 8)}...`);
     return token;
   } catch (error) {
-    console.error("CSRF token fetch failed:", error);
+    logDebugError("CSRF token fetch failed:", error);
     throw new Error("Unable to establish CSRF session. Check backend availability and try again.");
   }
 };
@@ -160,7 +171,7 @@ export const getStoredAuthState = (): StoredAuthState | null => {
     }
     return null;
   } catch (error) {
-    console.error("[API] Error reading stored auth state:", error);
+    logDebugError("[API] Error reading stored auth state:", error);
     return null;
   }
 };
@@ -169,7 +180,7 @@ export const setStoredAuthState = (authData: StoredAuthState): void => {
   try {
     localStorage.setItem("auth_state", JSON.stringify(authData));
   } catch (error) {
-    console.error("[API] Error storing auth state:", error);
+    logDebugError("[API] Error storing auth state:", error);
   }
 };
 
@@ -180,7 +191,7 @@ export const clearAuthState = (): void => {
     clearStoredAccessToken();
     document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   } catch (error) {
-    console.error("[API] Error clearing auth state:", error);
+    logDebugError("[API] Error clearing auth state:", error);
   }
 };
 
@@ -188,7 +199,7 @@ export const checkAuthPersistence = async (): Promise<boolean> => {
   // First check cached auth state
   const cachedAuth = getStoredAuthState();
   if (cachedAuth && cachedAuth.isAuthenticated && cachedAuth.user) {
-    console.log("[API] Using cached authentication state");
+    logDebug("[API] Using cached authentication state");
     return true;
   }
   
@@ -208,7 +219,7 @@ export const checkAuthPersistence = async (): Promise<boolean> => {
     }
     return false;
   } catch (error) {
-    console.error("[API] Auth persistence check failed:", error);
+    logDebugError("[API] Auth persistence check failed:", error);
     return false;
   }
 };
@@ -351,30 +362,30 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   const requestId = makeRequestId();
   const maxAttempts = method === "GET" ? 2 : (requestUrl.includes("/pyapi/mission-control") ? 2 : 1);
   
-  console.log(`[API] ${method} ${requestUrl} - Starting request`);
+  logDebug(`[API] ${method} ${requestUrl} - Starting request`);
 
   if (isAuthMe) {
     let token = getStoredAccessToken();
     const cachedAuth = getStoredAuthState();
     if (!token) {
       if (!cachedAuth?.isAuthenticated) {
-        console.log(`[API] ${method} ${url} - No cached auth state, returning 401 without refresh`);
+        logDebug(`[API] ${method} ${url} - No cached auth state, returning 401 without refresh`);
         return new Response(null, { status: 401, statusText: "signed_out" });
       }
-      console.log(`[API] ${method} ${url} - No access token, attempting refresh before profile request`);
+      logDebug(`[API] ${method} ${url} - No access token, attempting refresh before profile request`);
       const refreshed = await tryRefreshSession();
       if (!refreshed) {
-        console.log(`[API] ${method} ${url} - No refresh session available, returning 401`);
+        logDebug(`[API] ${method} ${url} - No refresh session available, returning 401`);
         return new Response(null, { status: 401, statusText: "missing_token" });
       }
       token = getStoredAccessToken();
       if (!token) {
-        console.log(`[API] ${method} ${url} - Refresh succeeded without access token, returning 401`);
+        logDebug(`[API] ${method} ${url} - Refresh succeeded without access token, returning 401`);
         return new Response(null, { status: 401, statusText: "missing_token" });
       }
     }
     if (isStoredAccessTokenExpired(token)) {
-      console.log(`[API] ${method} ${url} - Access token expired, attempting refresh before profile request`);
+      logDebug(`[API] ${method} ${url} - Access token expired, attempting refresh before profile request`);
       const refreshed = await tryRefreshSession();
       if (!refreshed) {
         clearStoredAccessToken();
@@ -386,28 +397,28 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
       }
     }
     if (meRequestInFlight) {
-      console.log(`[API] ${method} ${url} - Reusing in-flight request`);
+      logDebug(`[API] ${method} ${url} - Reusing in-flight request`);
       return meRequestInFlight;
     }
   }
 
   // Ensure CSRF token for state-changing requests
   if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
-    console.log(`[API] ${method} ${url} - Ensuring CSRF token`);
+    logDebug(`[API] ${method} ${url} - Ensuring CSRF token`);
     await ensureCsrf();
   }
   
   const csrf = getCookie("neurobot_csrf");
   let bearer = getStoredAccessToken();
   if (!bearer && cachedAuth?.isAuthenticated && !url.startsWith("/api/auth/")) {
-    console.log(`[API] ${method} ${url} - Missing bearer with authenticated session, attempting refresh`);
+    logDebug(`[API] ${method} ${url} - Missing bearer with authenticated session, attempting refresh`);
     const refreshed = await tryRefreshSession();
     if (refreshed) {
       bearer = getStoredAccessToken();
     }
   }
   
-  console.log(`[API] ${method} ${url} - Headers:`, {
+  logDebug(`[API] ${method} ${url} - Headers:`, {
     hasCsrf: !!csrf,
     hasBearer: !!bearer,
     csrfPreview: csrf ? csrf.substring(0, 8) + "..." : "none",
@@ -426,7 +437,7 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   const execute = async () => {
     const response = await request();
     const duration = Date.now() - startTime;
-    console.log(`[API] ${method} ${requestUrl} - Response: ${response.status} (${duration}ms)`);
+    logDebug(`[API] ${method} ${requestUrl} - Response: ${response.status} (${duration}ms)`);
     recordRuntimeDebugEvent({
       level: response.ok ? "info" : "warning",
       source: "apiFetch",
@@ -461,7 +472,7 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   }
 
   const duration = Date.now() - startTime;
-  console.log(`[API] ${method} ${requestUrl} - Final response: ${response.status} (${duration}ms)`);
+  logDebug(`[API] ${method} ${requestUrl} - Final response: ${response.status} (${duration}ms)`);
   if (!response.ok) {
     recordClientDiagnostic({
       level: response.status >= 500 ? "error" : "warning",
@@ -471,26 +482,26 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   }
 
   if (response.status === 429) {
-    console.log(`[API] ${method} ${requestUrl} - Rate limited (429)`);
+    logDebug(`[API] ${method} ${requestUrl} - Rate limited (429)`);
     return response;
   }
 
   if (isAuthMe && response.status === 401) {
-    console.log(`[API] ${method} ${requestUrl} - Auth/me failed, clearing token`);
+    logDebug(`[API] ${method} ${requestUrl} - Auth/me failed, clearing token`);
     clearStoredAccessToken();
     return response;
   }
 
   if (response.status === 401 && !bearer && !url.startsWith("/api/auth/")) {
-    console.log(`[API] ${method} ${requestUrl} - No bearer token, attempting refresh before returning 401`);
+    logDebug(`[API] ${method} ${requestUrl} - No bearer token, attempting refresh before returning 401`);
     const refreshed = await tryRefreshSession();
     if (!refreshed) {
-      console.log(`[API] ${method} ${requestUrl} - Refresh unavailable, returning 401`);
+      logDebug(`[API] ${method} ${requestUrl} - Refresh unavailable, returning 401`);
       return response;
     }
     const refreshedBearer = getStoredAccessToken();
     if (!refreshedBearer) {
-      console.log(`[API] ${method} ${requestUrl} - Refresh succeeded without stored bearer, returning 401`);
+      logDebug(`[API] ${method} ${requestUrl} - Refresh succeeded without stored bearer, returning 401`);
       return response;
     }
     response = await fetch(requestUrl, {
@@ -506,25 +517,25 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
 
   if (response.status !== 401 || url.startsWith("/api/auth/")) return response;
 
-  console.log(`[API] ${method} ${requestUrl} - Got 401, attempting session refresh`);
+  logDebug(`[API] ${method} ${requestUrl} - Got 401, attempting session refresh`);
   const refreshed = await tryRefreshSession();
   if (!refreshed) {
-    console.log(`[API] ${method} ${requestUrl} - Session refresh failed, redirecting to auth`);
+    logDebug(`[API] ${method} ${requestUrl} - Session refresh failed, redirecting to auth`);
     clearStoredAccessToken();
     triggerAuthRedirect();
     return response;
   }
 
-  console.log(`[API] ${method} ${requestUrl} - Session refreshed, retrying request`);
+  logDebug(`[API] ${method} ${requestUrl} - Session refreshed, retrying request`);
   response = await request();
   if (response.status === 401) {
-    console.log(`[API] ${method} ${requestUrl} - Still 401 after refresh, redirecting to auth`);
+    logDebug(`[API] ${method} ${requestUrl} - Still 401 after refresh, redirecting to auth`);
     clearStoredAccessToken();
     triggerAuthRedirect();
   }
   
   const finalDuration = Date.now() - startTime;
-  console.log(`[API] ${method} ${requestUrl} - Completed: ${response.status} (${finalDuration}ms)`);
+  logDebug(`[API] ${method} ${requestUrl} - Completed: ${response.status} (${finalDuration}ms)`);
   return response;
 };
 

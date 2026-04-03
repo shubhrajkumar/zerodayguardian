@@ -24,6 +24,10 @@ const missingConfigKeys = Object.entries(firebaseConfig)
   .map(([key]) => key);
 
 export const isFirebaseConfigured = missingConfigKeys.length === 0;
+export const firebaseConfigIssue =
+  isFirebaseConfigured
+    ? ""
+    : `Missing Firebase config: ${missingConfigKeys.join(", ")}`;
 export const isFirebaseDiagnosticsEnabled = String(import.meta.env.VITE_ENABLE_FIREBASE_DIAGNOSTICS || "")
   .trim()
   .toLowerCase() === "true";
@@ -36,8 +40,8 @@ const shouldForceLongPolling = String(import.meta.env.VITE_FIRESTORE_FORCE_LONG_
 
 const createFirebaseConfigError = () =>
   new Error(
-    `[Firebase] Missing config value(s): ${missingConfigKeys.join(", ")}. ` +
-      "Set the matching VITE_FIREBASE_* variables in your .env file and restart Vite."
+    `[Firebase] ${firebaseConfigIssue || "Firebase configuration is incomplete."} ` +
+      "Set the matching VITE_FIREBASE_* variables for this deployment and rebuild the frontend."
   );
 
 export const firebaseApp: FirebaseApp | null = isFirebaseConfigured

@@ -170,9 +170,10 @@ osint_monitor = OsintMonitorService(osint_settings)
 
 
 def _resolve_cors_origins() -> tuple[list[str], str | None]:
-    raw = [origin.strip() for origin in os.getenv("PY_CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080").split(",")]
+    default_value = "" if os.getenv("NODE_ENV", "production") == "production" else "http://localhost:8080,http://127.0.0.1:8080"
+    raw = [origin.strip() for origin in os.getenv("PY_CORS_ORIGINS", default_value).split(",")]
     origins = [origin for origin in raw if origin and origin != "*"]
-    if not origins:
+    if not origins and default_value:
         return ["http://localhost:8080", "http://127.0.0.1:8080"], None
     if any(origin == "*" for origin in raw):
         return origins, ".*"

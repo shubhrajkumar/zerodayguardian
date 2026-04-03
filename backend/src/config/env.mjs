@@ -181,6 +181,7 @@ const parseMongoUrl = (raw) => {
 
 const llmProviderInput = firstSet("LLM_MODE", "LLM_PROVIDER");
 const normalizedLlmMode = normalizeLlmProvider(llmProviderInput || "auto");
+const isProduction = (process.env.NODE_ENV || "production") === "production";
 const required = [
   "DATABASE_URL",
   "SESSION_SECRET",
@@ -191,7 +192,7 @@ const required = [
 export const env = {
   nodeEnv: process.env.NODE_ENV || "production",
   port: Number(process.env.NEUROBOT_PORT || 8787),
-  corsOrigin: process.env.CORS_ORIGIN || "http://localhost:8080",
+  corsOrigin: process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"),
   openaiBaseUrl: normalizeApiBaseUrl(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1", "OPENAI_BASE_URL"),
   openaiApiKey: process.env.OPENAI_API_KEY || "",
   openaiModel: process.env.OPENAI_MODEL || "gpt-4.1-mini",
@@ -264,7 +265,7 @@ export const env = {
   alertMinLevel: (process.env.ALERT_MIN_LEVEL || "warn").toLowerCase(),
   alertCooldownMs: Math.max(30_000, Math.min(3_600_000, toNum(process.env.ALERT_COOLDOWN_MS, 300_000))),
   strictDependencyStartup:
-    (process.env.NODE_ENV || "production") === "production"
+    isProduction
       ? process.env.STRICT_DEPENDENCY_STARTUP != null
         ? process.env.STRICT_DEPENDENCY_STARTUP === "true"
         : true
@@ -276,17 +277,17 @@ export const env = {
   streamUseCheckpointStore:
     process.env.STREAM_USE_CHECKPOINT_STORE != null
       ? process.env.STREAM_USE_CHECKPOINT_STORE === "true"
-      : (process.env.NODE_ENV || "production") === "production",
+      : isProduction,
   allowLlmFallback:
     process.env.ALLOW_LLM_FALLBACK != null
       ? process.env.ALLOW_LLM_FALLBACK === "true"
       : true,
   forceLocalFallback: (process.env.FORCE_LOCAL_FALLBACK || "false") === "true",
-  appBaseUrl: process.env.APP_BASE_URL || process.env.CORS_ORIGIN || "http://localhost:8080",
+  appBaseUrl: process.env.APP_BASE_URL || process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"),
   backendPublicUrl:
     process.env.BACKEND_PUBLIC_URL ||
     process.env.PUBLIC_SERVER_URL ||
-    `http://localhost:${Number(process.env.NEUROBOT_PORT || 8787)}`,
+    (isProduction ? "" : `http://localhost:${Number(process.env.NEUROBOT_PORT || 8787)}`),
   googleOauthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID || "",
   googleOauthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || "",
   enableGoogleLocalhost:
@@ -294,7 +295,7 @@ export const env = {
       ? process.env.ENABLE_GOOGLE_LOCALHOST === "true"
       : true,
   googleAuthorizedOrigins: uniqueList(
-    splitCsv(process.env.GOOGLE_AUTHORIZED_ORIGINS || process.env.CORS_ORIGIN || "http://localhost:8080")
+    splitCsv(process.env.GOOGLE_AUTHORIZED_ORIGINS || process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"))
   ),
   googleRedirectUri: process.env.GOOGLE_REDIRECT_URI || "",
   githubOauthClientId: process.env.GITHUB_OAUTH_CLIENT_ID || "",
@@ -362,7 +363,7 @@ export const env = {
 };
 env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
 env.googleAuthorizedOrigins = uniqueList(env.googleAuthorizedOrigins);
-if (!env.googleRedirectUri) {
+if (!env.googleRedirectUri && env.backendPublicUrl) {
   try {
     env.googleRedirectUri = new URL("/auth/google/callback", env.backendPublicUrl).toString();
   } catch {
@@ -382,7 +383,7 @@ env.authOtpPreviewEnabled = isExplicitTrue(process.env.AUTH_OTP_PREVIEW_ENABLED)
   ? true
   : isExplicitFalse(process.env.AUTH_OTP_PREVIEW_ENABLED)
     ? false
-    : env.nodeEnv !== "production" || localLikeAppHost;
+      : env.nodeEnv !== "production" || localLikeAppHost;
 
 const missing = required.filter((key) => {
   if (key === "DATABASE_URL") return !env.mongoUri;
@@ -415,6 +416,12 @@ if (!new Set(["info", "warn", "error"]).has(env.alertMinLevel)) {
 }
 
 if (env.nodeEnv === "production") {
+  if (!env.appBaseUrl || !/^https?:\/\//.test(env.appBaseUrl)) {
+    throw new Error("[neurobot] APP_BASE_URL must be set to an absolute https:// or http:// URL in production");
+  }
+  if (!env.backendPublicUrl || !/^https?:\/\//.test(env.backendPublicUrl)) {
+    throw new Error("[neurobot] BACKEND_PUBLIC_URL must be set to an absolute https:// or http:// URL in production");
+  }
   if (String(env.dbEncryptionKey || "").length < 32) {
     throw new Error("[neurobot] DB_ENCRYPTION_KEY must be at least 32 characters in production");
   }
