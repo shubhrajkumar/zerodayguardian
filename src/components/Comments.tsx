@@ -15,6 +15,7 @@ const Comments: React.FC<CommentsProps> = ({ storageKey }) => {
         setComments(JSON.parse(stored));
       }
     } catch {
+      // Ignore malformed local comment storage and keep the UI usable.
     }
   }, [storageKey]);
 

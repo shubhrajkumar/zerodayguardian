@@ -43,7 +43,7 @@ const RewardExperience = () => {
   useEffect(() => {
     if (!activeReward) return;
     setShareOpen(true);
-  }, [activeReward?.id]);
+  }, [activeReward]);
 
   if (!activeReward) return null;
 

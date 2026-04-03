@@ -60,7 +60,7 @@ const DashboardPage = () => {
     sendTestPush,
     updateDigest,
     sendDigestNow,
-    useStreakFreeze,
+    useStreakFreeze: reserveStreakFreeze,
     enrollCertification,
     updateMilestone,
     joinWeeklyCtf,
@@ -806,7 +806,7 @@ const DashboardPage = () => {
                 type="button"
                 className="cyber-btn terminal-font mt-4"
                 onClick={() =>
-                  useStreakFreeze()
+                  reserveStreakFreeze()
                     .then(() => toast({ title: "Streak freeze reserved" }))
                     .catch((error) => toast({ title: "Freeze unavailable", description: error instanceof Error ? error.message : "Please retry." }))
                 }
