@@ -1,0 +1,42 @@
+﻿# Dependencies
+node_modules/
+.venv/
+venv/
+
+# Build output
+/dist/
+coverage/
+
+# Local environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Local app state
+local.db
+local.db-journal
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Editor and local tooling
+.vscode/
+.local/
+.lovable/
+.tools/
+.git-backup-*/
+
+# Logs
+*.log
+server-auth-test.err.log
+server-auth-test.out.log
+
+# Archives and backups
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db

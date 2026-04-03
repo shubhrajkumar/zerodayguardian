@@ -1,0 +1,61 @@
+{
+  "updated_at": "2026-04-03T01:12:28.286836+00:00",
+  "records": {
+    "e626109afa1cc2d8d485906aac031e3a7510f2f40b790fed1e15cd6897333bbc": {
+      "fingerprint": "e626109afa1cc2d8d485906aac031e3a7510f2f40b790fed1e15cd6897333bbc",
+      "title": "<![CDATA[South Korean Police Accidentally Post Cryptocurrency Wallet Password]]>",
+      "url": "https://www.schneier.com/blog/archives/2026/03/south-korean-police-accidentally-post-cryptocurrency-wallet-password.html",
+      "first_seen": "2026-03-24T08:40:17.385461+00:00",
+      "last_seen": "2026-03-24T08:40:17.385461+00:00"
+    },
+    "403149194238764fc5e70d8a683740479b8a01d4a302cade77880918b9d66771": {
+      "fingerprint": "403149194238764fc5e70d8a683740479b8a01d4a302cade77880918b9d66771",
+      "title": "South Korean Police Accidentally Post Cryptocurrency Wallet Password",
+      "url": "https://www.schneier.com/blog/archives/2026/03/south-korean-police-accidentally-post-cryptocurrency-wallet-password.html",
+      "first_seen": "2026-03-24T08:42:06.181070+00:00",
+      "last_seen": "2026-03-24T08:42:06.181070+00:00"
+    },
+    "33920d66ea8ffea5a1d99ac64bee4971e82ab82d46825b935b7e3ea9e78d96fb": {
+      "fingerprint": "33920d66ea8ffea5a1d99ac64bee4971e82ab82d46825b935b7e3ea9e78d96fb",
+      "title": "TeamPCP Hacks Checkmarx GitHub Actions Using Stolen CI Credentials",
+      "url": "https://thehackernews.com/2026/03/teampcp-hacks-checkmarx-github-actions.html",
+      "first_seen": "2026-03-24T16:08:35.721247+00:00",
+      "last_seen": "2026-03-24T16:08:35.721247+00:00"
+    },
+    "1510c77c4bf0567ea28725674c94945f0e4d811d316b8210784ce1b669968069": {
+      "fingerprint": "1510c77c4bf0567ea28725674c94945f0e4d811d316b8210784ce1b669968069",
+      "title": "Iran-Linked Hackers Breach FBI Director\u2019s Personal Email, Hit Stryker With Wiper Attack",
+      "url": "https://thehackernews.com/2026/03/iran-linked-hackers-breach-fbi.html",
+      "first_seen": "2026-03-29T08:20:23.633933+00:00",
+      "last_seen": "2026-03-29T08:20:23.633933+00:00"
+    },
+    "42b1b0912d407fdc6cf5fcc002693d23a2b32ca1b3013e8a48381293ad5607ed": {
+      "fingerprint": "42b1b0912d407fdc6cf5fcc002693d23a2b32ca1b3013e8a48381293ad5607ed",
+      "title": "Axios Supply Chain Attack Pushes Cross-Platform RAT via Compromised npm Account",
+      "url": "https://thehackernews.com/2026/03/axios-supply-chain-attack-pushes-cross.html",
+      "first_seen": "2026-03-31T08:47:39.713454+00:00",
+      "last_seen": "2026-03-31T08:47:39.713454+00:00"
+    },
+    "bdb7026ef9015b91c47106182b35f12af716711e67949be0f4577d6563e52c59": {
+      "fingerprint": "bdb7026ef9015b91c47106182b35f12af716711e67949be0f4577d6563e52c59",
+      "title": "DeepLoad Malware Uses ClickFix and WMI Persistence to Steal Browser Credentials",
+      "url": "https://thehackernews.com/2026/03/deepload-malware-uses-clickfix-and-wmi.html",
+      "first_seen": "2026-03-31T08:47:39.718818+00:00",
+      "last_seen": "2026-03-31T08:47:39.718818+00:00"
+    },
+    "96e97f5cadf32e0ee91262d73b1378ef4e7030ab95c64ed9d7300fec868c6262": {
+      "fingerprint": "96e97f5cadf32e0ee91262d73b1378ef4e7030ab95c64ed9d7300fec868c6262",
+      "title": "Claude Code Source Leaked via npm Packaging Error, Anthropic Confirms",
+      "url": "https://thehackernews.com/2026/04/claude-code-tleaked-via-npm-packaging.html",
+      "first_seen": "2026-04-01T08:13:40.898614+00:00",
+      "last_seen": "2026-04-01T08:13:40.898614+00:00"
+    },
+    "88c50de0ba6f1de208f63fe37a34010c913f57145938d31ed80f650a9e79d156": {
+      "fingerprint": "88c50de0ba6f1de208f63fe37a34010c913f57145938d31ed80f650a9e79d156",
+      "title": "Hackers Exploit CVE-2025-55182 to Breach 766 Next.js Hosts, Steal Credentials",
+      "url": "https://thehackernews.com/2026/04/hackers-exploit-cve-2025-55182-to.html",
+      "first_seen": "2026-04-03T01:12:28.286732+00:00",
+      "last_seen": "2026-04-03T01:12:28.286732+00:00"
+    }
+  }
+}

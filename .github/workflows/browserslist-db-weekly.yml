@@ -1,0 +1,37 @@
+name: Weekly Browserslist DB Refresh
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh browserslist DB
+        run: npm run browserslist:update
+
+      - name: Create PR for lockfile updates
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: refresh browserslist db"
+          title: "chore: refresh browserslist db"
+          body: "Automated weekly refresh of caniuse-lite/browserslist data."
+          branch: "chore/browserslist-db-refresh"
+          delete-branch: true

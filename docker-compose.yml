@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zeroday_guardian
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  py-api:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./backend/python:/app
+    environment:
+      PY_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/zeroday_guardian
+      PY_API_PORT: 8000
+      PY_CORS_ORIGINS: http://localhost:8080
+    command: bash -c "pip install -r requirements.txt && python -m uvicorn main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+
+  app:
+    build: .
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      LLM_API_KEY: ${LLM_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1/responses}
+      DATABASE_URL: mongodb://mongo:27017/neurobot
+      REDIS_URL: redis://redis:6379
+      MONGODB_DB_NAME: neurobot
+      SESSION_SECRET: ${SESSION_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      TRUST_PROXY: "true"
+      VERIFY_LLM_ON_STARTUP: "true"
+      NEUROBOT_PORT: 8787
+    ports:
+      - "8080:8080"
+      - "8787:8787"
+
+volumes:
+  mongo_data:
+  pg_data:
