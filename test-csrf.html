@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSRF Test</title>
+</head>
+<body>
+    <h1>CSRF Authentication Test</h1>
+    <div id="status"></div>
+    <button onclick="testCSRF()">Test CSRF Token</button>
+    <button onclick="testLogin()">Test Login (should fail with 403)</button>
+    <button onclick="testLoginWithCSRF()">Test Login with CSRF</button>
+    <button onclick="testDirectBackend()">Test Direct Backend (port 8787)</button>
+    <button onclick="testProxyBackend()">Test Proxy Backend (port 8082)</button>
+
+    <script>
+        async function getCsrfToken() {
+            const response = await fetch('/api/auth/csrf', { 
+                credentials: 'include',
+                method: 'GET'
+            });
+            console.log('CSRF Response:', response);
+            console.log('CSRF Headers:', Object.fromEntries(response.headers.entries()));
+            return response.ok;
+        }
+
+        async function testLogin() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'testpassword'
+                    }),
+                    credentials: 'include'
+                });
+                document.getElementById('status').innerHTML = `Login without CSRF: ${response.status} ${response.statusText}`;
+                const data = await response.json();
+                console.log('Login response:', data);
+            } catch (error) {
+                document.getElementById('status').innerHTML = `Login error: ${error.message}`;
+            }
+        }
+
+        async function testLoginWithCSRF() {
+            try {
+                // First get CSRF token
+                const csrfResponse = await fetch('/api/auth/csrf', { 
+                    credentials: 'include',
+                    method: 'GET'
+                });
+                
+                // Get the cookie
+                const cookies = document.cookie.split('; ');
+                const csrfCookie = cookies.find(c => c.startsWith('neurobot_csrf='));
+                const csrfToken = csrfCookie ? csrfCookie.split('=')[1] : null;
+                
+                console.log('CSRF Cookie:', csrfCookie);
+                console.log('CSRF Token:', csrfToken);
+
+                // Now try login with CSRF token
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken || 'fallback-token'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'testpassword'
+                    }),
+                    credentials: 'include'
+                });
+                
+                document.getElementById('status').innerHTML = `Login with CSRF: ${response.status} ${response.statusText}`;
+                const data = await response.json();
+                console.log('Login with CSRF response:', data);
+            } catch (error) {
+                document.getElementById('status').innerHTML = `Login with CSRF error: ${error.message}`;
+            }
+        }
+
+        function testCSRF() {
+            getCsrfToken().then(success => {
+                document.getElementById('status').innerHTML = `CSRF token fetch: ${success ? 'Success' : 'Failed'}`;
+            });
+        }
+
+        async function testDirectBackend() {
+            try {
+                // Test direct connection to backend on port 8787
+                const response = await fetch('http://localhost:8787/api/auth/csrf', { 
+                    credentials: 'include',
+                    method: 'GET'
+                });
+                
+                document.getElementById('status').innerHTML = `Direct backend test: ${response.status} ${response.statusText}`;
+                console.log('Direct backend response:', response);
+                
+                if (response.ok) {
+                    // Get the cookie
+                    const cookies = document.cookie.split('; ');
+                    const csrfCookie = cookies.find(c => c.startsWith('neurobot_csrf='));
+                    const csrfToken = csrfCookie ? csrfCookie.split('=')[1] : null;
+                    
+                    console.log('Direct backend CSRF Cookie:', csrfCookie);
+                    console.log('Direct backend CSRF Token:', csrfToken);
+
+                    // Test login with direct backend
+                    const loginResponse = await fetch('http://localhost:8787/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken || 'fallback-token'
+                        },
+                        body: JSON.stringify({
+                            email: 'test@example.com',
+                            password: 'testpassword'
+                        }),
+                        credentials: 'include'
+                    });
+                    
+                    document.getElementById('status').innerHTML += '<br>Direct backend login: ' + loginResponse.status + ' ' + loginResponse.statusText;
+                    console.log('Direct backend login response:', loginResponse);
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = `Direct backend error: ${error.message}`;
+            }
+        }
+
+        async function testProxyBackend() {
+            try {
+                // Test proxy connection through Vite (should work without CORS)
+                const response = await fetch('/api/auth/csrf', { 
+                    credentials: 'include',
+                    method: 'GET'
+                });
+                
+                document.getElementById('status').innerHTML = `Proxy backend test: ${response.status} ${response.statusText}`;
+                console.log('Proxy backend response:', response);
+                
+                if (response.ok) {
+                    // Get the cookie
+                    const cookies = document.cookie.split('; ');
+                    const csrfCookie = cookies.find(c => c.startsWith('neurobot_csrf='));
+                    const csrfToken = csrfCookie ? csrfCookie.split('=')[1] : null;
+                    
+                    console.log('Proxy backend CSRF Cookie:', csrfCookie);
+                    console.log('Proxy backend CSRF Token:', csrfToken);
+
+                    // Test login through proxy
+                    const loginResponse = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken || 'fallback-token'
+                        },
+                        body: JSON.stringify({
+                            email: 'test@example.com',
+                            password: 'testpassword'
+                        }),
+                        credentials: 'include'
+                    });
+                    
+                    document.getElementById('status').innerHTML += '<br>Proxy backend login: ' + loginResponse.status + ' ' + loginResponse.statusText;
+                    console.log('Proxy backend login response:', loginResponse);
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = `Proxy backend error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

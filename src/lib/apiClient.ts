@@ -1,0 +1,805 @@
+import { toast } from "@/hooks/use-toast";
+import { recordClientDiagnostic, recordRuntimeDebugEvent } from "@/lib/runtimeDiagnostics";
+export const ACCESS_TOKEN_KEY = "neurobot_access_token";
+const REFRESH_BLOCK_KEY = "neurobot_refresh_block_until";
+
+const trimTrailingSlash = (value: string) => String(value || "").replace(/\/+$/, "");
+
+const resolveDevApiBaseUrl = () => {
+  if (!import.meta.env.DEV) return "";
+
+  const envBase = trimTrailingSlash(String(import.meta.env.VITE_API_BASE_URL || ""));
+  if (envBase) return envBase;
+  return "";
+};
+
+const DEV_API_BASE_URL = resolveDevApiBaseUrl();
+
+const resolveDevBackendOrigin = () => {
+  if (!import.meta.env.DEV) return "";
+  const explicitBase = trimTrailingSlash(String(import.meta.env.VITE_API_BASE_URL || ""));
+  if (explicitBase && /^https?:\/\//i.test(explicitBase)) return explicitBase.replace(/\/api$/i, "");
+  const configuredPort = String(import.meta.env.VITE_NEUROBOT_PORT || "").trim();
+  const port = configuredPort || "8787";
+  return `http://127.0.0.1:${port}`;
+};
+
+const DEV_BACKEND_ORIGIN = resolveDevBackendOrigin();
+
+const withApiBaseUrl = (url: string) => {
+  const normalizedUrl = String(url || "").trim();
+  if (!normalizedUrl) return normalizedUrl;
+  if (/^https?:\/\//i.test(normalizedUrl)) return normalizedUrl;
+  if (!DEV_API_BASE_URL || !normalizedUrl.startsWith("/api")) return normalizedUrl;
+  return `${DEV_API_BASE_URL}${normalizedUrl}`;
+};
+
+export const getCookie = (name: string) => {
+  const encoded = document.cookie
+    .split("; ")
+    .find((entry) => entry.startsWith(`${name}=`))
+    ?.split("=")[1];
+  return encoded ? decodeURIComponent(encoded) : "";
+};
+
+export const ensureCsrf = async () => {
+  const existingToken = getCookie("neurobot_csrf");
+  if (existingToken) {
+    console.log(`[CSRF] Using existing token: ${existingToken.substring(0, 8)}...`);
+    return existingToken;
+  }
+  
+  console.log("[CSRF] No existing token found, fetching new CSRF token");
+  
+  try {
+    const response = await fetch(withApiBaseUrl("/api/auth/csrf"), {
+      credentials: "include",
+      method: "GET"
+    });
+    
+    if (!response.ok) {
+      throw new Error(`CSRF endpoint failed: ${response.status}`);
+    }
+    
+    // Wait a moment for the cookie to be set
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const token = getCookie("neurobot_csrf");
+    if (!token) {
+      throw new Error("CSRF cookie was not set after fetching token");
+    }
+    
+    console.log(`[CSRF] Successfully fetched new token: ${token.substring(0, 8)}...`);
+    return token;
+  } catch (error) {
+    console.error("CSRF token fetch failed:", error);
+    throw new Error("Unable to establish CSRF session. Check backend availability and try again.");
+  }
+};
+
+export const getStoredAccessToken = () => {
+  try {
+    return localStorage.getItem(ACCESS_TOKEN_KEY) || "";
+  } catch {
+    return "";
+  }
+};
+
+const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
+  try {
+    const [, payload = ""] = String(token || "").split(".");
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    return JSON.parse(atob(padded)) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+};
+
+const isStoredAccessTokenExpired = (token: string, skewSeconds = 30) => {
+  const payload = decodeJwtPayload(token);
+  const exp = Number(payload?.exp || 0);
+  if (!exp) return false;
+  return exp <= Math.floor(Date.now() / 1000) + skewSeconds;
+};
+
+export const setStoredAccessToken = (token: string) => {
+  try {
+    if (token) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, token);
+      localStorage.removeItem(REFRESH_BLOCK_KEY);
+    }
+  } catch {
+    // ignore storage failures
+  }
+};
+
+export const clearStoredAccessToken = () => {
+  try {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+  } catch {
+    // ignore storage failures
+  }
+};
+
+export const clearAnonymousClientState = () => {
+  try {
+    const keep = new Set(["theme", "theme:mode", "app:theme", "auth_state"]);
+    const prefixes = ["neurobot:", "lab:", "tools:", "zdg:"];
+    for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+      const key = localStorage.key(i);
+      if (!key || keep.has(key)) continue;
+      if (prefixes.some((prefix) => key.startsWith(prefix))) localStorage.removeItem(key);
+    }
+    for (let i = sessionStorage.length - 1; i >= 0; i -= 1) {
+      const key = sessionStorage.key(i);
+      if (!key) continue;
+      if (prefixes.some((prefix) => key.startsWith(prefix))) sessionStorage.removeItem(key);
+    }
+  } catch {
+    // ignore storage failures
+  }
+};
+
+// Enhanced authentication state management
+type StoredAuthState = {
+  isAuthenticated: boolean;
+  user?: Record<string, unknown>;
+  timestamp?: number;
+};
+
+export const getStoredAuthState = (): StoredAuthState | null => {
+  try {
+    const cachedAuth = localStorage.getItem("auth_state");
+    if (cachedAuth) {
+      const authData = JSON.parse(cachedAuth);
+      if (authData.isAuthenticated && authData.user) {
+        return authData;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("[API] Error reading stored auth state:", error);
+    return null;
+  }
+};
+
+export const setStoredAuthState = (authData: StoredAuthState): void => {
+  try {
+    localStorage.setItem("auth_state", JSON.stringify(authData));
+  } catch (error) {
+    console.error("[API] Error storing auth state:", error);
+  }
+};
+
+export const clearAuthState = (): void => {
+  try {
+    localStorage.removeItem("auth_state");
+    localStorage.removeItem(REFRESH_BLOCK_KEY);
+    clearStoredAccessToken();
+    document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  } catch (error) {
+    console.error("[API] Error clearing auth state:", error);
+  }
+};
+
+export const checkAuthPersistence = async (): Promise<boolean> => {
+  // First check cached auth state
+  const cachedAuth = getStoredAuthState();
+  if (cachedAuth && cachedAuth.isAuthenticated && cachedAuth.user) {
+    console.log("[API] Using cached authentication state");
+    return true;
+  }
+  
+  // If no cached data, check with server
+  try {
+    const response = await apiFetch("/api/auth/status", { method: "GET" });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.authenticated && data.user) {
+        setStoredAuthState({
+          isAuthenticated: true,
+          user: data.user,
+          timestamp: Date.now()
+        });
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.error("[API] Auth persistence check failed:", error);
+    return false;
+  }
+};
+
+let refreshInFlight: Promise<boolean> | null = null;
+let redirectingToAuth = false;
+let meRequestInFlight: Promise<Response> | null = null;
+const meAbortController = new AbortController();
+const AUTO_RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+const makeRequestId = () => `web-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+export class ApiError extends Error {
+  status: number;
+
+  code: string;
+
+  details?: unknown;
+
+  retryAfterSec?: number;
+
+  requestId?: string;
+
+  constructor(message: string, status: number, code = "request_failed", details?: unknown, retryAfterSec?: number, requestId?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+    this.retryAfterSec = retryAfterSec;
+    this.requestId = requestId;
+  }
+}
+
+const emitAssistantSignal = (detail: {
+  kind: "api_failure";
+  url: string;
+  method: string;
+  status: number;
+  code?: string;
+}) => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("assistant:signal", { detail }));
+};
+
+const triggerAuthRedirect = () => {
+  if (redirectingToAuth) return;
+  redirectingToAuth = true;
+  toast({
+    title: "Session expired, please sign in again.",
+  });
+  window.setTimeout(() => {
+    window.location.assign("/auth");
+  }, 700);
+};
+
+const runRefreshRequest = async (url: string) => {
+  const csrf = getCookie("neurobot_csrf");
+  return fetch(url, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(csrf ? { "X-CSRF-Token": csrf } : {}),
+    },
+    body: "{}",
+  });
+};
+
+const getRefreshBlockUntil = () => {
+  try {
+    return Number(localStorage.getItem(REFRESH_BLOCK_KEY) || 0);
+  } catch {
+    return 0;
+  }
+};
+
+const setRefreshBlockFor = (durationMs: number) => {
+  try {
+    localStorage.setItem(REFRESH_BLOCK_KEY, String(Date.now() + durationMs));
+  } catch {
+    // ignore storage failures
+  }
+};
+
+const tryRefreshSession = async () => {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    try {
+      if (getRefreshBlockUntil() > Date.now()) {
+        return false;
+      }
+      await ensureCsrf();
+      const refreshCandidates = [
+        withApiBaseUrl("/api/auth/refresh"),
+        withApiBaseUrl("/auth/refresh"),
+        ...(DEV_BACKEND_ORIGIN
+          ? [`${DEV_BACKEND_ORIGIN}/api/auth/refresh`, `${DEV_BACKEND_ORIGIN}/auth/refresh`]
+          : []),
+      ].filter((value, index, all) => Boolean(value) && all.indexOf(value) === index);
+
+      for (const refreshUrl of refreshCandidates) {
+        let response = await runRefreshRequest(refreshUrl);
+        if (response.status === 403) {
+          await ensureCsrf();
+          response = await runRefreshRequest(refreshUrl);
+        }
+        if (response.status === 404) continue;
+        if (response.ok) {
+          const payload = (await response.json()) as { accessToken?: string };
+          if (payload?.accessToken) setStoredAccessToken(payload.accessToken);
+          else setRefreshBlockFor(30_000);
+        } else if (response.status === 401 || response.status === 403) {
+          clearAuthState();
+          setRefreshBlockFor(5 * 60_000);
+        } else if (response.status >= 500) {
+          setRefreshBlockFor(30_000);
+        }
+        return response.ok;
+      }
+      clearAuthState();
+      setRefreshBlockFor(5 * 60_000);
+      return false;
+    } catch {
+      setRefreshBlockFor(30_000);
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
+};
+
+export const apiFetch = async (url: string, init: RequestInit = {}) => {
+  const requestUrl = withApiBaseUrl(url);
+  const method = String(init.method || "GET").toUpperCase();
+  const startTime = Date.now();
+  const isAuthMe = url === "/api/users/profile" && method === "GET";
+  const cachedAuth = getStoredAuthState();
+  const requestId = makeRequestId();
+  const maxAttempts = method === "GET" ? 2 : (requestUrl.includes("/pyapi/mission-control") ? 2 : 1);
+  
+  console.log(`[API] ${method} ${requestUrl} - Starting request`);
+
+  if (isAuthMe) {
+    let token = getStoredAccessToken();
+    const cachedAuth = getStoredAuthState();
+    if (!token) {
+      if (!cachedAuth?.isAuthenticated) {
+        console.log(`[API] ${method} ${url} - No cached auth state, returning 401 without refresh`);
+        return new Response(null, { status: 401, statusText: "signed_out" });
+      }
+      console.log(`[API] ${method} ${url} - No access token, attempting refresh before profile request`);
+      const refreshed = await tryRefreshSession();
+      if (!refreshed) {
+        console.log(`[API] ${method} ${url} - No refresh session available, returning 401`);
+        return new Response(null, { status: 401, statusText: "missing_token" });
+      }
+      token = getStoredAccessToken();
+      if (!token) {
+        console.log(`[API] ${method} ${url} - Refresh succeeded without access token, returning 401`);
+        return new Response(null, { status: 401, statusText: "missing_token" });
+      }
+    }
+    if (isStoredAccessTokenExpired(token)) {
+      console.log(`[API] ${method} ${url} - Access token expired, attempting refresh before profile request`);
+      const refreshed = await tryRefreshSession();
+      if (!refreshed) {
+        clearStoredAccessToken();
+        return new Response(null, { status: 401, statusText: "expired_token" });
+      }
+      token = getStoredAccessToken();
+      if (!token) {
+        return new Response(null, { status: 401, statusText: "missing_token" });
+      }
+    }
+    if (meRequestInFlight) {
+      console.log(`[API] ${method} ${url} - Reusing in-flight request`);
+      return meRequestInFlight;
+    }
+  }
+
+  // Ensure CSRF token for state-changing requests
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    console.log(`[API] ${method} ${url} - Ensuring CSRF token`);
+    await ensureCsrf();
+  }
+  
+  const csrf = getCookie("neurobot_csrf");
+  let bearer = getStoredAccessToken();
+  if (!bearer && cachedAuth?.isAuthenticated && !url.startsWith("/api/auth/")) {
+    console.log(`[API] ${method} ${url} - Missing bearer with authenticated session, attempting refresh`);
+    const refreshed = await tryRefreshSession();
+    if (refreshed) {
+      bearer = getStoredAccessToken();
+    }
+  }
+  
+  console.log(`[API] ${method} ${url} - Headers:`, {
+    hasCsrf: !!csrf,
+    hasBearer: !!bearer,
+    csrfPreview: csrf ? csrf.substring(0, 8) + "..." : "none",
+    bearerPreview: bearer ? "Bearer " + bearer.substring(0, 8) + "..." : "none"
+  });
+
+  const headers = {
+    ...(init.headers || {}),
+    "X-Request-Id": requestId,
+    ...(csrf && !["GET", "HEAD", "OPTIONS"].includes(method) ? { "X-CSRF-Token": csrf } : {}),
+    ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+  };
+
+  const request = () =>
+    fetch(requestUrl, { ...init, headers, credentials: "include", signal: isAuthMe ? meAbortController.signal : init.signal });
+  const execute = async () => {
+    const response = await request();
+    const duration = Date.now() - startTime;
+    console.log(`[API] ${method} ${requestUrl} - Response: ${response.status} (${duration}ms)`);
+    recordRuntimeDebugEvent({
+      level: response.ok ? "info" : "warning",
+      source: "apiFetch",
+      message: `${method} ${requestUrl} -> ${response.status}`,
+      metadata: { requestId, duration, status: response.status },
+    });
+    return response;
+  };
+
+  let response = isAuthMe
+    ? await (() => {
+      meRequestInFlight = execute().finally(() => {
+        meRequestInFlight = null;
+      });
+      return meRequestInFlight;
+    })()
+    : await execute();
+
+  let attempt = 1;
+  while (attempt < maxAttempts && AUTO_RETRY_STATUS.has(response.status)) {
+    const retryAfterHeader = Number(response.headers.get("retry-after") || 0);
+    const backoffMs = retryAfterHeader > 0 ? retryAfterHeader * 1000 : 300 * attempt;
+    recordRuntimeDebugEvent({
+      level: "warning",
+      source: "apiFetch",
+      message: `Auto-retrying ${method} ${requestUrl}`,
+      metadata: { requestId, attempt, backoffMs, status: response.status },
+    });
+    await sleep(backoffMs);
+    response = await execute();
+    attempt += 1;
+  }
+
+  const duration = Date.now() - startTime;
+  console.log(`[API] ${method} ${requestUrl} - Final response: ${response.status} (${duration}ms)`);
+  if (!response.ok) {
+    recordClientDiagnostic({
+      level: response.status >= 500 ? "error" : "warning",
+      message: `${method} ${requestUrl} failed with ${response.status}`,
+      source: "apiFetch",
+    });
+  }
+
+  if (response.status === 429) {
+    console.log(`[API] ${method} ${requestUrl} - Rate limited (429)`);
+    return response;
+  }
+
+  if (isAuthMe && response.status === 401) {
+    console.log(`[API] ${method} ${requestUrl} - Auth/me failed, clearing token`);
+    clearStoredAccessToken();
+    return response;
+  }
+
+  if (response.status === 401 && !bearer && !url.startsWith("/api/auth/")) {
+    console.log(`[API] ${method} ${requestUrl} - No bearer token, attempting refresh before returning 401`);
+    const refreshed = await tryRefreshSession();
+    if (!refreshed) {
+      console.log(`[API] ${method} ${requestUrl} - Refresh unavailable, returning 401`);
+      return response;
+    }
+    const refreshedBearer = getStoredAccessToken();
+    if (!refreshedBearer) {
+      console.log(`[API] ${method} ${requestUrl} - Refresh succeeded without stored bearer, returning 401`);
+      return response;
+    }
+    response = await fetch(requestUrl, {
+      ...init,
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${refreshedBearer}`,
+      },
+      credentials: "include",
+      signal: isAuthMe ? meAbortController.signal : init.signal,
+    });
+  }
+
+  if (response.status !== 401 || url.startsWith("/api/auth/")) return response;
+
+  console.log(`[API] ${method} ${requestUrl} - Got 401, attempting session refresh`);
+  const refreshed = await tryRefreshSession();
+  if (!refreshed) {
+    console.log(`[API] ${method} ${requestUrl} - Session refresh failed, redirecting to auth`);
+    clearStoredAccessToken();
+    triggerAuthRedirect();
+    return response;
+  }
+
+  console.log(`[API] ${method} ${requestUrl} - Session refreshed, retrying request`);
+  response = await request();
+  if (response.status === 401) {
+    console.log(`[API] ${method} ${requestUrl} - Still 401 after refresh, redirecting to auth`);
+    clearStoredAccessToken();
+    triggerAuthRedirect();
+  }
+  
+  const finalDuration = Date.now() - startTime;
+  console.log(`[API] ${method} ${requestUrl} - Completed: ${response.status} (${finalDuration}ms)`);
+  return response;
+};
+
+export const apiGetJson = async <T,>(url: string): Promise<T> => {
+  const response = await apiFetch(url);
+  if (!response.ok) {
+    let detail = "";
+    let code = "request_failed";
+    let retryAfterSec = 0;
+    let responsePayload: { error?: string; message?: string; code?: string; retryAfterSec?: number; requestId?: string; llmError?: unknown } | null = null;
+    const retryHeader = Number(response.headers.get("retry-after") || 0);
+    if (Number.isFinite(retryHeader) && retryHeader > 0) retryAfterSec = retryHeader;
+    try {
+      responsePayload = (await response.json()) as {
+        error?: string;
+        message?: string;
+        code?: string;
+        retryAfterSec?: number;
+        requestId?: string;
+        llmError?: unknown;
+      };
+      detail = responsePayload.error || responsePayload.message || responsePayload.code || "";
+      code = responsePayload.code || code;
+      retryAfterSec = Number(responsePayload.retryAfterSec || retryAfterSec || 0);
+    } catch {
+      // ignore parse failure
+    }
+    if (response.status === 429) {
+      const friendly = retryAfterSec > 0 ? `Too many requests. Please retry in about ${retryAfterSec}s.` : "Too many requests. Please wait and retry.";
+      emitAssistantSignal({ kind: "api_failure", url, method: "GET", status: 429, code: code || "rate_limited" });
+      throw new ApiError(
+        friendly,
+        429,
+        code || "rate_limited",
+        { url, response: responsePayload },
+        retryAfterSec || undefined,
+        responsePayload?.requestId
+      );
+    }
+    emitAssistantSignal({ kind: "api_failure", url, method: "GET", status: response.status, code });
+    throw new ApiError(
+      detail || `Request failed ${response.status}`,
+      response.status,
+      code,
+      { url, response: responsePayload },
+      undefined,
+      responsePayload?.requestId
+    );
+  }
+  return response.json() as Promise<T>;
+};
+
+export const apiPostJson = async <T,>(url: string, body: unknown): Promise<T> => {
+  const response = await apiFetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    let detail = "";
+    let code = "request_failed";
+    let retryAfterSec = 0;
+    let responsePayload:
+      | { error?: string; message?: string; code?: string; details?: string[]; retryAfterSec?: number; requestId?: string; llmError?: unknown }
+      | null = null;
+    const retryHeader = Number(response.headers.get("retry-after") || 0);
+    if (Number.isFinite(retryHeader) && retryHeader > 0) retryAfterSec = retryHeader;
+    try {
+      responsePayload = (await response.json()) as {
+        error?: string;
+        message?: string;
+        code?: string;
+        details?: string[];
+        retryAfterSec?: number;
+        requestId?: string;
+        llmError?: unknown;
+      };
+      detail = responsePayload.error || responsePayload.message || responsePayload.code || responsePayload.details?.[0] || "";
+      code = responsePayload.code || code;
+      retryAfterSec = Number(responsePayload.retryAfterSec || retryAfterSec || 0);
+    } catch {
+      // ignore parse failure
+    }
+    if (response.status === 429) {
+      const friendly = retryAfterSec > 0 ? `Too many requests. Please retry in about ${retryAfterSec}s.` : "Too many requests. Please wait and retry.";
+      emitAssistantSignal({ kind: "api_failure", url, method: "POST", status: 429, code: code || "rate_limited" });
+      throw new ApiError(
+        friendly,
+        429,
+        code || "rate_limited",
+        { url, body, response: responsePayload },
+        retryAfterSec || undefined,
+        responsePayload?.requestId
+      );
+    }
+    emitAssistantSignal({ kind: "api_failure", url, method: "POST", status: response.status, code });
+    throw new ApiError(
+      detail || `Request failed ${response.status}`,
+      response.status,
+      code,
+      { url, body, response: responsePayload },
+      undefined,
+      responsePayload?.requestId
+    );
+  }
+  return response.json() as Promise<T>;
+};
+
+export const apiPutJson = async <T,>(url: string, body: unknown): Promise<T> => {
+  const response = await apiFetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    let detail = "";
+    let code = "request_failed";
+    let retryAfterSec = 0;
+    let responsePayload:
+      | { error?: string; message?: string; code?: string; details?: string[]; retryAfterSec?: number; requestId?: string; llmError?: unknown }
+      | null = null;
+    const retryHeader = Number(response.headers.get("retry-after") || 0);
+    if (Number.isFinite(retryHeader) && retryHeader > 0) retryAfterSec = retryHeader;
+    try {
+      responsePayload = (await response.json()) as {
+        error?: string;
+        message?: string;
+        code?: string;
+        details?: string[];
+        retryAfterSec?: number;
+        requestId?: string;
+        llmError?: unknown;
+      };
+      detail = responsePayload.error || responsePayload.message || responsePayload.code || responsePayload.details?.[0] || "";
+      code = responsePayload.code || code;
+      retryAfterSec = Number(responsePayload.retryAfterSec || retryAfterSec || 0);
+    } catch {
+      // ignore parse failure
+    }
+    if (response.status === 429) {
+      const friendly = retryAfterSec > 0 ? `Too many requests. Please retry in about ${retryAfterSec}s.` : "Too many requests. Please wait and retry.";
+      emitAssistantSignal({ kind: "api_failure", url, method: "PUT", status: 429, code: code || "rate_limited" });
+      throw new ApiError(
+        friendly,
+        429,
+        code || "rate_limited",
+        { url, body, response: responsePayload },
+        retryAfterSec || undefined,
+        responsePayload?.requestId
+      );
+    }
+    emitAssistantSignal({ kind: "api_failure", url, method: "PUT", status: response.status, code });
+    throw new ApiError(
+      detail || `Request failed ${response.status}`,
+      response.status,
+      code,
+      { url, body, response: responsePayload },
+      undefined,
+      responsePayload?.requestId
+    );
+  }
+  return response.json() as Promise<T>;
+};
+
+export const apiDeleteJson = async <T,>(url: string): Promise<T> => {
+  const response = await apiFetch(url, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    let detail = "";
+    let code = "request_failed";
+    let retryAfterSec = 0;
+    let responsePayload:
+      | { error?: string; message?: string; code?: string; details?: string[]; retryAfterSec?: number; requestId?: string; llmError?: unknown }
+      | null = null;
+    const retryHeader = Number(response.headers.get("retry-after") || 0);
+    if (Number.isFinite(retryHeader) && retryHeader > 0) retryAfterSec = retryHeader;
+    try {
+      responsePayload = (await response.json()) as {
+        error?: string;
+        message?: string;
+        code?: string;
+        details?: string[];
+        retryAfterSec?: number;
+        requestId?: string;
+        llmError?: unknown;
+      };
+      detail = responsePayload.error || responsePayload.message || responsePayload.code || responsePayload.details?.[0] || "";
+      code = responsePayload.code || code;
+      retryAfterSec = Number(responsePayload.retryAfterSec || retryAfterSec || 0);
+    } catch {
+      // ignore parse failure
+    }
+    if (response.status === 429) {
+      const friendly = retryAfterSec > 0 ? `Too many requests. Please retry in about ${retryAfterSec}s.` : "Too many requests. Please wait and retry.";
+      emitAssistantSignal({ kind: "api_failure", url, method: "DELETE", status: 429, code: code || "rate_limited" });
+      throw new ApiError(
+        friendly,
+        429,
+        code || "rate_limited",
+        { url, response: responsePayload },
+        retryAfterSec || undefined,
+        responsePayload?.requestId
+      );
+    }
+    emitAssistantSignal({ kind: "api_failure", url, method: "DELETE", status: response.status, code });
+    throw new ApiError(
+      detail || `Request failed ${response.status}`,
+      response.status,
+      code,
+      { url, response: responsePayload },
+      undefined,
+      responsePayload?.requestId
+    );
+  }
+  return response.json() as Promise<T>;
+};
+
+export const bootstrapAuthSession = async () => {
+  let token = getStoredAccessToken();
+  const cachedAuth = getStoredAuthState();
+  const oauthRedirectActive =
+    typeof window !== "undefined" &&
+    (window.location.search.includes("oauth=google") || window.location.search.includes("oauth=success"));
+  if (!token) {
+    if (!cachedAuth?.isAuthenticated && !oauthRedirectActive) return { ok: false, reason: "signed_out" as const };
+    const refreshed = await tryRefreshSession();
+    if (!refreshed) return { ok: false, reason: "missing_token" as const };
+    token = getStoredAccessToken();
+    if (!token) return { ok: false, reason: "missing_token" as const };
+  }
+  try {
+    const response = await apiFetch("/api/users/profile", { method: "GET" });
+    if (!response.ok) {
+      clearStoredAccessToken();
+      return { ok: false, reason: "invalid_token" as const };
+    }
+    return { ok: true as const };
+  } catch {
+    clearStoredAccessToken();
+    return { ok: false, reason: "network_error" as const };
+  }
+};
+
+// Optional helper for code paths that still use axios.
+export const installAxiosAuthInterceptor = (axiosInstance: {
+  defaults?: { withCredentials?: boolean };
+  interceptors?: {
+    request?: { use?: (fn: (config: Record<string, unknown>) => Record<string, unknown>) => void };
+    response?: { use?: (onSuccess?: (response: unknown) => unknown, onRejected?: (error: { response?: { status?: number } }) => Promise<never>) => void };
+  };
+}) => {
+  if (!axiosInstance) return;
+  if (axiosInstance.defaults) axiosInstance.defaults.withCredentials = true;
+  axiosInstance.interceptors?.request?.use?.((config) => {
+    const next = { ...config };
+    const headers = { ...(next.headers as Record<string, unknown>) };
+    const token = getStoredAccessToken();
+    if (token && !headers.Authorization) headers.Authorization = `Bearer ${token}`;
+    next.headers = headers;
+    next.withCredentials = true;
+    return next;
+  });
+  axiosInstance.interceptors?.response?.use?.(
+    (response) => response,
+    async (error) => {
+      const status = Number(error?.response?.status || 0);
+      if (status === 401) {
+        clearStoredAccessToken();
+        triggerAuthRedirect();
+      }
+      if (status === 429) {
+        toast({ title: "You are sending requests too fast. Please retry shortly." });
+      }
+      return Promise.reject(error);
+    }
+  );
+};

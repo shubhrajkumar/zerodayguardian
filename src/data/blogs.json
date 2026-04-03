@@ -1,0 +1,47 @@
+[
+  {
+    "title": "Web Security: Preventing SQLi and XSS in Modern Apps",
+    "slug": "web-security-preventing-sqli-and-xss",
+    "category": "Web Security",
+    "date": "2026-03-01",
+    "readTime": "9 min read",
+    "excerpt": "A practical guide to eliminating SQL Injection and XSS through prepared statements, output encoding, and defense-in-depth controls.",
+    "content": "## Threat Model\nMost production incidents happen when user input crosses a trust boundary and reaches query builders or HTML rendering without strict controls.\n\n## SQL Injection Defensive Pattern\nUse prepared statements for every variable path.\n\n```sql\n-- Vulnerable\nSELECT * FROM users WHERE email = '\" + input + \"';\n\n-- Safe\nSELECT * FROM users WHERE email = ?;\n```\n\n## Reflected XSS Defensive Pattern\nNever insert untrusted data directly into HTML. Encode output by context.\n\n```js\n// Vulnerable\ncontainer.innerHTML = userInput;\n\n// Safer\ncontainer.textContent = userInput;\n```\n\n## Real World Example\nA bug bounty report found a login endpoint concatenating username into SQL and echoing errors to the client. Attackers first bypassed auth with a tautology payload, then chained XSS in an admin note field to steal session actions.\n\n## Visual Explanation Block\n[Input] -> [Server Parser] -> [SQL/HTML Sink] -> [Unsafe Execution]\n\n## Hardening Checklist\n1. Parameterized queries everywhere.\n2. Output encode by sink type (HTML, attribute, JS, URL).\n3. Strict CSP and secure cookies.\n4. Centralized validation and security logging."
+  },
+  {
+    "title": "OSINT Operations: Building a Safe Recon Workflow",
+    "slug": "osint-safe-recon-workflow",
+    "category": "OSINT",
+    "date": "2026-02-26",
+    "readTime": "8 min read",
+    "excerpt": "How to run legal, ethical, and repeatable reconnaissance with certificate transparency, DNS evidence, and asset validation.",
+    "content": "## Scope Before Collection\nDocument authorized domains, time window, and forbidden targets before collecting anything.\n\n## Collection Pipeline\n1. Certificate transparency review.\n2. DNS baseline and ownership checks.\n3. Public document and metadata review.\n\n```bash\n# Example workflow commands in lab context\nwhois example.com\nnslookup -type=NS example.com\n```\n\n## Real World Example\nA startup exposed an old staging hostname in certificate logs. The service still accepted legacy credentials and leaked API responses. The fix required hostname decommissioning, cert lifecycle cleanup, and SSO enforcement.\n\n## Visual Explanation Block\n[CT Logs] + [DNS] + [Public Docs] -> [Asset Inventory] -> [Risk Prioritization]\n\n## Defensive Recommendations\n1. Continuous external attack-surface inventory.\n2. Remove stale DNS and stale certificates.\n3. Enforce auth and IP controls on non-production assets."
+  },
+  {
+    "title": "Networking Basics for Security Engineers: Ports, TCP, and Exposure",
+    "slug": "networking-basics-ports-tcp-exposure",
+    "category": "Networking",
+    "date": "2026-02-22",
+    "readTime": "7 min read",
+    "excerpt": "Understand why open ports matter, how TCP services are enumerated, and how to prioritize hardening actions.",
+    "content": "## Core Concepts\nA port is a service endpoint. TCP is connection-oriented and commonly used for web, email, and database services.\n\n## Exposure Analysis\nOpen ports are not automatically vulnerabilities, but each one expands attack surface and requires explicit ownership.\n\n```bash\n# Safe lab scan pattern\nnmap -sV --top-ports 100 target.lab\n```\n\n## Real World Example\nA Redis instance on port 6379 was internet-exposed without auth. Attackers wrote malicious cron jobs through open admin interfaces. Containment required network ACLs, auth enforcement, and service segmentation.\n\n## Visual Explanation Block\n[Open Port] -> [Service Fingerprint] -> [Known Weakness] -> [Exploitability Risk]\n\n## Hardening Plan\n1. Default-deny firewall posture.\n2. Restrict admin ports to private networks.\n3. Monitor port exposure drift weekly."
+  },
+  {
+    "title": "Malware Basics: Initial Access, Persistence, and Detection Signals",
+    "slug": "malware-basics-initial-access-persistence-detection",
+    "category": "Malware Basics",
+    "date": "2026-02-18",
+    "readTime": "10 min read",
+    "excerpt": "Learn malware lifecycle stages and practical indicators defenders should monitor in endpoint and network telemetry.",
+    "content": "## Malware Lifecycle\n1. Initial access\n2. Execution\n3. Persistence\n4. Lateral movement\n5. Exfiltration\n\n## Detection Signals\nWatch for suspicious process trees, unsigned binaries in temp paths, unusual outbound beaconing, and privilege escalation chains.\n\n```yaml\nrule: suspicious_powershell_download\ncondition:\n  process_name: powershell.exe\n  command_line_contains: [\"IEX\", \"DownloadString\", \"-enc\"]\nseverity: high\n```\n\n## Real World Example\nA phishing macro launched PowerShell, downloaded a loader, and established startup persistence. EDR flagged parent-child anomaly between Office and script host processes.\n\n## Visual Explanation Block\n[Phish Attachment] -> [Script Execution] -> [Payload Fetch] -> [Persistence Key]\n\n## Defensive Baseline\n1. Endpoint detection with process telemetry.\n2. Email attachment controls and sandboxing.\n3. Rapid isolation playbooks for infected hosts."
+  },
+  {
+    "title": "Cybersecurity Career Guidance: From Beginner to Analyst",
+    "slug": "cybersecurity-career-beginner-to-analyst",
+    "category": "Career Guidance",
+    "date": "2026-02-14",
+    "readTime": "6 min read",
+    "excerpt": "A practical roadmap for building skill depth, portfolio proof, and interview readiness for SOC and security analyst roles.",
+    "content": "## Build Foundations First\nFocus on networking, Linux, HTTP, authentication, and common web vulnerabilities.\n\n## Build Proof, Not Just Notes\nCreate a portfolio with short write-ups: problem, evidence, fix, and retest.\n\n```text\nPortfolio Entry Template\n- Scenario\n- Findings\n- Risk rating\n- Remediation\n- Validation result\n```\n\n## Real World Example\nCandidates with 3 strong lab write-ups and one incident timeline often outperform candidates with only certificates.\n\n## Visual Explanation Block\n[Skills] + [Labs] + [Communication] -> [Interview Performance] -> [Role Readiness]\n\n## 90-Day Plan\n1. Month 1: fundamentals and logging.\n2. Month 2: web app labs and reporting.\n3. Month 3: SOC triage drills and mock interviews."
+  }
+]

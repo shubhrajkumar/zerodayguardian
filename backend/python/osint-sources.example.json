@@ -1,0 +1,24 @@
+{
+  "sources": [
+    {
+      "name": "BleepingComputer Data Breach",
+      "url": "https://www.bleepingcomputer.com/tag/data-breach/",
+      "item_selector": "div.bc_latest_news_text, article, li",
+      "title_selector": "h4, h2, a",
+      "date_selector": "li.bc_news_date, time, .bc_news_date",
+      "summary_selector": "p",
+      "link_selector": "a",
+      "max_items": 10
+    },
+    {
+      "name": "Security Affairs Data Breach",
+      "url": "https://securityaffairs.com/category/data-breach",
+      "item_selector": "article, .post",
+      "title_selector": "h2.entry-title, h3.entry-title, a",
+      "date_selector": "time, .entry-date, .td-post-date time",
+      "summary_selector": ".entry-content p, .td-excerpt, p",
+      "link_selector": "a",
+      "max_items": 10
+    }
+  ]
+}
