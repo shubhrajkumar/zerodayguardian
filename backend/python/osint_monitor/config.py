@@ -34,6 +34,9 @@ DEFAULT_DOMAIN_PATTERNS = (
     "protonmail.com",
 )
 
+IS_VERCEL = os.getenv("VERCEL", "").strip().lower() in {"1", "true"}
+SERVERLESS_STORAGE_ROOT = Path("/tmp/zeroday-guardian-osint") if IS_VERCEL else Path(__file__).resolve().parent.parent
+
 
 @dataclass(frozen=True)
 class SourceConfig:
@@ -67,8 +70,8 @@ class MonitorSettings:
     max_raw_text_chars: int = int(os.getenv("PY_OSINT_MAX_RAW_TEXT_CHARS", "1200"))
     max_alerts_per_cycle: int = int(os.getenv("PY_OSINT_MAX_ALERTS_PER_CYCLE", "20"))
     allow_http_sources: bool = os.getenv("PY_OSINT_ALLOW_HTTP_SOURCES", "false").lower() == "true"
-    log_file: Path = Path(os.getenv("PY_OSINT_LOG_FILE", Path(__file__).resolve().parent.parent / "osint-monitor.log"))
-    storage_file: Path = Path(os.getenv("PY_OSINT_STORAGE_FILE", Path(__file__).resolve().parent.parent / "osint-storage.json"))
+    log_file: Path = Path(os.getenv("PY_OSINT_LOG_FILE", SERVERLESS_STORAGE_ROOT / "osint-monitor.log"))
+    storage_file: Path = Path(os.getenv("PY_OSINT_STORAGE_FILE", SERVERLESS_STORAGE_ROOT / "osint-storage.json"))
     sources_file: Path | None = (
         Path(os.getenv("PY_OSINT_SOURCES_FILE")).expanduser()
         if os.getenv("PY_OSINT_SOURCES_FILE", "").strip()

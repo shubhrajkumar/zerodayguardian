@@ -182,6 +182,11 @@ const parseMongoUrl = (raw) => {
 const llmProviderInput = firstSet("LLM_MODE", "LLM_PROVIDER");
 const normalizedLlmMode = normalizeLlmProvider(llmProviderInput || "auto");
 const isProduction = (process.env.NODE_ENV || "production") === "production";
+const isVercel = ["1", "true"].includes(String(process.env.VERCEL || "").trim().toLowerCase());
+const vercelFallbackUrl = process.env.VERCEL_URL ? `https://${String(process.env.VERCEL_URL).trim()}` : "https://zeroday-guardian.invalid";
+const warnDeployConfig = (message) => {
+  console.warn(`[neurobot] ${message}`);
+};
 const required = [
   "DATABASE_URL",
   "SESSION_SECRET",
@@ -363,6 +368,36 @@ export const env = {
 };
 env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
 env.googleAuthorizedOrigins = uniqueList(env.googleAuthorizedOrigins);
+if (isVercel) {
+  if (!env.appBaseUrl) {
+    env.appBaseUrl = vercelFallbackUrl;
+    warnDeployConfig(`APP_BASE_URL missing during Vercel build/runtime. Using fallback ${env.appBaseUrl}`);
+  }
+  if (!env.backendPublicUrl) {
+    env.backendPublicUrl = vercelFallbackUrl;
+    warnDeployConfig(`BACKEND_PUBLIC_URL missing during Vercel build/runtime. Using fallback ${env.backendPublicUrl}`);
+  }
+  if (!env.corsOrigin) {
+    env.corsOrigin = env.appBaseUrl;
+    warnDeployConfig(`CORS_ORIGIN missing during Vercel build/runtime. Using fallback ${env.corsOrigin}`);
+  }
+  env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
+  if (!env.googleAuthorizedOrigins.length) {
+    env.googleAuthorizedOrigins = [...env.corsOrigins];
+  }
+  if (!env.sessionSecret) {
+    env.sessionSecret = "vercel-session-secret-placeholder-0000000000000000";
+    warnDeployConfig("SESSION_SECRET missing during Vercel build/runtime. Using a placeholder secret until env is configured.");
+  }
+  if (!env.jwtSecret) {
+    env.jwtSecret = "vercel-jwt-secret-placeholder-000000000000000000000000";
+    warnDeployConfig("JWT_SECRET missing during Vercel build/runtime. Using a placeholder secret until env is configured.");
+  }
+  if (!env.dbEncryptionKey) {
+    env.dbEncryptionKey = "vercel-db-encryption-key-placeholder-000000000000000";
+    warnDeployConfig("DB_ENCRYPTION_KEY missing during Vercel build/runtime. Using a placeholder key until env is configured.");
+  }
+}
 if (!env.googleRedirectUri && env.backendPublicUrl) {
   try {
     env.googleRedirectUri = new URL("/auth/google/callback", env.backendPublicUrl).toString();
@@ -393,14 +428,22 @@ const missing = required.filter((key) => {
 });
 
 if (missing.length) {
-  throw new Error(`[neurobot] Missing required env vars: ${missing.join(", ")}`);
+  if (isVercel) {
+    warnDeployConfig(`Missing required env vars during Vercel build/runtime: ${missing.join(", ")}. API will run in degraded mode until these are configured.`);
+  } else {
+    throw new Error(`[neurobot] Missing required env vars: ${missing.join(", ")}`);
+  }
 }
 
 if (!Number.isFinite(env.port) || env.port <= 0 || env.port > 65535) {
   throw new Error("[neurobot] Invalid NEUROBOT_PORT");
 }
 if (String(env.jwtSecret || "").length < 32) {
-  throw new Error("[neurobot] JWT_SECRET must be at least 32 characters");
+  if (isVercel) {
+    warnDeployConfig("JWT_SECRET is shorter than 32 characters. Configure a real production secret in Vercel.");
+  } else {
+    throw new Error("[neurobot] JWT_SECRET must be at least 32 characters");
+  }
 }
 if (env.llmRetryMaxMs < env.llmRetryBaseMs) {
   throw new Error("[neurobot] LLM_RETRY_MAX_MS must be >= LLM_RETRY_BASE_MS");
@@ -417,20 +460,41 @@ if (!new Set(["info", "warn", "error"]).has(env.alertMinLevel)) {
 
 if (env.nodeEnv === "production") {
   if (!env.appBaseUrl || !/^https?:\/\//.test(env.appBaseUrl)) {
-    throw new Error("[neurobot] APP_BASE_URL must be set to an absolute https:// or http:// URL in production");
+    if (isVercel) {
+      warnDeployConfig("APP_BASE_URL is not an absolute URL. Configure a real production APP_BASE_URL in Vercel.");
+    } else {
+      throw new Error("[neurobot] APP_BASE_URL must be set to an absolute https:// or http:// URL in production");
+    }
   }
   if (!env.backendPublicUrl || !/^https?:\/\//.test(env.backendPublicUrl)) {
-    throw new Error("[neurobot] BACKEND_PUBLIC_URL must be set to an absolute https:// or http:// URL in production");
+    if (isVercel) {
+      warnDeployConfig("BACKEND_PUBLIC_URL is not an absolute URL. Configure a real production BACKEND_PUBLIC_URL in Vercel.");
+    } else {
+      throw new Error("[neurobot] BACKEND_PUBLIC_URL must be set to an absolute https:// or http:// URL in production");
+    }
   }
   if (String(env.dbEncryptionKey || "").length < 32) {
-    throw new Error("[neurobot] DB_ENCRYPTION_KEY must be at least 32 characters in production");
+    if (isVercel) {
+      warnDeployConfig("DB_ENCRYPTION_KEY is shorter than 32 characters. Configure a real production key in Vercel.");
+    } else {
+      throw new Error("[neurobot] DB_ENCRYPTION_KEY must be at least 32 characters in production");
+    }
   }
   if (!env.corsOrigins.length) {
-    throw new Error("[neurobot] CORS_ORIGIN must include at least one origin in production");
+    if (isVercel) {
+      warnDeployConfig("CORS_ORIGIN is empty in production. Configure at least one frontend origin in Vercel.");
+    } else {
+      throw new Error("[neurobot] CORS_ORIGIN must include at least one origin in production");
+    }
   }
   for (const origin of env.corsOrigins) {
     if (!/^https?:\/\//.test(origin)) {
-      throw new Error("[neurobot] CORS_ORIGIN entries must be absolute URLs in production");
+      if (isVercel) {
+        warnDeployConfig("One or more CORS_ORIGIN entries are not absolute URLs. Configure valid origins in Vercel.");
+        break;
+      } else {
+        throw new Error("[neurobot] CORS_ORIGIN entries must be absolute URLs in production");
+      }
     }
   }
 }

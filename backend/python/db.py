@@ -18,7 +18,8 @@ def load_env() -> None:
 
 load_env()
 
-DEFAULT_SQLITE_PATH = Path(__file__).resolve().parent / "local.db"
+IS_VERCEL = os.getenv("VERCEL", "").strip().lower() in {"1", "true"}
+DEFAULT_SQLITE_PATH = Path("/tmp/zeroday-guardian-local.db") if IS_VERCEL else Path(__file__).resolve().parent / "local.db"
 DEFAULT_SQLITE_URL = f"sqlite:///{DEFAULT_SQLITE_PATH.as_posix()}"
 
 

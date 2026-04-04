@@ -96,6 +96,7 @@ def load_env() -> None:
 
 
 load_env()
+IS_VERCEL = os.getenv("VERCEL", "").strip().lower() in {"1", "true"}
 
 
 def get_db():
@@ -161,8 +162,11 @@ intel_rate_limiter = InMemoryRateLimiter(
 osint_settings = MonitorSettings()
 osint_logger = logging.getLogger("osint_monitor")
 if not any(isinstance(handler, logging.FileHandler) and getattr(handler, "baseFilename", "") == str(osint_settings.log_file) for handler in osint_logger.handlers):
-    osint_settings.log_file.parent.mkdir(parents=True, exist_ok=True)
-    handler = logging.FileHandler(osint_settings.log_file, encoding="utf-8")
+    try:
+        osint_settings.log_file.parent.mkdir(parents=True, exist_ok=True)
+        handler = logging.FileHandler(osint_settings.log_file, encoding="utf-8")
+    except OSError:
+        handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"))
     osint_logger.setLevel(logging.INFO)
     osint_logger.addHandler(handler)
@@ -277,7 +281,10 @@ def startup():
     )
     for warning in validate_monitor_settings(osint_settings):
         print(f"[OSINT Monitor Warning] {warning}")
-    osint_monitor.start()
+    if IS_VERCEL:
+        api_logger.info("Skipping OSINT monitor background worker on Vercel serverless runtime")
+    else:
+        osint_monitor.start()
 
 
 @app.on_event("shutdown")
