@@ -44,6 +44,10 @@ export const getDbPoolStatus = () => ({
 
 export const connectDb = async () => {
   if (db) return db;
+  if (!String(env.mongoUri || "").trim()) {
+    logWarn("Database URL missing, continuing without MongoDB connection");
+    return null;
+  }
   
   // Check if we should skip database connection in development
   const skipDb = process.env.SKIP_DB_CONNECTION === "true";

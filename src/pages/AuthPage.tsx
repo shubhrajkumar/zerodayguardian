@@ -39,6 +39,22 @@ type AuthProvidersResponse = {
 };
 
 const isApiError = (error: unknown): error is ApiError => error instanceof ApiError;
+const loadAuthProviders = async (): Promise<AuthProvidersResponse> => {
+  const candidates = ["/api/auth/providers", "/auth/providers"];
+  let lastError: unknown = null;
+
+  for (const candidate of candidates) {
+    try {
+      return await apiGetJson<AuthProvidersResponse>(candidate);
+    } catch (error) {
+      lastError = error;
+      if (!isApiError(error) || error.status !== 404) throw error;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Auth providers unavailable");
+};
+
 const runtimeSiteOrigin =
   typeof window !== "undefined"
     ? String(window.location.origin || "").replace(/\/+$/, "")
@@ -103,7 +119,7 @@ const AuthPage = () => {
   useEffect(() => {
     const envClientId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
     let active = true;
-    apiGetJson<AuthProvidersResponse>("/api/auth/providers")
+    loadAuthProviders()
       .then((payload) => {
         if (!active) return;
         const clientId = String(payload?.google?.clientId || envClientId || "").trim();

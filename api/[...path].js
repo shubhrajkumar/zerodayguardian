@@ -11,6 +11,16 @@ const MONGO_CONNECT_TIMEOUT_MS = Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 
 
 let initPromise = null;
 
+const isAuthProvidersRequest = (req) => {
+  const path = String(req?.url || req?.path || "");
+  return /\/auth\/providers\/?$/.test(path);
+};
+
+const isAuthCsrfRequest = (req) => {
+  const path = String(req?.url || req?.path || "");
+  return /\/auth\/csrf\/?$/.test(path);
+};
+
 const ensureMongo = async () => {
   if (!MONGO_URI) return;
   if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) return;
@@ -44,6 +54,44 @@ const ensureInit = async () => {
 };
 
 export default async function handler(req, res) {
-  await ensureInit();
-  return app(req, res);
+  try {
+    await ensureInit();
+    return app(req, res);
+  } catch (error) {
+    console.error("[Vercel API] Function bootstrap failed:", error instanceof Error ? error.message : String(error));
+
+    if (isAuthProvidersRequest(req)) {
+      return res.status(200).json({
+        status: "ok",
+        degraded: true,
+        google: {
+          enabled: Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID || ""),
+          clientId: String(process.env.GOOGLE_OAUTH_CLIENT_ID || ""),
+          backendFlow: true,
+          startUrl: "",
+          callbackUrl: "",
+          redirectUri: String(process.env.GOOGLE_REDIRECT_URI || ""),
+          frontendOrigin: String(process.env.APP_BASE_URL || ""),
+          authorizedOrigins: String(process.env.GOOGLE_AUTHORIZED_ORIGINS || process.env.CORS_ORIGIN || "")
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean),
+        },
+      });
+    }
+
+    if (isAuthCsrfRequest(req)) {
+      return res.status(200).json({
+        status: "ok",
+        degraded: true,
+        csrfToken: true,
+      });
+    }
+
+    return res.status(503).json({
+      status: "error",
+      code: "serverless_bootstrap_failed",
+      message: "The API is temporarily recovering. Please retry shortly.",
+    });
+  }
 }

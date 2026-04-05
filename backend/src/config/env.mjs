@@ -179,6 +179,20 @@ const parseMongoUrl = (raw) => {
   };
 };
 
+const createDegradedMongoConfig = (reason = "missing") => ({
+  protocol: "mongodb:",
+  host: "127.0.0.1",
+  port: 27017,
+  username: "",
+  dbName: process.env.MONGODB_DB_NAME || "neurobot",
+  isSrv: false,
+  isLocalHost: true,
+  tlsFlag: "unspecified",
+  requiresTlsHint: false,
+  masked: `mongodb://127.0.0.1:27017/${process.env.MONGODB_DB_NAME || "neurobot"}?degraded=${reason}`,
+  degraded: true,
+});
+
 const llmProviderInput = firstSet("LLM_MODE", "LLM_PROVIDER");
 const normalizedLlmMode = normalizeLlmProvider(llmProviderInput || "auto");
 const isProduction = (process.env.NODE_ENV || "production") === "production";
@@ -499,7 +513,22 @@ if (env.nodeEnv === "production") {
   }
 }
 
-env.mongo = parseMongoUrl(env.mongoUri);
+if (!env.mongoUri) {
+  env.mongo = createDegradedMongoConfig("missing");
+} else {
+  try {
+    env.mongo = parseMongoUrl(env.mongoUri);
+  } catch (error) {
+    if (isVercel) {
+      warnDeployConfig(
+        `DATABASE_URL is unavailable or malformed during Vercel build/runtime. Using degraded API mode until it is configured.`
+      );
+      env.mongo = createDegradedMongoConfig("invalid");
+    } else {
+      throw error;
+    }
+  }
+}
 
 const supportedProviders = new Set(["openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup"]);
 const supportedModes = new Set(["auto", "openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup"]);

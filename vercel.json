@@ -17,7 +17,7 @@
   },
   "rewrites": [
     {
-      "source": "/((?!api/|pyapi/).*)",
+      "source": "/((?!(api|pyapi)(/|$)).*)",
       "destination": "/index.html"
     }
   ]
