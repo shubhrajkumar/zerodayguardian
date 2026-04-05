@@ -7,22 +7,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/pyapi/(.*)",
-      "destination": "/api/pyapi/$1"
-    },
-    {
       "source": "/((?!api/|pyapi/).*)",
       "destination": "/index.html"
     }
-  ],
-  "functions": {
-    "api/[...path].js": {
-      "maxDuration": 60,
-      "includeFiles": "backend/**"
-    },
-    "api/pyapi/[...path].py": {
-      "maxDuration": 60,
-      "includeFiles": "backend/python/**"
-    }
-  }
+  ]
 }

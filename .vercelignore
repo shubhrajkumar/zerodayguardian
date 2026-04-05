@@ -9,6 +9,8 @@
 node_modules/
 dist/
 coverage/
+api/
+backend/
 __pycache__/
 *.pyc
 *.pyo
@@ -20,5 +22,6 @@ __pycache__/
 *.zip
 local.db
 local.db-journal
+requirements.txt
 server-auth-test.err.log
 server-auth-test.out.log

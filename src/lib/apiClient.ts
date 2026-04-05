@@ -45,6 +45,8 @@ const withApiBaseUrl = (url: string) => {
   return `${API_BASE_URL}${normalizedUrl}`;
 };
 
+export const resolvePublicApiUrl = (url: string) => withApiBaseUrl(url);
+
 export const getCookie = (name: string) => {
   const encoded = document.cookie
     .split("; ")

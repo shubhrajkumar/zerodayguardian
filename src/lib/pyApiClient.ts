@@ -42,11 +42,14 @@ const unwrapPayload = <T,>(payload: unknown): T => {
   return payload as T;
 };
 
-const normalizeUrl = (path: string) => {
+export const resolvePublicPyApiUrl = (path: string) => {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  if (path.startsWith("/pyapi/")) return `${PY_API_BASE}${path.slice("/pyapi".length)}`;
   if (!path.startsWith("/")) return `${PY_API_BASE}/${path}`;
   return `${PY_API_BASE}${path}`;
 };
+
+const normalizeUrl = (path: string) => resolvePublicPyApiUrl(path);
 
 const buildPyApiError = async (response: Response) => {
   let detail = "";

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch, apiGetJson, apiPostJson, getStoredAccessToken } from "@/lib/apiClient";
-import { getPyApiUserMessage, pyGetJson, pyPostJson } from "@/lib/pyApiClient";
+import { getPyApiUserMessage, pyGetJson, pyPostJson, resolvePublicPyApiUrl } from "@/lib/pyApiClient";
 import { useToast } from "@/hooks/use-toast";
 
 const MODULES = [
@@ -251,7 +251,10 @@ const OsintPage = () => {
   useEffect(() => {
     const token = getStoredAccessToken();
     if (!token || typeof window === "undefined" || typeof EventSource === "undefined") return;
-    const stream = new EventSource(`/pyapi/recommendations/stream?access_token=${encodeURIComponent(token)}`, { withCredentials: true });
+    const stream = new EventSource(
+      resolvePublicPyApiUrl(`/recommendations/stream?access_token=${encodeURIComponent(token)}`),
+      { withCredentials: true }
+    );
     const handleEvent = (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data) as PyRecommendationResponse;

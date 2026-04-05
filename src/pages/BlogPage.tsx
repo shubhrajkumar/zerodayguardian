@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { Activity, Newspaper, RefreshCw, ShieldAlert, Sparkles } from "lucide-react";
 import { debounce } from "@/utils/debounce";
-import { apiGetJson } from "@/lib/apiClient";
+import { apiGetJson, resolvePublicApiUrl } from "@/lib/apiClient";
 import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
 import BlogCard from "@/components/BlogCard";
@@ -70,7 +70,7 @@ const BlogPage = () => {
   }, [selectedCategory, searchTerm]);
 
   useEffect(() => {
-    const stream = new EventSource("/api/intelligence/news/stream", { withCredentials: true });
+    const stream = new EventSource(resolvePublicApiUrl("/api/intelligence/news/stream"), { withCredentials: true });
     stream.addEventListener("news:update", () => {
       load().catch(() => undefined);
     });
