@@ -99,11 +99,11 @@ const buildAiErrorState = (err) => {
   if (code === "service_busy") {
     return {
       code,
-      title: "Temporary provider issue",
-      detail: "Live providers are busy right now, so ZORVIX switched to stable local mentor intelligence instead of returning unstable output.",
+      title: "Live model is syncing",
+      detail: "Live providers are syncing right now, so ZORVIX switched to stable local mentor intelligence instead of returning unstable output.",
       retryable: true,
       retryAfterSec,
-      retryHint: retryAfterSec ? `Live provider retry in about ${Math.max(1, Math.ceil(retryAfterSec))}s.` : "Live provider retry will resume automatically.",
+      retryHint: retryAfterSec ? `Live provider retry in about ${Math.max(1, Math.ceil(retryAfterSec))}s.` : "Stable mode is active and live mode will resume automatically.",
       provider: "local",
       statusCode: aiHttpStatus(code, failure.statusCode || err?.statusCode || err?.status || 503),
     };
@@ -132,7 +132,7 @@ const buildAiErrorState = (err) => {
       retryAfterSec,
       retryHint:
         code === "forced_local_fallback"
-          ? (retryAfterSec ? `Live provider retry in about ${Math.max(1, Math.ceil(retryAfterSec))}s.` : "Live provider retry will resume automatically.")
+          ? (retryAfterSec ? `Live provider retry in about ${Math.max(1, Math.ceil(retryAfterSec))}s.` : "Stable mode is active and live mode will resume automatically.")
           : retryAfterSec
             ? `Retry in about ${Math.max(1, Math.ceil(retryAfterSec))}s.`
             : "Retry in a moment while providers recover.",

@@ -349,7 +349,7 @@ export const env = {
   digestEmailAppPassword: firstSet("DIGEST_EMAIL_APP_PASSWORD", "AUTH_EMAIL_APP_PASSWORD", "GMAIL_PASS"),
   pushVapidPublicKey: process.env.PUSH_VAPID_PUBLIC_KEY || "",
   pushVapidPrivateKey: process.env.PUSH_VAPID_PRIVATE_KEY || "",
-  pushVapidSubject: process.env.PUSH_VAPID_SUBJECT || "mailto:support@zerodayguardian.app",
+  pushVapidSubject: process.env.PUSH_VAPID_SUBJECT || "mailto:ksubhraj28@gmail.com",
   stripeSecretKey: process.env.STRIPE_SECRET_KEY || "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
   stripePremiumPriceId: process.env.STRIPE_PREMIUM_PRICE_ID || "",

@@ -52,14 +52,14 @@ const Navbar = () => {
   return (
     <>
       <div
-        className="fixed left-0 top-0 z-[60] h-[2px] bg-[linear-gradient(90deg,var(--green),var(--blue))] transition-all duration-150"
+        className="fixed left-0 top-0 z-[60] h-[2px] bg-[linear-gradient(90deg,#00ff88,#0066ff)] transition-all duration-150"
         style={{ width: `${scrollProgress}%` }}
       />
 
       <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 bg-[rgba(10,10,15,0.92)] backdrop-blur-2xl">
         <div className="mobile-page-frame flex min-h-16 items-center justify-between gap-3 py-2">
           <Link to="/" className="min-w-0 shrink-0">
-            <span className="block truncate text-sm font-extrabold uppercase tracking-[0.18em] text-[var(--text)] sm:text-[0.95rem]">
+            <span className="block truncate text-sm font-extrabold uppercase tracking-[0.18em] text-[#e2e8f0] sm:text-[0.95rem]">
               ZeroDay
               <span className="ml-2 terminal-font text-[0.78em] text-[#00ff88]">Guardian</span>
             </span>
@@ -100,7 +100,7 @@ const Navbar = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="center"
-                className="w-48 rounded-xl border-white/8 bg-[rgba(26,26,46,0.98)] text-[var(--text)] backdrop-blur-xl"
+                className="w-48 rounded-xl border-white/8 bg-[rgba(26,26,46,0.98)] text-[#e2e8f0] backdrop-blur-xl"
               >
                 {toolsNav.map((item) => (
                   <DropdownMenuItem key={item.to} asChild className="cursor-pointer rounded-lg">
@@ -142,20 +142,20 @@ const Navbar = () => {
               to={startFreeRoute}
               className="cyber-btn cta-focus-ring min-h-[42px] px-5 py-2 text-sm font-semibold"
             >
-              Start Free
+              Deploy Access
             </Link>
           </div>
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" className="h-12 w-12 shrink-0 rounded-xl border border-white/6 bg-white/[0.02] text-[var(--text)]">
+              <Button variant="ghost" size="icon" className="h-12 w-12 shrink-0 rounded-xl border border-white/6 bg-white/[0.02] text-[#e2e8f0]">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
 
             <SheetContent side="right" className="w-[92vw] max-w-[22rem] border-white/8 bg-[rgba(10,10,15,0.98)] px-4 py-4 backdrop-blur-2xl sm:w-[24rem]">
-              <SheetTitle className="text-base font-bold text-[var(--text)]">ZeroDay Guardian</SheetTitle>
+              <SheetTitle className="text-base font-bold text-[#e2e8f0]">ZeroDay Guardian</SheetTitle>
 
               <div className="mt-6 flex flex-col gap-3">
                 {primaryNav.map((item) => (
@@ -227,7 +227,7 @@ const Navbar = () => {
                     onClick={() => setOpen(false)}
                     className="cyber-btn cta-focus-ring inline-flex min-h-12 w-full justify-center px-4 py-3 text-sm font-semibold"
                   >
-                    Start Free
+                    Deploy Access
                   </Link>
                 </div>
               </div>

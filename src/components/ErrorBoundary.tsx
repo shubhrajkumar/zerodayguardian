@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { logFrontendErrorToFirestore } from "@/lib/firestoreGrowth";
 import { logger } from "@/lib/logger";
 
+const SUPPORT_EMAIL = "ksubhraj28@gmail.com";
+
 type Props = {
   children: ReactNode;
 };
@@ -48,17 +50,24 @@ export default class ErrorBoundary extends Component<Props, State> {
 
     return (
       <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-16">
-        <div className="max-w-xl rounded-[28px] border border-rose-400/20 bg-rose-500/8 p-8 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
-          <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-rose-100/72">Runtime failure captured</p>
-          <h1 className="mt-3 text-3xl font-semibold">Something broke in the interface, but your progress should still be safe.</h1>
+        <div className="max-w-xl rounded-[28px] border border-rose-400/20 bg-[linear-gradient(180deg,rgba(62,10,18,0.92),rgba(22,8,12,0.98))] p-8 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
+          <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-rose-100/72">System breach detected [red alert]</p>
+          <h1 className="mt-3 text-3xl font-semibold">The interface crashed, but your mission data should still be secure.</h1>
           <p className="mt-3 text-sm leading-6 text-rose-50/84">
-            We captured the failure automatically. Reloading usually restores the workspace without losing your current server-side progress.
+            We captured the fault automatically and isolated the failure path. Reloading usually restores the workspace
+            without losing server-side progress.
           </p>
           <p className="mt-3 text-sm leading-6 text-rose-100/70">{this.state.message}</p>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Button onClick={this.handleReload} className="cyber-btn">
-              Reload safely
+              Redeploy Interface
             </Button>
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=ZeroDay%20Guardian%20runtime%20failure`} className="ghost-btn">
+              Contact Support
+            </a>
+          </div>
+          <div className="mt-4 rounded-2xl border border-rose-400/12 bg-white/[0.03] p-4 text-left text-sm text-rose-100/72">
+            Fallback mode is active. Blank screen prevented.
           </div>
         </div>
       </div>

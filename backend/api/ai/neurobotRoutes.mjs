@@ -345,14 +345,14 @@ const buildLlmFailureState = (error = null) => {
   if (code === "service_busy") {
     return {
       code,
-      title: hasLocalFallbackText ? "Temporary provider issue" : "Temporary provider issue",
+      title: "Live model is syncing",
       detail: hasLocalFallbackText
         ? "Live AI providers were busy, so ZORVIX answered using local workspace intelligence."
-        : "Live providers are busy right now, so ZORVIX switched to stable local mentor intelligence instead of returning unstable output.",
+        : "Live providers are syncing right now, so ZORVIX switched to stable local mentor intelligence instead of returning unstable output.",
       provider: "local",
       retryable: true,
       retryAfterSec,
-      retryHint: retryAfterSec ? `Live provider retry in about ${formatRetryAfter(retryAfterSec)}.` : "Live provider retry will resume automatically.",
+      retryHint: retryAfterSec ? `Live provider retry in about ${formatRetryAfter(retryAfterSec)}.` : "Stable mode is active and live mode will resume automatically.",
       statusCode: statusCode || 503,
     };
   }

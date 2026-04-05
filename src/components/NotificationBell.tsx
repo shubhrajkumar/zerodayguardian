@@ -54,7 +54,7 @@ const NotificationBell = () => {
           ) : null}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[22rem] border-[var(--border)] bg-[rgba(10,10,15,0.97)] p-0 text-[var(--text)] backdrop-blur-xl">
+      <DropdownMenuContent align="end" className="w-[22rem] border border-white/10 bg-[rgba(10,10,15,0.97)] p-0 text-[#e2e8f0] backdrop-blur-xl">
         <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
           <div>
             <p className="terminal-font text-[11px] uppercase tracking-[0.22em] text-slate-500">Notifications</p>

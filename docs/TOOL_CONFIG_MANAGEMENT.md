@@ -583,5 +583,5 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 For questions, support, or feature requests:
 - GitHub Issues: [Repository Issues](https://github.com/your-repo/issues)
-- Email: support@zerodayguardian.com
+- Email: ksubhraj28@gmail.com
 - Documentation: [Full Documentation](./README.md)

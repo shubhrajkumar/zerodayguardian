@@ -1,16 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect, useRef } from "react";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { ComponentType, lazy, LazyExoticComponent, ReactNode, Suspense, useEffect, useRef } from "react";
+import { BrowserRouter, matchPath, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as HotToaster } from "react-hot-toast";
 import { Toaster as SonnerToaster } from "sonner";
-import { HelmetProvider } from "react-helmet-async";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 import ErrorBoundary from "./components/ErrorBoundary";
 import FirebaseStatusBadge from "./components/FirebaseStatusBadge";
 import Layout from "./components/Layout";
 import RewardExperience from "./components/platform/RewardExperience";
-import Index from "./pages/Index";
-import AuthPage from "./pages/AuthPage";
-import NotFound from "./pages/NotFound";
 import RequireAuth from "./components/RequireAuth";
 import { clearAnonymousClientState } from "./lib/apiClient";
 import { UserProgressProvider, useUserProgress } from "./context/UserProgressContext";
@@ -22,6 +19,9 @@ import { warmHighIntentRoutes } from "./lib/routeWarmup";
 import { useScrollReveal } from "./hooks/useScrollReveal";
 import { useGrowthProfileSync } from "./hooks/useGrowthFeatures";
 
+const IndexPage = lazy(() => import("./pages/Index"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFound"));
 const ToolsPage = lazy(() => import("./pages/ToolsPage"));
 const ToolDetail = lazy(() => import("./pages/ToolDetail"));
 const LearnPage = lazy(() => import("./pages/LearnPage"));
@@ -40,73 +40,219 @@ const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const SecuritySettingsPage = lazy(() => import("./pages/SecuritySettingsPage"));
 const AssistantPage = lazy(() => import("./pages/AssistantPage"));
 const PublicProfilePage = lazy(() => import("./pages/PublicProfilePage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const ContactPage = lazy(() => import("./pages/ContactPage"));
+
+const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || "https://zerodayguardian-delta.vercel.app").replace(/\/+$/, "");
+const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/placeholder.svg`;
+const SUPPORT_EMAIL = "ksubhraj28@gmail.com";
+
+const shouldRetryRequest = (failureCount: number, error: unknown) => {
+  const status = Number((error as { status?: number } | null)?.status || 0);
+  if ([400, 401, 403, 404, 409, 422].includes(status)) return false;
+  return failureCount < 3;
+};
+
+const retryDelay = (attemptIndex: number) => Math.min(800 * 2 ** attemptIndex, 8_000);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
       gcTime: 5 * 60_000,
-      retry: 1,
+      retry: shouldRetryRequest,
+      retryDelay,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: true,
       networkMode: "online",
     },
     mutations: {
-      retry: 0,
+      retry: (failureCount, error) => shouldRetryRequest(failureCount, error),
+      retryDelay,
       networkMode: "online",
     },
   },
 });
 
 const RouteFallback = () => (
-  <div className="container mx-auto px-4 py-12">
-    <div className="mx-auto max-w-5xl space-y-4">
-      <div className="h-8 w-48 animate-pulse rounded-full bg-white/10" />
-      <div className="h-28 animate-pulse rounded-[28px] border border-cyan-300/12 bg-white/[0.03]" />
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="h-32 animate-pulse rounded-3xl border border-cyan-300/12 bg-white/[0.03]" />
-        <div className="h-32 animate-pulse rounded-3xl border border-cyan-300/12 bg-white/[0.03]" />
-        <div className="h-32 animate-pulse rounded-3xl border border-cyan-300/12 bg-white/[0.03]" />
+  <div className="route-skeleton-shell container mx-auto px-4 py-8">
+    <div className="mx-auto max-w-6xl space-y-5">
+      <div className="shell-command-chip">Deploying command layer</div>
+      <div className="route-skeleton-panel space-y-5">
+        <div className="skeleton-block h-8 w-40" />
+        <div className="skeleton-block h-28 w-full rounded-[1.4rem]" />
+        <div className="route-skeleton-grid">
+          <div className="route-skeleton-card skeleton-block" />
+          <div className="route-skeleton-card skeleton-block" />
+          <div className="route-skeleton-card skeleton-block" />
+        </div>
       </div>
     </div>
   </div>
 );
 
+type RouteSeoConfig = {
+  patterns: string[];
+  title: string;
+  description: string;
+  keywords: string;
+  buildJsonLd?: (canonical: string) => Record<string, unknown>[];
+};
+
+const buildOrganizationJsonLd = () => ({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "ZeroDay Guardian",
+  url: SITE_ORIGIN,
+  logo: `${SITE_ORIGIN}/favicon.ico`,
+  email: SUPPORT_EMAIL,
+  description: "A cyber-AI SaaS for guided labs, missions, OSINT investigations, and adaptive security mentorship.",
+});
+
+const buildWebSiteJsonLd = () => ({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "ZeroDay Guardian",
+  url: SITE_ORIGIN,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${SITE_ORIGIN}/tools?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+});
+
+const buildCourseJsonLd = (canonical: string) => ({
+  "@context": "https://schema.org",
+  "@type": "Course",
+  name: "ZeroDay Guardian Cyber Learning Path",
+  description: "Hands-on cyber missions, real labs, adaptive mentorship, and guided learning tracks inside ZeroDay Guardian.",
+  provider: {
+    "@type": "Organization",
+    name: "ZeroDay Guardian",
+    sameAs: SITE_ORIGIN,
+  },
+  url: canonical,
+});
+
+const routeSeoConfig: RouteSeoConfig[] = [
+  {
+    patterns: ["/"],
+    title: "ZeroDay Guardian | Deploy Your Cyber-AI Workspace",
+    description: "Deploy missions, labs, OSINT workflows, and adaptive ZORVIX AI guidance inside one premium cybersecurity workspace.",
+    keywords: "cybersecurity SaaS, AI cyber mentor, cyber labs, OSINT tools, threat intelligence, zero day guardian",
+    buildJsonLd: () => [buildOrganizationJsonLd(), buildWebSiteJsonLd()],
+  },
+  {
+    patterns: ["/dashboard"],
+    title: "Threat Dashboard | ZeroDay Guardian",
+    description: "Track missions, streaks, badges, referrals, labs, and AI-guided progress from one elite cyber command dashboard.",
+    keywords: "cyber dashboard, mission control, security streaks, cyber xp, cyber achievements",
+  },
+  {
+    patterns: ["/learn", "/program", "/program/day/:day"],
+    title: "Cyber Learning Paths | ZeroDay Guardian",
+    description: "Structured cyber learning paths, guided programs, daily missions, and practical breach-ready training.",
+    keywords: "cyber course, cybersecurity learning path, guided cyber training, ethical hacking program",
+    buildJsonLd: (canonical) => [buildCourseJsonLd(canonical)],
+  },
+  {
+    patterns: ["/lab"],
+    title: "Labs | ZeroDay Guardian",
+    description: "Deploy hands-on cybersecurity labs, progress loops, and mission-driven practice with resilient training telemetry.",
+    keywords: "cyber labs, security sandbox, penetration testing labs, blue team labs",
+  },
+  {
+    patterns: ["/tools", "/tools/:id"],
+    title: "Cyber Tools Hub | ZeroDay Guardian",
+    description: "Run production-grade cyber tools, verified scans, and investigation workflows inside one trusted tools hub.",
+    keywords: "cybersecurity tools, OSINT tools, website scan, headers scan, web recon",
+  },
+  {
+    patterns: ["/assistant"],
+    title: "ZORVIX AI | ZeroDay Guardian",
+    description: "ZORVIX AI delivers adaptive cyber guidance, Socratic hints, and pinned mobile-first assistance without clutter.",
+    keywords: "AI cyber mentor, cybersecurity assistant, ZORVIX AI, Socratic cyber coach",
+  },
+  {
+    patterns: ["/osint", "/osint/share/:shareId"],
+    title: "OSINT Command Center | ZeroDay Guardian",
+    description: "Investigate domains, IPs, usernames, and case evidence with a premium OSINT workflow and shareable reports.",
+    keywords: "OSINT platform, threat intelligence, whois, dns lookup, cyber investigation",
+  },
+  {
+    patterns: ["/blog", "/blog/:slug", "/resources", "/community"],
+    title: "Intel Feed | ZeroDay Guardian",
+    description: "Stay sharp with cyber intel, curated resources, live community loops, and field-ready security signals.",
+    keywords: "cyber news, security resources, community intelligence, threat feed",
+  },
+  {
+    patterns: ["/about"],
+    title: "About ZeroDay Guardian",
+    description: "Learn how ZeroDay Guardian helps security learners deploy elite labs, missions, and AI-guided cyber growth.",
+    keywords: "about zero day guardian, cybersecurity platform, cyber ai company",
+  },
+  {
+    patterns: ["/privacy", "/terms", "/contact"],
+    title: "Trust Center | ZeroDay Guardian",
+    description: "Review privacy, terms, support, and trust commitments for the ZeroDay Guardian cyber-AI platform.",
+    keywords: "privacy policy, terms of service, contact support, cybersecurity saas trust",
+  },
+  {
+    patterns: ["/auth", "/verify-email", "/security"],
+    title: "Secure Access | ZeroDay Guardian",
+    description: "Secure your ZeroDay Guardian workspace with hardened auth, verification, and account protection flows.",
+    keywords: "cybersecurity auth, secure login, firebase auth, account security",
+  },
+  {
+    patterns: ["/u/:handle"],
+    title: "Cyber Portfolio | ZeroDay Guardian",
+    description: "Review public cyber progress, badges, and achievement signals from a shareable ZeroDay Guardian profile.",
+    keywords: "cyber portfolio, public profile, cybersecurity achievements, cyber resume",
+  },
+];
+
+const resolveSiteOrigin = () => {
+  if (typeof window === "undefined") return SITE_ORIGIN;
+  const runtimeOrigin = String(window.location.origin || "").replace(/\/+$/, "");
+  return runtimeOrigin || SITE_ORIGIN;
+};
+
+const resolveSeo = (pathname: string) =>
+  routeSeoConfig.find((entry) => entry.patterns.some((pattern) => Boolean(matchPath(pattern, pathname)))) || routeSeoConfig[0];
+
 const RouteSeo = () => {
   const location = useLocation();
+  const seo = resolveSeo(location.pathname);
+  const canonical = `${resolveSiteOrigin()}${location.pathname === "/" ? "" : location.pathname}`;
+  const jsonLd = seo.buildJsonLd?.(canonical) || [];
 
-  useEffect(() => {
-    const pathname = location.pathname;
-    const titleMap: Record<string, string> = {
-      "/": "ZeroDay Guardian | AI Cybersecurity Workspace",
-      "/dashboard": "Growth Dashboard | ZeroDay Guardian",
-      "/lab": "Labs | ZeroDay Guardian",
-      "/osint": "OSINT | ZeroDay Guardian",
-      "/community": "Community | ZeroDay Guardian",
-      "/tools": "Tools Hub | ZeroDay Guardian",
-    };
-    const descriptionMap: Record<string, string> = {
-      "/": "AI-powered cybersecurity workspace with verified OSINT, website scans, labs, and guided threat analysis.",
-      "/dashboard": "Growth-ready cybersecurity dashboard with referrals, shareable insights, streak loops, smart notifications, and resilient real-time debugging.",
-      "/lab": "Mission-based cybersecurity labs with simulated training flows, streaks, badges, and guided practice.",
-      "/osint": "Verified OSINT investigations with DNS, MX, WHOIS, headers, and evidence-driven case management.",
-      "/community": "Community intelligence, weekly missions, leaderboard progression, and practical cybersecurity discussion.",
-      "/tools": "Trusted tools hub for verified scans, premium UI, and real security workflows without fabricated data.",
-    };
-    document.title = titleMap[pathname] || "ZeroDay Guardian";
-
-    const metaDescription = document.querySelector('meta[name="description"]') || document.createElement("meta");
-    metaDescription.setAttribute("name", "description");
-    metaDescription.setAttribute("content", descriptionMap[pathname] || descriptionMap["/"]);
-    if (!metaDescription.parentNode) document.head.appendChild(metaDescription);
-
-    const canonical = document.querySelector('link[rel="canonical"]') || document.createElement("link");
-    canonical.setAttribute("rel", "canonical");
-    canonical.setAttribute("href", `${window.location.origin}${pathname}`);
-    if (!canonical.parentNode) document.head.appendChild(canonical);
-  }, [location.pathname]);
-
-  return null;
+  return (
+    <Helmet prioritizeSeoTags>
+      <title>{seo.title}</title>
+      <meta name="description" content={seo.description} />
+      <meta name="keywords" content={seo.keywords} />
+      <meta name="robots" content="index, follow, max-image-preview:large" />
+      <meta property="og:title" content={seo.title} />
+      <meta property="og:description" content={seo.description} />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="ZeroDay Guardian" />
+      <meta property="og:url" content={canonical} />
+      <meta property="og:image" content={DEFAULT_OG_IMAGE} />
+      <meta property="og:image:alt" content="ZeroDay Guardian cyber-AI platform" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={seo.title} />
+      <meta name="twitter:description" content={seo.description} />
+      <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
+      <link rel="canonical" href={canonical} />
+      {jsonLd.map((entry, index) => (
+        <script key={`${location.pathname}-schema-${index}`} type="application/ld+json">
+          {JSON.stringify(entry)}
+        </script>
+      ))}
+    </Helmet>
+  );
 };
 
 const GlobalScrollReveal = () => {
@@ -142,6 +288,59 @@ const GrowthProfileSync = () => {
   return null;
 };
 
+const RouteBoundary = ({ children }: { children: ReactNode }) => {
+  const location = useLocation();
+
+  return (
+    <ErrorBoundary key={`${location.pathname}${location.search}`}>
+      <div className="page-shell app-smooth-enter">{children}</div>
+    </ErrorBoundary>
+  );
+};
+
+type AppPageComponent = LazyExoticComponent<ComponentType<object>>;
+type AppRouteDefinition = {
+  path: string;
+  component: AppPageComponent;
+  requiresAuth?: boolean;
+};
+
+const appRoutes: AppRouteDefinition[] = [
+  { path: "/", component: IndexPage },
+  { path: "/tools", component: ToolsPage },
+  { path: "/tools/:id", component: ToolDetail },
+  { path: "/learn", component: LearnPage },
+  { path: "/program", component: ProgramPage },
+  { path: "/assistant", component: AssistantPage },
+  { path: "/program/day/:day", component: ProgramLabPage, requiresAuth: true },
+  { path: "/lab", component: LabPage },
+  { path: "/blog", component: BlogPage },
+  { path: "/blog/:slug", component: BlogDetail },
+  { path: "/resources", component: ResourcesPage },
+  { path: "/community", component: CommunityPage },
+  { path: "/osint", component: OsintPage, requiresAuth: true },
+  { path: "/osint/share/:shareId", component: OsintSharePage },
+  { path: "/about", component: AboutPage },
+  { path: "/privacy", component: PrivacyPage },
+  { path: "/terms", component: TermsPage },
+  { path: "/contact", component: ContactPage },
+  { path: "/auth", component: AuthPage },
+  { path: "/verify-email", component: VerifyEmailPage },
+  { path: "/u/:handle", component: PublicProfilePage },
+  { path: "/security", component: SecuritySettingsPage, requiresAuth: true },
+  { path: "/dashboard", component: DashboardPage, requiresAuth: true },
+];
+
+const renderRouteElement = (PageComponent: AppPageComponent, requiresAuth = false) => {
+  const page = (
+    <RouteBoundary>
+      <PageComponent />
+    </RouteBoundary>
+  );
+
+  return requiresAuth ? <RequireAuth>{page}</RequireAuth> : page;
+};
+
 const AppShell = () => {
   const { authState, isAuthenticated } = useAuth();
 
@@ -172,61 +371,41 @@ const AppShell = () => {
               <Layout>
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/tools" element={<ToolsPage />} />
-                    <Route path="/tools/:id" element={<ToolDetail />} />
-                    <Route path="/learn" element={<LearnPage />} />
-                    <Route path="/program" element={<ProgramPage />} />
-                    <Route path="/assistant" element={<AssistantPage />} />
-                    <Route
-                      path="/program/day/:day"
-                      element={
-                        <RequireAuth>
-                          <ProgramLabPage />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route path="/lab" element={<LabPage />} />
-                    <Route path="/blog" element={<BlogPage />} />
-                    <Route path="/blog/:slug" element={<BlogDetail />} />
-                    <Route path="/resources" element={<ResourcesPage />} />
-                    <Route path="/community" element={<CommunityPage />} />
-                    <Route
-                      path="/osint"
-                      element={
-                        <RequireAuth>
-                          <OsintPage />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route path="/osint/share/:shareId" element={<OsintSharePage />} />
-                    <Route path="/about" element={<AboutPage />} />
-                    <Route path="/auth" element={<AuthPage />} />
-                    <Route path="/verify-email" element={<VerifyEmailPage />} />
-                    <Route path="/u/:handle" element={<PublicProfilePage />} />
-                    <Route
-                      path="/security"
-                      element={
-                        <RequireAuth>
-                          <SecuritySettingsPage />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <RequireAuth>
-                          <DashboardPage />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route path="*" element={<NotFound />} />
+                    {appRoutes.map((route) => (
+                      <Route
+                        key={route.path}
+                        path={route.path}
+                        element={renderRouteElement(route.component, route.requiresAuth)}
+                      />
+                    ))}
+                    <Route path="*" element={renderRouteElement(NotFoundPage)} />
                   </Routes>
                 </Suspense>
               </Layout>
 
-              <HotToaster />
-              <SonnerToaster />
+              <HotToaster
+                position="top-right"
+                toastOptions={{
+                  duration: 4200,
+                  style: {
+                    background: "#12121a",
+                    color: "#e2e8f0",
+                    border: "1px solid #2d2d44",
+                  },
+                }}
+              />
+              <SonnerToaster
+                position="top-right"
+                richColors
+                closeButton
+                toastOptions={{
+                  style: {
+                    background: "#12121a",
+                    color: "#e2e8f0",
+                    border: "1px solid #2d2d44",
+                  },
+                }}
+              />
             </BrowserRouter>
           </AdaptiveMentorProvider>
         </LearningModeProvider>

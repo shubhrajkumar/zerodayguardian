@@ -3,7 +3,7 @@ import { Eye, EyeOff, Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
-import { ApiError, apiGetJson, apiPostJson, setStoredAccessToken } from "@/lib/apiClient";
+import { ApiError, apiGetJson, apiPostJson, resolvePublicApiUrl, setStoredAccessToken } from "@/lib/apiClient";
 import { applyReferralSignup, findReferrerByCode } from "@/lib/firestoreGrowth";
 
 declare global {
@@ -39,6 +39,14 @@ type AuthProvidersResponse = {
 };
 
 const isApiError = (error: unknown): error is ApiError => error instanceof ApiError;
+const runtimeSiteOrigin =
+  typeof window !== "undefined"
+    ? String(window.location.origin || "").replace(/\/+$/, "")
+    : String(import.meta.env.VITE_SITE_URL || "").replace(/\/+$/, "");
+const hasRuntimeApiBase = Boolean(String(import.meta.env.VITE_API_BASE_URL || "").trim());
+const isHostedRuntime =
+  Boolean(runtimeSiteOrigin) &&
+  !/localhost|127\.0\.0\.1/i.test(runtimeSiteOrigin);
 const signupSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
@@ -117,7 +125,11 @@ const AuthPage = () => {
         setGoogleClientId("");
         setGoogleStartUrl("");
         if (isApiError(error) && error.status === 404) {
-          setGoogleStatus("Google sign-in endpoint is not available yet. Restart the backend or set VITE_GOOGLE_CLIENT_ID in .env.");
+          const fallbackStatus =
+            isHostedRuntime && !hasRuntimeApiBase
+              ? "Google sign-in backend is not mounted on this Vercel deployment yet. Set VITE_API_BASE_URL to your backend origin or deploy the Vercel /api function."
+              : "Google sign-in endpoint is not available yet. Restart the backend or set VITE_API_BASE_URL in your deployment env.";
+          setGoogleStatus(fallbackStatus);
           return;
         }
         setGoogleStatus("Could not load Google sign-in configuration.");
@@ -133,6 +145,13 @@ const AuthPage = () => {
     const separator = googleStartUrl.includes("?") ? "&" : "?";
     window.location.assign(`${googleStartUrl}${separator}next=${next}`);
   };
+
+  const backendHint = useMemo(() => {
+    if (canUseGoogleOauth) return "";
+    if (hasRuntimeApiBase) return `Backend target: ${resolvePublicApiUrl("/api/auth/providers")}`;
+    if (isHostedRuntime) return "Production note: this frontend needs a deployed backend origin for Google OAuth.";
+    return "";
+  }, [canUseGoogleOauth]);
 
   const signupPasswordStrength = useMemo(() => {
     let score = 0;
@@ -418,6 +437,7 @@ const AuthPage = () => {
               ) : null}
             </div>
             {googleStatus ? <p className="text-sm text-muted-foreground">{googleStatus}</p> : null}
+            {backendHint ? <p className="text-xs text-muted-foreground/80">{backendHint}</p> : null}
           </div>
 
           {authStatus ? <p className="mt-4 text-sm text-muted-foreground">{authStatus}</p> : null}
