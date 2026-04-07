@@ -130,7 +130,7 @@ export const connectDb = async () => {
     await db.collection("users").createIndex({ role: 1 });
     await db.collection("users").createIndex(
       { emailHash: 1 },
-      { unique: true, sparse: true, partialFilterExpression: { emailHash: { $type: "string" } } }
+      { unique: true, partialFilterExpression: { emailHash: { $type: "string" } } }
     );
     await db.collection("users").updateMany({ googleId: "" }, { $set: { googleId: null } });
     try {

@@ -18,3 +18,7 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare const __BACKEND_PUBLIC_URL__: string;
+declare const __PY_API_PUBLIC_URL__: string;
+declare const __SITE_URL__: string;

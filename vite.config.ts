@@ -1,16 +1,31 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+
+const trimTrailingSlash = (value = "") => String(value || "").replace(/\/+$/, "");
+
 const resolveBackendTarget = (defaultPort: string) =>
   process.env.VITE_API_PROXY_TARGET || `http://127.0.0.1:${defaultPort}`;
 
 const resolvePyApiTarget = (defaultPort: string) =>
   process.env.VITE_PY_API_URL || process.env.VITE_PY_API_PROXY_TARGET || `http://127.0.0.1:${defaultPort}`;
 
+const resolveBackendPublicUrl = () =>
+  trimTrailingSlash(process.env.VITE_API_BASE_URL || process.env.BACKEND_PUBLIC_URL || "");
+
+const resolvePyApiPublicUrl = (backendPublicUrl: string) => {
+  const explicitPyApiUrl = trimTrailingSlash(process.env.VITE_PY_API_URL || process.env.PY_API_PUBLIC_URL || "");
+  if (explicitPyApiUrl) return explicitPyApiUrl;
+  return backendPublicUrl ? `${backendPublicUrl}/pyapi` : "";
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   const apiTarget = resolveBackendTarget(process.env.NEUROBOT_PORT || "8787");
   const pyApiTarget = resolvePyApiTarget(process.env.PY_API_PORT || "8000");
+  const backendPublicUrl = resolveBackendPublicUrl();
+  const pyApiPublicUrl = resolvePyApiPublicUrl(backendPublicUrl);
+  const siteUrl = trimTrailingSlash(process.env.VITE_SITE_URL || process.env.APP_BASE_URL || "");
 
   return {
     server: {
@@ -33,6 +48,11 @@ export default defineConfig(() => {
       },
     },
     plugins: [react()],
+    define: {
+      __BACKEND_PUBLIC_URL__: JSON.stringify(backendPublicUrl),
+      __PY_API_PUBLIC_URL__: JSON.stringify(pyApiPublicUrl),
+      __SITE_URL__: JSON.stringify(siteUrl),
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

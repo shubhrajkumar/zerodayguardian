@@ -44,6 +44,7 @@ import { incMetric, renderPrometheusMetrics } from "./observability/telemetry.mj
 import { getAiRoutingSnapshot, runAiSelfDiagnosis, validateAiStartupConfig } from "./ai-engine/index.mjs";
 import { logWarn } from "./utils/logger.mjs";
 import { requireAuth } from "./middleware/auth.mjs";
+import { buildCookieOptions } from "./utils/cookiePolicy.mjs";
 
 const COOKIE_NAME = "neurobot_ss";
 const ONE_WEEK = 60 * 60 * 24 * 7;
@@ -268,31 +269,16 @@ export const createApp = () => {
     const sessionId = createSessionId();
     const secureToken = encryptSessionToken(sessionId);
     req.neurobotSessionId = sessionId;
-    res.cookie(COOKIE_NAME, secureToken, {
+    res.cookie(COOKIE_NAME, secureToken, buildCookieOptions({
       httpOnly: true,
-      sameSite: "strict",
-      secure: env.nodeEnv === "production",
       maxAge: ONE_WEEK * 1000,
-    });
+    }));
     next();
   });
 
   app.use(optionalAuth);
-  app.get("/", (req, res) => {
-    res.json({
-      status: "ok",
-      service: "neurobot-backend",
-      message: "Backend online",
-      requestId: req.requestId,
-      ts: new Date().toISOString(),
-      endpoints: {
-        health: "/api/health",
-        ping: "/api/ping",
-        test: "/api/test",
-        readyz: "/api/readyz",
-        livez: "/api/livez",
-      },
-    });
+  app.get("/", (_req, res) => {
+    res.type("text/plain").send("Backend Running 🚀");
   });
   app.get("/health", (req, res) =>
     res.json({ status: "ok", service: "neurobot-backend", requestId: req.requestId, ts: new Date().toISOString() })

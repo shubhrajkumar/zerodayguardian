@@ -197,7 +197,13 @@ const llmProviderInput = firstSet("LLM_MODE", "LLM_PROVIDER");
 const normalizedLlmMode = normalizeLlmProvider(llmProviderInput || "auto");
 const isProduction = (process.env.NODE_ENV || "production") === "production";
 const isVercel = ["1", "true"].includes(String(process.env.VERCEL || "").trim().toLowerCase());
+const isRender =
+  ["1", "true"].includes(String(process.env.RENDER || "").trim().toLowerCase()) ||
+  Boolean(String(process.env.RENDER_EXTERNAL_URL || "").trim());
+const isManagedDeploy = isVercel || isRender;
 const vercelFallbackUrl = process.env.VERCEL_URL ? `https://${String(process.env.VERCEL_URL).trim()}` : "https://zeroday-guardian.invalid";
+const renderFallbackUrl = String(process.env.RENDER_EXTERNAL_URL || "").trim() || "https://zeroday-guardian.onrender.com";
+const managedFallbackUrl = isRender ? renderFallbackUrl : vercelFallbackUrl;
 const warnDeployConfig = (message) => {
   console.warn(`[neurobot] ${message}`);
 };
@@ -210,7 +216,7 @@ const required = [
 
 export const env = {
   nodeEnv: process.env.NODE_ENV || "production",
-  port: Number(process.env.NEUROBOT_PORT || 8787),
+  port: Number(process.env.PORT || process.env.NEUROBOT_PORT || 10000),
   corsOrigin: process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"),
   openaiBaseUrl: normalizeApiBaseUrl(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1", "OPENAI_BASE_URL"),
   openaiApiKey: process.env.OPENAI_API_KEY || "",
@@ -306,6 +312,7 @@ export const env = {
   backendPublicUrl:
     process.env.BACKEND_PUBLIC_URL ||
     process.env.PUBLIC_SERVER_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
     (isProduction ? "" : `http://localhost:${Number(process.env.NEUROBOT_PORT || 8787)}`),
   googleOauthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID || "",
   googleOauthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || "",
@@ -384,11 +391,11 @@ env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
 env.googleAuthorizedOrigins = uniqueList(env.googleAuthorizedOrigins);
 if (isVercel) {
   if (!env.appBaseUrl) {
-    env.appBaseUrl = vercelFallbackUrl;
+    env.appBaseUrl = managedFallbackUrl;
     warnDeployConfig(`APP_BASE_URL missing during Vercel build/runtime. Using fallback ${env.appBaseUrl}`);
   }
   if (!env.backendPublicUrl) {
-    env.backendPublicUrl = vercelFallbackUrl;
+    env.backendPublicUrl = managedFallbackUrl;
     warnDeployConfig(`BACKEND_PUBLIC_URL missing during Vercel build/runtime. Using fallback ${env.backendPublicUrl}`);
   }
   if (!env.corsOrigin) {
@@ -410,6 +417,36 @@ if (isVercel) {
   if (!env.dbEncryptionKey) {
     env.dbEncryptionKey = "vercel-db-encryption-key-placeholder-000000000000000";
     warnDeployConfig("DB_ENCRYPTION_KEY missing during Vercel build/runtime. Using a placeholder key until env is configured.");
+  }
+}
+if (isRender) {
+  if (!env.appBaseUrl) {
+    env.appBaseUrl = process.env.CORS_ORIGIN || env.backendPublicUrl || managedFallbackUrl;
+    warnDeployConfig(`APP_BASE_URL missing during Render startup. Using fallback ${env.appBaseUrl}`);
+  }
+  if (!env.backendPublicUrl) {
+    env.backendPublicUrl = managedFallbackUrl;
+    warnDeployConfig(`BACKEND_PUBLIC_URL missing during Render startup. Using fallback ${env.backendPublicUrl}`);
+  }
+  if (!env.corsOrigin) {
+    env.corsOrigin = env.appBaseUrl || env.backendPublicUrl || managedFallbackUrl;
+    warnDeployConfig(`CORS_ORIGIN missing during Render startup. Using fallback ${env.corsOrigin}`);
+  }
+  env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
+  if (!env.googleAuthorizedOrigins.length) {
+    env.googleAuthorizedOrigins = [...env.corsOrigins];
+  }
+  if (!env.sessionSecret) {
+    env.sessionSecret = "render-session-secret-placeholder-0000000000000000";
+    warnDeployConfig("SESSION_SECRET missing during Render startup. Using a placeholder secret until env is configured.");
+  }
+  if (!env.jwtSecret) {
+    env.jwtSecret = "render-jwt-secret-placeholder-000000000000000000000000";
+    warnDeployConfig("JWT_SECRET missing during Render startup. Using a placeholder secret until env is configured.");
+  }
+  if (!env.dbEncryptionKey) {
+    env.dbEncryptionKey = "render-db-encryption-key-placeholder-000000000000000";
+    warnDeployConfig("DB_ENCRYPTION_KEY missing during Render startup. Using a placeholder key until env is configured.");
   }
 }
 if (!env.googleRedirectUri && env.backendPublicUrl) {
@@ -442,8 +479,8 @@ const missing = required.filter((key) => {
 });
 
 if (missing.length) {
-  if (isVercel) {
-    warnDeployConfig(`Missing required env vars during Vercel build/runtime: ${missing.join(", ")}. API will run in degraded mode until these are configured.`);
+  if (isManagedDeploy) {
+    warnDeployConfig(`Missing required env vars during managed deployment: ${missing.join(", ")}. API will run in degraded mode until these are configured.`);
   } else {
     throw new Error(`[neurobot] Missing required env vars: ${missing.join(", ")}`);
   }
@@ -453,8 +490,8 @@ if (!Number.isFinite(env.port) || env.port <= 0 || env.port > 65535) {
   throw new Error("[neurobot] Invalid NEUROBOT_PORT");
 }
 if (String(env.jwtSecret || "").length < 32) {
-  if (isVercel) {
-    warnDeployConfig("JWT_SECRET is shorter than 32 characters. Configure a real production secret in Vercel.");
+  if (isManagedDeploy) {
+    warnDeployConfig("JWT_SECRET is shorter than 32 characters. Configure a real production secret in your deployment env.");
   } else {
     throw new Error("[neurobot] JWT_SECRET must be at least 32 characters");
   }
@@ -474,37 +511,37 @@ if (!new Set(["info", "warn", "error"]).has(env.alertMinLevel)) {
 
 if (env.nodeEnv === "production") {
   if (!env.appBaseUrl || !/^https?:\/\//.test(env.appBaseUrl)) {
-    if (isVercel) {
-      warnDeployConfig("APP_BASE_URL is not an absolute URL. Configure a real production APP_BASE_URL in Vercel.");
+    if (isManagedDeploy) {
+      warnDeployConfig("APP_BASE_URL is not an absolute URL. Configure a real production APP_BASE_URL in deployment env.");
     } else {
       throw new Error("[neurobot] APP_BASE_URL must be set to an absolute https:// or http:// URL in production");
     }
   }
   if (!env.backendPublicUrl || !/^https?:\/\//.test(env.backendPublicUrl)) {
-    if (isVercel) {
-      warnDeployConfig("BACKEND_PUBLIC_URL is not an absolute URL. Configure a real production BACKEND_PUBLIC_URL in Vercel.");
+    if (isManagedDeploy) {
+      warnDeployConfig("BACKEND_PUBLIC_URL is not an absolute URL. Configure a real production BACKEND_PUBLIC_URL in deployment env.");
     } else {
       throw new Error("[neurobot] BACKEND_PUBLIC_URL must be set to an absolute https:// or http:// URL in production");
     }
   }
   if (String(env.dbEncryptionKey || "").length < 32) {
-    if (isVercel) {
-      warnDeployConfig("DB_ENCRYPTION_KEY is shorter than 32 characters. Configure a real production key in Vercel.");
+    if (isManagedDeploy) {
+      warnDeployConfig("DB_ENCRYPTION_KEY is shorter than 32 characters. Configure a real production key in deployment env.");
     } else {
       throw new Error("[neurobot] DB_ENCRYPTION_KEY must be at least 32 characters in production");
     }
   }
   if (!env.corsOrigins.length) {
-    if (isVercel) {
-      warnDeployConfig("CORS_ORIGIN is empty in production. Configure at least one frontend origin in Vercel.");
+    if (isManagedDeploy) {
+      warnDeployConfig("CORS_ORIGIN is empty in production. Configure at least one frontend origin in deployment env.");
     } else {
       throw new Error("[neurobot] CORS_ORIGIN must include at least one origin in production");
     }
   }
   for (const origin of env.corsOrigins) {
     if (!/^https?:\/\//.test(origin)) {
-      if (isVercel) {
-        warnDeployConfig("One or more CORS_ORIGIN entries are not absolute URLs. Configure valid origins in Vercel.");
+      if (isManagedDeploy) {
+        warnDeployConfig("One or more CORS_ORIGIN entries are not absolute URLs. Configure valid origins in deployment env.");
         break;
       } else {
         throw new Error("[neurobot] CORS_ORIGIN entries must be absolute URLs in production");
@@ -519,9 +556,9 @@ if (!env.mongoUri) {
   try {
     env.mongo = parseMongoUrl(env.mongoUri);
   } catch (error) {
-    if (isVercel) {
+    if (isManagedDeploy) {
       warnDeployConfig(
-        `DATABASE_URL is unavailable or malformed during Vercel build/runtime. Using degraded API mode until it is configured.`
+        `DATABASE_URL is unavailable or malformed during deployment startup. Using degraded API mode until it is configured.`
       );
       env.mongo = createDegradedMongoConfig("invalid");
     } else {

@@ -1,5 +1,5 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
-import { env } from "../config/env.mjs";
+import { buildCookieOptions } from "../utils/cookiePolicy.mjs";
 
 const CSRF_COOKIE = "neurobot_csrf";
 const CSRF_HEADER = "x-csrf-token";
@@ -9,13 +9,10 @@ const ensureCsrfCookie = (req, res) => {
   const existing = req.cookies?.[CSRF_COOKIE];
   if (existing && typeof existing === "string" && existing.length > 8) return existing;
   const token = randomUUID();
-  res.cookie(CSRF_COOKIE, token, {
+  res.cookie(CSRF_COOKIE, token, buildCookieOptions({
     httpOnly: false,
-    sameSite: "strict",
-    secure: env.nodeEnv === "production",
-    path: "/",
     maxAge: 1000 * 60 * 60 * 24 * 7,
-  });
+  }));
   return token;
 };
 

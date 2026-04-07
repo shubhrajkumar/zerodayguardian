@@ -7,6 +7,7 @@ import { OAuth2Client } from "google-auth-library";
 import { getDb, getDbPoolStatus } from "../../src/config/db.mjs";
 import { env } from "../../src/config/env.mjs";
 import { logInfo, logWarn } from "../../src/utils/logger.mjs";
+import { buildCookieOptions } from "../../src/utils/cookiePolicy.mjs";
 import { createBlindIndex, decryptSensitive, encryptSensitive, sanitizeText } from "../../src/utils/security.mjs";
 
 const USERS = "users";
@@ -302,11 +303,8 @@ const signRefreshToken = (user, rememberMe = false, jti = createRefreshJti()) =>
   return { token, jti };
 };
 
-const cookieOptions = () => ({
+const cookieOptions = () => buildCookieOptions({
   httpOnly: true,
-  sameSite: env.nodeEnv === "production" ? "strict" : "lax",
-  secure: env.nodeEnv === "production",
-  path: "/",
 });
 
 const persistRefreshSession = async (user, refreshToken, { rememberMe = false, jti = "", expiresAt = 0 } = {}) => {

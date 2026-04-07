@@ -44,7 +44,7 @@ const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
 
-const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || "https://zerodayguardian-delta.vercel.app").replace(/\/+$/, "");
+const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "https://zerodayguardian-delta.vercel.app").replace(/\/+$/, "");
 const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/placeholder.svg`;
 const SUPPORT_EMAIL = "ksubhraj28@gmail.com";
 
