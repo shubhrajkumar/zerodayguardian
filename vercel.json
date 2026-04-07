@@ -5,16 +5,6 @@
   "installCommand": "npm run install:vercel",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": {
-    "api/[...path].js": {
-      "maxDuration": 60,
-      "includeFiles": "backend/**"
-    },
-    "api/pyapi/[...path].py": {
-      "maxDuration": 60,
-      "includeFiles": "backend/python/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/((?!(api|pyapi)(/|$)).*)",
