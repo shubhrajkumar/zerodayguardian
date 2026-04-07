@@ -1,42 +1,30 @@
 # Vercel Deployment
 
-## Single-project layout
+## Active deployment shape
 
-- Frontend is served by Vite from the repo root.
-- Node backend routes are served by `api/[...path].js`.
-- FastAPI routes are served by `api/pyapi/[...path].py`.
-- `vercel.json` keeps `/api/*` and `/pyapi/*` out of the SPA rewrite path.
+- Vercel serves the frontend from the repo root with Vite.
+- The Node compatibility API is served by `api/[...path].js`.
+- Python is not deployed on Vercel from this repo anymore.
+- `vercel.json` keeps `/api/*` out of the SPA rewrite path and lets Vercel auto-detect the project as Node/Vite.
 
 ## Recommended production topology
 
-- Vercel project 1: frontend on `https://zeroday-guardian.app`
-- Vercel project 2: backend on `https://api.zeroday-guardian.app`
+- Vercel project: frontend on `https://zeroday-guardian.app`
+- Live backend: Node service on a separate host such as Render
+- Optional Python service: host separately if you still need FastAPI workloads
 
-Deploying the same repo twice is supported:
+## Required frontend env
 
-- frontend project uses the root build with Vite
-- backend project uses the same repo and serves the function routes under `api/`
-
-## Required backend env
-
-- `APP_BASE_URL=https://zeroday-guardian.app`
 - `BACKEND_PUBLIC_URL=https://api.zeroday-guardian.app`
-- `CORS_ORIGIN=https://zeroday-guardian.app,https://www.zeroday-guardian.app`
-- `PY_API_INTERNAL_URL=https://api.zeroday-guardian.app/api`
+- `VITE_API_BASE_URL=` leave empty to let the frontend fall back to `BACKEND_PUBLIC_URL`
+- `VITE_PY_API_URL=` leave empty unless the browser should bypass the Node backend and call a separate Python service directly
 
-If backend and Python API are served from the same Vercel backend project, set:
+## Backend routing note
 
-- `PY_API_INTERNAL_URL=https://api.zeroday-guardian.app/api`
-
-That lets the Node backend compatibility routes reach `/api/pyapi/*`.
-
-## Frontend env
-
-- `VITE_API_BASE_URL=https://api.zeroday-guardian.app`
-- `VITE_PY_API_URL=` leave empty unless the browser should bypass backend routing
+- Browser `/api/*` calls are resolved against `BACKEND_PUBLIC_URL`.
+- The Node backend can proxy or bridge to any separately hosted Python service with its own internal env configuration.
 
 ## Notes
 
-- Vercel Python functions must fit platform limits. Heavy background jobs are better hosted separately.
-- If you split frontend and backend into separate Vercel projects, keep this same routing shape and env values.
-- `.vercelignore` excludes local DBs, logs, archives, and dev folders from deployment uploads.
+- `.vercelignore` excludes Python-only and local dev artifacts from the Vercel upload.
+- Keep root-level `requirements.txt` and root-level Python entrypoints out of the repo if Vercel should remain a pure Node/Vite deployment.

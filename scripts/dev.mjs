@@ -17,6 +17,7 @@ const sharedEnv = {
 const server = spawnCommand("node", ["server.js"], { env: sharedEnv });
 const pyServer = spawnCommand("python", ["-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", pyPort], {
   env: sharedEnv,
+  cwd: path.resolve("backend", "python"),
 });
 const viteScript = path.resolve("node_modules", "vite", "bin", "vite.js");
 const web = spawnCommand(process.execPath, [viteScript], { env: sharedEnv });

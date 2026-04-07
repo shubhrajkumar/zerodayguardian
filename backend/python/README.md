@@ -9,7 +9,7 @@ This FastAPI service powers backend security features for ZeroDay Guardian, incl
 ```bash
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r backend/python/requirements.txt
 ```
 
 2. Set environment variables:
@@ -26,12 +26,9 @@ set TELEGRAM_CHAT_ID=your_chat_id
 3. Run the API:
 
 ```bash
+cd backend/python
 python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
-
-The project root `main.py` is the supported local entrypoint. It wires the
-`backend/python` package onto `sys.path` so you can run FastAPI from the repo
-root without changing directories.
 
 ## Database migrations
 
