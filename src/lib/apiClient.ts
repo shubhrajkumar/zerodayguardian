@@ -1,10 +1,9 @@
 import { toast } from "@/hooks/use-toast";
+import { resolveApiUrl, resolveBackendUrl } from "@/lib/apiConfig";
 import { recordClientDiagnostic, recordRuntimeDebugEvent } from "@/lib/runtimeDiagnostics";
 export const ACCESS_TOKEN_KEY = "neurobot_access_token";
 const REFRESH_BLOCK_KEY = "neurobot_refresh_block_until";
 
-const trimTrailingSlash = (value: string) => String(value || "").replace(/\/+$/, "");
-const isAbsoluteHttpUrl = (value: string) => /^https?:\/\//i.test(String(value || "").trim());
 const verboseApiLogging =
   import.meta.env.DEV ||
   String(import.meta.env.VITE_ENABLE_FIREBASE_DIAGNOSTICS || "").trim().toLowerCase() === "true";
@@ -17,35 +16,7 @@ const logDebugError = (...args: unknown[]) => {
   console.error(...args);
 };
 
-const resolveApiBaseUrl = () => {
-  const envBase = trimTrailingSlash(String(import.meta.env.VITE_API_BASE_URL || ""));
-  if (envBase) return envBase;
-  return "";
-};
-
-const API_BASE_URL = resolveApiBaseUrl();
-
-const resolveDevBackendOrigin = () => {
-  if (!import.meta.env.DEV) return "";
-  const explicitBase = trimTrailingSlash(String(import.meta.env.VITE_API_BASE_URL || ""));
-  if (explicitBase && isAbsoluteHttpUrl(explicitBase)) return explicitBase.replace(/\/api$/i, "");
-  const configuredPort = String(import.meta.env.VITE_NEUROBOT_PORT || "").trim();
-  const port = configuredPort || "8787";
-  return `http://127.0.0.1:${port}`;
-};
-
-const DEV_BACKEND_ORIGIN = resolveDevBackendOrigin();
-
-const withApiBaseUrl = (url: string) => {
-  const normalizedUrl = String(url || "").trim();
-  if (!normalizedUrl) return normalizedUrl;
-  if (isAbsoluteHttpUrl(normalizedUrl)) return normalizedUrl;
-  if (!API_BASE_URL || !normalizedUrl.startsWith("/api")) return normalizedUrl;
-  if (normalizedUrl.startsWith(API_BASE_URL)) return normalizedUrl;
-  return `${API_BASE_URL}${normalizedUrl}`;
-};
-
-export const resolvePublicApiUrl = (url: string) => withApiBaseUrl(url);
+export const resolvePublicApiUrl = (url: string) => resolveApiUrl(url);
 
 export const getCookie = (name: string) => {
   const encoded = document.cookie
@@ -65,7 +36,7 @@ export const ensureCsrf = async () => {
   logDebug("[CSRF] No existing token found, fetching new CSRF token");
   
   try {
-    const response = await fetch(withApiBaseUrl("/api/auth/csrf"), {
+    const response = await fetch(resolveApiUrl("/api/auth/csrf"), {
       credentials: "include",
       method: "GET"
     });
@@ -316,11 +287,8 @@ const tryRefreshSession = async () => {
       }
       await ensureCsrf();
       const refreshCandidates = [
-        withApiBaseUrl("/api/auth/refresh"),
-        withApiBaseUrl("/auth/refresh"),
-        ...(DEV_BACKEND_ORIGIN
-          ? [`${DEV_BACKEND_ORIGIN}/api/auth/refresh`, `${DEV_BACKEND_ORIGIN}/auth/refresh`]
-          : []),
+        resolveApiUrl("/api/auth/refresh"),
+        resolveBackendUrl("/auth/refresh"),
       ].filter((value, index, all) => Boolean(value) && all.indexOf(value) === index);
 
       for (const refreshUrl of refreshCandidates) {
@@ -356,7 +324,7 @@ const tryRefreshSession = async () => {
 };
 
 export const apiFetch = async (url: string, init: RequestInit = {}) => {
-  const requestUrl = withApiBaseUrl(url);
+  const requestUrl = resolveApiUrl(url);
   const method = String(init.method || "GET").toUpperCase();
   const startTime = Date.now();
   const isAuthMe = url === "/api/users/profile" && method === "GET";

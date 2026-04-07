@@ -1,21 +1,6 @@
 import { apiFetch } from "@/lib/apiClient";
+import { resolvePyApiUrl } from "@/lib/apiConfig";
 import { recordRuntimeDebugEvent } from "@/lib/runtimeDiagnostics";
-
-const trimTrailingSlash = (value: string) => String(value || "").replace(/\/+$/, "");
-
-const resolvePyApiBase = () => {
-  const explicitPyBase = trimTrailingSlash(String(import.meta.env.VITE_PY_API_URL || ""));
-  if (explicitPyBase) return explicitPyBase;
-
-  const apiBase = trimTrailingSlash(String(import.meta.env.VITE_API_BASE_URL || ""));
-  if (apiBase) return `${apiBase}/pyapi`;
-
-  if (!import.meta.env.DEV) return "/pyapi";
-
-  return "/pyapi";
-};
-
-const PY_API_BASE = resolvePyApiBase();
 
 export class PyApiError extends Error {
   code: string;
@@ -42,14 +27,9 @@ const unwrapPayload = <T,>(payload: unknown): T => {
   return payload as T;
 };
 
-export const resolvePublicPyApiUrl = (path: string) => {
-  if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  if (path.startsWith("/pyapi/")) return `${PY_API_BASE}${path.slice("/pyapi".length)}`;
-  if (!path.startsWith("/")) return `${PY_API_BASE}/${path}`;
-  return `${PY_API_BASE}${path}`;
-};
+export const resolvePublicPyApiUrl = (path: string) => resolvePyApiUrl(path);
 
-const normalizeUrl = (path: string) => resolvePublicPyApiUrl(path);
+const normalizeUrl = (path: string) => resolvePyApiUrl(path);
 
 const buildPyApiError = async (response: Response) => {
   let detail = "";

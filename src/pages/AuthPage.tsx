@@ -3,6 +3,7 @@ import { Eye, EyeOff, Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
+import { hasConfiguredApiBase, resolveBackendUrl } from "@/lib/apiConfig";
 import { ApiError, apiGetJson, apiPostJson, resolvePublicApiUrl, setStoredAccessToken } from "@/lib/apiClient";
 import { applyReferralSignup, findReferrerByCode } from "@/lib/firestoreGrowth";
 
@@ -40,7 +41,7 @@ type AuthProvidersResponse = {
 
 const isApiError = (error: unknown): error is ApiError => error instanceof ApiError;
 const loadAuthProviders = async (): Promise<AuthProvidersResponse> => {
-  const candidates = ["/api/auth/providers", "/auth/providers"];
+  const candidates = [resolvePublicApiUrl("/api/auth/providers"), resolveBackendUrl("/auth/providers")];
   let lastError: unknown = null;
 
   for (const candidate of candidates) {
@@ -58,8 +59,9 @@ const loadAuthProviders = async (): Promise<AuthProvidersResponse> => {
 const runtimeSiteOrigin =
   typeof window !== "undefined"
     ? String(window.location.origin || "").replace(/\/+$/, "")
-    : String(import.meta.env.VITE_SITE_URL || "").replace(/\/+$/, "");
-const hasRuntimeApiBase = Boolean(String(import.meta.env.VITE_API_BASE_URL || "").trim());
+    : String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "").replace(/\/+$/, "");
+const configuredAuthProvidersUrl = resolvePublicApiUrl("/api/auth/providers");
+const hasRuntimeApiBase = hasConfiguredApiBase || /^https?:\/\//i.test(String(configuredAuthProvidersUrl || ""));
 const isHostedRuntime =
   Boolean(runtimeSiteOrigin) &&
   !/localhost|127\.0\.0\.1/i.test(runtimeSiteOrigin);
@@ -143,8 +145,8 @@ const AuthPage = () => {
         if (isApiError(error) && error.status === 404) {
           const fallbackStatus =
             isHostedRuntime && !hasRuntimeApiBase
-              ? "Google sign-in backend is not mounted on this Vercel deployment yet. Set VITE_API_BASE_URL to your backend origin or deploy the Vercel /api function."
-              : "Google sign-in endpoint is not available yet. Restart the backend or set VITE_API_BASE_URL in your deployment env.";
+              ? "Google sign-in backend is not mounted on this Vercel deployment yet. Set BACKEND_PUBLIC_URL or VITE_API_BASE_URL to your live backend origin."
+              : "Google sign-in endpoint is not available yet. Verify the deployed backend origin and production auth env values.";
           setGoogleStatus(fallbackStatus);
           return;
         }
@@ -164,8 +166,8 @@ const AuthPage = () => {
 
   const backendHint = useMemo(() => {
     if (canUseGoogleOauth) return "";
-    if (hasRuntimeApiBase) return `Backend target: ${resolvePublicApiUrl("/api/auth/providers")}`;
-    if (isHostedRuntime) return "Production note: this frontend needs a deployed backend origin for Google OAuth.";
+    if (hasRuntimeApiBase) return `Backend target: ${configuredAuthProvidersUrl}`;
+    if (isHostedRuntime) return "Production note: this frontend needs BACKEND_PUBLIC_URL or VITE_API_BASE_URL pointing at the live backend.";
     return "";
   }, [canUseGoogleOauth]);
 
