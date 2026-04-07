@@ -24,9 +24,6 @@ auth/
 server/
 api/pyapi/
 backend/python/
-main.py
-requirements.txt
-render.yaml
 Dockerfile
 server-auth-test.err.log
 server-auth-test.out.log
