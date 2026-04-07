@@ -20,14 +20,13 @@ __pycache__/
 *.zip
 local.db
 local.db-journal
-api/
-backend/
 auth/
 server/
+api/pyapi/
+backend/python/
 main.py
 requirements.txt
 render.yaml
-server.js
 Dockerfile
 server-auth-test.err.log
 server-auth-test.out.log

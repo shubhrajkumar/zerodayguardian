@@ -7,7 +7,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/((?!(api|pyapi)(/|$)).*)",
+      "source": "/((?!api(/|$)).*)",
       "destination": "/index.html"
     }
   ]

@@ -8,7 +8,6 @@
     "install:vercel": "npm install --no-fund --no-audit --prefer-offline",
     "ci:oauth-readiness": "node scripts/oauth-readiness-check.mjs",
     "dev": "node scripts/dev.mjs",
-    "dev:py": "python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
     "dev:web": "vite",
     "dev:server": "node server.js",
     "dev:server:full": "node scripts/dev-server-full.mjs",
@@ -136,7 +135,7 @@
     "vitest": "^3.2.4"
   },
   "description": "ZeroDay Guardian production cybersecurity SaaS with ZORVIX AI",
-  "main": "eslint.config.js",
+  "main": "server.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
