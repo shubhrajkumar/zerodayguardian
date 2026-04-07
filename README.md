@@ -77,5 +77,5 @@ PY_API_INTERNAL_URL=https://your-python-service.onrender.com
 ## Notes
 
 - Vercel is configured as a Node/Vite project only.
-- Root-level Python deployment triggers such as `requirements.txt` are intentionally excluded from the Vercel path.
+- Python dependency files are kept out of the Vercel root detection path.
 - See [docs/VERCEL_DEPLOYMENT.md](./docs/VERCEL_DEPLOYMENT.md) for the deployment checklist.

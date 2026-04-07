@@ -24,6 +24,9 @@ auth/
 server/
 api/pyapi/
 backend/python/
+backend/*.py
+osint-breach-monitor/
+**/requirements*.txt
 Dockerfile
 server-auth-test.err.log
 server-auth-test.out.log

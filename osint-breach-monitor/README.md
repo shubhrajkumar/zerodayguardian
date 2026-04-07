@@ -26,7 +26,7 @@ osint-breach-monitor/
 ├── storage.py
 ├── improver.py
 ├── config.py
-├── requirements.txt
+├── requirements-py.txt
 └── storage.json
 ```
 
@@ -60,7 +60,7 @@ OSINT_DOMAIN_PATTERNS=gmail.com,yahoo.com,outlook.com
 Install dependencies:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-py.txt
 ```
 
 Run one cycle:

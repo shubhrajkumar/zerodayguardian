@@ -7,7 +7,7 @@ This repo now deploys to Vercel as a pure Node/Vite project:
 - Vercel builds the frontend from the repo root with Vite.
 - Vercel can serve the Node compatibility handler at `api/[...path].js`.
 - Python is intentionally not deployed from the repo root on Vercel.
-- `.vercelignore` excludes Python-only and local dev artifacts so Vercel does not try to parse `requirements.txt`.
+- `.vercelignore` excludes Python-only and local dev artifacts so Vercel does not try to parse Python dependency files.
 
 Recommended production split:
 
@@ -86,4 +86,4 @@ PY_API_INTERNAL_URL=https://your-python-service.onrender.com
 5. Verify in the browser:
    - auth page loads without `/api/auth/providers` 404
    - frontend requests resolve to the live Render backend
-   - no `requirements.txt` parsing failure appears in Vercel
+   - no Python dependency parsing failure appears in Vercel

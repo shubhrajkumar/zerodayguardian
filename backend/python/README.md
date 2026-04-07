@@ -9,7 +9,7 @@ This FastAPI service powers backend security features for ZeroDay Guardian, incl
 ```bash
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r backend/python/requirements.txt
+pip install -r backend/python/requirements-py.txt
 ```
 
 2. Set environment variables:
