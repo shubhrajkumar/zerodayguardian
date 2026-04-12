@@ -31,9 +31,10 @@ export const firebaseConfigIssue =
 export const isFirebaseDiagnosticsEnabled = String(import.meta.env.VITE_ENABLE_FIREBASE_DIAGNOSTICS || "")
   .trim()
   .toLowerCase() === "true";
-const isFirebaseAuthEnabled = String(import.meta.env.VITE_ENABLE_FIREBASE_AUTH || "")
+const firebaseAuthFlag = String(import.meta.env.VITE_ENABLE_FIREBASE_AUTH || "")
   .trim()
-  .toLowerCase() === "true";
+  .toLowerCase();
+const isFirebaseAuthEnabled = firebaseAuthFlag ? firebaseAuthFlag !== "false" : isFirebaseConfigured;
 const shouldForceLongPolling = String(import.meta.env.VITE_FIRESTORE_FORCE_LONG_POLLING || "")
   .trim()
   .toLowerCase() === "true";

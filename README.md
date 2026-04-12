@@ -62,6 +62,7 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_APP_ID=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_GOOGLE_CLIENT_ID=
+VITE_ENABLE_FIREBASE_AUTH=true
 ```
 
 ### Backend env
@@ -77,6 +78,9 @@ SESSION_SECRET=<strong-random-secret>
 JWT_SECRET=<strong-random-jwt-secret>
 GOOGLE_AUTHORIZED_ORIGINS=https://your-frontend.vercel.app
 GOOGLE_REDIRECT_URI=https://your-backend.onrender.com/auth/google/callback
+FIREBASE_PROJECT_ID=<your-firebase-project-id>
+FIREBASE_CLIENT_EMAIL=<your-firebase-admin-client-email>
+FIREBASE_PRIVATE_KEY=<your-firebase-admin-private-key>
 ```
 
 If the backend should call a separate Python service:
@@ -84,6 +88,11 @@ If the backend should call a separate Python service:
 ```env
 PY_API_INTERNAL_URL=https://your-python-service.onrender.com
 ```
+
+For live Firebase-backed Python routes, the Render backend and any separate FastAPI host must share:
+
+- `JWT_SECRET` matching the Node backend if Python will accept app JWTs
+- Firebase Admin credentials if Python should also accept Firebase ID tokens directly
 
 ## Health checks
 

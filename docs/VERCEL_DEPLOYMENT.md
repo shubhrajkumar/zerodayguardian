@@ -38,7 +38,7 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_APP_ID=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_GOOGLE_CLIENT_ID=
-VITE_ENABLE_FIREBASE_AUTH=false
+VITE_ENABLE_FIREBASE_AUTH=true
 VITE_ENABLE_FIREBASE_DIAGNOSTICS=false
 VITE_FIRESTORE_FORCE_LONG_POLLING=false
 ```
@@ -61,6 +61,9 @@ GOOGLE_REDIRECT_URI=https://your-backend.onrender.com/auth/google/callback
 SESSION_SECRET=<strong-random-secret>
 JWT_SECRET=<strong-random-jwt-secret>
 DATABASE_URL=<your-mongodb-connection-string>
+FIREBASE_PROJECT_ID=<your-firebase-project-id>
+FIREBASE_CLIENT_EMAIL=<your-firebase-admin-client-email>
+FIREBASE_PRIVATE_KEY=<your-firebase-admin-private-key>
 ```
 
 If the Node backend needs to bridge to a separate Python service:
@@ -74,6 +77,8 @@ PY_API_INTERNAL_URL=https://your-python-service.onrender.com
 - Browser `/api/*` calls are resolved against `BACKEND_PUBLIC_URL` during the frontend build.
 - The frontend does not need same-origin Vercel `/api/*` routes to talk to the live backend.
 - The Node backend can proxy or bridge to any separate Python host with `PY_API_INTERNAL_URL`.
+- Firebase Auth should stay enabled on Vercel when the `VITE_FIREBASE_*` variables are configured.
+- Python/FastAPI auth works on the live URL when it can verify either the shared Node JWT or Firebase ID tokens via Firebase Admin credentials.
 
 ## Deployment checklist
 
