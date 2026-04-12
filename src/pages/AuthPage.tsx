@@ -23,6 +23,7 @@ type ResetOtpResponse = {
   delivery?: "email";
   destination?: string;
   expiresInMinutes?: number;
+  previewOtp?: string;
   message?: string;
 };
 
@@ -119,6 +120,32 @@ const AuthPage = () => {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
+    const oauthStatus = String(searchParams.get("oauth") || "").trim().toLowerCase();
+    const oauthError = String(searchParams.get("error") || "").trim().toLowerCase();
+    const oauthCode = String(searchParams.get("code") || "").trim();
+
+    if (oauthStatus === "google") {
+      setAuthStatus("Google sign-in successful. Finalizing your session...");
+      return;
+    }
+
+    if (!oauthError && !oauthCode) return;
+
+    const nextMessage =
+      oauthCode === "google_oauth_redirect_not_configured"
+        ? "Google sign-in redirect is not configured on the backend yet."
+        : oauthCode === "missing_google_code"
+          ? "Google sign-in was canceled before the authorization code returned."
+          : oauthCode === "google_identity_invalid"
+            ? "Google sign-in could not verify your account. Check the backend client ID and redirect URI."
+            : oauthCode === "google_auth_not_configured"
+              ? "Google sign-in is not configured on the backend yet."
+              : "Google sign-in failed. Please try again.";
+
+    setAuthStatus(nextMessage);
+  }, [searchParams]);
+
+  useEffect(() => {
     const envClientId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
     let active = true;
     loadAuthProviders()
@@ -135,7 +162,7 @@ const AuthPage = () => {
         }
         setGoogleClientId("");
         setGoogleStartUrl("");
-        setGoogleStatus("Google sign-in is not configured on the backend yet.");
+        setGoogleStatus(isHostedRuntime ? "Google sign-in is not configured on the backend yet." : "");
       })
       .catch((error) => {
         if (!active) return;
@@ -165,11 +192,11 @@ const AuthPage = () => {
   };
 
   const backendHint = useMemo(() => {
-    if (canUseGoogleOauth) return "";
+    if (canUseGoogleOauth || !googleStatus) return "";
     if (hasRuntimeApiBase) return `Backend target: ${configuredAuthProvidersUrl}`;
     if (isHostedRuntime) return "Production note: this frontend needs BACKEND_PUBLIC_URL or VITE_API_BASE_URL pointing at the live backend.";
     return "";
-  }, [canUseGoogleOauth]);
+  }, [canUseGoogleOauth, googleStatus]);
 
   const signupPasswordStrength = useMemo(() => {
     let score = 0;
@@ -299,7 +326,8 @@ const AuthPage = () => {
 
       if (payload.destination) {
         const expiry = payload.expiresInMinutes ? ` It expires in ${payload.expiresInMinutes} minutes.` : "";
-        setResetStatus(`A 6-digit OTP was sent to ${payload.destination}. Check your inbox and spam folder, then enter it below.${expiry}`);
+        const preview = payload.previewOtp ? ` Dev preview OTP: ${payload.previewOtp}.` : "";
+        setResetStatus(`A 6-digit OTP was sent to ${payload.destination}. Check your inbox and spam folder, then enter it below.${expiry}${preview}`);
       } else {
         setResetStatus(payload.message || "Reset OTP sent successfully.");
       }
@@ -329,7 +357,10 @@ const AuthPage = () => {
         otp: resetOtp.trim(),
         password: resetPassword,
       });
-      if (payload.accessToken) setStoredAccessToken(payload.accessToken);
+      if (payload.accessToken) {
+        setStoredAccessToken(payload.accessToken);
+        await refreshAuth();
+      }
       setResetStatus("Password reset successful. Redirecting to your dashboard...");
       window.setTimeout(() => navigate("/dashboard", { replace: true }), 250);
     } catch (error) {

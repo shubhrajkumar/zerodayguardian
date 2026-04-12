@@ -13,7 +13,7 @@ import {
 } from "../src/services/authService.mjs";
 import { env } from "../src/config/env.mjs";
 import { assertAuthAttemptAllowed, recordAuthFailure, recordAuthSuccess } from "../src/services/authThreatService.mjs";
-import { logError, logInfo } from "../src/utils/logger.mjs";
+import { logError, logInfo, redact } from "../src/utils/logger.mjs";
 
 const resolveBackendBaseUrl = (req) => {
   if (env.backendPublicUrl) return env.backendPublicUrl;
@@ -35,6 +35,13 @@ const resolveBackendAuthUrl = (req, path) => {
     const fallbackBase = (env.backendPublicUrl || env.corsOrigin || env.appBaseUrl || `http://localhost:${env.port || 8787}`).replace(/\/+$/, "");
     return `${fallbackBase}${path.startsWith("/") ? path : `/${path}`}`;
   }
+};
+
+const resolvePublicAuthPath = (req, suffix = "") => {
+  const baseUrl = String(req.baseUrl || req.originalUrl || req.url || "");
+  const useApiPrefix = baseUrl.startsWith("/api/auth");
+  const normalizedSuffix = suffix.startsWith("/") ? suffix : `/${suffix}`;
+  return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
 };
 
 const resolveAppRedirect = (target, fallbackPath = "/") => {
@@ -117,7 +124,7 @@ const normalizeRefreshError = (error) => {
   return current;
 };
 
-export const signup = async (req, res, next) => {
+export const signup = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth signup request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -132,7 +139,7 @@ export const signup = async (req, res, next) => {
   }
 };
 
-export const login = async (req, res, next) => {
+export const login = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth login request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -174,7 +181,7 @@ export const startGoogleOauth = async (req, res) => {
   }
 };
 
-export const sendOtp = async (req, res, next) => {
+export const sendOtp = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth send OTP request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -188,7 +195,7 @@ export const sendOtp = async (req, res, next) => {
   }
 };
 
-export const resetUserPassword = async (req, res, next) => {
+export const resetUserPassword = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth reset password request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -203,7 +210,7 @@ export const resetUserPassword = async (req, res, next) => {
   }
 };
 
-export const refreshSession = async (req, res, next) => {
+export const refreshSession = async (req, res) => {
   try {
     logInfo("Auth refresh request", { requestId: req.requestId || "", hasRefreshCookie: Boolean(req.cookies?.neurobot_rt) });
     const { user, rememberMe } = await refreshAuth(req.cookies?.neurobot_rt);
@@ -218,7 +225,7 @@ export const refreshSession = async (req, res, next) => {
   }
 };
 
-export const logout = async (req, res, next) => {
+export const logout = async (req, res) => {
   try {
     logInfo("Auth logout request", { requestId: req.requestId || "" });
     await revokeRefreshSession(req.cookies?.neurobot_rt);
@@ -232,8 +239,8 @@ export const logout = async (req, res, next) => {
 
 export const getAuthProviders = async (req, res) => {
   try {
-    const startUrl = resolveBackendAuthUrl(req, "/auth/google");
-    const callbackUrl = resolveBackendAuthUrl(req, "/auth/google/callback");
+    const startUrl = resolveBackendAuthUrl(req, resolvePublicAuthPath(req, "/google"));
+    const callbackUrl = resolveBackendAuthUrl(req, resolvePublicAuthPath(req, "/google/callback"));
     res.json({
       status: "ok",
       google: {
@@ -265,10 +272,16 @@ export const getAuthProviders = async (req, res) => {
   }
 };
 
-export const getCsrf = async (req, res, next) => {
+export const getCsrf = async (req, res) => {
   try {
-    logInfo("Auth CSRF token requested", { requestId: req.requestId || "" });
-    res.json({ csrfToken: req.csrfToken || true });
+    res.setHeader("Cache-Control", "no-store");
+    logInfo("Auth CSRF token requested", {
+      requestId: req.requestId || "",
+      origin: String(req.headers.origin || ""),
+      hasCsrfCookie: Boolean(req.cookies?.neurobot_csrf),
+      csrfToken: redact(req.csrfToken || ""),
+    });
+    res.json({ status: "ok", csrfToken: String(req.csrfToken || "") });
   } catch (error) {
     logError("Auth CSRF response failed", error, { requestId: req.requestId || "" });
     res.status(500).json({
@@ -280,7 +293,7 @@ export const getCsrf = async (req, res, next) => {
   }
 };
 
-export const googleOauthCallback = async (req, res) => {
+export const googleOauthCallback = async (req, res, next) => {
   try {
     const code = String(req.query?.code || "").trim();
     const state = String(req.query?.state || "").trim();

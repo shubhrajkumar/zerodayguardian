@@ -9,7 +9,7 @@ const verboseApiLogging =
   String(import.meta.env.VITE_ENABLE_FIREBASE_DIAGNOSTICS || "").trim().toLowerCase() === "true";
 const logDebug = (...args: unknown[]) => {
   if (!verboseApiLogging) return;
-  console.log(...args);
+  console.info(...args);
 };
 const logDebugError = (...args: unknown[]) => {
   if (!verboseApiLogging) return;
@@ -17,6 +17,8 @@ const logDebugError = (...args: unknown[]) => {
 };
 
 export const resolvePublicApiUrl = (url: string) => resolveApiUrl(url);
+const CSRF_TOKEN_KEY = "neurobot_csrf_token";
+let csrfTokenCache = "";
 
 export const getCookie = (name: string) => {
   const encoded = document.cookie
@@ -26,34 +28,62 @@ export const getCookie = (name: string) => {
   return encoded ? decodeURIComponent(encoded) : "";
 };
 
-export const ensureCsrf = async () => {
-  const existingToken = getCookie("neurobot_csrf");
+const getStoredCsrfToken = () => {
+  if (csrfTokenCache) return csrfTokenCache;
+  try {
+    const stored = sessionStorage.getItem(CSRF_TOKEN_KEY) || "";
+    if (stored) csrfTokenCache = stored;
+    return stored;
+  } catch {
+    return csrfTokenCache;
+  }
+};
+
+const setStoredCsrfToken = (token: string) => {
+  const normalized = String(token || "").trim();
+  csrfTokenCache = normalized;
+  try {
+    if (normalized) sessionStorage.setItem(CSRF_TOKEN_KEY, normalized);
+    else sessionStorage.removeItem(CSRF_TOKEN_KEY);
+  } catch {
+    // ignore storage failures
+  }
+  return normalized;
+};
+
+const clearStoredCsrfToken = () => {
+  setStoredCsrfToken("");
+};
+
+export const ensureCsrf = async (forceRefresh = false) => {
+  const existingToken = !forceRefresh ? getStoredCsrfToken() : "";
   if (existingToken) {
     logDebug(`[CSRF] Using existing token: ${existingToken.substring(0, 8)}...`);
     return existingToken;
   }
-  
-  logDebug("[CSRF] No existing token found, fetching new CSRF token");
-  
+
+  logDebug(forceRefresh ? "[CSRF] Refreshing CSRF token from backend" : "[CSRF] No cached CSRF token found, fetching");
+
   try {
     const response = await fetch(resolveApiUrl("/api/auth/csrf"), {
       credentials: "include",
-      method: "GET"
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
     });
-    
+
     if (!response.ok) {
       throw new Error(`CSRF endpoint failed: ${response.status}`);
     }
-    
-    // Wait a moment for the cookie to be set
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const token = getCookie("neurobot_csrf");
+
+    const payload = (await response.json().catch(() => ({}))) as { csrfToken?: string };
+    const token = setStoredCsrfToken(String(payload?.csrfToken || "").trim() || getCookie("neurobot_csrf"));
     if (!token) {
-      throw new Error("CSRF cookie was not set after fetching token");
+      throw new Error("CSRF token was not returned by the backend");
     }
-    
-    logDebug(`[CSRF] Successfully fetched new token: ${token.substring(0, 8)}...`);
+
+    logDebug(`[CSRF] Backend CSRF token ready: ${token.substring(0, 8)}...`);
     return token;
   } catch (error) {
     logDebugError("CSRF token fetch failed:", error);
@@ -162,6 +192,7 @@ export const clearAuthState = (): void => {
     localStorage.removeItem("auth_state");
     localStorage.removeItem(REFRESH_BLOCK_KEY);
     clearStoredAccessToken();
+    clearStoredCsrfToken();
     document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   } catch (error) {
     logDebugError("[API] Error clearing auth state:", error);
@@ -249,8 +280,8 @@ const triggerAuthRedirect = () => {
   }, 700);
 };
 
-const runRefreshRequest = async (url: string) => {
-  const csrf = getCookie("neurobot_csrf");
+const runRefreshRequest = (url: string) => {
+  const csrf = getStoredCsrfToken();
   return fetch(url, {
     method: "POST",
     credentials: "include",
@@ -294,7 +325,7 @@ const tryRefreshSession = async () => {
       for (const refreshUrl of refreshCandidates) {
         let response = await runRefreshRequest(refreshUrl);
         if (response.status === 403) {
-          await ensureCsrf();
+          await ensureCsrf(true);
           response = await runRefreshRequest(refreshUrl);
         }
         if (response.status === 404) continue;
@@ -331,12 +362,11 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   const cachedAuth = getStoredAuthState();
   const requestId = makeRequestId();
   const maxAttempts = method === "GET" ? 2 : (requestUrl.includes("/pyapi/mission-control") ? 2 : 1);
-  
+
   logDebug(`[API] ${method} ${requestUrl} - Starting request`);
 
   if (isAuthMe) {
     let token = getStoredAccessToken();
-    const cachedAuth = getStoredAuthState();
     if (!token) {
       if (!cachedAuth?.isAuthenticated) {
         logDebug(`[API] ${method} ${url} - No cached auth state, returning 401 without refresh`);
@@ -377,8 +407,8 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
     logDebug(`[API] ${method} ${url} - Ensuring CSRF token`);
     await ensureCsrf();
   }
-  
-  const csrf = getCookie("neurobot_csrf");
+
+  const csrf = getStoredCsrfToken();
   let bearer = getStoredAccessToken();
   if (!bearer && cachedAuth?.isAuthenticated && !url.startsWith("/api/auth/")) {
     logDebug(`[API] ${method} ${url} - Missing bearer with authenticated session, attempting refresh`);
@@ -395,15 +425,25 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
     bearerPreview: bearer ? "Bearer " + bearer.substring(0, 8) + "..." : "none"
   });
 
-  const headers = {
-    ...(init.headers || {}),
-    "X-Request-Id": requestId,
-    ...(csrf && !["GET", "HEAD", "OPTIONS"].includes(method) ? { "X-CSRF-Token": csrf } : {}),
-    ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+  const buildHeaders = (overrideBearer?: string) => {
+    const requestHeaders = new Headers(init.headers || {});
+    requestHeaders.set("X-Request-Id", requestId);
+    const csrfToken = getStoredCsrfToken();
+    if (csrfToken && !["GET", "HEAD", "OPTIONS"].includes(method)) requestHeaders.set("X-CSRF-Token", csrfToken);
+    else requestHeaders.delete("X-CSRF-Token");
+    const activeBearer = overrideBearer ?? getStoredAccessToken();
+    if (activeBearer) requestHeaders.set("Authorization", `Bearer ${activeBearer}`);
+    else requestHeaders.delete("Authorization");
+    return requestHeaders;
   };
 
-  const request = () =>
-    fetch(requestUrl, { ...init, headers, credentials: "include", signal: isAuthMe ? meAbortController.signal : init.signal });
+  const request = (overrideBearer?: string) =>
+    fetch(requestUrl, {
+      ...init,
+      headers: buildHeaders(overrideBearer),
+      credentials: "include",
+      signal: isAuthMe ? meAbortController.signal : init.signal,
+    });
   const execute = async () => {
     const response = await request();
     const duration = Date.now() - startTime;
@@ -451,6 +491,16 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
     });
   }
 
+  if (response.status === 403 && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const failurePayload = await response.clone().json().catch(() => null) as { code?: string } | null;
+    if (failurePayload?.code === "csrf_token_mismatch") {
+      logDebug(`[API] ${method} ${requestUrl} - CSRF mismatch, refreshing backend token and retrying once`);
+      clearStoredCsrfToken();
+      await ensureCsrf(true);
+      response = await execute();
+    }
+  }
+
   if (response.status === 429) {
     logDebug(`[API] ${method} ${requestUrl} - Rate limited (429)`);
     return response;
@@ -474,15 +524,7 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
       logDebug(`[API] ${method} ${requestUrl} - Refresh succeeded without stored bearer, returning 401`);
       return response;
     }
-    response = await fetch(requestUrl, {
-      ...init,
-      headers: {
-        ...headers,
-        Authorization: `Bearer ${refreshedBearer}`,
-      },
-      credentials: "include",
-      signal: isAuthMe ? meAbortController.signal : init.signal,
-    });
+    response = await request(refreshedBearer);
   }
 
   if (response.status !== 401 || url.startsWith("/api/auth/")) return response;

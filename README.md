@@ -22,6 +22,23 @@ The dev runner starts:
 - Node backend on `http://127.0.0.1:8787`
 - optional Python API from `backend/python`
 
+### Local password reset email
+
+For real reset emails in local development, set these in `.env.local` and restart the backend:
+
+```env
+AUTH_EMAIL_ENABLED=true
+AUTH_EMAIL_FROM_NAME=ZeroDay Guardian Security
+AUTH_EMAIL_FROM=yourgmail@gmail.com
+AUTH_EMAIL_USER=yourgmail@gmail.com
+AUTH_EMAIL_APP_PASSWORD=your_16_char_gmail_app_password
+```
+
+Notes:
+
+- Use a Gmail App Password, not your normal Gmail password.
+- If these are not set, local development can still use OTP preview mode with `AUTH_OTP_PREVIEW_ENABLED=true`.
+
 ## Production deployment
 
 Recommended topology:

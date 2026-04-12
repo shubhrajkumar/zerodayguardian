@@ -53,18 +53,32 @@ const setProbeNoStore = (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   next();
 };
+const normalizeCorsOrigin = (value = "") => String(value || "").trim().replace(/\/+$/, "");
+const isLocalLikeOrigin = (value = "") => /^(https?:\/\/)(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|::1)(:\d+)?$/i.test(normalizeCorsOrigin(value));
 const allowCorsOrigin = (origin, callback) => {
   if (!origin) {
     callback(null, true);
     return;
   }
-  if ((env.corsOrigins || []).includes(origin)) {
+  const normalizedOrigin = normalizeCorsOrigin(origin);
+  // Always allow if explicitly configured
+  if ((env.corsOrigins || []).includes(normalizedOrigin)) {
     callback(null, true);
     return;
   }
-  const error = new Error(`CORS blocked for origin ${origin}`);
+  // Block localhost in production only if not explicitly allowed
+  if (env.nodeEnv === "production" && isLocalLikeOrigin(normalizedOrigin)) {
+    const error = new Error(`CORS blocked for localhost origin ${normalizedOrigin}`);
+    error.status = 403;
+    error.code = "cors_blocked";
+    logWarn("CORS blocked for localhost origin", { origin: normalizedOrigin, allowedOrigins: env.corsOrigins || [] });
+    callback(error);
+    return;
+  }
+  const error = new Error(`CORS blocked for origin ${normalizedOrigin}`);
   error.status = 403;
   error.code = "cors_blocked";
+  logWarn("CORS blocked for origin", { origin: normalizedOrigin, allowedOrigins: env.corsOrigins || [] });
   callback(error);
 };
 
@@ -82,6 +96,12 @@ const buildBackendUrl = (req, path) => {
   } catch {
     return `${String(fallbackBase || "").replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
   }
+};
+const buildPublicAuthPath = (req, suffix = "") => {
+  const baseUrl = String(req.baseUrl || req.originalUrl || req.url || "");
+  const useApiPrefix = baseUrl.startsWith("/api/auth");
+  const normalizedSuffix = suffix.startsWith("/") ? suffix : `/${suffix}`;
+  return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
 };
 const listRoutes = (app) => {
   const routes = [];
@@ -192,7 +212,9 @@ export const createApp = () => {
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Last-Event-ID", "X-Request-Id"],
+      exposedHeaders: ["X-Request-Id"],
       maxAge: 600,
+      optionsSuccessStatus: 204,
     })
   );
   app.use(
@@ -387,8 +409,8 @@ export const createApp = () => {
     });
   });
   app.get("/api/auth/providers", (req, res) => {
-    const startUrl = buildBackendUrl(req, "/auth/google");
-    const callbackUrl = buildBackendUrl(req, "/auth/google/callback");
+    const startUrl = buildBackendUrl(req, buildPublicAuthPath(req, "/google"));
+    const callbackUrl = buildBackendUrl(req, buildPublicAuthPath(req, "/google/callback"));
     res.json({
       status: "ok",
       google: {
@@ -404,8 +426,8 @@ export const createApp = () => {
     });
   });
   app.get("/auth/providers", (req, res) => {
-    const startUrl = buildBackendUrl(req, "/auth/google");
-    const callbackUrl = buildBackendUrl(req, "/auth/google/callback");
+    const startUrl = buildBackendUrl(req, buildPublicAuthPath(req, "/google"));
+    const callbackUrl = buildBackendUrl(req, buildPublicAuthPath(req, "/google/callback"));
     res.json({
       status: "ok",
       google: {
@@ -512,8 +534,8 @@ export const createApp = () => {
     }
     }
   );
-  app.use("/auth", apiReadRateLimit, requireCsrf, authRoutes);
-  app.use("/api/auth", apiReadRateLimit, requireCsrf, authRoutes);
+  app.use("/auth", apiReadRateLimit, authRoutes);
+  app.use("/api/auth", apiReadRateLimit, authRoutes);
   app.use("/mission", requireCsrf, requireAuth, mutationRateLimit, missionRoutes);
   app.use("/api/mission", requireCsrf, requireAuth, mutationRateLimit, missionRoutes);
   app.use("/user", requireCsrf, requireAuth, mutationRateLimit, productUserRoutes);

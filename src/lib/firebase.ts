@@ -83,27 +83,16 @@ const runFirestoreConnectionTestOnce = async (): Promise<FirestoreConnectionTest
       };
     }
 
-    console.log("[Firebase] Starting initialization check...");
-
     if (!isFirebaseConfigured || !firebaseApp || !firestoreDb) {
       throw createFirebaseConfigError();
     }
 
-    console.log("[Firebase] App initialized successfully.");
-    console.log("[Firestore] Instance created successfully.");
-
     const testRef = doc(firestoreDb, "connection_tests", "react_main_test");
-    console.log("[Firestore] Reading probe document from connection_tests/react_main_test ...");
     const snapshot = await getDoc(testRef);
-
-    console.log("[Firestore] Read successful.");
-    console.log("[Firestore] Document path:", testRef.path);
 
     const data = snapshot.exists() ? snapshot.data() : { exists: false };
     if (!snapshot.exists()) {
       console.warn("[Firestore] Probe document does not exist, but Firestore is reachable.");
-    } else {
-      console.log("[Firestore] Document data:", data);
     }
 
     return {

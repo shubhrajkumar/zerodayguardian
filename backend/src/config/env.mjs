@@ -4,9 +4,12 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-const projectRootEnvPath = path.resolve(moduleDir, "..", "..", "..", ".env");
-const backendEnvPath = path.resolve(moduleDir, "..", "..", ".env");
-const envPaths = [projectRootEnvPath, backendEnvPath].filter((value, index, list) => list.indexOf(value) === index);
+const envPaths = [
+  path.resolve(moduleDir, "..", "..", "..", ".env"),
+  path.resolve(moduleDir, "..", "..", ".env"),
+  path.resolve(moduleDir, "..", "..", "..", ".env.local"),
+  path.resolve(moduleDir, "..", "..", ".env.local"),
+].filter((value, index, list) => list.indexOf(value) === index);
 const loadedEnv = envPaths.some((envPath, index) => {
   if (!fs.existsSync(envPath)) return false;
   dotenv.config({ path: envPath, override: index > 0 });
@@ -90,6 +93,57 @@ const normalizeApiBaseUrl = (raw = "", envName) => {
   parsed.hash = "";
   return parsed.toString().replace(/\/+$/, "");
 };
+const normalizeOrigin = (raw = "") => {
+  try {
+    return new URL(String(raw || "").trim()).origin.toLowerCase();
+  } catch {
+    return "";
+  }
+};
+const hostnameFromUrl = (raw = "") => {
+  try {
+    return new URL(String(raw || "").trim()).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+};
+const isLocalLikeOrigin = (raw = "") => LOCALHOST_LIKE_HOSTS.has(hostnameFromUrl(raw));
+const normalizeCookieDomain = (raw = "") => {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return hostnameFromUrl(value);
+  return value.replace(/^\.+/, "").replace(/\/.*$/, "").replace(/:\d+$/, "").toLowerCase();
+};
+const buildPublicAuthCallbackUrl = (baseUrl = "", useApiPrefix = false) => {
+  const safeBase = String(baseUrl || "").trim().replace(/\/+$/, "");
+  if (!safeBase) return "";
+  const authPath = useApiPrefix ? "/api/auth/google/callback" : "/auth/google/callback";
+  try {
+    return new URL(authPath, `${safeBase}/`).toString();
+  } catch {
+    return `${safeBase}${authPath}`;
+  }
+};
+const sanitizeOriginList = (items = [], { httpsOnly = false, disallowLocalhost = false } = {}) =>
+  uniqueList(
+    items
+      .map((value) => normalizeOrigin(value))
+      .filter(Boolean)
+      .filter((origin) => {
+        if (httpsOnly && !origin.startsWith("https://")) return false;
+        if (!disallowLocalhost) return true;
+        return !isLocalLikeOrigin(origin);
+      })
+  );
+const mergeOrigins = (...items) =>
+  uniqueList(
+    items
+      .flatMap((value) => {
+        if (Array.isArray(value)) return value;
+        return splitCsv(value);
+      })
+      .filter(Boolean)
+  );
 
 const defaultPort = (protocol) => (protocol === "mongodb+srv:" ? 27017 : 27017);
 const normalizeLlmProvider = (value = "") => {
@@ -195,12 +249,13 @@ const createDegradedMongoConfig = (reason = "missing") => ({
 
 const llmProviderInput = firstSet("LLM_MODE", "LLM_PROVIDER");
 const normalizedLlmMode = normalizeLlmProvider(llmProviderInput || "auto");
-const isProduction = (process.env.NODE_ENV || "production") === "production";
 const isVercel = ["1", "true"].includes(String(process.env.VERCEL || "").trim().toLowerCase());
 const isRender =
   ["1", "true"].includes(String(process.env.RENDER || "").trim().toLowerCase()) ||
   Boolean(String(process.env.RENDER_EXTERNAL_URL || "").trim());
 const isManagedDeploy = isVercel || isRender;
+const resolvedNodeEnv = String(process.env.NODE_ENV || (isManagedDeploy ? "production" : "development")).trim().toLowerCase() || "development";
+const isProduction = resolvedNodeEnv === "production";
 const vercelFallbackUrl = process.env.VERCEL_URL ? `https://${String(process.env.VERCEL_URL).trim()}` : "https://zeroday-guardian.invalid";
 const renderFallbackUrl = String(process.env.RENDER_EXTERNAL_URL || "").trim() || "https://zeroday-guardian.onrender.com";
 const managedFallbackUrl = isRender ? renderFallbackUrl : vercelFallbackUrl;
@@ -215,7 +270,7 @@ const required = [
 ];
 
 export const env = {
-  nodeEnv: process.env.NODE_ENV || "production",
+  nodeEnv: resolvedNodeEnv,
   port: Number(process.env.PORT || process.env.NEUROBOT_PORT || 10000),
   corsOrigin: process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"),
   openaiBaseUrl: normalizeApiBaseUrl(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1", "OPENAI_BASE_URL"),
@@ -314,6 +369,7 @@ export const env = {
     process.env.PUBLIC_SERVER_URL ||
     process.env.RENDER_EXTERNAL_URL ||
     (isProduction ? "" : `http://localhost:${Number(process.env.NEUROBOT_PORT || 8787)}`),
+  cookieDomain: process.env.COOKIE_DOMAIN || "",
   googleOauthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID || "",
   googleOauthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || "",
   enableGoogleLocalhost:
@@ -387,8 +443,8 @@ export const env = {
   labAllowlistCidrs: splitCsv(process.env.LAB_ALLOWLIST_CIDRS || ""),
   labAllowedBins: splitCsv(process.env.LAB_ALLOWED_BINS || ""),
 };
-env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
-env.googleAuthorizedOrigins = uniqueList(env.googleAuthorizedOrigins);
+env.corsOrigins = mergeOrigins(env.corsOrigin, env.appBaseUrl);
+env.googleAuthorizedOrigins = mergeOrigins(env.googleAuthorizedOrigins, env.appBaseUrl, env.corsOrigins);
 if (isVercel) {
   if (!env.appBaseUrl) {
     env.appBaseUrl = managedFallbackUrl;
@@ -402,7 +458,7 @@ if (isVercel) {
     env.corsOrigin = env.appBaseUrl;
     warnDeployConfig(`CORS_ORIGIN missing during Vercel build/runtime. Using fallback ${env.corsOrigin}`);
   }
-  env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
+  env.corsOrigins = mergeOrigins(env.corsOrigin, env.appBaseUrl);
   if (!env.googleAuthorizedOrigins.length) {
     env.googleAuthorizedOrigins = [...env.corsOrigins];
   }
@@ -432,7 +488,7 @@ if (isRender) {
     env.corsOrigin = env.appBaseUrl || env.backendPublicUrl || managedFallbackUrl;
     warnDeployConfig(`CORS_ORIGIN missing during Render startup. Using fallback ${env.corsOrigin}`);
   }
-  env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
+  env.corsOrigins = mergeOrigins(env.corsOrigin, env.appBaseUrl);
   if (!env.googleAuthorizedOrigins.length) {
     env.googleAuthorizedOrigins = [...env.corsOrigins];
   }
@@ -449,12 +505,23 @@ if (isRender) {
     warnDeployConfig("DB_ENCRYPTION_KEY missing during Render startup. Using a placeholder key until env is configured.");
   }
 }
+const productionOriginPolicy =
+  env.nodeEnv === "production"
+    ? { httpsOnly: true, disallowLocalhost: false }
+    : { httpsOnly: false, disallowLocalhost: false };
+env.corsOrigins = sanitizeOriginList(env.corsOrigins, productionOriginPolicy);
+env.corsOrigin = env.corsOrigins.join(",");
+env.googleAuthorizedOrigins = sanitizeOriginList(
+  mergeOrigins(env.googleAuthorizedOrigins, env.appBaseUrl, env.corsOrigins),
+  productionOriginPolicy
+);
+const derivedCookieDomain = normalizeCookieDomain(env.cookieDomain || env.backendPublicUrl);
+env.cookieDomain = LOCALHOST_LIKE_HOSTS.has(derivedCookieDomain) ? "" : derivedCookieDomain;
 if (!env.googleRedirectUri && env.backendPublicUrl) {
-  try {
-    env.googleRedirectUri = new URL("/auth/google/callback", env.backendPublicUrl).toString();
-  } catch {
-    env.googleRedirectUri = `${env.backendPublicUrl.replace(/\/+$/, "")}/auth/google/callback`;
-  }
+  const frontendOrigin = normalizeOrigin(env.appBaseUrl || "");
+  const backendOrigin = normalizeOrigin(env.backendPublicUrl || "");
+  const useApiPrefix = isVercel || (frontendOrigin && backendOrigin && frontendOrigin === backendOrigin);
+  env.googleRedirectUri = buildPublicAuthCallbackUrl(env.backendPublicUrl, useApiPrefix);
 }
 
 const appBaseHost = (() => {
@@ -510,19 +577,27 @@ if (!new Set(["info", "warn", "error"]).has(env.alertMinLevel)) {
 }
 
 if (env.nodeEnv === "production") {
-  if (!env.appBaseUrl || !/^https?:\/\//.test(env.appBaseUrl)) {
+  if (!env.appBaseUrl || !/^https:\/\//.test(env.appBaseUrl)) {
     if (isManagedDeploy) {
-      warnDeployConfig("APP_BASE_URL is not an absolute URL. Configure a real production APP_BASE_URL in deployment env.");
+      warnDeployConfig("APP_BASE_URL must be an absolute HTTPS URL in production.");
     } else {
-      throw new Error("[neurobot] APP_BASE_URL must be set to an absolute https:// or http:// URL in production");
+      throw new Error("[neurobot] APP_BASE_URL must be set to an absolute HTTPS URL in production");
     }
   }
-  if (!env.backendPublicUrl || !/^https?:\/\//.test(env.backendPublicUrl)) {
+  if (!env.backendPublicUrl || !/^https:\/\//.test(env.backendPublicUrl)) {
     if (isManagedDeploy) {
-      warnDeployConfig("BACKEND_PUBLIC_URL is not an absolute URL. Configure a real production BACKEND_PUBLIC_URL in deployment env.");
+      warnDeployConfig("BACKEND_PUBLIC_URL must be an absolute HTTPS URL in production.");
     } else {
-      throw new Error("[neurobot] BACKEND_PUBLIC_URL must be set to an absolute https:// or http:// URL in production");
+      throw new Error("[neurobot] BACKEND_PUBLIC_URL must be set to an absolute HTTPS URL in production");
     }
+  }
+  if (isLocalLikeOrigin(env.appBaseUrl)) {
+    if (isManagedDeploy) warnDeployConfig("APP_BASE_URL cannot point to localhost in production.");
+    else throw new Error("[neurobot] APP_BASE_URL cannot point to localhost in production");
+  }
+  if (isLocalLikeOrigin(env.backendPublicUrl)) {
+    if (isManagedDeploy) warnDeployConfig("BACKEND_PUBLIC_URL cannot point to localhost in production.");
+    else throw new Error("[neurobot] BACKEND_PUBLIC_URL cannot point to localhost in production");
   }
   if (String(env.dbEncryptionKey || "").length < 32) {
     if (isManagedDeploy) {
@@ -539,12 +614,12 @@ if (env.nodeEnv === "production") {
     }
   }
   for (const origin of env.corsOrigins) {
-    if (!/^https?:\/\//.test(origin)) {
+    if (!/^https:\/\//.test(origin) || isLocalLikeOrigin(origin)) {
       if (isManagedDeploy) {
-        warnDeployConfig("One or more CORS_ORIGIN entries are not absolute URLs. Configure valid origins in deployment env.");
+        warnDeployConfig("CORS_ORIGIN entries must be exact HTTPS frontend origins and cannot include localhost in production.");
         break;
       } else {
-        throw new Error("[neurobot] CORS_ORIGIN entries must be absolute URLs in production");
+        throw new Error("[neurobot] CORS_ORIGIN entries must be exact HTTPS frontend origins in production");
       }
     }
   }

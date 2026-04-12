@@ -6,15 +6,16 @@
     <meta name="theme-color" content="#0a0a0f" />
     <meta name="color-scheme" content="dark" />
     <meta name="application-name" content="ZeroDay Guardian" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ZeroDay Guardian" />
     <meta name="format-detection" content="telephone=no" />
 
-    <title>ZeroDay Guardian | Deploy Your Cyber-AI Workspace</title>
+    <title>ZeroDay Guardian | The One Line of Defense</title>
     <meta
       name="description"
-      content="ZeroDay Guardian is a premium cyber-AI SaaS for labs, missions, OSINT, guided learning, and adaptive security mentorship."
+      content="ZeroDay Guardian is an AI-guided cybersecurity platform for labs, missions, OSINT workflows, guided learning, and adaptive security mentorship."
     />
     <meta
       name="keywords"
@@ -22,29 +23,35 @@
     />
     <meta name="author" content="ZeroDay Guardian" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
-    <meta property="og:title" content="ZeroDay Guardian | Deploy Your Cyber-AI Workspace" />
+    <meta property="og:title" content="ZeroDay Guardian | The One Line of Defense" />
     <meta
       property="og:description"
-      content="Deploy labs, missions, OSINT workflows, and ZORVIX AI guidance inside one production-grade cybersecurity workspace."
+      content="Train with cyber labs, guided missions, OSINT workflows, and ZORVIX AI inside one production-ready security workspace."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Zero Day Guardian" />
+    <meta property="og:site_name" content="ZeroDay Guardian" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://zerodayguardian-delta.vercel.app/" />
     <meta property="og:image" content="https://zerodayguardian-delta.vercel.app/placeholder.svg" />
+    <meta property="og:image:secure_url" content="https://zerodayguardian-delta.vercel.app/placeholder.svg" />
+    <meta property="og:image:type" content="image/svg+xml" />
     <meta property="og:image:alt" content="ZeroDay Guardian cyber-AI workspace preview" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="ZeroDay Guardian | Deploy Your Cyber-AI Workspace" />
+    <meta name="twitter:site" content="@zerodayguardian" />
+    <meta name="twitter:title" content="ZeroDay Guardian | The One Line of Defense" />
     <meta
       name="twitter:description"
-      content="Premium cyber labs, adaptive missions, OSINT workflows, and ZORVIX AI guidance for serious security learners."
+      content="AI-guided cybersecurity training with labs, missions, OSINT workflows, and ZORVIX support."
     />
+    <meta name="twitter:url" content="https://zerodayguardian-delta.vercel.app/" />
     <meta name="twitter:image" content="https://zerodayguardian-delta.vercel.app/placeholder.svg" />
+    <meta name="twitter:image:alt" content="ZeroDay Guardian cyber-AI workspace preview" />
     <link rel="canonical" href="https://zerodayguardian-delta.vercel.app/" />
 
     <link
@@ -56,15 +63,25 @@
     <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
     <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
     <link rel="dns-prefetch" href="https://securetoken.googleapis.com" />
+    <link rel="dns-prefetch" href="https://firebaseinstallations.googleapis.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://firebaseinstallations.googleapis.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -80,6 +97,7 @@
           {
             "@type": "WebSite",
             "name": "ZeroDay Guardian",
+            "description": "ZeroDay Guardian is an AI-guided cybersecurity platform for labs, missions, OSINT workflows, guided learning, and adaptive security mentorship.",
             "url": "https://zerodayguardian-delta.vercel.app/",
             "potentialAction": {
               "@type": "SearchAction",
@@ -88,12 +106,27 @@
             }
           },
           {
-            "@type": "WebApplication",
+            "@type": "WebPage",
+            "name": "ZeroDay Guardian | The One Line of Defense",
+            "url": "https://zerodayguardian-delta.vercel.app/",
+            "description": "AI-guided cybersecurity platform for labs, missions, OSINT workflows, guided learning, and adaptive mentorship.",
+            "isPartOf": {
+              "@type": "WebSite",
+              "url": "https://zerodayguardian-delta.vercel.app/"
+            }
+          },
+          {
+            "@type": "SoftwareApplication",
             "name": "ZeroDay Guardian",
             "applicationCategory": "SecurityApplication",
             "operatingSystem": "Web",
             "url": "https://zerodayguardian-delta.vercel.app/",
-            "description": "Cyber-AI SaaS for labs, missions, OSINT workflows, guided learning, and adaptive mentorship."
+            "description": "Cyber-AI SaaS for labs, missions, OSINT workflows, guided learning, and adaptive mentorship.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
           }
         ]
       }

@@ -390,6 +390,18 @@ const sanitizeUser = (user) => {
   };
 };
 
+const getUserWithAuthStateById = async (id) => {
+  const hydrated = hydrateUser(await getCollection(USERS).findOne({ _id: toObjectId(id) }));
+  if (!hydrated) return null;
+  return {
+    ...hydrated,
+    email: normalizeEmail(hydrated.email),
+    name: normalizeName(hydrated.name),
+    avatarUrl: normalizeUrl(hydrated.avatarUrl),
+    refreshSession: hydrated.refreshSession || null,
+  };
+};
+
 export const registerUser = async ({ email, password, name }) => {
   const users = getCollection(USERS);
   const safeEmail = normalizeEmail(email);
@@ -588,7 +600,7 @@ export const refreshAuth = async (refreshToken) => {
     throw createError("Invalid refresh token", 401, "invalid_refresh_token");
   }
 
-  const user = await getUserById(payload.sub);
+  const user = await getUserWithAuthStateById(payload.sub);
   if (!user) {
     throw createError("User not found", 404, "user_not_found");
   }
@@ -645,6 +657,20 @@ export const sendResetOtp = async ({ email }) => {
   );
 
   if (!mailConfigured()) {
+    if (env.authOtpPreviewEnabled) {
+      logInfo("OTP preview issued", {
+        email: safeEmail,
+        delivery: "preview",
+      });
+      return {
+        sent: true,
+        delivery: "email",
+        destination: maskEmail(safeEmail),
+        expiresInMinutes: resetOtpExpiresInMinutes,
+        previewOtp: otp,
+        message: `Email delivery is not configured locally. Use preview OTP: ${otp}`,
+      };
+    }
     throw createError("Password reset email is not configured", 503, "mail_not_configured");
   }
 
@@ -703,6 +729,20 @@ export const sendResetOtp = async ({ email }) => {
       code: String(error?.code || ""),
       message: String(error?.message || "unknown_error"),
     });
+    if (env.authOtpPreviewEnabled) {
+      logInfo("OTP preview fallback issued after mail delivery failure", {
+        email: safeEmail,
+        delivery: "preview",
+      });
+      return {
+        sent: true,
+        delivery: "email",
+        destination: maskEmail(safeEmail),
+        expiresInMinutes: resetOtpExpiresInMinutes,
+        previewOtp: otp,
+        message: `Email delivery failed locally. Use preview OTP: ${otp}`,
+      };
+    }
     throw createError("Password reset email could not be sent", 502, "mail_delivery_failed");
   }
 };

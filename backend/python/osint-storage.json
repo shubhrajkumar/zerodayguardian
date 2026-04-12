@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-03T01:12:28.286836+00:00",
+  "updated_at": "2026-04-12T08:36:04.987437+00:00",
   "records": {
     "e626109afa1cc2d8d485906aac031e3a7510f2f40b790fed1e15cd6897333bbc": {
       "fingerprint": "e626109afa1cc2d8d485906aac031e3a7510f2f40b790fed1e15cd6897333bbc",
@@ -56,6 +56,13 @@
       "url": "https://thehackernews.com/2026/04/hackers-exploit-cve-2025-55182-to.html",
       "first_seen": "2026-04-03T01:12:28.286732+00:00",
       "last_seen": "2026-04-03T01:12:28.286732+00:00"
+    },
+    "465df92d015164da0e50ef09f0481e6d2f52a1287375088c6796c9882f02723d": {
+      "fingerprint": "465df92d015164da0e50ef09f0481e6d2f52a1287375088c6796c9882f02723d",
+      "title": "CPUID Breach Distributes STX RAT via Trojanized CPU-Z and HWMonitor Downloads",
+      "url": "https://thehackernews.com/2026/04/cpuid-breach-distributes-stx-rat-via.html",
+      "first_seen": "2026-04-12T08:36:04.987367+00:00",
+      "last_seen": "2026-04-12T08:36:04.987367+00:00"
     }
   }
 }

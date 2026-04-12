@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { validateBody } from "../src/middleware/validate.mjs";
 import { authProvidersRateLimit, authRateLimit, authSessionRateLimit } from "../src/middleware/rateLimit.mjs";
+import { requireCsrf } from "../src/middleware/csrf.mjs";
 import { googleLoginSchema, loginSchema, refreshSchema, resetPasswordSchema, sendOtpSchema, signupSchema } from "../src/validators/authSchemas.mjs";
 import { getAuthProviders, getCsrf, googleLogin, googleOauthCallback, login, logout, refreshSession, resetUserPassword, sendOtp, signup, startGoogleOauth } from "../controllers/authController.js";
 
@@ -18,6 +19,6 @@ router.post("/google", authRateLimit, validateBody(googleLoginSchema), googleLog
 router.post("/send-otp", authRateLimit, validateBody(sendOtpSchema), sendOtp);
 router.post("/reset-password", authRateLimit, validateBody(resetPasswordSchema), resetUserPassword);
 router.post("/refresh", authSessionRateLimit, validateBody(refreshSchema), refreshSession);
-router.post("/logout", authSessionRateLimit, validateBody(refreshSchema), logout);
+router.post("/logout", authSessionRateLimit, requireCsrf, validateBody(refreshSchema), logout);
 
 export default router;

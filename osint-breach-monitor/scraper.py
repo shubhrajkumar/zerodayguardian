@@ -111,17 +111,20 @@ class WebScraper:
     def _is_allowed_by_robots(self, url: str) -> bool:
         parsed = urlparse(url)
         base_url = f"{parsed.scheme}://{parsed.netloc}"
-        parser = self._robots_cache.get(base_url)
-        if parser is None:
-            parser = RobotFileParser()
-            parser.set_url(urljoin(base_url, "/robots.txt"))
-            try:
-                parser.read()
-            except Exception as exc:
-                LOGGER.warning("Could not read robots.txt for %s: %s", base_url, exc)
-                return True
-            self._robots_cache[base_url] = parser
-        return parser.can_fetch(self.settings.user_agent, url)
+        cached = self._robots_cache.get(base_url)
+        if cached is not None:
+            return cached
+        parser = RobotFileParser()
+        parser.set_url(urljoin(base_url, "/robots.txt"))
+        try:
+            parser.read()
+        except Exception as exc:
+            LOGGER.warning("Could not read robots.txt for %s: %s", base_url, exc)
+            self._robots_cache[base_url] = True
+            return True
+        can_fetch = parser.can_fetch(self.settings.user_agent, url)
+        self._robots_cache[base_url] = can_fetch
+        return can_fetch
 
     @staticmethod
     def _extract_text(node, selector: str) -> str:

@@ -228,16 +228,10 @@ toolConfigSchema.pre(['updateOne', 'updateMany', 'findOneAndUpdate'], function(n
   next();
 });
 
-// Post-save middleware for audit logging
 toolConfigSchema.post('save', function(doc) {
-  // Log configuration creation/update
-  console.log(`Configuration ${doc.isNew ? 'created' : 'updated'}: ${doc.name} for tool ${doc.toolId}`);
 });
 
-// Post-remove middleware for audit logging
 toolConfigSchema.post('remove', function(doc) {
-  // Log configuration deletion
-  console.log(`Configuration deleted: ${doc.name} for tool ${doc.toolId}`);
 });
 
 module.exports = mongoose.model('ToolConfig', toolConfigSchema);
