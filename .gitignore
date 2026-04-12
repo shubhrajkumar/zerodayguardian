@@ -7,10 +7,7 @@ venv/
 /dist/
 coverage/
 
-# Local environment and secrets
-.env
-.env.local
-.env.*.local
+# Local environment and secrets\n.env.local\n.env.*.local\n!.env.example
 
 # Local app state
 local.db
