@@ -17,6 +17,6 @@ if (!hasBunLock || hasBun) {
   if (res.status === 0) process.exit(0);
 }
 
-console.log("[browserslist] Falling back to npm update for caniuse-lite/browserslist");
+  process.stdout.write("[browserslist] Falling back to npm update for caniuse-lite/browserslist\n");
 const fallback = run("npm", ["update", "caniuse-lite", "browserslist"]);
 process.exit(fallback.status ?? 1);

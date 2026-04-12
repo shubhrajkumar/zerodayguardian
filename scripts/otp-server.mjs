@@ -144,7 +144,7 @@ app.get("/health", (_req, res) => {
 
 transporter.verify().then(() => {
   app.listen(PORT, () => {
-    console.log(`OTP server listening on http://localhost:${PORT}`);
+    process.stdout.write(`OTP server listening on http://localhost:${PORT}\n`);
   });
 }).catch((error) => {
   console.error("SMTP verification failed:", error?.message || error);

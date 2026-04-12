@@ -83,7 +83,7 @@ for (const check of checks) {
   const result = await check.run();
   if (!result.ok) failed = true;
   const status = result.ok ? "OK" : "FAIL";
-  console.log(`[${status}] ${check.label}: ${result.detail}`);
+  process.stdout.write(`[${status}] ${check.label}: ${result.detail}\n`);
 }
 
 process.exitCode = failed ? 1 : 0;

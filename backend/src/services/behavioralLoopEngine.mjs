@@ -64,7 +64,6 @@ const buildAdaptiveMission = ({
 };
 
 const buildReengagementTriggers = ({
-  streak = 1,
   daysSinceActive = 0,
   hoursSinceEvent = 0,
   momentumScore = 0,

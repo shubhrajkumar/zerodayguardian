@@ -12,7 +12,6 @@ const NO_VERIFIED_DATA = "No verified data.";
 const DNS_PROVIDER = "node:dns";
 const WHOIS_PROVIDER = "whois+rdap";
 const LOCAL_PROVIDER = "local";
-const RISK_LEVELS = ["LOW", "MEDIUM", "HIGH"];
 const dnsCache = new TtlCache({ ttlMs: 5 * 60_000, maxEntries: 400 });
 const whoisCache = new TtlCache({ ttlMs: 15 * 60_000, maxEntries: 300 });
 const reverseDnsCache = new TtlCache({ ttlMs: 5 * 60_000, maxEntries: 300 });

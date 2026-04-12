@@ -552,7 +552,7 @@ export function ToolConfigModal({
                             title: "Configurations exported",
                             description: "All configurations have been downloaded successfully.",
                           });
-                        } catch (error) {
+                        } catch {
                           toast({
                             title: "Export failed",
                             description: "Failed to export configurations. Please try again.",

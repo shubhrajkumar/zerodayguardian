@@ -228,10 +228,4 @@ toolConfigSchema.pre(['updateOne', 'updateMany', 'findOneAndUpdate'], function(n
   next();
 });
 
-toolConfigSchema.post('save', function(doc) {
-});
-
-toolConfigSchema.post('remove', function(doc) {
-});
-
 module.exports = mongoose.model('ToolConfig', toolConfigSchema);

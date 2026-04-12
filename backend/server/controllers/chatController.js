@@ -1,7 +1,7 @@
 import { logError } from "../../src/utils/logger.mjs";
 import { runChat } from "../services/chatService.js";
 
-export const postChat = async (req, res, next) => {
+export const postChat = async (req, res) => {
   try {
     const { message } = req.body || {};
     const result = await runChat({ message, requestId: req.requestId || "" });

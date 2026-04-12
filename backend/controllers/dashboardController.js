@@ -97,7 +97,7 @@ const loadCachedDashboardStats = async (userId) =>
     };
   });
 
-export const getDashboardStats = async (req, res, next) => {
+export const getDashboardStats = async (req, res) => {
   try {
     logInfo("Dashboard stats requested", { requestId: req.requestId || "", userId: req.user?.sub || "" });
     const userId = normalizeUserId(req.user?.sub);

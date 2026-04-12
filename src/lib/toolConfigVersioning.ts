@@ -89,7 +89,7 @@ export class ToolConfigVersioning {
       });
 
       return createdVersion;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const versions = this.getLocalVersions(configId);
       const newVersion: ConfigurationVersion = {
@@ -115,7 +115,7 @@ export class ToolConfigVersioning {
   static async getVersions(configId: string): Promise<ConfigurationVersion[]> {
     try {
       return await apiGetJson<ConfigurationVersion[]>(`/api/tools/configs/${configId}/versions`);
-    } catch (error) {
+    } catch {
       return this.getLocalVersions(configId);
     }
   }
@@ -123,7 +123,7 @@ export class ToolConfigVersioning {
   static async getVersion(configId: string, versionId: string): Promise<ConfigurationVersion | null> {
     try {
       return await apiGetJson<ConfigurationVersion>(`/api/tools/configs/${configId}/versions/${versionId}`);
-    } catch (error) {
+    } catch {
       const versions = this.getLocalVersions(configId);
       return versions.find(v => v.id === versionId) || null;
     }
@@ -139,7 +139,7 @@ export class ToolConfigVersioning {
       return await apiGetJson<VersionComparison>(
         `/api/tools/configs/${configId}/versions/compare?version1=${version1Id}&version2=${version2Id}`
       );
-    } catch (error) {
+    } catch {
       const versions = this.getLocalVersions(configId);
       const version1 = versions.find(v => v.id === version1Id);
       const version2 = versions.find(v => v.id === version2Id);
@@ -201,7 +201,7 @@ export class ToolConfigVersioning {
       });
 
       return rollbackData;
-    } catch (error) {
+    } catch {
       // Fallback to local rollback
       const versions = this.getLocalVersions(configId);
       const targetVersion = versions.find(v => v.version === options.targetVersion);
@@ -242,7 +242,7 @@ export class ToolConfigVersioning {
   static async getVersionHistory(configId: string): Promise<VersionHistory | null> {
     try {
       return await apiGetJson<VersionHistory>(`/api/tools/configs/${configId}/versions/history`);
-    } catch (error) {
+    } catch {
       const versions = this.getLocalVersions(configId);
       if (versions.length === 0) return null;
 
@@ -265,7 +265,7 @@ export class ToolConfigVersioning {
         description: "Version has been deleted successfully."
       });
       return true;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const versions = this.getLocalVersions(configId);
       const index = versions.findIndex(v => v.id === versionId);
@@ -286,7 +286,7 @@ export class ToolConfigVersioning {
   static async getBreakingChanges(configId: string): Promise<ConfigurationVersion[]> {
     try {
       return await apiGetJson<ConfigurationVersion[]>(`/api/tools/configs/${configId}/versions/breaking`);
-    } catch (error) {
+    } catch {
       const versions = this.getLocalVersions(configId);
       return versions.filter(v => v.metadata.isBreaking);
     }
@@ -362,7 +362,7 @@ export class ToolConfigVersioning {
       });
 
       return true;
-    } catch (error) {
+    } catch {
       toast({
         title: "Import failed",
         description: "Invalid version history data. Please check the file format.",

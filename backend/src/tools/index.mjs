@@ -17,7 +17,7 @@ export const runToolHeadersAnalyze = async (actor, headers) => analyzeHeaders(ac
 export const runToolHeadersFromUrl = async (actor, url) => analyzeHeadersFromUrl(actor, url);
 export const runToolMetadataAnalyze = async (actor, input) => analyzeMetadata(actor, input);
 export const runToolMetadataUploadAnalyze = async (actor, payload) => analyzeMetadataFile(actor, payload);
-export const runToolSubdomainRecon = async (_actor, _target) => ({
+export const runToolSubdomainRecon = async () => ({
   verified: false,
   target: "",
   subdomains: [],

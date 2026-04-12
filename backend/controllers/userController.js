@@ -22,7 +22,7 @@ const isDbUnavailableError = (error) =>
   String(error?.code || "").toLowerCase() === "db_unavailable" ||
   String(error?.message || "").toLowerCase().includes("database not initialized");
 
-export const getProfile = async (req, res, next) => {
+export const getProfile = async (req, res) => {
   try {
     logInfo("User profile requested", { requestId: req.requestId || "", userId: req.user?.sub || "" });
     const user = await getUserById(req.user.sub);
@@ -50,7 +50,7 @@ export const getProfile = async (req, res, next) => {
   }
 };
 
-export const updateProfile = async (req, res, next) => {
+export const updateProfile = async (req, res) => {
   try {
     logInfo("User profile update requested", { requestId: req.requestId || "", userId: req.user?.sub || "" });
     const updates = {};

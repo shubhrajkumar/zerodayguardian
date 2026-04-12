@@ -141,7 +141,7 @@ export class ToolConfigMonitoring {
         total,
         percentage: (used / total) * 100
       };
-    } catch (error) {
+    } catch {
       return { used: 0, total: 10000000, percentage: 0 };
     }
   }

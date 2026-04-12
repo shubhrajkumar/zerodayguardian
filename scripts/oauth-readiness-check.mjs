@@ -28,5 +28,5 @@ const report = {
   },
 };
 
-console.log(JSON.stringify(report, null, 2));
+process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 if (!deploymentReady) process.exit(1);

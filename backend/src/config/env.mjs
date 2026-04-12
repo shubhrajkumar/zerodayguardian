@@ -37,16 +37,6 @@ const toNum = (value, fallback) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 };
-const csv = (value = "") =>
-  String(value)
-    .split(",")
-    .map((v) => v.trim().toLowerCase())
-    .filter(Boolean);
-const splitMap = (value = "") =>
-  String(value)
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean);
 const splitCsv = (value = "") =>
   String(value)
     .split(",")
@@ -57,8 +47,6 @@ const isExplicitFalse = (value) => String(value || "").trim().toLowerCase() === 
 
 const uniqueList = (items = []) => [...new Set(items)];
 const LOCALHOST_LIKE_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "0.0.0.0"]);
-const formatOriginHost = (host) => (host.includes(":") ? `[${host}]` : host);
-
 const parseHttpUrl = (raw, envName) => {
   let parsed;
   try {

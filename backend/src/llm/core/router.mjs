@@ -41,7 +41,7 @@ export class ProviderRouter {
     return uniq([first, ...this.weightedPool.slice(this.pointer + 1), ...this.weightedPool.slice(0, this.pointer)]);
   }
 
-  orderedByMode(request = {}) {
+  orderedByMode() {
     const activeProviders = env.activeProviderOrder?.length ? env.activeProviderOrder : ["ollama"];
 
     if (env.routingMode === ROUTING_MODES.FAILOVER) {

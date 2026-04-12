@@ -16,7 +16,6 @@ import {
 import { sanitizeText } from "../../src/utils/security.mjs";
 import { formatAssistantResponse } from "../../src/services/responseFormatterV2.js";
 import {
-  appendAssistantOnly,
   clearConversationHistory,
   appendMessages,
   deleteConversationSession,

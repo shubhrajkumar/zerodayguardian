@@ -225,12 +225,12 @@ router.get("/prompts/recommendation", validateQuery(promptRecommendationQuerySch
   }
 });
 
-router.post("/telemetry/event", validateBody(telemetryEventSchema), async (req, res, next) => {
+router.post("/telemetry/event", validateBody(telemetryEventSchema), async (req, res) => {
   try {
     const actor = resolveActor({ req });
     const result = await recordTelemetryEvent(actor, req.validatedBody);
     res.status(202).json({ status: "accepted", ...result });
-  } catch (error) {
+  } catch {
     res.status(202).json({
       status: "accepted",
       degraded: true,
@@ -284,7 +284,7 @@ router.get("/tools/catalog", async (_req, res, next) => {
 
 router.use(requireAuthenticatedMutation);
 
-router.get("/dashboard", async (req, res, next) => {
+router.get("/dashboard", async (req, res) => {
   try {
     const actor = resolveActor({ req });
     const cacheKey = dashboardCacheKey(actor);
@@ -370,12 +370,12 @@ router.post("/training/labs/beginner/complete", validateBody(trainingLabComplete
   }
 });
 
-router.get("/progression/me", async (req, res, next) => {
+router.get("/progression/me", async (req, res) => {
   try {
     const actor = resolveTrainingActor({ req });
     const profile = await getProgressionProfile(actor);
     res.json({ status: "ok", profile });
-  } catch (error) {
+  } catch {
     res.json({
       status: "ok",
       degraded: true,

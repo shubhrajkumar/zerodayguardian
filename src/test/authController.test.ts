@@ -351,6 +351,7 @@ describe("Auth Controller Unit Tests", () => {
   describe("safeRecordAuthSuccess/Failure", () => {
     it("should catch errors silently in safeRecordAuthSuccess", async () => {
       const safeRecordAuthSuccess = async (payload: { identifier: string; userId?: string }) => {
+        void payload;
         try {
           throw new Error("Audit service unavailable");
         } catch {
@@ -363,6 +364,7 @@ describe("Auth Controller Unit Tests", () => {
 
     it("should catch errors silently in safeRecordAuthFailure", async () => {
       const safeRecordAuthFailure = async (payload: { identifier: string; reason?: string }) => {
+        void payload;
         try {
           throw new Error("Audit service unavailable");
         } catch {
@@ -395,7 +397,7 @@ describe("Auth Controller Integration Tests", () => {
           const { accessToken } = await mockSetAuthCookies(res, user);
           await mockRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
           res.status(201).json({ status: "ok", accessToken });
-        } catch (error) {
+        } catch {
           res.status(500).json({ status: "error" });
         }
       };
@@ -461,7 +463,7 @@ describe("Auth Controller Integration Tests", () => {
           await mockRevokeRefreshSession(req.cookies?.neurobot_rt);
           mockClearAuthCookies(res);
           res.status(204).end();
-        } catch (error) {
+        } catch {
           res.status(500).json({ status: "error" });
         }
       };

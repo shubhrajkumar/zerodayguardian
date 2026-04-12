@@ -150,7 +150,6 @@ export const runDockerSandboxCommand = async (command) => {
   return await new Promise((resolve) => {
     const child = spawn("docker", dockerArgs, { windowsHide: true });
     let stdout = "";
-    let stderr = "";
     const killTimer = setTimeout(() => {
       child.kill();
       resolve({
@@ -208,7 +207,6 @@ export const getDockerSandboxStatus = async () => {
   const image = env.labDockerImage || "zeroday-lab-sandbox:latest";
   return await new Promise((resolve) => {
     const child = spawn("docker", ["image", "inspect", image], { windowsHide: true });
-    let stderr = "";
     const killTimer = setTimeout(() => {
       child.kill();
       resolve({
@@ -222,9 +220,6 @@ export const getDockerSandboxStatus = async () => {
       });
     }, 5000);
 
-    child.stderr.on("data", (data) => {
-      stderr += data.toString();
-    });
     child.on("error", (error) => {
       clearTimeout(killTimer);
       resolve({

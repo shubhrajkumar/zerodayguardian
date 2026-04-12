@@ -4,7 +4,7 @@ import { processWeeklyDigests } from "../backend/src/services/platformGrowthServ
 const run = async () => {
   await connectDb();
   const result = await processWeeklyDigests();
-  console.log(JSON.stringify(result, null, 2));
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   await closeDb();
 };
 

@@ -1,14 +1,5 @@
 import { createHash } from "node:crypto";
 import net from "node:net";
-import { getDb } from "../../src/config/db.mjs";
-
-const NO_VERIFIED_DATA = "No verified data.";
-const learningUnavailableError = () => {
-  const error = new Error(NO_VERIFIED_DATA);
-  error.status = 503;
-  error.code = "no_verified_data";
-  return error;
-};
 
 const COLLECTIONS = {
   profiles: "training_profiles",

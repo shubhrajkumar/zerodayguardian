@@ -189,6 +189,7 @@ const buildAiErrorState = (err) => {
 };
 
 export const errorHandler = (err, req, res, _next) => {
+  void _next;
   if (res.headersSent) return;
   if (isZodError(err)) {
     res.status(400).json({

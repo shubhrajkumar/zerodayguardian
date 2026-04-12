@@ -1,6 +1,5 @@
 const ToolConfig = require('../database/models/ToolConfig');
 const AuditLog = require('../monitoring/audit-logs');
-const mongoose = require('mongoose');
 
 class ConfigurationAnalytics {
   /**

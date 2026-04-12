@@ -2,7 +2,7 @@ import { OsintQuery } from "../src/models/OsintQuery.mjs";
 import { scanDomainOsint, scanEmailOsint, scanIpOsint } from "../src/services/osintService.mjs";
 import { logError, logInfo } from "../src/utils/logger.mjs";
 
-const runScan = async ({ req, res, next, query, modules, scanner }) => {
+const runScan = async ({ req, res, query, modules, scanner }) => {
   try {
     logInfo("OSINT scan requested", {
       requestId: req.requestId || "",
@@ -36,11 +36,11 @@ const runScan = async ({ req, res, next, query, modules, scanner }) => {
   }
 };
 
-export const runEmailScan = async (req, res, next) =>
-  runScan({ req, res, next, query: req.validatedBody.email, modules: ["email", "dns"], scanner: scanEmailOsint });
+export const runEmailScan = async (req, res) =>
+  runScan({ req, res, query: req.validatedBody.email, modules: ["email", "dns"], scanner: scanEmailOsint });
 
-export const runDomainScan = async (req, res, next) =>
-  runScan({ req, res, next, query: req.validatedBody.domain, modules: ["domain", "whois", "dns"], scanner: scanDomainOsint });
+export const runDomainScan = async (req, res) =>
+  runScan({ req, res, query: req.validatedBody.domain, modules: ["domain", "whois", "dns"], scanner: scanDomainOsint });
 
-export const runIpScan = async (req, res, next) =>
-  runScan({ req, res, next, query: req.validatedBody.ip, modules: ["ip", "rdns", "geoip"], scanner: scanIpOsint });
+export const runIpScan = async (req, res) =>
+  runScan({ req, res, query: req.validatedBody.ip, modules: ["ip", "rdns", "geoip"], scanner: scanIpOsint });

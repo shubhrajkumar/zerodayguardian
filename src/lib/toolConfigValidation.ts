@@ -94,7 +94,7 @@ export class ToolConfigValidator {
     try {
       // Check if settings can be serialized
       JSON.stringify(settings);
-    } catch (error) {
+    } catch {
       errors.push("Configuration settings contain invalid data that cannot be saved");
     }
 

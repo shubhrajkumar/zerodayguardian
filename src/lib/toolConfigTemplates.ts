@@ -96,7 +96,7 @@ export class ToolConfigTemplates {
       // Try to get from backend first
       const backendTemplates = await apiGetJson<ConfigurationTemplate[]>(`/api/tools/templates${toolId ? `?toolId=${toolId}` : ''}`);
       return backendTemplates;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const localTemplates = this.getLocalTemplates();
       const filtered = toolId ? localTemplates.filter(t => t.toolId === toolId) : localTemplates;
@@ -118,7 +118,7 @@ export class ToolConfigTemplates {
         description: `${template.name} has been created successfully.`
       });
       return createdTemplate;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const localTemplates = this.getLocalTemplates();
       const newTemplate: ConfigurationTemplate = {
@@ -144,7 +144,7 @@ export class ToolConfigTemplates {
         description: "Template has been updated successfully."
       });
       return updatedTemplate;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const localTemplates = this.getLocalTemplates();
       const index = localTemplates.findIndex(t => t.id === id);
@@ -170,7 +170,7 @@ export class ToolConfigTemplates {
         description: "Template has been deleted successfully."
       });
       return true;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const localTemplates = this.getLocalTemplates();
       const index = localTemplates.findIndex(t => t.id === id);
@@ -225,7 +225,7 @@ export class ToolConfigTemplates {
         description: "Template sharing settings updated successfully."
       });
       return true;
-    } catch (error) {
+    } catch {
       toast({
         title: "Share failed",
         description: "Failed to update template sharing settings.",
@@ -238,7 +238,7 @@ export class ToolConfigTemplates {
   static async getTemplateStats(templateId: string): Promise<TemplateUsageStats | null> {
     try {
       return await apiGetJson<TemplateUsageStats>(`/api/tools/templates/${templateId}/stats`);
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -252,7 +252,7 @@ export class ToolConfigTemplates {
       }
       
       return await apiGetJson<ConfigurationTemplate[]>(`/api/tools/templates/recommended?${params}`);
-    } catch (error) {
+    } catch {
       // Fallback to local recommendations
       const templates = this.getLocalTemplates().filter(t => t.toolId === toolId);
       return templates.slice(0, 5); // Return top 5
@@ -290,7 +290,7 @@ export class ToolConfigTemplates {
         description: "Template has been imported successfully."
       });
       return true;
-    } catch (error) {
+    } catch {
       toast({
         title: "Import failed",
         description: "Invalid template data. Please check the file format.",
@@ -360,7 +360,7 @@ export class ToolConfigTemplates {
       if (category) params.append('category', category);
 
       return await apiGetJson<ConfigurationTemplate[]>(`/api/tools/templates/search?${params}`);
-    } catch (error) {
+    } catch {
       // Fallback to local search
       const templates = this.getLocalTemplates();
       const filtered = templates.filter(t => {
@@ -392,9 +392,8 @@ export class ToolConfigTemplates {
         configId,
         timestamp: new Date().toISOString()
       });
-    } catch (error) {
-      // Silent fail for usage tracking
-      console.debug("Failed to track template usage:", error);
+    } catch {
+      return;
     }
   }
 
@@ -434,7 +433,7 @@ export class ToolConfigTemplates {
       });
 
       return true;
-    } catch (error) {
+    } catch {
       toast({
         title: "Import failed",
         description: "Invalid template data. Please check the file format.",

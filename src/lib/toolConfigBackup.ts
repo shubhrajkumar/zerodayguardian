@@ -73,7 +73,7 @@ export class ToolConfigBackup {
           metadata,
           data: backupString
         });
-      } catch (error) {
+      } catch {
         // Fallback to local storage
         const backups = this.getLocalBackups();
         backups.push({ metadata, data: backupString });
@@ -104,7 +104,7 @@ export class ToolConfigBackup {
       // Try to get from backend first
       try {
         backupData = await apiGetJson<ConfigImportExport>(`/api/tools/backups/${backupId}/data`);
-      } catch (error) {
+      } catch {
         // Fallback to local storage
         const backups = this.getLocalBackups();
         const backup = backups.find(b => b.metadata.id === backupId);
@@ -166,7 +166,7 @@ export class ToolConfigBackup {
       });
 
       return true;
-    } catch (error) {
+    } catch {
       toast({
         title: "Restore failed",
         description: "Failed to restore backup. Please try again.",
@@ -180,7 +180,7 @@ export class ToolConfigBackup {
   static async getBackups(): Promise<BackupMetadata[]> {
     try {
       return await apiGetJson<BackupMetadata[]>('/api/tools/backups');
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       return this.getLocalBackups().map(b => b.metadata);
     }
@@ -194,7 +194,7 @@ export class ToolConfigBackup {
         description: "Backup has been deleted successfully."
       });
       return true;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const backups = this.getLocalBackups();
       const index = backups.findIndex(b => b.metadata.id === backupId);
@@ -217,7 +217,7 @@ export class ToolConfigBackup {
       const backupData = await apiGetJson<ConfigImportExport>(`/api/tools/backups/${backupId}/data`);
       const dataString = JSON.stringify(backupData, null, 2);
       this.downloadFile(dataString, `backup-${backupId}.json`);
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const backups = this.getLocalBackups();
       const backup = backups.find(b => b.metadata.id === backupId);
@@ -249,7 +249,7 @@ export class ToolConfigBackup {
         description: `${createdSchedule.name} has been scheduled successfully.`
       });
       return createdSchedule;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const schedules = this.getLocalSchedules();
       schedules.push(newSchedule);
@@ -267,7 +267,7 @@ export class ToolConfigBackup {
     try {
       const updatedSchedule = await apiPutJson<BackupSchedule>(`/api/tools/backups/schedules/${id}`, updates);
       return updatedSchedule;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const schedules = this.getLocalSchedules();
       const index = schedules.findIndex(s => s.id === id);
@@ -284,7 +284,7 @@ export class ToolConfigBackup {
     try {
       await apiDeleteJson(`/api/tools/backups/schedules/${scheduleId}`);
       return true;
-    } catch (error) {
+    } catch {
       // Fallback to local storage
       const schedules = this.getLocalSchedules();
       const index = schedules.findIndex(s => s.id === scheduleId);
@@ -300,7 +300,7 @@ export class ToolConfigBackup {
   static async getSchedules(): Promise<BackupSchedule[]> {
     try {
       return await apiGetJson<BackupSchedule[]>('/api/tools/backups/schedules');
-    } catch (error) {
+    } catch {
       return this.getLocalSchedules();
     }
   }
@@ -349,7 +349,7 @@ export class ToolConfigBackup {
         }
       }
 
-    } catch (error) {
+    } catch {
       errors.push("Invalid JSON format");
     }
 
@@ -434,7 +434,7 @@ export class ToolConfigBackup {
         title: "Backup optimization complete",
         description: "Old backups have been cleaned up according to retention policies."
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Optimization failed",
         description: "Failed to optimize backups.",

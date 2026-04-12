@@ -137,11 +137,11 @@ router.get("/architecture", (_req, res) => {
   res.json({ status: "ok", architecture: platformArchitecture });
 });
 
-router.get("/growth/overview", async (req, res, next) => {
+router.get("/growth/overview", async (req, res) => {
   try {
     const overview = await getPlatformGrowthOverview({ userId: req.user.sub });
     res.json({ status: "ok", overview });
-  } catch (error) {
+  } catch {
     res.json({
       status: "ok",
       degraded: true,

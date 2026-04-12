@@ -293,7 +293,7 @@ export const getCsrf = async (req, res) => {
   }
 };
 
-export const googleOauthCallback = async (req, res, next) => {
+export const googleOauthCallback = async (req, res) => {
   try {
     const code = String(req.query?.code || "").trim();
     const state = String(req.query?.state || "").trim();
