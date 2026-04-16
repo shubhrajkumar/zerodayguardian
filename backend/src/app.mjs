@@ -409,34 +409,32 @@ export const createApp = () => {
     });
   });
   app.get("/api/auth/providers", (req, res) => {
-    const startUrl = buildBackendUrl(req, buildPublicAuthPath(req, "/google"));
-    const callbackUrl = buildBackendUrl(req, buildPublicAuthPath(req, "/google/callback"));
     res.json({
       status: "ok",
       google: {
         enabled: Boolean(env.googleOauthClientId),
         clientId: env.googleOauthClientId || "",
-        backendFlow: true,
-        startUrl,
-        callbackUrl,
-        redirectUri: env.googleRedirectUri || callbackUrl,
+        backendFlow: false,
+        popupFlow: true,
+        startUrl: "",
+        callbackUrl: "",
+        redirectUri: "",
         frontendOrigin: env.appBaseUrl || "",
         authorizedOrigins: env.googleAuthorizedOrigins || [],
       },
     });
   });
   app.get("/auth/providers", (req, res) => {
-    const startUrl = buildBackendUrl(req, buildPublicAuthPath(req, "/google"));
-    const callbackUrl = buildBackendUrl(req, buildPublicAuthPath(req, "/google/callback"));
     res.json({
       status: "ok",
       google: {
         enabled: Boolean(env.googleOauthClientId),
         clientId: env.googleOauthClientId || "",
-        backendFlow: true,
-        startUrl,
-        callbackUrl,
-        redirectUri: env.googleRedirectUri || callbackUrl,
+        backendFlow: false,
+        popupFlow: true,
+        startUrl: "",
+        callbackUrl: "",
+        redirectUri: "",
         frontendOrigin: env.appBaseUrl || "",
         authorizedOrigins: env.googleAuthorizedOrigins || [],
       },

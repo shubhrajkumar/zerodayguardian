@@ -61,16 +61,18 @@ export default async function handler(req, res) {
     console.error("[Vercel API] Function bootstrap failed:", error instanceof Error ? error.message : String(error));
 
     if (isAuthProvidersRequest(req)) {
+      const googleClientId = String(process.env.GOOGLE_OAUTH_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "").trim();
       return res.status(200).json({
         status: "ok",
         degraded: true,
         google: {
-          enabled: Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID || ""),
-          clientId: String(process.env.GOOGLE_OAUTH_CLIENT_ID || ""),
-          backendFlow: true,
+          enabled: Boolean(googleClientId),
+          clientId: googleClientId,
+          backendFlow: false,
+          popupFlow: true,
           startUrl: "",
           callbackUrl: "",
-          redirectUri: String(process.env.GOOGLE_REDIRECT_URI || ""),
+          redirectUri: "",
           frontendOrigin: String(process.env.APP_BASE_URL || ""),
           authorizedOrigins: String(process.env.GOOGLE_AUTHORIZED_ORIGINS || process.env.CORS_ORIGIN || "")
             .split(",")
@@ -84,7 +86,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         status: "ok",
         degraded: true,
-        csrfToken: true,
+        csrfToken: "",
       });
     }
 

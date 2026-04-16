@@ -3,6 +3,7 @@ import {
   authenticateGoogleUser,
   buildGoogleOauthRedirectUrl,
   clearAuthCookies,
+  getUserById,
   loginUser,
   refreshAuth,
   registerUser,
@@ -73,6 +74,19 @@ const toPublicUser = (user) =>
         authProvider: String(user.authProvider || "local"),
         emailVerified: Boolean(user.emailVerified),
         avatarUrl: String(user.avatarUrl || ""),
+      }
+    : null;
+
+const toTokenBackedUser = (authUser) =>
+  authUser
+    ? {
+        id: String(authUser?.sub || ""),
+        name: String(authUser?.name || authUser?.preferred_username || "Operator"),
+        email: String(authUser?.email || ""),
+        role: String(authUser?.role || "user"),
+        authProvider: String(authUser?.authProvider || "local"),
+        emailVerified: Boolean(authUser?.emailVerified || authUser?.email_verified),
+        avatarUrl: String(authUser?.avatarUrl || ""),
       }
     : null;
 
@@ -239,17 +253,16 @@ export const logout = async (req, res) => {
 
 export const getAuthProviders = async (req, res) => {
   try {
-    const startUrl = resolveBackendAuthUrl(req, resolvePublicAuthPath(req, "/google"));
-    const callbackUrl = resolveBackendAuthUrl(req, resolvePublicAuthPath(req, "/google/callback"));
     res.json({
       status: "ok",
       google: {
         enabled: Boolean(env.googleOauthClientId),
         clientId: env.googleOauthClientId || "",
-        backendFlow: true,
-        startUrl,
-        callbackUrl,
-        redirectUri: env.googleRedirectUri || callbackUrl,
+        backendFlow: false,
+        popupFlow: true,
+        startUrl: "",
+        callbackUrl: "",
+        redirectUri: "",
         frontendOrigin: env.appBaseUrl || "",
         authorizedOrigins: env.googleAuthorizedOrigins || [],
       },
@@ -261,7 +274,8 @@ export const getAuthProviders = async (req, res) => {
       google: {
         enabled: false,
         clientId: "",
-        backendFlow: true,
+        backendFlow: false,
+        popupFlow: true,
         startUrl: "",
         callbackUrl: "",
         redirectUri: "",
@@ -275,15 +289,46 @@ export const getAuthProviders = async (req, res) => {
 export const getCsrf = async (req, res) => {
   try {
     res.setHeader("Cache-Control", "no-store");
+    const token = String(req.csrfToken || req.cookies?.neurobot_csrf || "").trim();
     logInfo("Auth CSRF token requested", {
       requestId: req.requestId || "",
       origin: String(req.headers.origin || ""),
       hasCsrfCookie: Boolean(req.cookies?.neurobot_csrf),
-      csrfToken: redact(req.csrfToken || ""),
+      csrfToken: redact(token),
     });
-    res.json({ status: "ok", csrfToken: String(req.csrfToken || "") });
+    res.json({ status: "ok", csrfToken: token });
   } catch (error) {
     logError("Auth CSRF response failed", error, { requestId: req.requestId || "" });
+    res.status(500).json({
+      status: "error",
+      code: error.code || "INTERNAL_SERVER_ERROR",
+      message: error.message || "An unexpected error occurred.",
+      requestId: req.requestId || "",
+    });
+  }
+};
+
+export const getAuthStatus = async (req, res) => {
+  try {
+    if (!req.user?.sub) {
+      res.json({
+        status: "ok",
+        authenticated: false,
+        user: null,
+        requestId: req.requestId || "",
+      });
+      return;
+    }
+
+    const dbUser = await getUserById(req.user.sub).catch(() => null);
+    res.json({
+      status: "ok",
+      authenticated: true,
+      user: toPublicUser(dbUser) || toTokenBackedUser(req.user),
+      requestId: req.requestId || "",
+    });
+  } catch (error) {
+    logError("Auth status lookup failed", error, { requestId: req.requestId || "", userId: req.user?.sub || "" });
     res.status(500).json({
       status: "error",
       code: error.code || "INTERNAL_SERVER_ERROR",

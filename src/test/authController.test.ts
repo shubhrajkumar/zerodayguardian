@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock browser globals before any imports use them
 global.localStorage = {
@@ -7,7 +7,9 @@ global.localStorage = {
   removeItem: vi.fn(),
   clear: vi.fn(),
   key: vi.fn(),
-  get length() { return 0; },
+  get length() {
+    return 0;
+  },
 };
 
 global.sessionStorage = {
@@ -16,14 +18,15 @@ global.sessionStorage = {
   removeItem: vi.fn(),
   clear: vi.fn(),
   key: vi.fn(),
-  get length() { return 0; },
+  get length() {
+    return 0;
+  },
 };
 
 global.document = {
   cookie: "",
 } as unknown as Document;
 
-// Mock dependencies
 vi.mock("@/lib/apiConfig", () => ({
   resolveApiUrl: (url: string) => `/api${url}`,
   resolveBackendUrl: (url: string) => `/auth${url}`,
@@ -38,7 +41,59 @@ vi.mock("@/hooks/use-toast", () => ({
   toast: vi.fn(),
 }));
 
-const mockUser = {
+type MockUser = {
+  _id: { toString: () => string };
+  name?: string;
+  email?: string;
+  role?: string;
+  authProvider?: string;
+  emailVerified?: boolean;
+  avatarUrl?: string;
+};
+
+type MockReq = {
+  validatedBody: { email: string; password: string };
+  requestId: string;
+  headers: Record<string, string>;
+  cookies: Record<string, string>;
+  ip: string;
+  query: Record<string, string>;
+};
+
+type MockRes = {
+  status: ReturnType<typeof vi.fn>;
+  json: ReturnType<typeof vi.fn>;
+  redirect: ReturnType<typeof vi.fn>;
+  setHeader: ReturnType<typeof vi.fn>;
+  cookie: ReturnType<typeof vi.fn>;
+  end: ReturnType<typeof vi.fn>;
+};
+
+type AuthErrorShape = {
+  status?: number;
+  statusCode?: number;
+  code?: string;
+  message?: string;
+  retryAfterSec?: number;
+};
+
+type RefreshErrorShape = {
+  message?: string;
+  code?: string;
+  status?: number;
+  statusCode?: number;
+};
+
+type NormalizedRefreshError = RefreshErrorShape & Error;
+
+type ProvidersEnv = {
+  googleOauthClientId: string;
+  googleRedirectUri: string;
+  appBaseUrl: string;
+  googleAuthorizedOrigins: string[];
+};
+
+const mockUser: MockUser = {
   _id: { toString: () => "user123" },
   name: "Test User",
   email: "test@example.com",
@@ -48,7 +103,7 @@ const mockUser = {
   avatarUrl: "",
 };
 
-const mockReq = (overrides = {}) => ({
+const mockReq = (overrides: Partial<MockReq> = {}): MockReq => ({
   validatedBody: { email: "test@example.com", password: "password123" },
   requestId: "req-123",
   headers: {},
@@ -58,13 +113,21 @@ const mockReq = (overrides = {}) => ({
   ...overrides,
 });
 
-const mockRes = () => {
-  const res = {};
-  res.status = vi.fn().mockReturnThis();
-  res.json = vi.fn().mockReturnThis();
-  res.redirect = vi.fn().mockReturnThis();
-  res.setHeader = vi.fn().mockReturnThis();
-  res.cookie = vi.fn().mockReturnThis();
+const mockRes = (): MockRes => {
+  const res = {
+    status: vi.fn(),
+    json: vi.fn(),
+    redirect: vi.fn(),
+    setHeader: vi.fn(),
+    cookie: vi.fn(),
+    end: vi.fn(),
+  } as MockRes;
+  res.status.mockReturnValue(res);
+  res.json.mockReturnValue(res);
+  res.redirect.mockReturnValue(res);
+  res.setHeader.mockReturnValue(res);
+  res.cookie.mockReturnValue(res);
+  res.end.mockReturnValue(res);
   return res;
 };
 
@@ -76,7 +139,7 @@ describe("Auth Controller Unit Tests", () => {
 
   describe("toPublicUser transformation", () => {
     it("should transform user object to public format", () => {
-      const toPublicUser = (user: typeof mockUser | null) =>
+      const toPublicUser = (user: MockUser | null) =>
         user
           ? {
               id: user._id?.toString?.() || "",
@@ -102,7 +165,7 @@ describe("Auth Controller Unit Tests", () => {
     });
 
     it("should return null for null user", () => {
-      const toPublicUser = (user: typeof mockUser | null) =>
+      const toPublicUser = (user: MockUser | null) =>
         user
           ? {
               id: user._id?.toString?.() || "",
@@ -119,7 +182,7 @@ describe("Auth Controller Unit Tests", () => {
     });
 
     it("should handle user with missing optional fields", () => {
-      const toPublicUser = (user: typeof mockUser | null) =>
+      const toPublicUser = (user: MockUser | null) =>
         user
           ? {
               id: user._id?.toString?.() || "",
@@ -132,7 +195,7 @@ describe("Auth Controller Unit Tests", () => {
             }
           : null;
 
-      const partialUser = { _id: { toString: () => "456" }, name: undefined, email: "partial@test.com" } as unknown as typeof mockUser;
+      const partialUser: MockUser = { _id: { toString: () => "456" }, email: "partial@test.com" };
       const result = toPublicUser(partialUser);
       expect(result?.name).toBe("");
       expect(result?.role).toBe("user");
@@ -142,7 +205,7 @@ describe("Auth Controller Unit Tests", () => {
 
   describe("sendAuthError", () => {
     it("should format error response correctly", () => {
-      const sendAuthError = (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>, error: { status?: number; statusCode?: number; code?: string; message?: string; retryAfterSec?: number }) => {
+      const sendAuthError = (req: MockReq, res: MockRes, error: AuthErrorShape) => {
         const status = Number(error?.status || error?.statusCode || 500) || 500;
         res.status(status).json({
           status: "error",
@@ -169,7 +232,7 @@ describe("Auth Controller Unit Tests", () => {
     });
 
     it("should default to 500 status and INTERNAL_SERVER_ERROR code", () => {
-      const sendAuthError = (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>, error: { status?: number; statusCode?: number; code?: string; message?: string }) => {
+      const sendAuthError = (req: MockReq, res: MockRes, error: AuthErrorShape) => {
         const status = Number(error?.status || error?.statusCode || 500) || 500;
         res.status(status).json({
           status: "error",
@@ -194,7 +257,7 @@ describe("Auth Controller Unit Tests", () => {
     });
 
     it("should include retryAfterSec when provided", () => {
-      const sendAuthError = (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>, error: { status?: number; statusCode?: number; code?: string; message?: string; retryAfterSec?: number }) => {
+      const sendAuthError = (req: MockReq, res: MockRes, error: AuthErrorShape) => {
         const status = Number(error?.status || error?.statusCode || 500) || 500;
         res.status(status).json({
           status: "error",
@@ -211,15 +274,13 @@ describe("Auth Controller Unit Tests", () => {
 
       sendAuthError(req, res, error);
 
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ retryAfterSec: 60 })
-      );
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ retryAfterSec: 60 }));
     });
   });
 
   describe("normalizeRefreshError", () => {
     it("should normalize refresh token errors to 401", () => {
-      const normalizeRefreshError = (error: { message?: string; code?: string; status?: number; statusCode?: number } | undefined) => {
+      const normalizeRefreshError = (error: RefreshErrorShape | undefined): NormalizedRefreshError | RefreshErrorShape => {
         const current = error || {};
         const message = String(current.message || "").toLowerCase();
         const code = String(current.code || "").toLowerCase();
@@ -231,7 +292,7 @@ describe("Auth Controller Unit Tests", () => {
           message.includes("token") ||
           message.includes("jwt")
         ) {
-          const normalized = new Error(current.message || "Refresh session unavailable");
+          const normalized = new Error(current.message || "Refresh session unavailable") as NormalizedRefreshError;
           normalized.status = 401;
           normalized.code = current.code || "refresh_unavailable";
           return normalized;
@@ -241,14 +302,14 @@ describe("Auth Controller Unit Tests", () => {
       };
 
       const error = { message: "jwt expired", code: "TOKEN_EXPIRED" };
-      const result = normalizeRefreshError(error);
+      const result = normalizeRefreshError(error) as NormalizedRefreshError;
 
       expect(result.status).toBe(401);
       expect(result.code).toBe("TOKEN_EXPIRED");
     });
 
     it("should preserve status for non-token errors", () => {
-      const normalizeRefreshError = (error: { message?: string; code?: string; status?: number; statusCode?: number } | undefined) => {
+      const normalizeRefreshError = (error: RefreshErrorShape | undefined): NormalizedRefreshError | RefreshErrorShape => {
         const current = error || {};
         const message = String(current.message || "").toLowerCase();
         const code = String(current.code || "").toLowerCase();
@@ -260,7 +321,7 @@ describe("Auth Controller Unit Tests", () => {
           message.includes("token") ||
           message.includes("jwt")
         ) {
-          const normalized = new Error(current.message || "Refresh session unavailable");
+          const normalized = new Error(current.message || "Refresh session unavailable") as NormalizedRefreshError;
           normalized.status = 401;
           normalized.code = current.code || "refresh_unavailable";
           return normalized;
@@ -276,7 +337,7 @@ describe("Auth Controller Unit Tests", () => {
     });
 
     it("should return input for unknown errors", () => {
-      const normalizeRefreshError = (error: { message?: string; code?: string; status?: number; statusCode?: number } | undefined) => {
+      const normalizeRefreshError = (error: RefreshErrorShape | undefined): NormalizedRefreshError | RefreshErrorShape => {
         const current = error || {};
         const message = String(current.message || "").toLowerCase();
         const code = String(current.code || "").toLowerCase();
@@ -288,7 +349,7 @@ describe("Auth Controller Unit Tests", () => {
           message.includes("token") ||
           message.includes("jwt")
         ) {
-          const normalized = new Error(current.message || "Refresh session unavailable");
+          const normalized = new Error(current.message || "Refresh session unavailable") as NormalizedRefreshError;
           normalized.status = 401;
           normalized.code = current.code || "refresh_unavailable";
           return normalized;
@@ -337,11 +398,10 @@ describe("Auth Controller Unit Tests", () => {
     });
 
     it("should append query params correctly", () => {
-      const appendQueryParam = (target: string, key: string, value: string) => {
-        return target.includes("?")
+      const appendQueryParam = (target: string, key: string, value: string) =>
+        target.includes("?")
           ? `${target}&${key}=${encodeURIComponent(value)}`
           : `${target}?${key}=${encodeURIComponent(value)}`;
-      };
 
       expect(appendQueryParam("/auth?error=1", "oauth", "google")).toBe("/auth?error=1&oauth=google");
       expect(appendQueryParam("/auth", "oauth", "google")).toBe("/auth?oauth=google");
@@ -389,8 +449,7 @@ describe("Auth Controller Integration Tests", () => {
       vi.stubGlobal("setAuthCookies", mockSetAuthCookies);
       vi.stubGlobal("assertAuthAttemptAllowed", mockAssertAuthAttemptAllowed);
 
-      // Simulate signup controller logic
-      const signup = async (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>) => {
+      const signup = async (req: MockReq, res: MockRes) => {
         try {
           await mockAssertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
           const user = await mockRegisterUser(req.validatedBody);
@@ -411,9 +470,7 @@ describe("Auth Controller Integration Tests", () => {
       expect(mockRegisterUser).toHaveBeenCalledWith(req.validatedBody);
       expect(mockSetAuthCookies).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "ok", accessToken: "mock-token-123" })
-      );
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ status: "ok", accessToken: "mock-token-123" }));
     });
 
     it("should handle login failure gracefully", async () => {
@@ -423,7 +480,7 @@ describe("Auth Controller Integration Tests", () => {
       vi.stubGlobal("loginUser", mockLoginUser);
       vi.stubGlobal("assertAuthAttemptAllowed", mockAssertAuthAttemptAllowed);
 
-      const login = async (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>) => {
+      const login = async (req: MockReq, res: MockRes) => {
         try {
           await mockAssertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
           await mockLoginUser(req.validatedBody);
@@ -443,12 +500,7 @@ describe("Auth Controller Integration Tests", () => {
       await login(req, res);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: "error",
-          code: "invalid_credentials",
-        })
-      );
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ status: "error", code: "invalid_credentials" }));
     });
 
     it("should handle logout with refresh token revocation", async () => {
@@ -458,7 +510,7 @@ describe("Auth Controller Integration Tests", () => {
       vi.stubGlobal("revokeRefreshSession", mockRevokeRefreshSession);
       vi.stubGlobal("clearAuthCookies", mockClearAuthCookies);
 
-      const logout = async (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>) => {
+      const logout = async (req: MockReq, res: MockRes) => {
         try {
           await mockRevokeRefreshSession(req.cookies?.neurobot_rt);
           mockClearAuthCookies(res);
@@ -485,7 +537,7 @@ describe("Auth Controller Integration Tests", () => {
 
       vi.stubGlobal("buildGoogleOauthRedirectUrl", mockBuildGoogleOauthRedirectUrl);
 
-      const startGoogleOauth = async (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>) => {
+      const startGoogleOauth = async (req: MockReq, res: MockRes) => {
         const next = String(req.query?.next || "").trim();
         const redirectUrl = mockBuildGoogleOauthRedirectUrl({ state: next || "" });
         res.redirect(302, redirectUrl);
@@ -505,7 +557,7 @@ describe("Auth Controller Integration Tests", () => {
 
       vi.stubGlobal("resolveAppRedirect", mockResolveAppRedirect);
 
-      const googleOauthCallback = async (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>) => {
+      const googleOauthCallback = async (req: MockReq, res: MockRes) => {
         const code = String(req.query?.code || "").trim();
         if (!code) {
           const failureBase = mockResolveAppRedirect("/auth?error=oauth_failed", "/auth?error=oauth_failed");
@@ -527,7 +579,7 @@ describe("Auth Controller Integration Tests", () => {
 
   describe("CSRF protection", () => {
     it("should return CSRF token", async () => {
-      const getCsrf = async (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>) => {
+      const getCsrf = async (req: MockReq, res: MockRes) => {
         res.setHeader("Cache-Control", "no-store");
         res.json({ status: "ok", csrfToken: String(req.requestId || "csrf-token-xyz") });
       };
@@ -547,21 +599,22 @@ describe("Auth Controller Integration Tests", () => {
 
   describe("Auth providers endpoint", () => {
     it("should return Google OAuth configuration when enabled", () => {
-      const mockEnv = {
+      const mockEnv: ProvidersEnv = {
         googleOauthClientId: "client-id-123",
         googleRedirectUri: "https://api.example.com/auth/google/callback",
         appBaseUrl: "https://app.example.com",
         googleAuthorizedOrigins: ["https://app.example.com"],
       };
 
-      const getAuthProviders = (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>, env: typeof mockEnv) => {
+      const getAuthProviders = (_req: MockReq, res: MockRes, env: ProvidersEnv) => {
         res.json({
           status: "ok",
           google: {
             enabled: Boolean(env.googleOauthClientId),
             clientId: env.googleOauthClientId || "",
-            backendFlow: true,
-            redirectUri: env.googleRedirectUri || "https://api.example.com/auth/google/callback",
+            backendFlow: false,
+            popupFlow: true,
+            redirectUri: "",
             frontendOrigin: env.appBaseUrl || "",
             authorizedOrigins: env.googleAuthorizedOrigins || [],
           },
@@ -576,8 +629,9 @@ describe("Auth Controller Integration Tests", () => {
         google: {
           enabled: true,
           clientId: "client-id-123",
-          backendFlow: true,
-          redirectUri: "https://api.example.com/auth/google/callback",
+          backendFlow: false,
+          popupFlow: true,
+          redirectUri: "",
           frontendOrigin: "https://app.example.com",
           authorizedOrigins: ["https://app.example.com"],
         },
@@ -585,20 +639,21 @@ describe("Auth Controller Integration Tests", () => {
     });
 
     it("should return disabled Google OAuth when not configured", () => {
-      const mockEnv = {
+      const mockEnv: ProvidersEnv = {
         googleOauthClientId: "",
         googleRedirectUri: "",
         appBaseUrl: "https://app.example.com",
         googleAuthorizedOrigins: [],
       };
 
-      const getAuthProviders = (req: ReturnType<typeof mockReq>, res: ReturnType<typeof mockRes>, env: typeof mockEnv) => {
+      const getAuthProviders = (_req: MockReq, res: MockRes, env: ProvidersEnv) => {
         res.json({
           status: "ok",
           google: {
             enabled: Boolean(env.googleOauthClientId),
             clientId: "",
-            backendFlow: true,
+            backendFlow: false,
+            popupFlow: true,
             redirectUri: "",
             frontendOrigin: env.appBaseUrl || "",
             authorizedOrigins: [],
@@ -609,7 +664,7 @@ describe("Auth Controller Integration Tests", () => {
       const res = mockRes();
       getAuthProviders(mockReq(), res, mockEnv);
 
-      const call = res.json.mock.calls[0][0];
+      const call = res.json.mock.calls[0][0] as { google: { enabled: boolean; clientId: string } };
       expect(call.google.enabled).toBe(false);
       expect(call.google.clientId).toBe("");
     });

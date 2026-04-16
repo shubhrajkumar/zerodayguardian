@@ -22,7 +22,6 @@ export const validateStartupConfig = () => {
   const hasOllama = !!String(env.ollamaBaseUrl || "").trim() && !!String(env.ollamaModel || "").trim();
   if (llmMode === "ollama" && !hasOllama) issues.push("OLLAMA_BASE_URL and OLLAMA_MODEL are required for LLM mode ollama");
 
-  requirePair(env.googleOauthClientId, env.googleOauthClientSecret, "Google OAuth", issues);
   requirePair(env.githubOauthClientId, env.githubOauthClientSecret, "GitHub OAuth", issues);
 
   if (issues.length) {

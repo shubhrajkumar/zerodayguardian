@@ -15,13 +15,22 @@ const ensureCsrfCookie = (req, res) => {
   }
   const token = randomUUID();
   req.csrfToken = token;
-  if (req.cookies && typeof req.cookies === "object") {
-    req.cookies[CSRF_COOKIE] = token;
+  if (!req.cookies || typeof req.cookies !== "object") {
+    req.cookies = {};
   }
-  res.cookie(CSRF_COOKIE, token, buildCookieOptions({
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 7,
-  }));
+  req.cookies[CSRF_COOKIE] = token;
+  try {
+    res.cookie(CSRF_COOKIE, token, buildCookieOptions({
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    }));
+  } catch (error) {
+    logWarn("Failed to set CSRF cookie", {
+      requestId: req.requestId || "",
+      error: String(error),
+      token: redact(token),
+    });
+  }
   logInfo("CSRF cookie issued", {
     requestId: req.requestId || "",
     origin: String(req.headers.origin || ""),

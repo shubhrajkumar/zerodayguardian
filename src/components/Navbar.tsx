@@ -42,7 +42,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await logout();
-    startTransition(() => navigate("/auth", { replace: true }));
+    startTransition(() => navigate("/", { replace: true }));
     setOpen(false);
   };
 

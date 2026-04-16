@@ -1,5 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { apiGetJson, apiPostJson, bootstrapAuthSession, clearAuthState, setStoredAuthState } from "@/lib/apiClient";
+import { firebaseAuth } from "@/lib/firebase";
+import { signOut } from "firebase/auth";
 
 type AuthState = "loading" | "authenticated" | "unauthenticated";
 
@@ -54,6 +56,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await apiPostJson("/api/auth/logout", {});
     } catch {
       // Ignore backend logout failures and still clear client auth state.
+    }
+    try {
+      if (firebaseAuth) {
+        await signOut(firebaseAuth);
+      }
+    } catch {
+      // Ignore Firebase logout failures and still clear client auth state.
     }
     syncAuthState(null);
   }, [syncAuthState]);

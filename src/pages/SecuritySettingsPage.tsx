@@ -23,7 +23,7 @@ const SecuritySettingsPage = () => {
   const handleLogout = async () => {
     await logout();
     toast({ title: "Logged out" });
-    navigate("/auth", { replace: true });
+    navigate("/", { replace: true });
   };
 
   return (

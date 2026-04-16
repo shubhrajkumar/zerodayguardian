@@ -358,7 +358,7 @@ export const env = {
     process.env.RENDER_EXTERNAL_URL ||
     (isProduction ? "" : `http://localhost:${Number(process.env.NEUROBOT_PORT || 8787)}`),
   cookieDomain: process.env.COOKIE_DOMAIN || "",
-  googleOauthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID || "",
+  googleOauthClientId: firstSet("GOOGLE_OAUTH_CLIENT_ID", "VITE_GOOGLE_CLIENT_ID"),
   googleOauthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || "",
   enableGoogleLocalhost:
     process.env.ENABLE_GOOGLE_LOCALHOST != null
@@ -545,10 +545,10 @@ if (!Number.isFinite(env.port) || env.port <= 0 || env.port > 65535) {
   throw new Error("[neurobot] Invalid NEUROBOT_PORT");
 }
 if (String(env.jwtSecret || "").length < 32) {
-  if (isManagedDeploy) {
-    warnDeployConfig("JWT_SECRET is shorter than 32 characters. Configure a real production secret in your deployment env.");
-  } else {
+  if (isManagedDeploy || env.nodeEnv === "production") {
     throw new Error("[neurobot] JWT_SECRET must be at least 32 characters");
+  } else {
+    warnDeployConfig("JWT_SECRET is shorter than 32 characters. Configure a real production secret for production deployments.");
   }
 }
 if (env.llmRetryMaxMs < env.llmRetryBaseMs) {

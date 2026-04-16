@@ -1,11 +1,12 @@
 import { FirebaseApp, FirebaseOptions, getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth } from "firebase/auth";
-import { Firestore, doc, getDoc, getFirestore, initializeFirestore } from "firebase/firestore";
+import type { Firestore } from "firebase/firestore";
 
 // Fill these Vite env vars in your local .env file:
 // VITE_FIREBASE_API_KEY=
 // VITE_FIREBASE_AUTH_DOMAIN=
 // VITE_FIREBASE_PROJECT_ID=
+// VITE_FIREBASE_STORAGE_BUCKET=
 // VITE_FIREBASE_APP_ID=
 // VITE_FIREBASE_MESSAGING_SENDER_ID=
 //
@@ -15,6 +16,7 @@ const firebaseConfig: FirebaseOptions = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
 };
@@ -51,20 +53,8 @@ export const firebaseApp: FirebaseApp | null = isFirebaseConfigured
     : initializeApp(firebaseConfig)
   : null;
 
-const createFirestoreDb = (app: FirebaseApp): Firestore => {
-  if (!shouldForceLongPolling) return getFirestore(app);
-
-  try {
-    return initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-    });
-  } catch {
-    return getFirestore(app);
-  }
-};
-
 export const firebaseAuth: Auth | null = firebaseApp && isFirebaseAuthEnabled ? getAuth(firebaseApp) : null;
-export const firestoreDb: Firestore | null = firebaseApp ? createFirestoreDb(firebaseApp) : null;
+export const firestoreDb: Firestore | null = null;
 
 export type FirestoreConnectionTestResult = {
   ok: boolean;
@@ -85,22 +75,14 @@ const runFirestoreConnectionTestOnce = async (): Promise<FirestoreConnectionTest
     }
 
     if (!isFirebaseConfigured || !firebaseApp || !firestoreDb) {
+      if (firebaseApp && !firestoreDb) {
+        return {
+          ok: false,
+          reason: "auth_only_mode",
+        };
+      }
       throw createFirebaseConfigError();
     }
-
-    const testRef = doc(firestoreDb, "connection_tests", "react_main_test");
-    const snapshot = await getDoc(testRef);
-
-    const data = snapshot.exists() ? snapshot.data() : { exists: false };
-    if (!snapshot.exists()) {
-      console.warn("[Firestore] Probe document does not exist, but Firestore is reachable.");
-    }
-
-    return {
-      ok: true,
-      documentPath: testRef.path,
-      data,
-    };
   } catch (error: unknown) {
     console.error("[Firebase] Connection test failed.");
 
@@ -129,6 +111,11 @@ const runFirestoreConnectionTestOnce = async (): Promise<FirestoreConnectionTest
       reason: firebaseLikeError?.code || "unknown_error",
     };
   }
+
+  return {
+    ok: false,
+    reason: shouldForceLongPolling ? "auth_only_mode" : "auth_only_mode",
+  };
 };
 
 export const runFirestoreConnectionTest = (): Promise<FirestoreConnectionTestResult> => {

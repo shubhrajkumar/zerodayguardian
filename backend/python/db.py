@@ -10,6 +10,8 @@ def load_env() -> None:
     candidates = [
         current.parents[2] / ".env",
         current.parents[1] / ".env",
+        current.parents[2] / ".env.local",
+        current.parents[1] / ".env.local",
     ]
     for env_path in candidates:
         if env_path.exists():

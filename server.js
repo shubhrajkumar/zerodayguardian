@@ -196,11 +196,7 @@ const buildPublicAuthPath = (req, suffix = "") => {
 };
 
 const buildAuthProvidersPayload = (req) => {
-  const baseUrl = derivePublicBaseUrl(req);
-  const callbackPath = buildPublicAuthPath(req, "/google/callback");
-  const startPath = buildPublicAuthPath(req, "/google");
-  const callbackUrl = baseUrl ? `${baseUrl}${callbackPath}` : "";
-  const startUrl = baseUrl ? `${baseUrl}${startPath}` : "";
+  const googleClientId = String(process.env.GOOGLE_OAUTH_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "").trim();
   const frontendOrigin =
     firstOrigin(startupPublicConfig.appBaseUrl || "") ||
     firstOrigin(startupPublicConfig.corsOrigin || "") ||
@@ -211,12 +207,13 @@ const buildAuthProvidersPayload = (req) => {
     status: "ok",
     degraded: !fullAppReady,
     google: {
-      enabled: Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID || ""),
-      clientId: String(process.env.GOOGLE_OAUTH_CLIENT_ID || ""),
-      backendFlow: true,
-      startUrl,
-      callbackUrl,
-      redirectUri: String(startupPublicConfig.googleRedirectUri || callbackUrl),
+      enabled: Boolean(googleClientId),
+      clientId: googleClientId,
+      backendFlow: false,
+      popupFlow: true,
+      startUrl: "",
+      callbackUrl: "",
+      redirectUri: "",
       frontendOrigin,
       authorizedOrigins,
     },
@@ -319,14 +316,23 @@ const buildShellCookieOptions = (req, overrides = {}) => {
 };
 
 const issueShellCsrfToken = (req, res) => {
-  const existingToken = readCookieValue(req, "neurobot_csrf");
-  const csrfToken = existingToken && existingToken.length > 8 ? existingToken : randomUUID();
-  res.cookie("neurobot_csrf", csrfToken, buildShellCookieOptions(req, {
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 7,
-  }));
-  res.setHeader("Cache-Control", "no-store");
-  res.json({ status: "ok", degraded: !fullAppReady, csrfToken });
+  try {
+    const existingToken = readCookieValue(req, "neurobot_csrf");
+    const csrfToken = existingToken && existingToken.length > 8 ? existingToken : randomUUID();
+    res.cookie("neurobot_csrf", csrfToken, buildShellCookieOptions(req, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    }));
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ status: "ok", degraded: !fullAppReady, csrfToken });
+  } catch (error) {
+    console.error("Failed to issue shell CSRF token", error);
+    res.status(500).json({
+      status: "error",
+      code: "csrf_issue",
+      message: "Unable to issue CSRF token.",
+    });
+  }
 };
 
 const degradedApp = express();

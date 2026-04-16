@@ -89,6 +89,8 @@ def load_env() -> None:
     candidates = [
         current.parents[2] / ".env",
         current.parents[1] / ".env",
+        current.parents[2] / ".env.local",
+        current.parents[1] / ".env.local",
     ]
     for env_path in candidates:
         if env_path.exists():
@@ -175,7 +177,8 @@ osint_monitor = OsintMonitorService(osint_settings)
 
 def _resolve_cors_origins() -> tuple[list[str], str | None]:
     default_value = "" if os.getenv("NODE_ENV", "production") == "production" else "http://localhost:8080,http://127.0.0.1:8080"
-    raw = [origin.strip() for origin in os.getenv("PY_CORS_ORIGINS", default_value).split(",")]
+    configured = os.getenv("PY_CORS_ORIGINS") or os.getenv("CORS_ORIGIN") or default_value
+    raw = [origin.strip() for origin in configured.split(",")]
     origins = [origin for origin in raw if origin and origin != "*"]
     if not origins and default_value:
         return ["http://localhost:8080", "http://127.0.0.1:8080"], None

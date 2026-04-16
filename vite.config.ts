@@ -21,7 +21,7 @@ const resolvePyApiPublicUrl = (backendPublicUrl: string) => {
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
-  const apiTarget = resolveBackendTarget(process.env.NEUROBOT_PORT || "8787");
+  const apiTarget = resolveBackendTarget(process.env.NEUROBOT_PORT || "5000");
   const pyApiTarget = resolvePyApiTarget(process.env.PY_API_PORT || "8000");
   const backendPublicUrl = resolveBackendPublicUrl();
   const pyApiPublicUrl = resolvePyApiPublicUrl(backendPublicUrl);

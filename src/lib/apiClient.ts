@@ -55,7 +55,7 @@ const clearStoredCsrfToken = () => {
   setStoredCsrfToken("");
 };
 
-export const ensureCsrf = async (forceRefresh = false) => {
+export const ensureCsrf = async (forceRefresh = false): Promise<string> => {
   const existingToken = !forceRefresh ? getStoredCsrfToken() : "";
   if (existingToken) {
     logDebug(`[CSRF] Using existing token: ${existingToken.substring(0, 8)}...`);
@@ -74,6 +74,15 @@ export const ensureCsrf = async (forceRefresh = false) => {
     });
 
     if (!response.ok) {
+      const fallbackToken = getCookie("neurobot_csrf");
+      if (fallbackToken) {
+        setStoredCsrfToken(fallbackToken);
+        return fallbackToken;
+      }
+      if (!forceRefresh && response.status >= 500) {
+        await sleep(150);
+        return ensureCsrf(true);
+      }
       throw new Error(`CSRF endpoint failed: ${response.status}`);
     }
 
