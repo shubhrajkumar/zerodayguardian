@@ -1,15 +1,12 @@
 import "dotenv/config";
 import mongoose from "mongoose";
-import { createApp } from "../backend/src/app.mjs";
-import { connectDb } from "../backend/src/config/db.mjs";
-
-const app = createApp();
 const MONGO_URI = String(process.env.MONGO_URI || process.env.DATABASE_URL || process.env.MONGODB_URI || "")
   .trim()
   .replace(/^['"]|['"]$/g, "");
 const MONGO_CONNECT_TIMEOUT_MS = Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 8000);
 
 let initPromise = null;
+let appPromise = null;
 
 const isAuthProvidersRequest = (req) => {
   const path = String(req?.url || req?.path || "");
@@ -19,6 +16,11 @@ const isAuthProvidersRequest = (req) => {
 const isAuthCsrfRequest = (req) => {
   const path = String(req?.url || req?.path || "");
   return /\/auth\/csrf\/?$/.test(path);
+};
+
+const isHealthRequest = (req) => {
+  const path = String(req?.url || req?.path || "");
+  return /\/api\/health\/?$/.test(path) || /^\/health\/?$/.test(path);
 };
 
 const ensureMongo = async () => {
@@ -44,6 +46,9 @@ const ensureMongo = async () => {
 const ensureInit = async () => {
   if (!initPromise) {
     initPromise = (async () => {
+      const [{ connectDb }] = await Promise.all([
+        import("../backend/src/config/db.mjs"),
+      ]);
       await ensureMongo();
       await connectDb().catch((error) => {
         console.warn("[Vercel API] Native DB pool connect skipped:", error instanceof Error ? error.message : String(error));
@@ -53,9 +58,17 @@ const ensureInit = async () => {
   return initPromise;
 };
 
+const getApp = async () => {
+  if (!appPromise) {
+    appPromise = import("../backend/src/app.mjs").then(({ createApp }) => createApp());
+  }
+  return appPromise;
+};
+
 export default async function handler(req, res) {
   try {
     await ensureInit();
+    const app = await getApp();
     return app(req, res);
   } catch (error) {
     console.error("[Vercel API] Function bootstrap failed:", error instanceof Error ? error.message : String(error));
@@ -87,6 +100,14 @@ export default async function handler(req, res) {
         status: "ok",
         degraded: true,
         csrfToken: "",
+      });
+    }
+
+    if (isHealthRequest(req)) {
+      return res.status(200).json({
+        status: "ok",
+        degraded: true,
+        runtime: "vercel-serverless-fallback",
       });
     }
 
