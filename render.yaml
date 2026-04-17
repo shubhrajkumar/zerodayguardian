@@ -1,0 +1,63 @@
+services:
+  - type: web
+    name: zeroday-guardian
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install --no-fund --no-audit && npm run build
+    startCommand: node server.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: NPM_CONFIG_PRODUCTION
+        value: false
+      - key: APP_BASE_URL
+        sync: false
+      - key: BACKEND_PUBLIC_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: DB_ENCRYPTION_KEY
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: VITE_FIREBASE_API_KEY
+        sync: false
+      - key: VITE_FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: VITE_FIREBASE_PROJECT_ID
+        sync: false
+      - key: VITE_FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: VITE_FIREBASE_MESSAGING_SENDER_ID
+        sync: false
+      - key: VITE_FIREBASE_APP_ID
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: AUTH_EMAIL_ENABLED
+        sync: false
+      - key: AUTH_EMAIL_FROM
+        sync: false
+      - key: AUTH_EMAIL_USER
+        sync: false
+      - key: AUTH_EMAIL_APP_PASSWORD
+        sync: false
