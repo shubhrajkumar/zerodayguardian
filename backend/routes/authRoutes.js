@@ -20,6 +20,6 @@ router.post("/google", authRateLimit, validateBody(googleLoginSchema), googleLog
 router.post("/send-otp", authRateLimit, validateBody(sendOtpSchema), sendOtp);
 router.post("/reset-password", authRateLimit, validateBody(resetPasswordSchema), resetUserPassword);
 router.post("/refresh", authSessionRateLimit, validateBody(refreshSchema), refreshSession);
-router.post("/logout", authSessionRateLimit, requireCsrf, validateBody(refreshSchema), logout);
+router.post("/logout", authSessionRateLimit, logout);
 
 export default router;
