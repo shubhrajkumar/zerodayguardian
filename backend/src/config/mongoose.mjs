@@ -1,18 +1,17 @@
 import mongoose from "mongoose";
-import { env } from "./env.mjs";
-import { logInfo, logWarn } from "../utils/logger.mjs";
+import { logInfo } from "../utils/logger.mjs";
 
 let connected = false;
+const MONGODB_URI = String(process.env.MONGODB_URI || "")
+  .trim()
+  .replace(/^['"]|['"]$/g, "");
 
 export const connectMongoose = async () => {
   if (connected) return mongoose;
-  const uri = String(env.mongoUri || process.env.MONGODB_URI || "");
-  if (!uri) {
-    logWarn("Mongoose connection skipped: MONGODB_URI not configured.");
-    return null;
+  if (!MONGODB_URI) {
+    throw new Error("Missing required environment variable: MONGODB_URI");
   }
-  await mongoose.connect(uri, {
-    dbName: process.env.MONGODB_DB_NAME || "neurobot",
+  await mongoose.connect(MONGODB_URI, {
     maxPoolSize: 20,
   });
   connected = true;

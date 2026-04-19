@@ -11,7 +11,7 @@ const resolvePyApiTarget = (defaultPort: string) =>
   process.env.VITE_PY_API_URL || process.env.VITE_PY_API_PROXY_TARGET || `http://127.0.0.1:${defaultPort}`;
 
 const resolveBackendPublicUrl = () =>
-  trimTrailingSlash(process.env.VITE_API_BASE_URL || process.env.BACKEND_PUBLIC_URL || "");
+  trimTrailingSlash(process.env.VITE_API_URL || process.env.VITE_API_BASE_URL || process.env.BACKEND_PUBLIC_URL || "");
 
 const resolvePyApiPublicUrl = (backendPublicUrl: string) => {
   const explicitPyApiUrl = trimTrailingSlash(process.env.VITE_PY_API_URL || process.env.PY_API_PUBLIC_URL || "");

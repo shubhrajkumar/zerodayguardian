@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Zorvix from "@/components/Zorvix";
 import AssistantCommandPalette from "@/components/AssistantCommandPalette";
+import BackendStatusBanner from "@/components/BackendStatusBanner";
 
 const InteractiveScene = lazy(() => import("@/components/InteractiveScene"));
 const AnimatedCyberBackground = lazy(() => import("@/components/AnimatedCyberBackground"));
@@ -49,6 +50,7 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       ) : null}
       <Navbar />
+      <BackendStatusBanner />
 
       <main className="relative z-10 min-w-0 flex-1 pt-16">
         {children}

@@ -244,6 +244,14 @@ const meAbortController = new AbortController();
 const AUTO_RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 const makeRequestId = () => `web-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+const hasJsonBody = (body: BodyInit | null | undefined) =>
+  typeof body === "string" || (typeof Blob !== "undefined" && body instanceof Blob && body.type === "application/json");
+
+const friendlyNetworkErrorMessage = (url: string) => {
+  if (url.includes("/api/health")) return "Backend is unavailable right now. Please try again in a moment.";
+  if (url.includes("/api/auth/")) return "We couldn't reach the sign-in service. Please try again shortly.";
+  return "We couldn't connect to the server. Please check your connection and try again.";
+};
 
 export class ApiError extends Error {
   status: number;
@@ -437,6 +445,10 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   const buildHeaders = (overrideBearer?: string) => {
     const requestHeaders = new Headers(init.headers || {});
     requestHeaders.set("X-Request-Id", requestId);
+    if (!requestHeaders.has("Accept")) requestHeaders.set("Accept", "application/json");
+    if (!requestHeaders.has("Content-Type") && hasJsonBody(init.body)) {
+      requestHeaders.set("Content-Type", "application/json");
+    }
     const csrfToken = getStoredCsrfToken();
     if (csrfToken && !["GET", "HEAD", "OPTIONS"].includes(method)) requestHeaders.set("X-CSRF-Token", csrfToken);
     else requestHeaders.delete("X-CSRF-Token");
@@ -452,6 +464,17 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
       headers: buildHeaders(overrideBearer),
       credentials: "include",
       signal: isAuthMe ? meAbortController.signal : init.signal,
+    }).catch((error) => {
+      const message = friendlyNetworkErrorMessage(requestUrl);
+      recordClientDiagnostic({
+        level: "error",
+        message: `${method} ${requestUrl} failed before a response was received`,
+        source: "apiFetch",
+      });
+      throw new ApiError(message, 0, "network_error", {
+        url: requestUrl,
+        cause: error instanceof Error ? error.message : String(error || "unknown"),
+      });
     });
   const execute = async () => {
     const response = await request();

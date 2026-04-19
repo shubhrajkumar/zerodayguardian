@@ -20,7 +20,7 @@ for (const envPath of envPaths) {
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number.parseInt(String(process.env.PORT || process.env.NEUROBOT_PORT || "10000"), 10) || 10000;
-const MONGO_URI = String(process.env.MONGO_URI || process.env.DATABASE_URL || process.env.MONGODB_URI || "")
+const MONGO_URI = String(process.env.MONGODB_URI || "")
   .trim()
   .replace(/^['"]|['"]$/g, "");
 const MONGO_CONNECT_TIMEOUT_MS = Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 8000);
@@ -403,34 +403,27 @@ shellApp.use((req, res, next) => {
 
 const connectMongoBestEffort = async () => {
   if (!MONGO_URI) {
-    log("warn", "DATABASE_URL missing, continuing without MongoDB");
-    return;
+    throw new Error("Missing required environment variable: MONGODB_URI");
   }
   if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) return;
 
-  try {
-    await Promise.race([
-      mongoose.connect(MONGO_URI, {
-        serverSelectionTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
-        connectTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
-        family: 4,
-        maxPoolSize: 10,
-        autoIndex: true,
-      }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`Mongo connect timeout after ${MONGO_CONNECT_TIMEOUT_MS}ms`)), MONGO_CONNECT_TIMEOUT_MS)
-      ),
-    ]);
-    clearReconnectTimer();
-    log("info", "MongoDB connected", {
-      host: mongoose.connection.host || "",
-      name: mongoose.connection.name || "",
-    });
-  } catch (error) {
-    log("warn", "MongoDB unavailable, continuing without it", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
+  await Promise.race([
+    mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
+      connectTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
+      family: 4,
+      maxPoolSize: 10,
+      autoIndex: true,
+    }),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Mongo connect timeout after ${MONGO_CONNECT_TIMEOUT_MS}ms`)), MONGO_CONNECT_TIMEOUT_MS)
+    ),
+  ]);
+  clearReconnectTimer();
+  log("info", "MongoDB connected", {
+    host: mongoose.connection.host || "",
+    name: mongoose.connection.name || "",
+  });
 };
 
 mongoose.connection.on("connected", () => {
@@ -473,13 +466,7 @@ const bootstrapFullApp = async () => {
 
     await Promise.allSettled([
       connectMongoBestEffort(),
-      typeof dbModule.connectDb === "function"
-        ? dbModule.connectDb().catch((error) => {
-            log("warn", "Native DB unavailable, continuing without it", {
-              error: error instanceof Error ? error.message : String(error),
-            });
-          })
-        : Promise.resolve(),
+      typeof dbModule.connectDb === "function" ? dbModule.connectDb() : Promise.resolve(),
     ]);
 
     const fullApp = createApp();

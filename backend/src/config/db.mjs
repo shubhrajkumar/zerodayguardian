@@ -1,11 +1,12 @@
 import { MongoClient } from "mongodb";
-import net from "node:net";
-import { env } from "./env.mjs";
-import { logError, logInfo, logWarn } from "../utils/logger.mjs";
+import { logInfo } from "../utils/logger.mjs";
 
 let client;
 let db;
 let indexesEnsured = false;
+const MONGODB_URI = String(process.env.MONGODB_URI || "")
+  .trim()
+  .replace(/^['"]|['"]$/g, "");
 
 const createDbUnavailableError = (message = "Database not initialized. Call connectDb first.") => {
   const error = new Error(message);
@@ -14,25 +15,6 @@ const createDbUnavailableError = (message = "Database not initialized. Call conn
   error.code = "db_unavailable";
   return error;
 };
-
-const checkTcpPort = (host, port, timeoutMs = 1200) =>
-  new Promise((resolve) => {
-    const socket = new net.Socket();
-    let settled = false;
-
-    const finish = (ok) => {
-      if (settled) return;
-      settled = true;
-      socket.destroy();
-      resolve(ok);
-    };
-
-    socket.setTimeout(timeoutMs);
-    socket.once("connect", () => finish(true));
-    socket.once("timeout", () => finish(false));
-    socket.once("error", () => finish(false));
-    socket.connect(port, host);
-  });
 
 export const getDbPoolStatus = () => ({
   initialized: !!db,
@@ -44,84 +26,23 @@ export const getDbPoolStatus = () => ({
 
 export const connectDb = async () => {
   if (db) return db;
-  if (!String(env.mongoUri || "").trim()) {
-    logWarn("Database URL missing, continuing without MongoDB connection");
-    return null;
-  }
-  
-  // Check if we should skip database connection in development
-  const skipDb = process.env.SKIP_DB_CONNECTION === "true";
-  if (skipDb) {
-    logInfo("Skipping database connection (SKIP_DB_CONNECTION=true)");
-    return null;
-  }
-  
-  if (!env.mongo.isSrv) {
-    const reachable = await checkTcpPort(env.mongo.host, env.mongo.port, 1200);
-    if (!reachable) {
-      const error = new Error(`DB host unreachable ${env.mongo.host}:${env.mongo.port}`);
-      logError("Database TCP precheck failed", error, {
-        dbHost: env.mongo.host,
-        dbPort: env.mongo.port,
-        dbUri: env.mongo.masked,
-      });
-      if (env.strictDependencyStartup) throw error;
-      logWarn("Database unavailable, continuing with in-memory storage");
-      return null;
-    }
-  }
-
-  if (env.mongo.requiresTlsHint) {
-    logWarn("DATABASE_URL likely requires TLS for remote host; add tls=true/ssl=true if your provider mandates it.", {
-      dbHost: env.mongo.host,
-      dbUri: env.mongo.masked,
-    });
+  if (!MONGODB_URI) {
+    throw new Error("Missing required environment variable: MONGODB_URI");
   }
 
   const startedAt = Date.now();
-  let connected = false;
-  let lastError = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    client = new MongoClient(env.mongoUri, {
-      maxPoolSize: 30,
-      minPoolSize: 5,
-      maxIdleTimeMS: 30000,
-      serverSelectionTimeoutMS: 3000,
-      connectTimeoutMS: 3000,
-      socketTimeoutMS: 8000,
-    });
-    try {
-      await client.connect();
-      await client.db("admin").command({ ping: 1 });
-      connected = true;
-      break;
-    } catch (error) {
-      lastError = error;
-      logWarn(`Database connection attempt ${attempt + 1} failed`, { error: error.message });
-      try {
-        await client.close();
-      } catch {
-        // ignore close failure
-      }
-      client = null;
-      if (attempt < 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
-  }
-  if (!connected) {
-    logError("Database connection failed, using in-memory storage", lastError, {
-      dbHost: env.mongo.host,
-      dbPort: env.mongo.port,
-      dbName: env.mongo.dbName,
-      dbUri: env.mongo.masked,
-    });
-    // Don't throw error, just return null to use in-memory storage
-    client = null;
-    db = null;
-    return null;
-  }
-  db = client.db(process.env.MONGODB_DB_NAME || "neurobot");
+  client = new MongoClient(MONGODB_URI, {
+    maxPoolSize: 30,
+    minPoolSize: 5,
+    maxIdleTimeMS: 30000,
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 10000,
+  });
+
+  await client.connect();
+  await client.db("admin").command({ ping: 1 });
+  db = client.db();
 
   if (!indexesEnsured) {
     await db.collection("conversations").createIndex({ sessionId: 1 }, { unique: true });
@@ -176,10 +97,7 @@ export const connectDb = async () => {
   }
 
   logInfo("Database connected successfully", {
-    dbHost: env.mongo.host,
-    dbPort: env.mongo.port,
-    dbName: env.mongo.dbName,
-    dbUri: env.mongo.masked,
+    dbName: db.databaseName,
     latencyMs: Date.now() - startedAt,
     pool: getDbPoolStatus(),
   });

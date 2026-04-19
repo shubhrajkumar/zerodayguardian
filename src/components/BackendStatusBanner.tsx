@@ -20,10 +20,10 @@ const toneFor = (state: BackendState) => {
 };
 
 const labelFor = (state: BackendState) => {
-  if (state === "online") return "Backend online";
+  if (state === "online") return "Backend Connected ✅";
   if (state === "degraded") return "Backend degraded";
   if (state === "offline") return "Backend offline";
-  return "Checking backend";
+  return "Checking backend...";
 };
 
 const BackendStatusBanner = () => {
@@ -46,10 +46,18 @@ const BackendStatusBanner = () => {
       const started = performance.now();
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);
+      if (mountedRef.current) {
+        setState("checking");
+        setNote("Testing backend connection...");
+      }
       try {
-        const response = await fetch(resolvePublicApiUrl("/api/ping"), {
+        const response = await fetch(resolvePublicApiUrl("/api/health"), {
           method: "GET",
           credentials: "include",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
           signal: controller.signal,
         });
         clearTimeout(timeout);
@@ -59,20 +67,20 @@ const BackendStatusBanner = () => {
         if (!response.ok) {
           setState(response.status >= 500 ? "degraded" : "offline");
           setLatencyMs(elapsed);
-          setNote(`Ping failed (${response.status}).`);
+          setNote(response.status >= 500 ? "The backend responded with a temporary server issue." : `Connection failed (${response.status}).`);
           return;
         }
 
         const payload = (await response.json()) as PingPayload;
         setState(payload.status === "ok" ? "online" : "degraded");
         setLatencyMs(elapsed);
-        setNote(payload.message ? `${payload.message} (${elapsed}ms)` : `Healthy (${elapsed}ms)`);
+        setNote(payload.status === "ok" ? `Health check passed (${elapsed}ms)` : "Backend responded, but not in a healthy state.");
       } catch (error) {
         clearTimeout(timeout);
         if (!mountedRef.current) return;
         setState(navigator.onLine ? "degraded" : "offline");
         setLatencyMs(null);
-        setNote((error as Error)?.name === "AbortError" ? "Ping timed out." : "Cannot reach backend.");
+        setNote((error as Error)?.name === "AbortError" ? "Backend check timed out. Please retry shortly." : "Cannot reach backend right now.");
       }
     };
 

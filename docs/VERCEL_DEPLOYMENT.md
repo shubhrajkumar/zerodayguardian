@@ -29,6 +29,7 @@ Set these in the Vercel project:
 
 ```env
 VITE_SITE_URL=https://your-frontend.vercel.app
+VITE_API_URL=https://your-backend.onrender.com
 BACKEND_PUBLIC_URL=https://your-backend.onrender.com
 VITE_API_BASE_URL=
 VITE_PY_API_URL=
@@ -45,7 +46,8 @@ VITE_FIRESTORE_FORCE_LONG_POLLING=false
 
 Notes:
 
-- Leave `VITE_API_BASE_URL` empty unless you explicitly want to override `BACKEND_PUBLIC_URL`.
+- Set `VITE_API_URL` to the live Render backend origin.
+- Leave `VITE_API_BASE_URL` empty unless you explicitly want to override `VITE_API_URL`.
 - Leave `VITE_PY_API_URL` empty unless the browser should call a separate Python host directly.
 
 ## Required backend env on Render

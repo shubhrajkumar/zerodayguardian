@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-12T08:36:04.987437+00:00",
+  "updated_at": "2026-04-13T17:21:50.349253+00:00",
   "records": {
     "e626109afa1cc2d8d485906aac031e3a7510f2f40b790fed1e15cd6897333bbc": {
       "fingerprint": "e626109afa1cc2d8d485906aac031e3a7510f2f40b790fed1e15cd6897333bbc",
@@ -63,6 +63,13 @@
       "url": "https://thehackernews.com/2026/04/cpuid-breach-distributes-stx-rat-via.html",
       "first_seen": "2026-04-12T08:36:04.987367+00:00",
       "last_seen": "2026-04-12T08:36:04.987367+00:00"
+    },
+    "6bc63e454a519ce35722941aa8b5f72af44af8cf2edca9cffcd2e3d7518fdc5c": {
+      "fingerprint": "6bc63e454a519ce35722941aa8b5f72af44af8cf2edca9cffcd2e3d7518fdc5c",
+      "title": "FBI and Indonesian Police Dismantle W3LL Phishing Network Behind $20M Fraud Attempts",
+      "url": "https://thehackernews.com/2026/04/fbi-and-indonesian-police-dismantle.html",
+      "first_seen": "2026-04-13T17:21:50.349201+00:00",
+      "last_seen": "2026-04-13T17:21:50.349201+00:00"
     }
   }
 }

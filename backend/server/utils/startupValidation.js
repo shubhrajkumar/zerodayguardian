@@ -15,7 +15,7 @@ export const validateStartupConfig = () => {
 
   requireValue(env.sessionSecret, "SESSION_SECRET", issues);
   requireValue(env.jwtSecret, "JWT_SECRET", issues);
-  requireValue(env.mongoUri, "DATABASE_URL", issues);
+  requireValue(env.mongoUri, "MONGODB_URI", issues);
   requireValue(env.corsOrigin, "CORS_ORIGIN", issues);
 
   const llmMode = String(env.llmMode || "ollama").toLowerCase();

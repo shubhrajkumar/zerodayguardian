@@ -147,7 +147,7 @@ const parseMongoUrl = (raw) => {
     const fallback = String(raw || "").trim();
     const multiHostMatch = fallback.match(/^mongodb:\/\/(?:(?<auth>[^@/]+)@)?(?<hosts>[^/]+)\/(?<db>[^?]+)(?:\?(?<query>.*))?$/i);
     if (!multiHostMatch?.groups?.hosts) {
-      throw new Error("[neurobot] DATABASE_URL is malformed.");
+      throw new Error("[neurobot] MONGODB_URI is malformed.");
     }
 
     const protocol = "mongodb:";
@@ -157,13 +157,13 @@ const parseMongoUrl = (raw) => {
       .filter(Boolean);
     const firstHost = hostEntries[0] || "";
     const [hostname, portText] = firstHost.split(":");
-    if (!hostname) throw new Error("[neurobot] DATABASE_URL must include a hostname");
+    if (!hostname) throw new Error("[neurobot] MONGODB_URI must include a hostname");
 
     const auth = String(multiHostMatch.groups.auth || "");
     const authSep = auth.indexOf(":");
     const username = authSep >= 0 ? decodeURIComponent(auth.slice(0, authSep)) : decodeURIComponent(auth);
     const dbName = String(multiHostMatch.groups.db || "").trim() || process.env.MONGODB_DB_NAME || "";
-    if (!dbName) throw new Error("[neurobot] DATABASE_URL must include a database name or set MONGODB_DB_NAME");
+    if (!dbName) throw new Error("[neurobot] MONGODB_URI must include a database name or set MONGODB_DB_NAME");
 
     const searchParams = new URLSearchParams(String(multiHostMatch.groups.query || ""));
     const tlsFlag = String(searchParams.get("tls") || searchParams.get("ssl") || "").toLowerCase();
@@ -171,7 +171,7 @@ const parseMongoUrl = (raw) => {
     const requiresTlsHint = !isLocalHost && tlsFlag !== "true";
     const port = Number(portText || defaultPort(protocol));
     if (!Number.isFinite(port) || port <= 0 || port > 65535) {
-      throw new Error("[neurobot] DATABASE_URL has invalid port");
+      throw new Error("[neurobot] MONGODB_URI has invalid port");
     }
 
     return {
@@ -189,16 +189,16 @@ const parseMongoUrl = (raw) => {
   }
   const protocol = parsed.protocol;
   if (!["mongodb:", "mongodb+srv:"].includes(protocol)) {
-    throw new Error("[neurobot] DATABASE_URL must use mongodb:// or mongodb+srv://");
+    throw new Error("[neurobot] MONGODB_URI must use mongodb:// or mongodb+srv://");
   }
-  if (!parsed.hostname) throw new Error("[neurobot] DATABASE_URL must include a hostname");
+  if (!parsed.hostname) throw new Error("[neurobot] MONGODB_URI must include a hostname");
   const dbNameFromPath = parsed.pathname?.replace(/^\//, "") || "";
   const dbName = dbNameFromPath || process.env.MONGODB_DB_NAME || "";
-  if (!dbName) throw new Error("[neurobot] DATABASE_URL must include a database name or set MONGODB_DB_NAME");
+  if (!dbName) throw new Error("[neurobot] MONGODB_URI must include a database name or set MONGODB_DB_NAME");
   if (protocol === "mongodb:" && parsed.port) {
     const port = Number(parsed.port);
     if (!Number.isFinite(port) || port <= 0 || port > 65535) {
-      throw new Error("[neurobot] DATABASE_URL has invalid port");
+      throw new Error("[neurobot] MONGODB_URI has invalid port");
     }
   }
 
@@ -221,20 +221,6 @@ const parseMongoUrl = (raw) => {
   };
 };
 
-const createDegradedMongoConfig = (reason = "missing") => ({
-  protocol: "mongodb:",
-  host: "127.0.0.1",
-  port: 27017,
-  username: "",
-  dbName: process.env.MONGODB_DB_NAME || "neurobot",
-  isSrv: false,
-  isLocalHost: true,
-  tlsFlag: "unspecified",
-  requiresTlsHint: false,
-  masked: `mongodb://127.0.0.1:27017/${process.env.MONGODB_DB_NAME || "neurobot"}?degraded=${reason}`,
-  degraded: true,
-});
-
 const llmProviderInput = firstSet("LLM_MODE", "LLM_PROVIDER");
 const normalizedLlmMode = normalizeLlmProvider(llmProviderInput || "auto");
 const isVercel = ["1", "true"].includes(String(process.env.VERCEL || "").trim().toLowerCase());
@@ -244,6 +230,8 @@ const isRender =
 const isManagedDeploy = isVercel || isRender;
 const resolvedNodeEnv = String(process.env.NODE_ENV || (isManagedDeploy ? "production" : "development")).trim().toLowerCase() || "development";
 const isProduction = resolvedNodeEnv === "production";
+const DEFAULT_FRONTEND_ORIGIN = "https://zerodayguardian-delta.vercel.app";
+const DEFAULT_BACKEND_PUBLIC_URL = "https://zerodayguardian-backend.onrender.com";
 const vercelFallbackUrl = process.env.VERCEL_URL ? `https://${String(process.env.VERCEL_URL).trim()}` : "https://zeroday-guardian.invalid";
 const renderFallbackUrl = String(process.env.RENDER_EXTERNAL_URL || "").trim() || "https://zeroday-guardian.onrender.com";
 const managedFallbackUrl = isRender ? renderFallbackUrl : vercelFallbackUrl;
@@ -251,7 +239,7 @@ const warnDeployConfig = (message) => {
   console.warn(`[neurobot] ${message}`);
 };
 const required = [
-  "DATABASE_URL",
+  "MONGODB_URI",
   "SESSION_SECRET",
   "JWT_SECRET",
   "CORS_ORIGIN",
@@ -260,7 +248,7 @@ const required = [
 export const env = {
   nodeEnv: resolvedNodeEnv,
   port: Number(process.env.PORT || process.env.NEUROBOT_PORT || 10000),
-  corsOrigin: process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"),
+  corsOrigin: process.env.CORS_ORIGIN || (isProduction ? DEFAULT_FRONTEND_ORIGIN : "http://localhost:8080"),
   openaiBaseUrl: normalizeApiBaseUrl(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1", "OPENAI_BASE_URL"),
   openaiApiKey: process.env.OPENAI_API_KEY || "",
   openaiModel: process.env.OPENAI_MODEL || "gpt-4.1-mini",
@@ -286,7 +274,7 @@ export const env = {
   ollamaBackupBaseUrl: normalizeOllamaBaseUrl(process.env.OLLAMA_BACKUP_BASE_URL || process.env.OLLAMA_BASE_URL),
   ollamaBackupModel: process.env.OLLAMA_BACKUP_MODEL || "",
   ollamaBackupNumPredict: clamp(process.env.OLLAMA_BACKUP_NUM_PREDICT, 32, 1024, 96),
-  mongoUri: firstSet("DATABASE_URL", "MONGODB_URI"),
+  mongoUri: firstSet("MONGODB_URI"),
   redisUrl: process.env.REDIS_URL || "",
   sessionSecret: process.env.SESSION_SECRET || "",
   jwtSecret: process.env.JWT_SECRET || "",
@@ -351,12 +339,12 @@ export const env = {
       ? process.env.ALLOW_LLM_FALLBACK === "true"
       : true,
   forceLocalFallback: (process.env.FORCE_LOCAL_FALLBACK || "false") === "true",
-  appBaseUrl: process.env.APP_BASE_URL || process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"),
+  appBaseUrl: process.env.APP_BASE_URL || process.env.CORS_ORIGIN || (isProduction ? DEFAULT_FRONTEND_ORIGIN : "http://localhost:8080"),
   backendPublicUrl:
     process.env.BACKEND_PUBLIC_URL ||
     process.env.PUBLIC_SERVER_URL ||
     process.env.RENDER_EXTERNAL_URL ||
-    (isProduction ? "" : `http://localhost:${Number(process.env.NEUROBOT_PORT || 8787)}`),
+    (isProduction ? DEFAULT_BACKEND_PUBLIC_URL : `http://localhost:${Number(process.env.NEUROBOT_PORT || 8787)}`),
   cookieDomain: process.env.COOKIE_DOMAIN || "",
   googleOauthClientId: firstSet("GOOGLE_OAUTH_CLIENT_ID", "VITE_GOOGLE_CLIENT_ID"),
   googleOauthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || "",
@@ -527,18 +515,14 @@ env.authOtpPreviewEnabled = isExplicitTrue(process.env.AUTH_OTP_PREVIEW_ENABLED)
       : env.nodeEnv !== "production" || localLikeAppHost;
 
 const missing = required.filter((key) => {
-  if (key === "DATABASE_URL") return !env.mongoUri;
+  if (key === "MONGODB_URI") return !env.mongoUri;
   if (key === "CORS_ORIGIN") return !env.corsOrigin;
   if (key === "JWT_SECRET") return !env.jwtSecret;
   return !process.env[key] || !String(process.env[key]).trim();
 });
 
 if (missing.length) {
-  if (isManagedDeploy) {
-    warnDeployConfig(`Missing required env vars during managed deployment: ${missing.join(", ")}. API will run in degraded mode until these are configured.`);
-  } else {
-    throw new Error(`[neurobot] Missing required env vars: ${missing.join(", ")}`);
-  }
+  throw new Error(`[neurobot] Missing required env vars: ${missing.join(", ")}`);
 }
 
 if (!Number.isFinite(env.port) || env.port <= 0 || env.port > 65535) {
@@ -613,22 +597,7 @@ if (env.nodeEnv === "production") {
   }
 }
 
-if (!env.mongoUri) {
-  env.mongo = createDegradedMongoConfig("missing");
-} else {
-  try {
-    env.mongo = parseMongoUrl(env.mongoUri);
-  } catch (error) {
-    if (isManagedDeploy) {
-      warnDeployConfig(
-        `DATABASE_URL is unavailable or malformed during deployment startup. Using degraded API mode until it is configured.`
-      );
-      env.mongo = createDegradedMongoConfig("invalid");
-    } else {
-      throw error;
-    }
-  }
-}
+env.mongo = parseMongoUrl(env.mongoUri);
 
 const supportedProviders = new Set(["openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup"]);
 const supportedModes = new Set(["auto", "openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup"]);

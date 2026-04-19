@@ -53,6 +53,7 @@ Set these in Vercel:
 
 ```env
 VITE_SITE_URL=https://your-frontend.vercel.app
+VITE_API_URL=https://your-backend.onrender.com
 BACKEND_PUBLIC_URL=https://your-backend.onrender.com
 VITE_API_BASE_URL=
 VITE_PY_API_URL=
