@@ -253,16 +253,22 @@ export const logout = async (req, res) => {
 
 export const getAuthProviders = async (req, res) => {
   try {
+    const hasGoogleClient = Boolean(env.googleOauthClientId);
+    const hasGoogleRedirectFlow = Boolean(env.googleOauthClientId && env.googleOauthClientSecret && env.googleRedirectUri);
+    const startPath = resolvePublicAuthPath(req, "/google");
+    const callbackPath = resolvePublicAuthPath(req, "/google/callback");
+    const startUrl = hasGoogleRedirectFlow ? resolveBackendAuthUrl(req, startPath) : "";
+    const callbackUrl = hasGoogleRedirectFlow ? resolveBackendAuthUrl(req, callbackPath) : "";
     res.json({
       status: "ok",
       google: {
-        enabled: Boolean(env.googleOauthClientId),
+        enabled: hasGoogleClient,
         clientId: env.googleOauthClientId || "",
-        backendFlow: false,
+        backendFlow: hasGoogleRedirectFlow,
         popupFlow: true,
-        startUrl: "",
-        callbackUrl: "",
-        redirectUri: "",
+        startUrl,
+        callbackUrl,
+        redirectUri: hasGoogleRedirectFlow ? (env.googleRedirectUri || callbackUrl) : "",
         frontendOrigin: env.appBaseUrl || "",
         authorizedOrigins: env.googleAuthorizedOrigins || [],
       },

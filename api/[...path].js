@@ -73,17 +73,23 @@ export default async function handler(req, res) {
 
     if (isAuthProvidersRequest(req)) {
       const googleClientId = String(process.env.GOOGLE_OAUTH_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "").trim();
+      const googleClientSecret = String(process.env.GOOGLE_OAUTH_CLIENT_SECRET || "").trim();
+      const googleRedirectUri = String(process.env.GOOGLE_REDIRECT_URI || "").trim();
+      const hasGoogleRedirectFlow = Boolean(googleClientId && googleClientSecret && googleRedirectUri);
+      const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").trim();
+      const proto = String(req.headers["x-forwarded-proto"] || "https").trim();
+      const baseUrl = host ? `${proto}://${host}`.replace(/\/+$/, "") : "";
       return res.status(200).json({
         status: "ok",
         degraded: true,
         google: {
           enabled: Boolean(googleClientId),
           clientId: googleClientId,
-          backendFlow: false,
+          backendFlow: hasGoogleRedirectFlow,
           popupFlow: true,
-          startUrl: "",
-          callbackUrl: "",
-          redirectUri: "",
+          startUrl: hasGoogleRedirectFlow && baseUrl ? `${baseUrl}/api/auth/google` : "",
+          callbackUrl: hasGoogleRedirectFlow && baseUrl ? `${baseUrl}/api/auth/google/callback` : "",
+          redirectUri: hasGoogleRedirectFlow ? googleRedirectUri : "",
           frontendOrigin: String(process.env.APP_BASE_URL || ""),
           authorizedOrigins: String(process.env.GOOGLE_AUTHORIZED_ORIGINS || process.env.CORS_ORIGIN || "")
             .split(",")

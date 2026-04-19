@@ -212,6 +212,11 @@ const buildPublicAuthPath = (req, suffix = "") => {
 
 const buildAuthProvidersPayload = (req) => {
   const googleClientId = String(process.env.GOOGLE_OAUTH_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "").trim();
+  const googleClientSecret = String(process.env.GOOGLE_OAUTH_CLIENT_SECRET || "").trim();
+  const googleRedirectUri = String(process.env.GOOGLE_REDIRECT_URI || "").trim();
+  const hasGoogleRedirectFlow = Boolean(googleClientId && googleClientSecret && googleRedirectUri);
+  const startPath = buildPublicAuthPath(req, "/google");
+  const callbackPath = buildPublicAuthPath(req, "/google/callback");
   const frontendOrigin =
     firstOrigin(startupPublicConfig.appBaseUrl || "") ||
     firstOrigin(startupPublicConfig.corsOrigin || "") ||
@@ -224,11 +229,11 @@ const buildAuthProvidersPayload = (req) => {
     google: {
       enabled: Boolean(googleClientId),
       clientId: googleClientId,
-      backendFlow: false,
+      backendFlow: hasGoogleRedirectFlow,
       popupFlow: true,
-      startUrl: "",
-      callbackUrl: "",
-      redirectUri: "",
+      startUrl: hasGoogleRedirectFlow ? `${derivePublicBaseUrl(req)}${startPath}`.replace(/([^:]\/)\/+/g, "$1") : "",
+      callbackUrl: hasGoogleRedirectFlow ? `${derivePublicBaseUrl(req)}${callbackPath}`.replace(/([^:]\/)\/+/g, "$1") : "",
+      redirectUri: hasGoogleRedirectFlow ? (googleRedirectUri || `${derivePublicBaseUrl(req)}${callbackPath}`.replace(/([^:]\/)\/+/g, "$1")) : "",
       frontendOrigin,
       authorizedOrigins,
     },

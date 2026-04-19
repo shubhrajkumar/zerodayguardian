@@ -119,6 +119,29 @@ const buildPublicAuthPath = (req, suffix = "") => {
   const normalizedSuffix = suffix.startsWith("/") ? suffix : `/${suffix}`;
   return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
 };
+const buildAuthProvidersPayload = (req) => {
+  const hasGoogleClient = Boolean(env.googleOauthClientId);
+  const hasGoogleRedirectFlow = Boolean(env.googleOauthClientId && env.googleOauthClientSecret && env.googleRedirectUri);
+  const startPath = buildPublicAuthPath(req, "/google");
+  const callbackPath = buildPublicAuthPath(req, "/google/callback");
+  const startUrl = hasGoogleRedirectFlow ? buildBackendUrl(req, startPath) : "";
+  const callbackUrl = hasGoogleRedirectFlow ? buildBackendUrl(req, callbackPath) : "";
+
+  return {
+    status: "ok",
+    google: {
+      enabled: hasGoogleClient,
+      clientId: env.googleOauthClientId || "",
+      backendFlow: hasGoogleRedirectFlow,
+      popupFlow: true,
+      startUrl,
+      callbackUrl,
+      redirectUri: hasGoogleRedirectFlow ? (env.googleRedirectUri || callbackUrl) : "",
+      frontendOrigin: env.appBaseUrl || "",
+      authorizedOrigins: env.googleAuthorizedOrigins || [],
+    },
+  };
+};
 const listRoutes = (app) => {
   const routes = [];
   const stack = app?._router?.stack || [];
@@ -425,36 +448,10 @@ export const createApp = () => {
     });
   });
   app.get("/api/auth/providers", (req, res) => {
-    res.json({
-      status: "ok",
-      google: {
-        enabled: Boolean(env.googleOauthClientId),
-        clientId: env.googleOauthClientId || "",
-        backendFlow: false,
-        popupFlow: true,
-        startUrl: "",
-        callbackUrl: "",
-        redirectUri: "",
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
-    });
+    res.json(buildAuthProvidersPayload(req));
   });
   app.get("/auth/providers", (req, res) => {
-    res.json({
-      status: "ok",
-      google: {
-        enabled: Boolean(env.googleOauthClientId),
-        clientId: env.googleOauthClientId || "",
-        backendFlow: false,
-        popupFlow: true,
-        startUrl: "",
-        callbackUrl: "",
-        redirectUri: "",
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
-    });
+    res.json(buildAuthProvidersPayload(req));
   });
   app.get("/api/ai/health", setProbeNoStore, async (req, res, next) => {
     try {

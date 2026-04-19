@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
 import { firebaseAuth } from "@/lib/firebase";
-import { ApiError, apiPostJson, setStoredAccessToken } from "@/lib/apiClient";
+import { ApiError, apiGetJson, apiPostJson, setStoredAccessToken } from "@/lib/apiClient";
 import { applyReferralSignup, findReferrerByCode } from "@/lib/firestoreGrowth";
 
 type BackendAuthPayload = {
@@ -22,9 +22,44 @@ type ResetOtpResponse = {
   message?: string;
 };
 
+type GoogleProviderConfig = {
+  enabled?: boolean;
+  clientId?: string;
+  backendFlow?: boolean;
+  popupFlow?: boolean;
+  startUrl?: string;
+  callbackUrl?: string;
+  redirectUri?: string;
+  frontendOrigin?: string;
+  authorizedOrigins?: string[];
+};
+
+type AuthProvidersPayload = {
+  status?: string;
+  degraded?: boolean;
+  google?: GoogleProviderConfig;
+  providers?: {
+    google?: GoogleProviderConfig;
+  };
+};
+
 const isApiError = (error: unknown): error is ApiError => error instanceof ApiError;
 const isFirebaseError = (error: unknown): error is { code?: string; message?: string } =>
   typeof error === "object" && error !== null && ("code" in error || "message" in error);
+const normalizeGoogleProvider = (payload: AuthProvidersPayload | null | undefined): GoogleProviderConfig => {
+  const google = payload?.google || payload?.providers?.google || {};
+  return {
+    enabled: Boolean(google.enabled),
+    clientId: String(google.clientId || "").trim(),
+    backendFlow: Boolean(google.backendFlow),
+    popupFlow: google.popupFlow !== false,
+    startUrl: String(google.startUrl || "").trim(),
+    callbackUrl: String(google.callbackUrl || "").trim(),
+    redirectUri: String(google.redirectUri || "").trim(),
+    frontendOrigin: String(google.frontendOrigin || "").trim(),
+    authorizedOrigins: Array.isArray(google.authorizedOrigins) ? google.authorizedOrigins.map((value) => String(value || "").trim()).filter(Boolean) : [],
+  };
+};
 
 const normalizeFirebaseAuthError = (error: unknown, currentMode: "login" | "signup") => {
   const code = String((isFirebaseError(error) ? error.code : "") || "").trim().toLowerCase();
@@ -78,9 +113,13 @@ const AuthPage = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [googleStatus, setGoogleStatus] = useState("");
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const [googleConfigReady, setGoogleConfigReady] = useState(false);
+  const [googleProvider, setGoogleProvider] = useState<GoogleProviderConfig>({});
   const resetOtpInputRef = useRef<HTMLInputElement | null>(null);
   const requestedResetEmailRef = useRef("");
-  const canUseGoogleOauth = Boolean(firebaseAuth);
+  const canUseGooglePopup = Boolean(firebaseAuth);
+  const canUseGoogleRedirect = Boolean(googleProvider.enabled && googleProvider.backendFlow && googleProvider.startUrl);
+  const canUseGoogleOauth = canUseGooglePopup || canUseGoogleRedirect;
   const referralCode = String(searchParams.get("ref") || localStorage.getItem("zdg:referral_code") || "").trim().toUpperCase();
 
   useEffect(() => {
@@ -94,11 +133,30 @@ const AuthPage = () => {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    if (firebaseAuth) {
-      setGoogleStatus("");
-      return;
-    }
-    setGoogleStatus("Google sign-in is not configured in Firebase Auth.");
+    let active = true;
+    const loadProviders = async () => {
+      try {
+        const payload = await apiGetJson<AuthProvidersPayload>("/api/auth/providers");
+        if (!active) return;
+        const normalized = normalizeGoogleProvider(payload);
+        setGoogleProvider(normalized);
+        setGoogleConfigReady(true);
+        if (firebaseAuth || normalized.enabled) {
+          setGoogleStatus("");
+          return;
+        }
+        setGoogleStatus("Google sign-in is not configured for this deployment.");
+      } catch {
+        if (!active) return;
+        setGoogleProvider({});
+        setGoogleConfigReady(true);
+        setGoogleStatus("Could not load Google sign-in configuration.");
+      }
+    };
+    loadProviders();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const signupPasswordStrength = useMemo(() => {
@@ -156,33 +214,40 @@ const AuthPage = () => {
     setAuthStatus("");
 
     try {
-      if (!firebaseAuth) {
-        throw new Error("Google sign-in is not configured in Firebase Auth.");
+      if (firebaseAuth) {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        const result = await signInWithPopup(firebaseAuth, provider);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const idToken = String(credential?.idToken || "").trim();
+
+        if (!idToken) {
+          throw new Error("Google did not return a valid credential.");
+        }
+
+        const payload = await apiPostJson<BackendAuthPayload>("/api/auth/google", {
+          credential: idToken,
+        });
+
+        if (payload.accessToken) {
+          setStoredAccessToken(payload.accessToken);
+          await refreshAuth();
+        }
+
+        setAuthStatus("Google sign-in successful. Redirecting to your dashboard...");
+        window.setTimeout(() => navigate("/dashboard", { replace: true }), 250);
+        return;
       }
 
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      const result = await signInWithPopup(firebaseAuth, provider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const idToken = String(credential?.idToken || "").trim();
-
-      if (!idToken) {
-        throw new Error("Google did not return a valid credential.");
+      if (googleProvider.backendFlow && googleProvider.startUrl) {
+        window.location.assign(googleProvider.startUrl);
+        return;
       }
-
-      const payload = await apiPostJson<BackendAuthPayload>("/api/auth/google", {
-        credential: idToken,
-      });
-
-      if (payload.accessToken) {
-        setStoredAccessToken(payload.accessToken);
-        await refreshAuth();
-      }
-
-      setAuthStatus("Google sign-in successful. Redirecting to your dashboard...");
-      window.setTimeout(() => navigate("/dashboard", { replace: true }), 250);
+      throw new Error("Google sign-in is not configured for this deployment.");
     } catch (error) {
-      await signOut(firebaseAuth!).catch(() => undefined);
+      if (firebaseAuth) {
+        await signOut(firebaseAuth).catch(() => undefined);
+      }
       setGoogleStatus(getAuthErrorMessage(error, "login"));
     } finally {
       setGoogleSubmitting(false);
@@ -207,18 +272,18 @@ const AuthPage = () => {
     setAuthStatus("");
 
     try {
-      if (!firebaseAuth) {
-        throw new Error("Firebase Auth is not configured.");
-      }
       if (mode === "signup") {
         signupSchema.parse({
           name: name.trim(),
           email: email.trim(),
           password,
         });
-        const firebaseCredential = await createUserWithEmailAndPassword(firebaseAuth, email.trim(), password);
+        let firebaseCredential: Awaited<ReturnType<typeof createUserWithEmailAndPassword>> | null = null;
+        if (firebaseAuth) {
+          firebaseCredential = await createUserWithEmailAndPassword(firebaseAuth, email.trim(), password);
+        }
         try {
-          if (name.trim()) {
+          if (firebaseCredential && name.trim()) {
             await updateProfile(firebaseCredential.user, { displayName: name.trim() });
           }
           const payload = await apiPostJson<BackendAuthPayload>("/api/auth/signup", {
@@ -239,10 +304,12 @@ const AuthPage = () => {
           }
           setAuthStatus("Account created successfully. Redirecting to your dashboard...");
         } catch (error) {
-          try {
-            await deleteUser(firebaseCredential.user);
-          } catch {
-            await signOut(firebaseAuth).catch(() => undefined);
+          if (firebaseCredential && firebaseAuth) {
+            try {
+              await deleteUser(firebaseCredential.user);
+            } catch {
+              await signOut(firebaseAuth).catch(() => undefined);
+            }
           }
           throw error;
         }
@@ -252,10 +319,12 @@ const AuthPage = () => {
           password,
         });
         let firebaseLoginError: unknown = null;
-        try {
-          await signInWithEmailAndPassword(firebaseAuth, email.trim(), password);
-        } catch (error) {
-          firebaseLoginError = error;
+        if (firebaseAuth) {
+          try {
+            await signInWithEmailAndPassword(firebaseAuth, email.trim(), password);
+          } catch (error) {
+            firebaseLoginError = error;
+          }
         }
         try {
           const payload = await apiPostJson<BackendAuthPayload>("/api/auth/login", {
@@ -268,7 +337,7 @@ const AuthPage = () => {
             await refreshAuth();
           }
         } catch (error) {
-          await signOut(firebaseAuth).catch(() => undefined);
+          if (firebaseAuth) await signOut(firebaseAuth).catch(() => undefined);
           throw error;
         }
         if (firebaseLoginError) {
@@ -447,7 +516,7 @@ const AuthPage = () => {
           <div className="mt-4 space-y-3 border-t border-primary/10 pt-4">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Google Sign-In</p>
             <div className="min-h-[44px]">
-              {canUseGoogleOauth ? (
+              {googleConfigReady && canUseGoogleOauth ? (
                 <button
                   type="button"
                   onClick={submitGoogleAuth}
@@ -457,13 +526,17 @@ const AuthPage = () => {
                   {googleSubmitting ? "Connecting to Google..." : "Continue with Google"}
                 </button>
               ) : null}
-              {!canUseGoogleOauth && googleStatus ? (
+              {googleConfigReady && !canUseGoogleOauth && googleStatus ? (
                 <div className="rounded-xl border border-amber-300/20 bg-amber-500/8 px-4 py-3 text-sm leading-6 text-amber-100/90">
                   {googleStatus}
                 </div>
               ) : null}
+              {!googleConfigReady ? (
+                <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
+                  Loading Google sign-in configuration...
+                </div>
+              ) : null}
             </div>
-            {googleStatus ? <p className="text-sm text-muted-foreground">{googleStatus}</p> : null}
           </div>
 
           {authStatus ? <p className="mt-4 text-sm text-muted-foreground">{authStatus}</p> : null}
@@ -550,7 +623,7 @@ const AuthPage = () => {
 
           <p className="mt-5 inline-flex items-center gap-2 text-xs text-cyan-200/80">
             <ShieldCheck className="h-3.5 w-3.5" />
-            Email/password authentication is handled through Firebase Auth with the existing ZeroDay Guardian session service.
+            Email/password authentication is validated by the ZeroDay Guardian session service and optionally synced with Firebase when configured.
           </p>
         </section>
       </div>
