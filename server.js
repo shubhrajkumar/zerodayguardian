@@ -26,6 +26,7 @@ const MONGO_URI = String(process.env.MONGODB_URI || "")
 const MONGO_CONNECT_TIMEOUT_MS = Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 8000);
 const RENDER_EXTERNAL_URL = String(process.env.RENDER_EXTERNAL_URL || "").trim().replace(/\/+$/, "");
 const STARTUP_RETRY_MS = Math.max(5000, Number(process.env.STARTUP_RETRY_MS || 15000));
+const DEFAULT_FRONTEND_ORIGIN = "https://zerodayguardian-delta.vercel.app";
 const SAFE_SESSION_SECRET = "render-session-secret-placeholder-0000000000000000";
 const SAFE_JWT_SECRET = "render-jwt-secret-placeholder-000000000000000000000000";
 const SAFE_DB_ENCRYPTION_KEY = "render-db-encryption-key-placeholder-000000000000000";
@@ -69,6 +70,17 @@ const normalizeOrigin = (value = "") => {
     return new URL(String(value || "").trim()).origin.toLowerCase();
   } catch {
     return "";
+  }
+};
+const isTrustedFrontendOrigin = (value = "") => {
+  const normalized = normalizeOrigin(value);
+  if (!normalized) return false;
+  if (normalized === DEFAULT_FRONTEND_ORIGIN.toLowerCase()) return true;
+  try {
+    const hostname = new URL(normalized).hostname.toLowerCase();
+    return hostname.endsWith(".vercel.app") && hostname.includes("zerodayguardian");
+  } catch {
+    return false;
   }
 };
 const normalizeCookieDomain = (value = "") => {
@@ -118,15 +130,18 @@ const ensureSafeEnvDefaults = () => {
   if (!process.env.APP_BASE_URL && process.env.CORS_ORIGIN) {
     process.env.APP_BASE_URL = firstOrigin(process.env.CORS_ORIGIN);
   }
+  if (!process.env.APP_BASE_URL) {
+    process.env.APP_BASE_URL = DEFAULT_FRONTEND_ORIGIN;
+  }
   if (isManagedRuntime && isLocalLikeUrl(process.env.APP_BASE_URL || "")) {
-    process.env.APP_BASE_URL = firstOrigin(process.env.CORS_ORIGIN || "") || process.env.BACKEND_PUBLIC_URL || RENDER_EXTERNAL_URL;
+    process.env.APP_BASE_URL = firstOrigin(process.env.CORS_ORIGIN || "") || DEFAULT_FRONTEND_ORIGIN;
   }
   if (!process.env.CORS_ORIGIN) {
-    const cloudSafeOrigin = firstOrigin(process.env.APP_BASE_URL || process.env.BACKEND_PUBLIC_URL || RENDER_EXTERNAL_URL);
+    const cloudSafeOrigin = firstOrigin(process.env.APP_BASE_URL || DEFAULT_FRONTEND_ORIGIN);
     if (cloudSafeOrigin) process.env.CORS_ORIGIN = cloudSafeOrigin;
   }
   if (isManagedRuntime && splitCsv(process.env.CORS_ORIGIN || "").some((origin) => isLocalLikeUrl(origin))) {
-    process.env.CORS_ORIGIN = firstOrigin(process.env.APP_BASE_URL || process.env.BACKEND_PUBLIC_URL || RENDER_EXTERNAL_URL);
+    process.env.CORS_ORIGIN = firstOrigin(process.env.APP_BASE_URL || DEFAULT_FRONTEND_ORIGIN);
   }
   if (isManagedRuntime && isLocalLikeUrl(process.env.GOOGLE_REDIRECT_URI || "")) {
     process.env.GOOGLE_REDIRECT_URI = process.env.BACKEND_PUBLIC_URL
@@ -247,7 +262,8 @@ const applyShellCors = (req, res) => {
     resolvedNodeEnv !== "production" &&
     !allowedOrigins.length &&
     isLocalLikeOrigin(origin);
-  if (!allowImplicitLocalOrigin && !allowedOrigins.includes(origin)) {
+  const allowTrustedFrontend = resolvedNodeEnv === "production" && isTrustedFrontendOrigin(origin);
+  if (!allowImplicitLocalOrigin && !allowTrustedFrontend && !allowedOrigins.includes(origin)) {
     res.status(403).json({
       status: "error",
       code: "cors_blocked",

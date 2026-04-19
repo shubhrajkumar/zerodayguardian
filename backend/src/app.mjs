@@ -53,8 +53,20 @@ const setProbeNoStore = (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   next();
 };
+const DEFAULT_FRONTEND_ORIGIN = "https://zerodayguardian-delta.vercel.app";
 const normalizeCorsOrigin = (value = "") => String(value || "").trim().replace(/\/+$/, "");
 const isLocalLikeOrigin = (value = "") => /^(https?:\/\/)(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|::1)(:\d+)?$/i.test(normalizeCorsOrigin(value));
+const isTrustedFrontendOrigin = (value = "") => {
+  const normalizedOrigin = normalizeCorsOrigin(value).toLowerCase();
+  if (!normalizedOrigin) return false;
+  if (normalizedOrigin === DEFAULT_FRONTEND_ORIGIN.toLowerCase()) return true;
+  try {
+    const hostname = new URL(normalizedOrigin).hostname.toLowerCase();
+    return hostname.endsWith(".vercel.app") && hostname.includes("zerodayguardian");
+  } catch {
+    return false;
+  }
+};
 const allowCorsOrigin = (origin, callback) => {
   if (!origin) {
     callback(null, true);
@@ -63,6 +75,10 @@ const allowCorsOrigin = (origin, callback) => {
   const normalizedOrigin = normalizeCorsOrigin(origin);
   // Always allow if explicitly configured
   if ((env.corsOrigins || []).includes(normalizedOrigin)) {
+    callback(null, true);
+    return;
+  }
+  if (env.nodeEnv === "production" && isTrustedFrontendOrigin(normalizedOrigin)) {
     callback(null, true);
     return;
   }

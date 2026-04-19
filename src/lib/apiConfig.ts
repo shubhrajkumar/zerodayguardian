@@ -40,6 +40,20 @@ const isLocalOrigin = (value: string) => {
     return false;
   }
 };
+const isVercelOrigin = (value: string) => {
+  try {
+    return new URL(value).hostname.toLowerCase().endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+};
+const isRenderOrigin = (value: string) => {
+  try {
+    return new URL(value).hostname.toLowerCase().endsWith(".onrender.com");
+  } catch {
+    return false;
+  }
+};
 
 const BUILD_BACKEND_PUBLIC_URL = normalizeBaseUrl(
   typeof __BACKEND_PUBLIC_URL__ === "string" ? __BACKEND_PUBLIC_URL__ : ""
@@ -50,15 +64,29 @@ const BUILD_PY_API_PUBLIC_URL = normalizeBaseUrl(
 const WINDOW_ORIGIN = normalizeBaseUrl(readWindowOrigin());
 
 const LOCAL_DEV_BACKEND_BASE = isLocalOrigin(WINDOW_ORIGIN) ? WINDOW_ORIGIN : "";
+const SAME_ORIGIN_VERCEL_API_BASE = isVercelOrigin(WINDOW_ORIGIN) ? WINDOW_ORIGIN : "";
 
 export const API_BASE_URL = (() => {
   const runtimeProcessBase = normalizeBaseUrl(readProcessEnv("VITE_API_URL") || readProcessEnv("BACKEND_PUBLIC_URL"));
-  if (runtimeProcessBase) return runtimeProcessBase;
+  if (runtimeProcessBase) {
+    if (SAME_ORIGIN_VERCEL_API_BASE && isRenderOrigin(runtimeProcessBase)) return SAME_ORIGIN_VERCEL_API_BASE;
+    return runtimeProcessBase;
+  }
   const explicitBase = normalizeBaseUrl(String(import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || ""));
-  if (explicitBase) return explicitBase;
+  if (explicitBase) {
+    if (SAME_ORIGIN_VERCEL_API_BASE && isRenderOrigin(explicitBase)) return SAME_ORIGIN_VERCEL_API_BASE;
+    return explicitBase;
+  }
   const runtimeWindowBase = normalizeBaseUrl(readWindowEnv("VITE_API_URL") || readWindowEnv("BACKEND_PUBLIC_URL"));
-  if (runtimeWindowBase) return runtimeWindowBase;
-  if (BUILD_BACKEND_PUBLIC_URL) return BUILD_BACKEND_PUBLIC_URL;
+  if (runtimeWindowBase) {
+    if (SAME_ORIGIN_VERCEL_API_BASE && isRenderOrigin(runtimeWindowBase)) return SAME_ORIGIN_VERCEL_API_BASE;
+    return runtimeWindowBase;
+  }
+  if (BUILD_BACKEND_PUBLIC_URL) {
+    if (SAME_ORIGIN_VERCEL_API_BASE && isRenderOrigin(BUILD_BACKEND_PUBLIC_URL)) return SAME_ORIGIN_VERCEL_API_BASE;
+    return BUILD_BACKEND_PUBLIC_URL;
+  }
+  if (SAME_ORIGIN_VERCEL_API_BASE) return SAME_ORIGIN_VERCEL_API_BASE;
   if (LOCAL_DEV_BACKEND_BASE) return LOCAL_DEV_BACKEND_BASE;
   return DEFAULT_API_BASE;
 })();
