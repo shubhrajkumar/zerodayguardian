@@ -20,14 +20,15 @@ const LOCALHOST_LIKE_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "0.0.0.0"
 
 const frontendOrigin = normalizeOrigin(env.appBaseUrl || env.corsOrigins?.[0] || env.corsOrigin || "");
 const backendOrigin = normalizeOrigin(env.backendPublicUrl || "");
-const derivedCookieDomain = normalizeCookieDomain(env.cookieDomain || env.backendPublicUrl || "");
+const derivedCookieDomain = normalizeCookieDomain(env.cookieDomain || "");
 const cookieDomain = LOCALHOST_LIKE_HOSTS.has(derivedCookieDomain) ? "" : derivedCookieDomain;
 
 export const usesCrossSiteCookies = Boolean(frontendOrigin && backendOrigin && frontendOrigin !== backendOrigin);
 
 export const buildCookieOptions = (overrides = {}) => {
-  const secure = usesCrossSiteCookies || env.nodeEnv === "production";
-  const sameSite = usesCrossSiteCookies ? "none" : env.nodeEnv === "production" ? "strict" : "lax";
+  const isProduction = env.nodeEnv === "production";
+  const secure = isProduction ? true : usesCrossSiteCookies;
+  const sameSite = isProduction ? "none" : usesCrossSiteCookies ? "none" : "lax";
   return {
     path: "/",
     secure,

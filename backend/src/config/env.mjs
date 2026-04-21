@@ -238,6 +238,8 @@ const managedFallbackUrl = isRender ? renderFallbackUrl : vercelFallbackUrl;
 const warnDeployConfig = (message) => {
   console.warn(`[neurobot] ${message}`);
 };
+const isPlaceholderSecret = (value = "") =>
+  /(placeholder|changeme|example|default|test-secret|dummy)/i.test(String(value || "").trim());
 const required = [
   "MONGODB_URI",
   "SESSION_SECRET",
@@ -535,6 +537,19 @@ if (String(env.jwtSecret || "").length < 32) {
     warnDeployConfig("JWT_SECRET is shorter than 32 characters. Configure a real production secret for production deployments.");
   }
 }
+if (String(env.sessionSecret || "").length < 32) {
+  if (isManagedDeploy || env.nodeEnv === "production") {
+    throw new Error("[neurobot] SESSION_SECRET must be at least 32 characters");
+  } else {
+    warnDeployConfig("SESSION_SECRET is shorter than 32 characters. Configure a real production secret for production deployments.");
+  }
+}
+if ((isManagedDeploy || env.nodeEnv === "production") && isPlaceholderSecret(env.jwtSecret)) {
+  throw new Error("[neurobot] JWT_SECRET appears to be a placeholder. Set a real secret in deployment env.");
+}
+if ((isManagedDeploy || env.nodeEnv === "production") && isPlaceholderSecret(env.sessionSecret)) {
+  throw new Error("[neurobot] SESSION_SECRET appears to be a placeholder. Set a real secret in deployment env.");
+}
 if (env.llmRetryMaxMs < env.llmRetryBaseMs) {
   throw new Error("[neurobot] LLM_RETRY_MAX_MS must be >= LLM_RETRY_BASE_MS");
 }
@@ -583,6 +598,14 @@ if (env.nodeEnv === "production") {
       warnDeployConfig("CORS_ORIGIN is empty in production. Configure at least one frontend origin in deployment env.");
     } else {
       throw new Error("[neurobot] CORS_ORIGIN must include at least one origin in production");
+    }
+  }
+  const appOrigin = normalizeOrigin(env.appBaseUrl || "");
+  if (appOrigin && !env.corsOrigins.includes(appOrigin)) {
+    if (isManagedDeploy) {
+      warnDeployConfig("APP_BASE_URL origin is not included in CORS_ORIGIN. Add APP_BASE_URL to CORS_ORIGIN to prevent credentialed auth failures.");
+    } else {
+      throw new Error("[neurobot] APP_BASE_URL origin must be present in CORS_ORIGIN");
     }
   }
   for (const origin of env.corsOrigins) {

@@ -96,6 +96,7 @@ const REFRESH_TTL = "7d";
 const REFRESH_TTL_LONG = "30d";
 const BCRYPT_ROUNDS = 12;
 const RESET_OTP_TTL_MS = 10 * 60 * 1000;
+const RESET_OTP_MAX_ATTEMPTS = 5;
 const REFRESH_GRACE_WINDOW_MS = 30 * 1000;
 
 const toObjectId = (value) => (ObjectId.isValid(value) ? new ObjectId(value) : value);
@@ -651,6 +652,7 @@ export const sendResetOtp = async ({ email }) => {
       $set: {
         resetOtp: otpHash,
         resetOtpExpire: expiresAt,
+        resetOtpAttempts: 0,
         updatedAt: now(),
       },
     }
@@ -768,11 +770,54 @@ export const resetPassword = async ({ email, otp, password }) => {
   }
 
   if (Number(user.resetOtpExpire) < now()) {
+    await users.updateOne(
+      { _id: user._id },
+      {
+        $unset: {
+          resetOtp: "",
+          resetOtpExpire: "",
+          resetOtpAttempts: "",
+        },
+        $set: {
+          updatedAt: now(),
+        },
+      }
+    );
     throw createError("OTP expired", 400, "otp_expired");
+  }
+
+  const currentAttempts = Number(user.resetOtpAttempts || 0);
+  if (currentAttempts >= RESET_OTP_MAX_ATTEMPTS) {
+    throw createError("OTP attempts exceeded. Request a new OTP.", 400, "otp_attempts_exceeded");
   }
 
   const otpMatches = await bcrypt.compare(safeOtp, String(user.resetOtp || ""));
   if (!otpMatches) {
+    const nextAttempts = currentAttempts + 1;
+    const shouldInvalidateOtp = nextAttempts >= RESET_OTP_MAX_ATTEMPTS;
+    await users.updateOne(
+      { _id: user._id },
+      shouldInvalidateOtp
+        ? {
+            $unset: {
+              resetOtp: "",
+              resetOtpExpire: "",
+            },
+            $set: {
+              resetOtpAttempts: nextAttempts,
+              updatedAt: now(),
+            },
+          }
+        : {
+            $set: {
+              resetOtpAttempts: nextAttempts,
+              updatedAt: now(),
+            },
+          }
+    );
+    if (shouldInvalidateOtp) {
+      throw createError("OTP attempts exceeded. Request a new OTP.", 400, "otp_attempts_exceeded");
+    }
     throw createError("Invalid OTP", 400, "invalid_otp");
   }
 
@@ -788,6 +833,7 @@ export const resetPassword = async ({ email, otp, password }) => {
         passwordHash: "",
         resetOtp: "",
         resetOtpExpire: "",
+        resetOtpAttempts: "",
       },
     }
   );

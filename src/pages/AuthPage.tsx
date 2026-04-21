@@ -261,6 +261,7 @@ const AuthPage = () => {
     if (error.code === "otp_not_requested") return "Request a reset OTP first, then enter it here.";
     if (error.code === "otp_expired") return "That OTP has expired. Request a fresh one and try again.";
     if (error.code === "invalid_otp") return "That OTP doesn't match. Double-check the code and try again.";
+    if (error.code === "otp_attempts_exceeded") return "Too many invalid OTP attempts. Request a new OTP and try again.";
     if (error.code === "mail_not_configured") return "Password reset email is temporarily unavailable. Please try again shortly.";
     if (error.code === "mail_delivery_failed") return "We couldn't send the reset email right now. Please try again shortly.";
     return error.message || fallback;

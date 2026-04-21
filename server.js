@@ -323,14 +323,14 @@ const buildShellCookieOptions = (req, overrides = {}) => {
   const frontendOrigin = normalizeOrigin(startupPublicConfig.appBaseUrl || firstOrigin(startupPublicConfig.corsOrigin));
   const backendOrigin = normalizeOrigin(startupPublicConfig.backendPublicUrl || derivePublicBaseUrl(req));
   const usesCrossSiteCookies = Boolean(frontendOrigin && backendOrigin && frontendOrigin !== backendOrigin);
-  const cookieDomain = normalizeCookieDomain(process.env.COOKIE_DOMAIN || startupPublicConfig.backendPublicUrl || derivePublicBaseUrl(req));
+  const cookieDomain = normalizeCookieDomain(process.env.COOKIE_DOMAIN || "");
   const isProduction = String(process.env.NODE_ENV || resolvedNodeEnv).trim().toLowerCase() === "production";
-  const secure = usesCrossSiteCookies || isProduction;
+  const secure = isProduction ? true : usesCrossSiteCookies;
 
   return {
     path: "/",
     secure,
-    sameSite: usesCrossSiteCookies ? "none" : secure ? "strict" : "lax",
+    sameSite: isProduction ? "none" : usesCrossSiteCookies ? "none" : "lax",
     ...(cookieDomain && !isLocalLikeUrl(cookieDomain) ? { domain: cookieDomain } : {}),
     ...overrides,
   };
@@ -338,8 +338,8 @@ const buildShellCookieOptions = (req, overrides = {}) => {
 
 const issueShellCsrfToken = (req, res) => {
   try {
-    const existingToken = readCookieValue(req, "neurobot_csrf");
-    const csrfToken = existingToken && existingToken.length > 8 ? existingToken : randomUUID();
+    const existingToken = String(readCookieValue(req, "neurobot_csrf") || "").trim();
+    const csrfToken = existingToken.length > 8 ? existingToken : randomUUID();
     res.cookie("neurobot_csrf", csrfToken, buildShellCookieOptions(req, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7,

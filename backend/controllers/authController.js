@@ -295,7 +295,15 @@ export const getAuthProviders = async (req, res) => {
 export const getCsrf = async (req, res) => {
   try {
     res.setHeader("Cache-Control", "no-store");
-    const token = String(req.csrfToken || req.cookies?.neurobot_csrf || "").trim();
+    const cookieToken = String(req.cookies?.neurobot_csrf || "").trim();
+    const requestTokenRaw =
+      typeof req.csrfToken === "string"
+        ? req.csrfToken
+        : typeof req.csrfToken === "function"
+          ? req.csrfToken()
+          : "";
+    const requestToken = String(requestTokenRaw || "").trim();
+    const token = requestToken.length > 8 ? requestToken : cookieToken;
     logInfo("Auth CSRF token requested", {
       requestId: req.requestId || "",
       origin: String(req.headers.origin || ""),
