@@ -267,7 +267,7 @@ const applyShellCors = (req, res) => {
     resolvedNodeEnv !== "production" &&
     !allowedOrigins.length &&
     isLocalLikeOrigin(origin);
-  const allowTrustedFrontend = resolvedNodeEnv === "production" && isTrustedFrontendOrigin(origin);
+  const allowTrustedFrontend = resolvedNodeEnv === "production" && origin === DEFAULT_FRONTEND_ORIGIN.toLowerCase();
   if (!allowImplicitLocalOrigin && !allowTrustedFrontend && !allowedOrigins.includes(origin)) {
     res.status(403).json({
       status: "error",

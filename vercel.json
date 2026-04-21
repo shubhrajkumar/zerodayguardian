@@ -14,6 +14,10 @@
     }
   ],
   "functions": {
+    "api/auth/[...path].js": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 60
+    },
     "api/[...path].js": {
       "runtime": "nodejs20.x",
       "maxDuration": 60

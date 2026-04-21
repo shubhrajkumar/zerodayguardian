@@ -78,7 +78,7 @@ const allowCorsOrigin = (origin, callback) => {
     callback(null, true);
     return;
   }
-  if (env.nodeEnv === "production" && isTrustedFrontendOrigin(normalizedOrigin)) {
+  if (env.nodeEnv === "production" && normalizedOrigin === DEFAULT_FRONTEND_ORIGIN.toLowerCase()) {
     callback(null, true);
     return;
   }
