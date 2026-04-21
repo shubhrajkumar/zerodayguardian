@@ -1,21 +1,39 @@
-import "dotenv/config";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import dotenv from "dotenv";
 import express from "express";
 import mongoose from "mongoose";
+import { randomUUID } from "node:crypto";
+
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const envPaths = [
+  path.resolve(moduleDir, ".env"),
+  path.resolve(moduleDir, "backend", ".env"),
+  path.resolve(moduleDir, ".env.local"),
+  path.resolve(moduleDir, "backend", ".env.local"),
+];
+for (const envPath of envPaths) {
+  if (!fs.existsSync(envPath)) continue;
+  dotenv.config({ path: envPath, override: true });
+}
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number.parseInt(String(process.env.PORT || process.env.NEUROBOT_PORT || "10000"), 10) || 10000;
-const MONGO_URI = String(process.env.MONGO_URI || process.env.DATABASE_URL || process.env.MONGODB_URI || "")
+const MONGO_URI = String(process.env.MONGODB_URI || "")
   .trim()
   .replace(/^['"]|['"]$/g, "");
 const MONGO_CONNECT_TIMEOUT_MS = Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 8000);
 const RENDER_EXTERNAL_URL = String(process.env.RENDER_EXTERNAL_URL || "").trim().replace(/\/+$/, "");
 const STARTUP_RETRY_MS = Math.max(5000, Number(process.env.STARTUP_RETRY_MS || 15000));
+const DEFAULT_FRONTEND_ORIGIN = "https://zerodayguardian-delta.vercel.app";
 const SAFE_SESSION_SECRET = "render-session-secret-placeholder-0000000000000000";
 const SAFE_JWT_SECRET = "render-jwt-secret-placeholder-000000000000000000000000";
 const SAFE_DB_ENCRYPTION_KEY = "render-db-encryption-key-placeholder-000000000000000";
 const isManagedRuntime =
   ["1", "true"].includes(String(process.env.RENDER || "").trim().toLowerCase()) ||
   Boolean(RENDER_EXTERNAL_URL);
+const resolvedNodeEnv = String(process.env.NODE_ENV || (isManagedRuntime ? "production" : "development")).trim().toLowerCase() || "development";
 let startupPublicConfig = {
   backendPublicUrl: "",
   appBaseUrl: "",
@@ -46,10 +64,50 @@ const splitCsv = (value = "") =>
 
 const firstOrigin = (value = "") => splitCsv(value)[0] || "";
 const isLocalLikeUrl = (value = "") => /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(String(value || ""));
+const isLocalLikeOrigin = (value = "") => /^(https?:\/\/)(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|::1)(:\d+)?$/i.test(String(value || "").trim());
+const normalizeOrigin = (value = "") => {
+  try {
+    return new URL(String(value || "").trim()).origin.toLowerCase();
+  } catch {
+    return "";
+  }
+};
+const isTrustedFrontendOrigin = (value = "") => {
+  const normalized = normalizeOrigin(value);
+  if (!normalized) return false;
+  if (normalized === DEFAULT_FRONTEND_ORIGIN.toLowerCase()) return true;
+  try {
+    const hostname = new URL(normalized).hostname.toLowerCase();
+    return hostname.endsWith(".vercel.app") && hostname.includes("zerodayguardian");
+  } catch {
+    return false;
+  }
+};
+const normalizeCookieDomain = (value = "") => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    return new URL(raw).hostname.toLowerCase();
+  } catch {
+    return raw.replace(/^\.+/, "").replace(/\/.*$/, "").replace(/:\d+$/, "").toLowerCase();
+  }
+};
+const mergeOrigins = (...items) =>
+  [...new Set(
+    items
+      .flatMap((value) => {
+        if (Array.isArray(value)) return value;
+        return splitCsv(value);
+      })
+      .filter(Boolean)
+  )];
 
 const ensureSafeEnvDefaults = () => {
   if (isManagedRuntime && String(process.env.NODE_ENV || "").trim().toLowerCase() !== "production") {
     process.env.NODE_ENV = "production";
+  }
+  if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = resolvedNodeEnv;
   }
   if (!process.env.SESSION_SECRET) {
     process.env.SESSION_SECRET = SAFE_SESSION_SECRET;
@@ -72,15 +130,18 @@ const ensureSafeEnvDefaults = () => {
   if (!process.env.APP_BASE_URL && process.env.CORS_ORIGIN) {
     process.env.APP_BASE_URL = firstOrigin(process.env.CORS_ORIGIN);
   }
+  if (!process.env.APP_BASE_URL) {
+    process.env.APP_BASE_URL = DEFAULT_FRONTEND_ORIGIN;
+  }
   if (isManagedRuntime && isLocalLikeUrl(process.env.APP_BASE_URL || "")) {
-    process.env.APP_BASE_URL = firstOrigin(process.env.CORS_ORIGIN || "") || process.env.BACKEND_PUBLIC_URL || RENDER_EXTERNAL_URL;
+    process.env.APP_BASE_URL = firstOrigin(process.env.CORS_ORIGIN || "") || DEFAULT_FRONTEND_ORIGIN;
   }
   if (!process.env.CORS_ORIGIN) {
-    const cloudSafeOrigin = firstOrigin(process.env.APP_BASE_URL || process.env.BACKEND_PUBLIC_URL || RENDER_EXTERNAL_URL);
+    const cloudSafeOrigin = firstOrigin(process.env.APP_BASE_URL || DEFAULT_FRONTEND_ORIGIN);
     if (cloudSafeOrigin) process.env.CORS_ORIGIN = cloudSafeOrigin;
   }
   if (isManagedRuntime && splitCsv(process.env.CORS_ORIGIN || "").some((origin) => isLocalLikeUrl(origin))) {
-    process.env.CORS_ORIGIN = firstOrigin(process.env.APP_BASE_URL || process.env.BACKEND_PUBLIC_URL || RENDER_EXTERNAL_URL);
+    process.env.CORS_ORIGIN = firstOrigin(process.env.APP_BASE_URL || DEFAULT_FRONTEND_ORIGIN);
   }
   if (isManagedRuntime && isLocalLikeUrl(process.env.GOOGLE_REDIRECT_URI || "")) {
     process.env.GOOGLE_REDIRECT_URI = process.env.BACKEND_PUBLIC_URL
@@ -93,9 +154,13 @@ const ensureSafeEnvDefaults = () => {
   startupPublicConfig = {
     backendPublicUrl: String(process.env.BACKEND_PUBLIC_URL || RENDER_EXTERNAL_URL || "").trim(),
     appBaseUrl: String(process.env.APP_BASE_URL || "").trim(),
-    corsOrigin: String(process.env.CORS_ORIGIN || "").trim(),
+    corsOrigin: mergeOrigins(process.env.CORS_ORIGIN || "", process.env.APP_BASE_URL || "").join(","),
     googleRedirectUri: String(process.env.GOOGLE_REDIRECT_URI || "").trim(),
-    googleAuthorizedOrigins: splitCsv(process.env.GOOGLE_AUTHORIZED_ORIGINS || process.env.CORS_ORIGIN || process.env.APP_BASE_URL || ""),
+    googleAuthorizedOrigins: mergeOrigins(
+      process.env.GOOGLE_AUTHORIZED_ORIGINS || "",
+      process.env.CORS_ORIGIN || "",
+      process.env.APP_BASE_URL || ""
+    ),
   };
 };
 
@@ -138,10 +203,20 @@ const derivePublicBaseUrl = (req) => {
   return "";
 };
 
+const buildPublicAuthPath = (req, suffix = "") => {
+  const currentPath = String(req.originalUrl || req.url || "");
+  const useApiPrefix = currentPath.startsWith("/api/auth");
+  const normalizedSuffix = suffix.startsWith("/") ? suffix : `/${suffix}`;
+  return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
+};
+
 const buildAuthProvidersPayload = (req) => {
-  const baseUrl = derivePublicBaseUrl(req);
-  const callbackUrl = baseUrl ? `${baseUrl}/auth/google/callback` : "";
-  const startUrl = baseUrl ? `${baseUrl}/auth/google` : "";
+  const googleClientId = String(process.env.GOOGLE_OAUTH_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "").trim();
+  const googleClientSecret = String(process.env.GOOGLE_OAUTH_CLIENT_SECRET || "").trim();
+  const googleRedirectUri = String(process.env.GOOGLE_REDIRECT_URI || "").trim();
+  const hasGoogleRedirectFlow = Boolean(googleClientId && googleClientSecret && googleRedirectUri);
+  const startPath = buildPublicAuthPath(req, "/google");
+  const callbackPath = buildPublicAuthPath(req, "/google/callback");
   const frontendOrigin =
     firstOrigin(startupPublicConfig.appBaseUrl || "") ||
     firstOrigin(startupPublicConfig.corsOrigin || "") ||
@@ -152,20 +227,139 @@ const buildAuthProvidersPayload = (req) => {
     status: "ok",
     degraded: !fullAppReady,
     google: {
-      enabled: Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID || ""),
-      clientId: String(process.env.GOOGLE_OAUTH_CLIENT_ID || ""),
-      backendFlow: true,
-      startUrl,
-      callbackUrl,
-      redirectUri: String(startupPublicConfig.googleRedirectUri || callbackUrl),
+      enabled: Boolean(googleClientId),
+      clientId: googleClientId,
+      backendFlow: hasGoogleRedirectFlow,
+      popupFlow: true,
+      startUrl: hasGoogleRedirectFlow ? `${derivePublicBaseUrl(req)}${startPath}`.replace(/([^:]\/)\/+/g, "$1") : "",
+      callbackUrl: hasGoogleRedirectFlow ? `${derivePublicBaseUrl(req)}${callbackPath}`.replace(/([^:]\/)\/+/g, "$1") : "",
+      redirectUri: hasGoogleRedirectFlow ? (googleRedirectUri || `${derivePublicBaseUrl(req)}${callbackPath}`.replace(/([^:]\/)\/+/g, "$1")) : "",
       frontendOrigin,
       authorizedOrigins,
     },
   };
 };
 
+const appendVaryHeader = (res, value) => {
+  const current = String(res.getHeader("Vary") || "").trim();
+  if (!current) {
+    res.setHeader("Vary", value);
+    return;
+  }
+  const parts = current.split(",").map((entry) => entry.trim().toLowerCase());
+  if (!parts.includes(String(value).toLowerCase())) {
+    res.setHeader("Vary", `${current}, ${value}`);
+  }
+};
+
+const allowedShellOrigins = () =>
+  mergeOrigins(startupPublicConfig.corsOrigin || "", startupPublicConfig.appBaseUrl || "")
+    .map((origin) => normalizeOrigin(origin))
+    .filter(Boolean)
+    .filter((origin) => resolvedNodeEnv === "production" ? !isLocalLikeOrigin(origin) : true);
+
+const applyShellCors = (req, res) => {
+  const origin = normalizeOrigin(req.headers.origin || "");
+  if (!origin) return true;
+  appendVaryHeader(res, "Origin");
+  const allowedOrigins = allowedShellOrigins();
+  const allowImplicitLocalOrigin =
+    resolvedNodeEnv !== "production" &&
+    !allowedOrigins.length &&
+    isLocalLikeOrigin(origin);
+  const allowTrustedFrontend = resolvedNodeEnv === "production" && origin === DEFAULT_FRONTEND_ORIGIN.toLowerCase();
+  if (!allowImplicitLocalOrigin && !allowTrustedFrontend && !allowedOrigins.includes(origin)) {
+    res.status(403).json({
+      status: "error",
+      code: "cors_blocked",
+      message: "Origin not allowed.",
+    });
+    return false;
+  }
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token, X-Request-Id, Last-Event-ID");
+  res.setHeader("Access-Control-Expose-Headers", "X-Request-Id");
+  return true;
+};
+
+const shellCorsMiddleware = (req, res, next) => {
+  if (!applyShellCors(req, res)) return;
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+  next();
+};
+
+const shellHttpsMiddleware = (req, res, next) => {
+  if (String(process.env.NODE_ENV || resolvedNodeEnv).trim().toLowerCase() !== "production") {
+    next();
+    return;
+  }
+  const proto = String(req.headers["x-forwarded-proto"] || req.protocol || "").trim().toLowerCase();
+  if (proto.includes("https")) {
+    next();
+    return;
+  }
+  const host = String(req.headers.host || "");
+  res.status(426).json({ error: "HTTPS required", target: host ? `https://${host}${req.originalUrl || "/"}` : "" });
+};
+
+const readCookieValue = (req, name) => {
+  const encodedName = `${String(name || "").trim()}=`;
+  const rawCookie = String(req.headers?.cookie || "");
+  if (!rawCookie || !encodedName.trim()) return "";
+  const match = rawCookie
+    .split(";")
+    .map((entry) => entry.trim())
+    .find((entry) => entry.startsWith(encodedName));
+  if (!match) return "";
+  return decodeURIComponent(match.slice(encodedName.length));
+};
+
+const buildShellCookieOptions = (req, overrides = {}) => {
+  const frontendOrigin = normalizeOrigin(startupPublicConfig.appBaseUrl || firstOrigin(startupPublicConfig.corsOrigin));
+  const backendOrigin = normalizeOrigin(startupPublicConfig.backendPublicUrl || derivePublicBaseUrl(req));
+  const usesCrossSiteCookies = Boolean(frontendOrigin && backendOrigin && frontendOrigin !== backendOrigin);
+  const cookieDomain = normalizeCookieDomain(process.env.COOKIE_DOMAIN || "");
+  const isProduction = String(process.env.NODE_ENV || resolvedNodeEnv).trim().toLowerCase() === "production";
+  const secure = isProduction ? true : usesCrossSiteCookies;
+
+  return {
+    path: "/",
+    secure,
+    sameSite: isProduction ? "none" : usesCrossSiteCookies ? "none" : "lax",
+    ...(cookieDomain && !isLocalLikeUrl(cookieDomain) ? { domain: cookieDomain } : {}),
+    ...overrides,
+  };
+};
+
+const issueShellCsrfToken = (req, res) => {
+  try {
+    const existingToken = String(readCookieValue(req, "neurobot_csrf") || "").trim();
+    const csrfToken = existingToken.length > 8 ? existingToken : randomUUID();
+    res.cookie("neurobot_csrf", csrfToken, buildShellCookieOptions(req, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    }));
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ status: "ok", degraded: !fullAppReady, csrfToken });
+  } catch (error) {
+    console.error("Failed to issue shell CSRF token", error);
+    res.status(500).json({
+      status: "error",
+      code: "csrf_issue",
+      message: "Unable to issue CSRF token.",
+    });
+  }
+};
+
 const degradedApp = express();
 degradedApp.disable("x-powered-by");
+degradedApp.use(shellHttpsMiddleware);
+degradedApp.use(shellCorsMiddleware);
 degradedApp.get("/", (_req, res) => {
   res.type("text/plain").send("Backend Running 🚀");
 });
@@ -181,8 +375,8 @@ degradedApp.get("/api/auth/providers", (req, res) => {
 degradedApp.get("/auth/providers", (req, res) => {
   res.json(buildAuthProvidersPayload(req));
 });
-degradedApp.get("/api/auth/csrf", (_req, res) => {
-  res.json({ status: "ok", degraded: !fullAppReady, csrfToken: true });
+degradedApp.get("/api/auth/csrf", (req, res) => {
+  issueShellCsrfToken(req, res);
 });
 degradedApp.use((_req, res) => {
   res.status(503).json({
@@ -196,6 +390,8 @@ activeHandler = degradedApp;
 
 const shellApp = express();
 shellApp.disable("x-powered-by");
+shellApp.use(shellHttpsMiddleware);
+shellApp.use(shellCorsMiddleware);
 shellApp.get("/", (_req, res) => {
   res.type("text/plain").send("Backend Running 🚀");
 });
@@ -211,8 +407,8 @@ shellApp.get("/api/auth/providers", (req, res) => {
 shellApp.get("/auth/providers", (req, res) => {
   res.json(buildAuthProvidersPayload(req));
 });
-shellApp.get("/api/auth/csrf", (_req, res) => {
-  res.json({ status: "ok", degraded: !fullAppReady, csrfToken: true });
+shellApp.get("/api/auth/csrf", (req, res) => {
+  issueShellCsrfToken(req, res);
 });
 shellApp.use((req, res, next) => {
   try {
@@ -228,34 +424,27 @@ shellApp.use((req, res, next) => {
 
 const connectMongoBestEffort = async () => {
   if (!MONGO_URI) {
-    log("warn", "DATABASE_URL missing, continuing without MongoDB");
-    return;
+    throw new Error("Missing required environment variable: MONGODB_URI");
   }
   if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) return;
 
-  try {
-    await Promise.race([
-      mongoose.connect(MONGO_URI, {
-        serverSelectionTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
-        connectTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
-        family: 4,
-        maxPoolSize: 10,
-        autoIndex: true,
-      }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`Mongo connect timeout after ${MONGO_CONNECT_TIMEOUT_MS}ms`)), MONGO_CONNECT_TIMEOUT_MS)
-      ),
-    ]);
-    clearReconnectTimer();
-    log("info", "MongoDB connected", {
-      host: mongoose.connection.host || "",
-      name: mongoose.connection.name || "",
-    });
-  } catch (error) {
-    log("warn", "MongoDB unavailable, continuing without it", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
+  await Promise.race([
+    mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
+      connectTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
+      family: 4,
+      maxPoolSize: 10,
+      autoIndex: true,
+    }),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Mongo connect timeout after ${MONGO_CONNECT_TIMEOUT_MS}ms`)), MONGO_CONNECT_TIMEOUT_MS)
+    ),
+  ]);
+  clearReconnectTimer();
+  log("info", "MongoDB connected", {
+    host: mongoose.connection.host || "",
+    name: mongoose.connection.name || "",
+  });
 };
 
 mongoose.connection.on("connected", () => {
@@ -282,7 +471,8 @@ mongoose.connection.on("disconnected", () => {
 });
 
 const bootstrapFullApp = async () => {
-  if (bootstrapInFlight || fullAppReady) return;
+  if (fullAppReady) return;
+  if (bootstrapInFlight) return;
   bootstrapInFlight = true;
   bootstrapAttempts += 1;
   log("info", "Bootstrapping full backend application", { attempt: bootstrapAttempts, port: PORT });
@@ -297,13 +487,7 @@ const bootstrapFullApp = async () => {
 
     await Promise.allSettled([
       connectMongoBestEffort(),
-      typeof dbModule.connectDb === "function"
-        ? dbModule.connectDb().catch((error) => {
-            log("warn", "Native DB unavailable, continuing without it", {
-              error: error instanceof Error ? error.message : String(error),
-            });
-          })
-        : Promise.resolve(),
+      typeof dbModule.connectDb === "function" ? dbModule.connectDb() : Promise.resolve(),
     ]);
 
     const fullApp = createApp();

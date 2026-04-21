@@ -53,18 +53,48 @@ const setProbeNoStore = (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   next();
 };
+const DEFAULT_FRONTEND_ORIGIN = "https://zerodayguardian-delta.vercel.app";
+const normalizeCorsOrigin = (value = "") => String(value || "").trim().replace(/\/+$/, "");
+const isLocalLikeOrigin = (value = "") => /^(https?:\/\/)(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|::1)(:\d+)?$/i.test(normalizeCorsOrigin(value));
+const isTrustedFrontendOrigin = (value = "") => {
+  const normalizedOrigin = normalizeCorsOrigin(value).toLowerCase();
+  if (!normalizedOrigin) return false;
+  if (normalizedOrigin === DEFAULT_FRONTEND_ORIGIN.toLowerCase()) return true;
+  try {
+    const hostname = new URL(normalizedOrigin).hostname.toLowerCase();
+    return hostname.endsWith(".vercel.app") && hostname.includes("zerodayguardian");
+  } catch {
+    return false;
+  }
+};
 const allowCorsOrigin = (origin, callback) => {
   if (!origin) {
     callback(null, true);
     return;
   }
-  if ((env.corsOrigins || []).includes(origin)) {
+  const normalizedOrigin = normalizeCorsOrigin(origin);
+  // Always allow if explicitly configured
+  if ((env.corsOrigins || []).includes(normalizedOrigin)) {
     callback(null, true);
     return;
   }
-  const error = new Error(`CORS blocked for origin ${origin}`);
+  if (env.nodeEnv === "production" && normalizedOrigin === DEFAULT_FRONTEND_ORIGIN.toLowerCase()) {
+    callback(null, true);
+    return;
+  }
+  // Block localhost in production only if not explicitly allowed
+  if (env.nodeEnv === "production" && isLocalLikeOrigin(normalizedOrigin)) {
+    const error = new Error(`CORS blocked for localhost origin ${normalizedOrigin}`);
+    error.status = 403;
+    error.code = "cors_blocked";
+    logWarn("CORS blocked for localhost origin", { origin: normalizedOrigin, allowedOrigins: env.corsOrigins || [] });
+    callback(error);
+    return;
+  }
+  const error = new Error(`CORS blocked for origin ${normalizedOrigin}`);
   error.status = 403;
   error.code = "cors_blocked";
+  logWarn("CORS blocked for origin", { origin: normalizedOrigin, allowedOrigins: env.corsOrigins || [] });
   callback(error);
 };
 
@@ -82,6 +112,35 @@ const buildBackendUrl = (req, path) => {
   } catch {
     return `${String(fallbackBase || "").replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
   }
+};
+const buildPublicAuthPath = (req, suffix = "") => {
+  const baseUrl = String(req.baseUrl || req.originalUrl || req.url || "");
+  const useApiPrefix = baseUrl.startsWith("/api/auth");
+  const normalizedSuffix = suffix.startsWith("/") ? suffix : `/${suffix}`;
+  return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
+};
+const buildAuthProvidersPayload = (req) => {
+  const hasGoogleClient = Boolean(env.googleOauthClientId);
+  const hasGoogleRedirectFlow = Boolean(env.googleOauthClientId && env.googleOauthClientSecret && env.googleRedirectUri);
+  const startPath = buildPublicAuthPath(req, "/google");
+  const callbackPath = buildPublicAuthPath(req, "/google/callback");
+  const startUrl = hasGoogleRedirectFlow ? buildBackendUrl(req, startPath) : "";
+  const callbackUrl = hasGoogleRedirectFlow ? buildBackendUrl(req, callbackPath) : "";
+
+  return {
+    status: "ok",
+    google: {
+      enabled: hasGoogleClient,
+      clientId: env.googleOauthClientId || "",
+      backendFlow: hasGoogleRedirectFlow,
+      popupFlow: true,
+      startUrl,
+      callbackUrl,
+      redirectUri: hasGoogleRedirectFlow ? (env.googleRedirectUri || callbackUrl) : "",
+      frontendOrigin: env.appBaseUrl || "",
+      authorizedOrigins: env.googleAuthorizedOrigins || [],
+    },
+  };
 };
 const listRoutes = (app) => {
   const routes = [];
@@ -192,7 +251,9 @@ export const createApp = () => {
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Last-Event-ID", "X-Request-Id"],
+      exposedHeaders: ["X-Request-Id"],
       maxAge: 600,
+      optionsSuccessStatus: 204,
     })
   );
   app.use(
@@ -387,38 +448,10 @@ export const createApp = () => {
     });
   });
   app.get("/api/auth/providers", (req, res) => {
-    const startUrl = buildBackendUrl(req, "/auth/google");
-    const callbackUrl = buildBackendUrl(req, "/auth/google/callback");
-    res.json({
-      status: "ok",
-      google: {
-        enabled: Boolean(env.googleOauthClientId),
-        clientId: env.googleOauthClientId || "",
-        backendFlow: true,
-        startUrl,
-        callbackUrl,
-        redirectUri: env.googleRedirectUri || callbackUrl,
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
-    });
+    res.json(buildAuthProvidersPayload(req));
   });
   app.get("/auth/providers", (req, res) => {
-    const startUrl = buildBackendUrl(req, "/auth/google");
-    const callbackUrl = buildBackendUrl(req, "/auth/google/callback");
-    res.json({
-      status: "ok",
-      google: {
-        enabled: Boolean(env.googleOauthClientId),
-        clientId: env.googleOauthClientId || "",
-        backendFlow: true,
-        startUrl,
-        callbackUrl,
-        redirectUri: env.googleRedirectUri || callbackUrl,
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
-    });
+    res.json(buildAuthProvidersPayload(req));
   });
   app.get("/api/ai/health", setProbeNoStore, async (req, res, next) => {
     try {
@@ -512,8 +545,8 @@ export const createApp = () => {
     }
     }
   );
-  app.use("/auth", apiReadRateLimit, requireCsrf, authRoutes);
-  app.use("/api/auth", apiReadRateLimit, requireCsrf, authRoutes);
+  app.use("/auth", apiReadRateLimit, authRoutes);
+  app.use("/api/auth", apiReadRateLimit, authRoutes);
   app.use("/mission", requireCsrf, requireAuth, mutationRateLimit, missionRoutes);
   app.use("/api/mission", requireCsrf, requireAuth, mutationRateLimit, missionRoutes);
   app.use("/user", requireCsrf, requireAuth, mutationRateLimit, productUserRoutes);
