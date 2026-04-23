@@ -72,17 +72,6 @@ const normalizeOrigin = (value = "") => {
     return "";
   }
 };
-const isTrustedFrontendOrigin = (value = "") => {
-  const normalized = normalizeOrigin(value);
-  if (!normalized) return false;
-  if (normalized === DEFAULT_FRONTEND_ORIGIN.toLowerCase()) return true;
-  try {
-    const hostname = new URL(normalized).hostname.toLowerCase();
-    return hostname.endsWith(".vercel.app") && hostname.includes("zerodayguardian");
-  } catch {
-    return false;
-  }
-};
 const normalizeCookieDomain = (value = "") => {
   const raw = String(value || "").trim();
   if (!raw) return "";

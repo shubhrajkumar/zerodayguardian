@@ -9,6 +9,7 @@ const router = Router();
 
 router.get("/csrf", authSessionRateLimit, getCsrf);
 router.get("/status", authSessionRateLimit, getAuthStatus);
+router.get("/session", authSessionRateLimit, getAuthStatus);
 router.get("/providers", authProvidersRateLimit, getAuthProviders);
 router.get("/google", authProvidersRateLimit, startGoogleOauth);
 router.get("/google/callback", authProvidersRateLimit, googleOauthCallback);
