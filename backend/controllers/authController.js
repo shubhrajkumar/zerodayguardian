@@ -3,6 +3,7 @@ import {
   authenticateGoogleUser,
   buildGoogleOauthRedirectUrl,
   clearAuthCookies,
+  getUserById,
   loginUser,
   refreshAuth,
   registerUser,
@@ -13,7 +14,7 @@ import {
 } from "../src/services/authService.mjs";
 import { env } from "../src/config/env.mjs";
 import { assertAuthAttemptAllowed, recordAuthFailure, recordAuthSuccess } from "../src/services/authThreatService.mjs";
-import { logError, logInfo } from "../src/utils/logger.mjs";
+import { logError, logInfo, redact } from "../src/utils/logger.mjs";
 
 const resolveBackendBaseUrl = (req) => {
   if (env.backendPublicUrl) return env.backendPublicUrl;
@@ -35,6 +36,13 @@ const resolveBackendAuthUrl = (req, path) => {
     const fallbackBase = (env.backendPublicUrl || env.corsOrigin || env.appBaseUrl || `http://localhost:${env.port || 8787}`).replace(/\/+$/, "");
     return `${fallbackBase}${path.startsWith("/") ? path : `/${path}`}`;
   }
+};
+
+const resolvePublicAuthPath = (req, suffix = "") => {
+  const baseUrl = String(req.baseUrl || req.originalUrl || req.url || "");
+  const useApiPrefix = baseUrl.startsWith("/api/auth");
+  const normalizedSuffix = suffix.startsWith("/") ? suffix : `/${suffix}`;
+  return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
 };
 
 const resolveAppRedirect = (target, fallbackPath = "/") => {
@@ -66,6 +74,19 @@ const toPublicUser = (user) =>
         authProvider: String(user.authProvider || "local"),
         emailVerified: Boolean(user.emailVerified),
         avatarUrl: String(user.avatarUrl || ""),
+      }
+    : null;
+
+const toTokenBackedUser = (authUser) =>
+  authUser
+    ? {
+        id: String(authUser?.sub || ""),
+        name: String(authUser?.name || authUser?.preferred_username || "Operator"),
+        email: String(authUser?.email || ""),
+        role: String(authUser?.role || "user"),
+        authProvider: String(authUser?.authProvider || "local"),
+        emailVerified: Boolean(authUser?.emailVerified || authUser?.email_verified),
+        avatarUrl: String(authUser?.avatarUrl || ""),
       }
     : null;
 
@@ -117,7 +138,7 @@ const normalizeRefreshError = (error) => {
   return current;
 };
 
-export const signup = async (req, res, next) => {
+export const signup = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth signup request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -132,7 +153,7 @@ export const signup = async (req, res, next) => {
   }
 };
 
-export const login = async (req, res, next) => {
+export const login = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth login request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -174,7 +195,7 @@ export const startGoogleOauth = async (req, res) => {
   }
 };
 
-export const sendOtp = async (req, res, next) => {
+export const sendOtp = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth send OTP request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -188,7 +209,7 @@ export const sendOtp = async (req, res, next) => {
   }
 };
 
-export const resetUserPassword = async (req, res, next) => {
+export const resetUserPassword = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth reset password request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -203,7 +224,7 @@ export const resetUserPassword = async (req, res, next) => {
   }
 };
 
-export const refreshSession = async (req, res, next) => {
+export const refreshSession = async (req, res) => {
   try {
     logInfo("Auth refresh request", { requestId: req.requestId || "", hasRefreshCookie: Boolean(req.cookies?.neurobot_rt) });
     const { user, rememberMe } = await refreshAuth(req.cookies?.neurobot_rt);
@@ -218,7 +239,7 @@ export const refreshSession = async (req, res, next) => {
   }
 };
 
-export const logout = async (req, res, next) => {
+export const logout = async (req, res) => {
   try {
     logInfo("Auth logout request", { requestId: req.requestId || "" });
     await revokeRefreshSession(req.cookies?.neurobot_rt);
@@ -232,17 +253,22 @@ export const logout = async (req, res, next) => {
 
 export const getAuthProviders = async (req, res) => {
   try {
-    const startUrl = resolveBackendAuthUrl(req, "/auth/google");
-    const callbackUrl = resolveBackendAuthUrl(req, "/auth/google/callback");
+    const hasGoogleClient = Boolean(env.googleOauthClientId);
+    const hasGoogleRedirectFlow = Boolean(env.googleOauthClientId && env.googleOauthClientSecret && env.googleRedirectUri);
+    const startPath = resolvePublicAuthPath(req, "/google");
+    const callbackPath = resolvePublicAuthPath(req, "/google/callback");
+    const startUrl = hasGoogleRedirectFlow ? resolveBackendAuthUrl(req, startPath) : "";
+    const callbackUrl = hasGoogleRedirectFlow ? resolveBackendAuthUrl(req, callbackPath) : "";
     res.json({
       status: "ok",
       google: {
-        enabled: Boolean(env.googleOauthClientId),
+        enabled: hasGoogleClient,
         clientId: env.googleOauthClientId || "",
-        backendFlow: true,
+        backendFlow: hasGoogleRedirectFlow,
+        popupFlow: true,
         startUrl,
         callbackUrl,
-        redirectUri: env.googleRedirectUri || callbackUrl,
+        redirectUri: hasGoogleRedirectFlow ? (env.googleRedirectUri || callbackUrl) : "",
         frontendOrigin: env.appBaseUrl || "",
         authorizedOrigins: env.googleAuthorizedOrigins || [],
       },
@@ -254,7 +280,8 @@ export const getAuthProviders = async (req, res) => {
       google: {
         enabled: false,
         clientId: "",
-        backendFlow: true,
+        backendFlow: false,
+        popupFlow: true,
         startUrl: "",
         callbackUrl: "",
         redirectUri: "",
@@ -265,12 +292,57 @@ export const getAuthProviders = async (req, res) => {
   }
 };
 
-export const getCsrf = async (req, res, next) => {
+export const getCsrf = async (req, res) => {
   try {
-    logInfo("Auth CSRF token requested", { requestId: req.requestId || "" });
-    res.json({ csrfToken: req.csrfToken || true });
+    res.setHeader("Cache-Control", "no-store");
+    const cookieToken = String(req.cookies?.neurobot_csrf || "").trim();
+    const requestTokenRaw =
+      typeof req.csrfToken === "string"
+        ? req.csrfToken
+        : typeof req.csrfToken === "function"
+          ? req.csrfToken()
+          : "";
+    const requestToken = String(requestTokenRaw || "").trim();
+    const token = requestToken.length > 8 ? requestToken : cookieToken;
+    logInfo("Auth CSRF token requested", {
+      requestId: req.requestId || "",
+      origin: String(req.headers.origin || ""),
+      hasCsrfCookie: Boolean(req.cookies?.neurobot_csrf),
+      csrfToken: redact(token),
+    });
+    res.json({ status: "ok", csrfToken: token });
   } catch (error) {
     logError("Auth CSRF response failed", error, { requestId: req.requestId || "" });
+    res.status(500).json({
+      status: "error",
+      code: error.code || "INTERNAL_SERVER_ERROR",
+      message: error.message || "An unexpected error occurred.",
+      requestId: req.requestId || "",
+    });
+  }
+};
+
+export const getAuthStatus = async (req, res) => {
+  try {
+    if (!req.user?.sub) {
+      res.json({
+        status: "ok",
+        authenticated: false,
+        user: null,
+        requestId: req.requestId || "",
+      });
+      return;
+    }
+
+    const dbUser = await getUserById(req.user.sub).catch(() => null);
+    res.json({
+      status: "ok",
+      authenticated: true,
+      user: toPublicUser(dbUser) || toTokenBackedUser(req.user),
+      requestId: req.requestId || "",
+    });
+  } catch (error) {
+    logError("Auth status lookup failed", error, { requestId: req.requestId || "", userId: req.user?.sub || "" });
     res.status(500).json({
       status: "error",
       code: error.code || "INTERNAL_SERVER_ERROR",
