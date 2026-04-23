@@ -15,7 +15,7 @@
     "start": "node server.js",
     "health:stack": "node scripts/health-check.mjs",
     "ops:weekly-digest": "node scripts/send-weekly-digests.mjs",
-    "build": "vite build || react-scripts build",
+    "build": "vite build",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
