@@ -2,6 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
   "outputDirectory": "dist",
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs@18.x",
+      "maxDuration": 60
+    }
+  },
   "cleanUrls": true,
   "rewrites": [
     {
@@ -12,15 +18,5 @@
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
-  ],
-  "functions": {
-    "api/auth/[...path].js": {
-      "runtime": "nodejs@20.x",
-      "maxDuration": 60
-    },
-    "api/[...path].js": {
-      "runtime": "nodejs@20.x",
-      "maxDuration": 60
-    }
-  }
+  ]
 }
