@@ -135,7 +135,7 @@ const AuthPage = () => {
         }
         setGoogleClientId("");
         setGoogleStartUrl("");
-        setGoogleStatus("Google sign-in is not configured on the backend yet.");
+        setGoogleStatus("Google sign-in is currently unavailable. You can continue with email login.");
       })
       .catch((error) => {
         if (!active) return;
@@ -145,12 +145,12 @@ const AuthPage = () => {
         if (isApiError(error) && error.status === 404) {
           const fallbackStatus =
             isHostedRuntime && !hasRuntimeApiBase
-              ? "Google sign-in backend is not mounted on this Vercel deployment yet. Set BACKEND_PUBLIC_URL or VITE_API_BASE_URL to your live backend origin."
-              : "Google sign-in endpoint is not available yet. Verify the deployed backend origin and production auth env values.";
+              ? "Google sign-in endpoint is temporarily unavailable. Please verify production auth environment variables."
+              : "Google sign-in endpoint is temporarily unavailable. Please retry shortly.";
           setGoogleStatus(fallbackStatus);
           return;
         }
-        setGoogleStatus("Could not load Google sign-in configuration.");
+        setGoogleStatus(isApiError(error) ? (error.message || "Google sign-in is temporarily unavailable.") : "Google sign-in is temporarily unavailable.");
       });
     return () => {
       active = false;
@@ -195,7 +195,7 @@ const AuthPage = () => {
     if (!isApiError(error)) return "Authentication failed.";
     if (error.status === 429) return error.message;
     if (error.code === "google_auth_not_configured") {
-      return "Google sign-in is not configured on the backend.";
+      return "Google sign-in is temporarily unavailable. Please continue with email login.";
     }
     if (error.code === "google_token_required") {
       return "Google did not return a valid credential.";

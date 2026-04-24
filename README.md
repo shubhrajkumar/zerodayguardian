@@ -36,7 +36,7 @@ Set these in Vercel:
 
 ```env
 VITE_SITE_URL=https://your-frontend.vercel.app
-BACKEND_PUBLIC_URL=https://your-backend.onrender.com
+BACKEND_PUBLIC_URL=https://zerodayguardian-backend.onrender.com
 VITE_API_BASE_URL=
 VITE_PY_API_URL=
 VITE_FIREBASE_API_KEY=
@@ -53,13 +53,13 @@ Set these on the live Node backend:
 
 ```env
 APP_BASE_URL=https://your-frontend.vercel.app
-BACKEND_PUBLIC_URL=https://your-backend.onrender.com
+BACKEND_PUBLIC_URL=https://zerodayguardian-backend.onrender.com
 CORS_ORIGIN=https://your-frontend.vercel.app
 DATABASE_URL=<your-mongodb-uri>
 SESSION_SECRET=<strong-random-secret>
 JWT_SECRET=<strong-random-jwt-secret>
 GOOGLE_AUTHORIZED_ORIGINS=https://your-frontend.vercel.app
-GOOGLE_REDIRECT_URI=https://your-backend.onrender.com/auth/google/callback
+GOOGLE_REDIRECT_URI=https://zerodayguardian-backend.onrender.com/auth/google/callback
 ```
 
 If the backend should call a separate Python service:
@@ -79,3 +79,4 @@ PY_API_INTERNAL_URL=https://your-python-service.onrender.com
 - Vercel is configured as a Node/Vite project only.
 - Python dependency files are kept out of the Vercel root detection path.
 - See [docs/VERCEL_DEPLOYMENT.md](./docs/VERCEL_DEPLOYMENT.md) for the deployment checklist.
+

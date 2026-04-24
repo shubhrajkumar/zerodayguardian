@@ -29,7 +29,7 @@ Set these in the Vercel project:
 
 ```env
 VITE_SITE_URL=https://your-frontend.vercel.app
-BACKEND_PUBLIC_URL=https://your-backend.onrender.com
+BACKEND_PUBLIC_URL=https://zerodayguardian-backend.onrender.com
 VITE_API_BASE_URL=
 VITE_PY_API_URL=
 VITE_FIREBASE_API_KEY=
@@ -54,10 +54,10 @@ Set the live backend origin so the frontend can reach it:
 
 ```env
 APP_BASE_URL=https://your-frontend.vercel.app
-BACKEND_PUBLIC_URL=https://your-backend.onrender.com
+BACKEND_PUBLIC_URL=https://zerodayguardian-backend.onrender.com
 CORS_ORIGIN=https://your-frontend.vercel.app
 GOOGLE_AUTHORIZED_ORIGINS=https://your-frontend.vercel.app
-GOOGLE_REDIRECT_URI=https://your-backend.onrender.com/auth/google/callback
+GOOGLE_REDIRECT_URI=https://zerodayguardian-backend.onrender.com/auth/google/callback
 SESSION_SECRET=<strong-random-secret>
 JWT_SECRET=<strong-random-jwt-secret>
 DATABASE_URL=<your-mongodb-connection-string>
@@ -79,11 +79,12 @@ PY_API_INTERNAL_URL=https://your-python-service.onrender.com
 
 1. Deploy or update the Render backend first.
 2. Confirm the backend health URL responds:
-   - `https://your-backend.onrender.com/`
-   - `https://your-backend.onrender.com/api/health`
+   - `https://zerodayguardian-backend.onrender.com/`
+   - `https://zerodayguardian-backend.onrender.com/api/health`
 3. Set `BACKEND_PUBLIC_URL` in Vercel to that live backend origin.
 4. Redeploy the Vercel frontend.
 5. Verify in the browser:
    - auth page loads without `/api/auth/providers` 404
    - frontend requests resolve to the live Render backend
    - no Python dependency parsing failure appears in Vercel
+

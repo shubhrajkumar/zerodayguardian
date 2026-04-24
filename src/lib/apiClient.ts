@@ -3,6 +3,7 @@ import { resolveApiUrl, resolveBackendUrl } from "@/lib/apiConfig";
 import { recordClientDiagnostic, recordRuntimeDebugEvent } from "@/lib/runtimeDiagnostics";
 export const ACCESS_TOKEN_KEY = "neurobot_access_token";
 const REFRESH_BLOCK_KEY = "neurobot_refresh_block_until";
+const CSRF_TOKEN_KEY = "neurobot_csrf_token";
 
 const verboseApiLogging =
   import.meta.env.DEV ||
@@ -26,8 +27,29 @@ export const getCookie = (name: string) => {
   return encoded ? decodeURIComponent(encoded) : "";
 };
 
+const getStoredCsrfToken = () => {
+  try {
+    return sessionStorage.getItem(CSRF_TOKEN_KEY) || "";
+  } catch {
+    return "";
+  }
+};
+
+const setStoredCsrfToken = (token: string) => {
+  const normalized = String(token || "").trim();
+  try {
+    if (normalized) sessionStorage.setItem(CSRF_TOKEN_KEY, normalized);
+    else sessionStorage.removeItem(CSRF_TOKEN_KEY);
+  } catch {
+    // ignore storage failures
+  }
+  return normalized;
+};
+
+const getCsrfToken = () => getStoredCsrfToken() || getCookie("neurobot_csrf");
+
 export const ensureCsrf = async () => {
-  const existingToken = getCookie("neurobot_csrf");
+  const existingToken = getCsrfToken();
   if (existingToken) {
     logDebug(`[CSRF] Using existing token: ${existingToken.substring(0, 8)}...`);
     return existingToken;
@@ -38,19 +60,20 @@ export const ensureCsrf = async () => {
   try {
     const response = await fetch(resolveApiUrl("/api/auth/csrf"), {
       credentials: "include",
-      method: "GET"
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
     });
     
     if (!response.ok) {
       throw new Error(`CSRF endpoint failed: ${response.status}`);
     }
     
-    // Wait a moment for the cookie to be set
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const token = getCookie("neurobot_csrf");
+    const payload = (await response.json().catch(() => ({}))) as { csrfToken?: string };
+    const token = setStoredCsrfToken(String(payload?.csrfToken || "").trim() || getCookie("neurobot_csrf"));
     if (!token) {
-      throw new Error("CSRF cookie was not set after fetching token");
+      throw new Error("CSRF token was not returned by the backend");
     }
     
     logDebug(`[CSRF] Successfully fetched new token: ${token.substring(0, 8)}...`);
@@ -162,6 +185,7 @@ export const clearAuthState = (): void => {
     localStorage.removeItem("auth_state");
     localStorage.removeItem(REFRESH_BLOCK_KEY);
     clearStoredAccessToken();
+    setStoredCsrfToken("");
     document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   } catch (error) {
     logDebugError("[API] Error clearing auth state:", error);
@@ -250,7 +274,7 @@ const triggerAuthRedirect = () => {
 };
 
 const runRefreshRequest = async (url: string) => {
-  const csrf = getCookie("neurobot_csrf");
+  const csrf = getCsrfToken();
   return fetch(url, {
     method: "POST",
     credentials: "include",
@@ -378,7 +402,7 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
     await ensureCsrf();
   }
   
-  const csrf = getCookie("neurobot_csrf");
+  const csrf = getCsrfToken();
   let bearer = getStoredAccessToken();
   if (!bearer && cachedAuth?.isAuthenticated && !url.startsWith("/api/auth/")) {
     logDebug(`[API] ${method} ${url} - Missing bearer with authenticated session, attempting refresh`);

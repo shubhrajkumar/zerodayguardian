@@ -18,6 +18,7 @@ router.get("/oauth/google/callback", authProvidersRateLimit, googleOauthCallback
 router.post("/signup", authRateLimit, validateBody(signupSchema), signup);
 router.post("/login", authRateLimit, validateBody(loginSchema), login);
 router.post("/google", authRateLimit, validateBody(googleLoginSchema), googleLogin);
+router.post("/otp", authRateLimit, validateBody(sendOtpSchema), sendOtp);
 router.post("/send-otp", authRateLimit, validateBody(sendOtpSchema), sendOtp);
 router.post("/reset-password", authRateLimit, validateBody(resetPasswordSchema), resetUserPassword);
 router.post("/refresh", authSessionRateLimit, validateBody(refreshSchema), refreshSession);

@@ -202,7 +202,7 @@ const isRender =
   Boolean(String(process.env.RENDER_EXTERNAL_URL || "").trim());
 const isManagedDeploy = isVercel || isRender;
 const vercelFallbackUrl = process.env.VERCEL_URL ? `https://${String(process.env.VERCEL_URL).trim()}` : "https://zeroday-guardian.invalid";
-const renderFallbackUrl = String(process.env.RENDER_EXTERNAL_URL || "").trim() || "https://zeroday-guardian.onrender.com";
+const renderFallbackUrl = String(process.env.RENDER_EXTERNAL_URL || "").trim() || "https://zerodayguardian-backend.onrender.com";
 const managedFallbackUrl = isRender ? renderFallbackUrl : vercelFallbackUrl;
 const warnDeployConfig = (message) => {
   console.warn(`[neurobot] ${message}`);
