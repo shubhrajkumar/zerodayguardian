@@ -5,7 +5,7 @@ services:
     plan: free
     rootDir: .
     buildCommand: npm install --no-fund --no-audit && npm run build
-    startCommand: node server.js
+    startCommand: node backend/server.js
     healthCheckPath: /health
     autoDeploy: true
     envVars:

@@ -26,8 +26,8 @@ backend/
 backend/**
 api/
 api/**
-pages/api/
-pages/api/**
+pages/
+pages/**
 functions/
 functions/**
 ai-engine/
@@ -38,8 +38,6 @@ docs/
 labs/
 osint-breach-monitor/
 frontend/
-server.js
-ollamaRoute.js
 render.yaml
 docker-compose.yml
 Dockerfile

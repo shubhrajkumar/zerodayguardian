@@ -7,11 +7,12 @@ import mongoose from "mongoose";
 import { randomUUID } from "node:crypto";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(moduleDir, "..");
 const envPaths = [
+  path.resolve(projectRoot, ".env"),
   path.resolve(moduleDir, ".env"),
-  path.resolve(moduleDir, "backend", ".env"),
+  path.resolve(projectRoot, ".env.local"),
   path.resolve(moduleDir, ".env.local"),
-  path.resolve(moduleDir, "backend", ".env.local"),
 ];
 for (const envPath of envPaths) {
   if (!fs.existsSync(envPath)) continue;

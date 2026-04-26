@@ -1,2 +1,2 @@
-console.warn("[server] backend/src/server.mjs is deprecated. Redirecting to root server.js");
-await import("../../server.js");
+console.warn("[server] backend/src/server.mjs is deprecated. Redirecting to backend/server.js");
+await import("../server.js");

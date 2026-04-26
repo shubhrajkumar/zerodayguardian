@@ -11,4 +11,4 @@ ENV NODE_ENV=production
 
 EXPOSE 8080 8787
 
-CMD ["sh", "-c", "node server.js & npm run preview -- --host 0.0.0.0 --port 8080"]
+CMD ["sh", "-c", "node backend/server.js & npm run preview -- --host 0.0.0.0 --port 8080"]
