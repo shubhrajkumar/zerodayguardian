@@ -1,6 +1,6 @@
 const trimTrailingSlash = (value: string) => String(value || "").replace(/\/+$/, "");
 const isAbsoluteHttpUrl = (value: string) => /^https?:\/\//i.test(String(value || "").trim());
-const DEFAULT_API_BASE = "https://zerodayguardian-backend.onrender.com";
+export const DEFAULT_RENDER_BACKEND_URL = "https://zerodayguardian-backend.onrender.com";
 
 const readProcessEnv = (key: string) => {
   if (typeof process === "undefined" || !process?.env) return "";
@@ -42,7 +42,7 @@ export const API_BASE_URL = (() => {
   const runtimeWindowBase = normalizeBaseUrl(readWindowEnv("VITE_API_URL") || readWindowEnv("BACKEND_PUBLIC_URL"));
   if (runtimeWindowBase) return runtimeWindowBase;
   if (BUILD_BACKEND_PUBLIC_URL) return BUILD_BACKEND_PUBLIC_URL;
-  return DEFAULT_API_BASE;
+  return DEFAULT_RENDER_BACKEND_URL;
 })();
 
 export const API_BASE = API_BASE_URL;
@@ -56,7 +56,7 @@ export const PY_API_BASE_URL = (() => {
   if (runtimeWindowPyBase) return runtimeWindowPyBase;
   if (BUILD_PY_API_PUBLIC_URL) return BUILD_PY_API_PUBLIC_URL;
   if (API_BASE_URL) return `${API_BASE_URL}/pyapi`;
-  return `${DEFAULT_API_BASE}/pyapi`;
+  return `${DEFAULT_RENDER_BACKEND_URL}/pyapi`;
 })();
 
 const joinUrl = (baseUrl: string, path: string) => `${trimTrailingSlash(baseUrl)}${path.startsWith("/") ? path : `/${path}`}`;
@@ -69,7 +69,7 @@ const resolveAbsoluteUrl = (path: string, baseUrl: string, matcher: RegExp) => {
     return baseUrl ? joinUrl(baseUrl, normalizedPath) : normalizedPath;
   }
   if (!matcher.test(normalizedPath)) return normalizedPath;
-  return joinUrl(baseUrl || DEFAULT_API_BASE, normalizedPath);
+  return joinUrl(baseUrl || DEFAULT_RENDER_BACKEND_URL, normalizedPath);
 };
 
 export const resolveBackendUrl = (path: string) =>
@@ -82,7 +82,7 @@ export const resolvePyApiUrl = (path: string) => {
   const normalizedPath = String(path || "").trim();
   if (!normalizedPath) return normalizedPath;
   if (isAbsoluteHttpUrl(normalizedPath)) return normalizedPath;
-  if (!PY_API_BASE_URL) return joinUrl(`${DEFAULT_API_BASE}/pyapi`, normalizedPath);
+  if (!PY_API_BASE_URL) return joinUrl(`${DEFAULT_RENDER_BACKEND_URL}/pyapi`, normalizedPath);
   if (normalizedPath.startsWith("/pyapi/")) return `${PY_API_BASE_URL}${normalizedPath.slice("/pyapi".length)}`;
   return joinUrl(PY_API_BASE_URL, normalizedPath);
 };

@@ -17,6 +17,8 @@
 .pytest_cache/
 .mypy_cache/
 .env
+.env.local
+.env.*.local
 *.log
 *.zip
 local.db
@@ -48,3 +50,6 @@ local.db-journal
 **/requirements*.txt
 server-auth-test.err.log
 server-auth-test.out.log
+/test-csrf.html
+/tmp-*.log
+/ZeroDay-Guardian-source-*.zip
