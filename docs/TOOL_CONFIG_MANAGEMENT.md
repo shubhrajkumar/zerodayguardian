@@ -62,7 +62,7 @@ The Tool Configuration Management System is a comprehensive solution for managin
 
 ### Prerequisites
 
-- Node.js 18.x or higher
+- Node.js 24.x or higher
 - npm 8.x or higher
 - MongoDB 4.4 or higher
 - Redis (optional, for caching)
