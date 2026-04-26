@@ -19,7 +19,7 @@ import { warmHighIntentRoutes } from "./lib/routeWarmup";
 import { useScrollReveal } from "./hooks/useScrollReveal";
 import { useGrowthProfileSync } from "./hooks/useGrowthFeatures";
 
-const IndexPage = lazy(() => import("./pages/Index"));
+const IndexPage = lazy(() => import("./pages/HomePage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFound"));
 const ToolsPage = lazy(() => import("./pages/ToolsPage"));

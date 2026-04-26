@@ -6,7 +6,7 @@ import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import Seo from "@/components/Seo";
 import LandingIntro from "@/components/LandingIntro";
 
-const Index = () => {
+const HomePage = () => {
   const navigate = useNavigate();
   const { nextMissionHook, totalPoints, streak, completedDays, completedSandboxLabs } = useMissionSystem();
 
@@ -215,4 +215,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default HomePage;

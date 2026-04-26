@@ -40,3 +40,4 @@ server-auth-test.out.log
 # OS files
 .DS_Store
 Thumbs.db
+.vercel
