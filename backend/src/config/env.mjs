@@ -7,9 +7,9 @@ const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRootEnvPath = path.resolve(moduleDir, "..", "..", "..", ".env");
 const backendEnvPath = path.resolve(moduleDir, "..", "..", ".env");
 const envPaths = [projectRootEnvPath, backendEnvPath].filter((value, index, list) => list.indexOf(value) === index);
-const loadedEnv = envPaths.some((envPath, index) => {
+const loadedEnv = envPaths.some((envPath) => {
   if (!fs.existsSync(envPath)) return false;
-  dotenv.config({ path: envPath, override: index > 0 });
+  dotenv.config({ path: envPath, override: false });
   return true;
 });
 if (!loadedEnv) {
@@ -105,7 +105,7 @@ const parseMongoUrl = (raw) => {
     const fallback = String(raw || "").trim();
     const multiHostMatch = fallback.match(/^mongodb:\/\/(?:(?<auth>[^@/]+)@)?(?<hosts>[^/]+)\/(?<db>[^?]+)(?:\?(?<query>.*))?$/i);
     if (!multiHostMatch?.groups?.hosts) {
-      throw new Error("[neurobot] DATABASE_URL is malformed.");
+      throw new Error("[neurobot] MONGODB_URI is malformed.");
     }
 
     const protocol = "mongodb:";
@@ -115,13 +115,13 @@ const parseMongoUrl = (raw) => {
       .filter(Boolean);
     const firstHost = hostEntries[0] || "";
     const [hostname, portText] = firstHost.split(":");
-    if (!hostname) throw new Error("[neurobot] DATABASE_URL must include a hostname");
+    if (!hostname) throw new Error("[neurobot] MONGODB_URI must include a hostname");
 
     const auth = String(multiHostMatch.groups.auth || "");
     const authSep = auth.indexOf(":");
     const username = authSep >= 0 ? decodeURIComponent(auth.slice(0, authSep)) : decodeURIComponent(auth);
     const dbName = String(multiHostMatch.groups.db || "").trim() || process.env.MONGODB_DB_NAME || "";
-    if (!dbName) throw new Error("[neurobot] DATABASE_URL must include a database name or set MONGODB_DB_NAME");
+    if (!dbName) throw new Error("[neurobot] MONGODB_URI must include a database name or set MONGODB_DB_NAME");
 
     const searchParams = new URLSearchParams(String(multiHostMatch.groups.query || ""));
     const tlsFlag = String(searchParams.get("tls") || searchParams.get("ssl") || "").toLowerCase();
@@ -129,7 +129,7 @@ const parseMongoUrl = (raw) => {
     const requiresTlsHint = !isLocalHost && tlsFlag !== "true";
     const port = Number(portText || defaultPort(protocol));
     if (!Number.isFinite(port) || port <= 0 || port > 65535) {
-      throw new Error("[neurobot] DATABASE_URL has invalid port");
+      throw new Error("[neurobot] MONGODB_URI has invalid port");
     }
 
     return {
@@ -147,16 +147,16 @@ const parseMongoUrl = (raw) => {
   }
   const protocol = parsed.protocol;
   if (!["mongodb:", "mongodb+srv:"].includes(protocol)) {
-    throw new Error("[neurobot] DATABASE_URL must use mongodb:// or mongodb+srv://");
+    throw new Error("[neurobot] MONGODB_URI must use mongodb:// or mongodb+srv://");
   }
-  if (!parsed.hostname) throw new Error("[neurobot] DATABASE_URL must include a hostname");
+  if (!parsed.hostname) throw new Error("[neurobot] MONGODB_URI must include a hostname");
   const dbNameFromPath = parsed.pathname?.replace(/^\//, "") || "";
   const dbName = dbNameFromPath || process.env.MONGODB_DB_NAME || "";
-  if (!dbName) throw new Error("[neurobot] DATABASE_URL must include a database name or set MONGODB_DB_NAME");
+  if (!dbName) throw new Error("[neurobot] MONGODB_URI must include a database name or set MONGODB_DB_NAME");
   if (protocol === "mongodb:" && parsed.port) {
     const port = Number(parsed.port);
     if (!Number.isFinite(port) || port <= 0 || port > 65535) {
-      throw new Error("[neurobot] DATABASE_URL has invalid port");
+      throw new Error("[neurobot] MONGODB_URI has invalid port");
     }
   }
 
@@ -193,7 +193,17 @@ const managedFallbackUrl = isRender ? renderFallbackUrl : vercelFallbackUrl;
 const warnDeployConfig = (message) => {
   console.warn(`[neurobot] ${message}`);
 };
-const required = ["MONGODB_URI", "SESSION_SECRET", "JWT_SECRET", "CORS_ORIGIN", "APP_BASE_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"];
+const required = [
+  "MONGODB_URI",
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
+  "SESSION_SECRET",
+  "JWT_SECRET",
+  "APP_BASE_URL",
+  "BACKEND_PUBLIC_URL",
+  "CORS_ORIGIN",
+  "GOOGLE_REDIRECT_URI",
+];
 
 export const env = {
   nodeEnv: process.env.NODE_ENV || "production",
@@ -224,7 +234,7 @@ export const env = {
   ollamaBackupBaseUrl: normalizeOllamaBaseUrl(process.env.OLLAMA_BACKUP_BASE_URL || process.env.OLLAMA_BASE_URL),
   ollamaBackupModel: process.env.OLLAMA_BACKUP_MODEL || "",
   ollamaBackupNumPredict: clamp(process.env.OLLAMA_BACKUP_NUM_PREDICT, 32, 1024, 96),
-  mongoUri: firstSet("MONGODB_URI", "DATABASE_URL"),
+  mongoUri: firstSet("MONGODB_URI"),
   redisUrl: process.env.REDIS_URL || "",
   sessionSecret: process.env.SESSION_SECRET || "",
   jwtSecret: process.env.JWT_SECRET || "",
@@ -289,21 +299,15 @@ export const env = {
       ? process.env.ALLOW_LLM_FALLBACK === "true"
       : true,
   forceLocalFallback: (process.env.FORCE_LOCAL_FALLBACK || "false") === "true",
-  appBaseUrl: process.env.APP_BASE_URL || process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"),
-  backendPublicUrl:
-    process.env.BACKEND_PUBLIC_URL ||
-    process.env.PUBLIC_SERVER_URL ||
-    process.env.RENDER_EXTERNAL_URL ||
-    (isProduction ? "" : `http://localhost:${Number(process.env.NEUROBOT_PORT || 8787)}`),
-  googleOauthClientId: firstSet("GOOGLE_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_ID", "VITE_GOOGLE_CLIENT_ID"),
-  googleOauthClientSecret: firstSet("GOOGLE_CLIENT_SECRET", "GOOGLE_OAUTH_CLIENT_SECRET"),
+  appBaseUrl: process.env.APP_BASE_URL || "",
+  backendPublicUrl: process.env.BACKEND_PUBLIC_URL || "",
+  googleOauthClientId: firstSet("GOOGLE_CLIENT_ID"),
+  googleOauthClientSecret: firstSet("GOOGLE_CLIENT_SECRET"),
   enableGoogleLocalhost:
     process.env.ENABLE_GOOGLE_LOCALHOST != null
       ? process.env.ENABLE_GOOGLE_LOCALHOST === "true"
       : true,
-  googleAuthorizedOrigins: uniqueList(
-    splitCsv(process.env.GOOGLE_AUTHORIZED_ORIGINS || process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"))
-  ),
+  googleAuthorizedOrigins: uniqueList(splitCsv(process.env.APP_BASE_URL || "")),
   googleRedirectUri: process.env.GOOGLE_REDIRECT_URI || "",
   githubOauthClientId: process.env.GITHUB_OAUTH_CLIENT_ID || "",
   githubOauthClientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET || "",
@@ -370,49 +374,10 @@ export const env = {
 };
 env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
 env.googleAuthorizedOrigins = uniqueList(env.googleAuthorizedOrigins);
-if (isVercel) {
-  if (!env.appBaseUrl) {
-    env.appBaseUrl = managedFallbackUrl;
-    warnDeployConfig(`APP_BASE_URL missing during Vercel build/runtime. Using fallback ${env.appBaseUrl}`);
-  }
-  if (!env.backendPublicUrl) {
-    env.backendPublicUrl = managedFallbackUrl;
-    warnDeployConfig(`BACKEND_PUBLIC_URL missing during Vercel build/runtime. Using fallback ${env.backendPublicUrl}`);
-  }
-  if (!env.corsOrigin) {
-    env.corsOrigin = env.appBaseUrl;
-    warnDeployConfig(`CORS_ORIGIN missing during Vercel build/runtime. Using fallback ${env.corsOrigin}`);
-  }
-  env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
-  if (!env.googleAuthorizedOrigins.length) {
-    env.googleAuthorizedOrigins = [...env.corsOrigins];
-  }
-}
-if (isRender) {
-  if (!env.appBaseUrl) {
-    env.appBaseUrl = process.env.CORS_ORIGIN || env.backendPublicUrl || managedFallbackUrl;
-    warnDeployConfig(`APP_BASE_URL missing during Render startup. Using fallback ${env.appBaseUrl}`);
-  }
-  if (!env.backendPublicUrl) {
-    env.backendPublicUrl = managedFallbackUrl;
-    warnDeployConfig(`BACKEND_PUBLIC_URL missing during Render startup. Using fallback ${env.backendPublicUrl}`);
-  }
-  if (!env.corsOrigin) {
-    env.corsOrigin = env.appBaseUrl || env.backendPublicUrl || managedFallbackUrl;
-    warnDeployConfig(`CORS_ORIGIN missing during Render startup. Using fallback ${env.corsOrigin}`);
-  }
-  env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
-  if (!env.googleAuthorizedOrigins.length) {
-    env.googleAuthorizedOrigins = [...env.corsOrigins];
-  }
-}
-if (!env.googleRedirectUri && env.backendPublicUrl) {
-  try {
-    env.googleRedirectUri = new URL("/auth/google/callback", env.backendPublicUrl).toString();
-  } catch {
-    env.googleRedirectUri = `${env.backendPublicUrl.replace(/\/+$/, "")}/auth/google/callback`;
-  }
-}
+env.corsOrigins = uniqueList([...splitCsv(env.corsOrigin), ...splitCsv(env.appBaseUrl)]);
+env.googleAuthorizedOrigins = uniqueList(
+  env.googleAuthorizedOrigins.length ? env.googleAuthorizedOrigins : [env.appBaseUrl].filter(Boolean)
+);
 
 const appBaseHost = (() => {
   try {
@@ -435,6 +400,8 @@ const missing = required.filter((key) => {
   if (key === "GOOGLE_CLIENT_ID") return !env.googleOauthClientId;
   if (key === "GOOGLE_CLIENT_SECRET") return !env.googleOauthClientSecret;
   if (key === "APP_BASE_URL") return !env.appBaseUrl;
+  if (key === "BACKEND_PUBLIC_URL") return !env.backendPublicUrl;
+  if (key === "GOOGLE_REDIRECT_URI") return !env.googleRedirectUri;
   return !process.env[key] || !String(process.env[key]).trim();
 });
 
@@ -467,41 +434,23 @@ if (!new Set(["info", "warn", "error"]).has(env.alertMinLevel)) {
 
 if (env.nodeEnv === "production") {
   if (!env.appBaseUrl || !/^https?:\/\//.test(env.appBaseUrl)) {
-    if (isManagedDeploy) {
-      warnDeployConfig("APP_BASE_URL is not an absolute URL. Configure a real production APP_BASE_URL in deployment env.");
-    } else {
-      throw new Error("[neurobot] APP_BASE_URL must be set to an absolute https:// or http:// URL in production");
-    }
+    throw new Error("[neurobot] APP_BASE_URL must be set to an absolute https:// or http:// URL in production");
   }
   if (!env.backendPublicUrl || !/^https?:\/\//.test(env.backendPublicUrl)) {
-    if (isManagedDeploy) {
-      warnDeployConfig("BACKEND_PUBLIC_URL is not an absolute URL. Configure a real production BACKEND_PUBLIC_URL in deployment env.");
-    } else {
-      throw new Error("[neurobot] BACKEND_PUBLIC_URL must be set to an absolute https:// or http:// URL in production");
-    }
+    throw new Error("[neurobot] BACKEND_PUBLIC_URL must be set to an absolute https:// or http:// URL in production");
+  }
+  if (!env.googleRedirectUri || !/^https?:\/\//.test(env.googleRedirectUri)) {
+    throw new Error("[neurobot] GOOGLE_REDIRECT_URI must be set to an absolute https:// or http:// URL in production");
   }
   if (String(env.dbEncryptionKey || "").length < 32) {
-    if (isManagedDeploy) {
-      warnDeployConfig("DB_ENCRYPTION_KEY is shorter than 32 characters. Configure a real production key in deployment env.");
-    } else {
-      throw new Error("[neurobot] DB_ENCRYPTION_KEY must be at least 32 characters in production");
-    }
+    throw new Error("[neurobot] DB_ENCRYPTION_KEY must be at least 32 characters in production");
   }
   if (!env.corsOrigins.length) {
-    if (isManagedDeploy) {
-      warnDeployConfig("CORS_ORIGIN is empty in production. Configure at least one frontend origin in deployment env.");
-    } else {
-      throw new Error("[neurobot] CORS_ORIGIN must include at least one origin in production");
-    }
+    throw new Error("[neurobot] CORS_ORIGIN must include at least one origin in production");
   }
   for (const origin of env.corsOrigins) {
     if (!/^https?:\/\//.test(origin)) {
-      if (isManagedDeploy) {
-        warnDeployConfig("One or more CORS_ORIGIN entries are not absolute URLs. Configure valid origins in deployment env.");
-        break;
-      } else {
-        throw new Error("[neurobot] CORS_ORIGIN entries must be absolute URLs in production");
-      }
+      throw new Error("[neurobot] CORS_ORIGIN entries must be absolute URLs in production");
     }
   }
 }

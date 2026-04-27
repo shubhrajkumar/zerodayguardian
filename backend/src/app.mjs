@@ -53,7 +53,6 @@ const setProbeNoStore = (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   next();
 };
-const DEFAULT_FRONTEND_ORIGIN = "https://zerodayguardian-delta.vercel.app";
 const normalizeCorsOrigin = (value = "") => String(value || "").trim().replace(/\/+$/, "");
 const isLocalLikeOrigin = (value = "") => /^(https?:\/\/)(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|::1)(:\d+)?$/i.test(normalizeCorsOrigin(value));
 const allowCorsOrigin = (origin, callback) => {
@@ -64,10 +63,6 @@ const allowCorsOrigin = (origin, callback) => {
   const normalizedOrigin = normalizeCorsOrigin(origin);
   // Always allow if explicitly configured
   if ((env.corsOrigins || []).includes(normalizedOrigin)) {
-    callback(null, true);
-    return;
-  }
-  if (env.nodeEnv === "production" && normalizedOrigin === DEFAULT_FRONTEND_ORIGIN.toLowerCase()) {
     callback(null, true);
     return;
   }
@@ -109,23 +104,22 @@ const buildPublicAuthPath = (req, suffix = "") => {
   return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
 };
 const buildAuthProvidersPayload = (req) => {
-  const hasGoogleClient = Boolean(env.googleOauthClientId);
-  const hasGoogleRedirectFlow = Boolean(env.googleOauthClientId && env.googleOauthClientSecret && env.googleRedirectUri);
   const startPath = buildPublicAuthPath(req, "/google");
   const callbackPath = buildPublicAuthPath(req, "/google/callback");
-  const startUrl = hasGoogleRedirectFlow ? buildBackendUrl(req, startPath) : "";
-  const callbackUrl = hasGoogleRedirectFlow ? buildBackendUrl(req, callbackPath) : "";
+  const startUrl = buildBackendUrl(req, startPath);
+  const callbackUrl = buildBackendUrl(req, callbackPath);
 
   return {
     status: "ok",
+    providers: ["google"],
     google: {
-      enabled: hasGoogleClient,
+      enabled: true,
       clientId: env.googleOauthClientId || "",
-      backendFlow: hasGoogleRedirectFlow,
+      backendFlow: true,
       popupFlow: true,
       startUrl,
       callbackUrl,
-      redirectUri: hasGoogleRedirectFlow ? (env.googleRedirectUri || callbackUrl) : "",
+      redirectUri: env.googleRedirectUri || callbackUrl,
       frontendOrigin: env.appBaseUrl || "",
       authorizedOrigins: env.googleAuthorizedOrigins || [],
     },
