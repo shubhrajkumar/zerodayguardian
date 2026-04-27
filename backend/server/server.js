@@ -15,7 +15,13 @@ const PORT = Number(process.env.NEUROBOT_PORT || env.port || 8787);
 const bootstrap = async () => {
   await startTelemetry();
   validateStartupConfig();
-  validateLlmStartupConfig();
+  try {
+    validateLlmStartupConfig();
+  } catch (error) {
+    logWarn("LLM startup configuration invalid; continuing without blocking auth/backend startup", {
+      error: String(error?.message || error),
+    });
+  }
 
   await connectDb();
   if (env.redisUrl) {
@@ -27,7 +33,13 @@ const bootstrap = async () => {
     }
   }
 
-  await verifyLlmConnection({ timeoutMs: Math.min(20_000, env.llmCriticalTimeoutMs) });
+  try {
+    await verifyLlmConnection({ timeoutMs: Math.min(20_000, env.llmCriticalTimeoutMs) });
+  } catch (error) {
+    logWarn("LLM provider verification failed at startup; continuing with backend startup", {
+      error: String(error?.message || error),
+    });
+  }
 
   const app = createServerApp();
   

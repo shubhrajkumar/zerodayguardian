@@ -179,20 +179,6 @@ const parseMongoUrl = (raw) => {
   };
 };
 
-const createDegradedMongoConfig = (reason = "missing") => ({
-  protocol: "mongodb:",
-  host: "127.0.0.1",
-  port: 27017,
-  username: "",
-  dbName: process.env.MONGODB_DB_NAME || "neurobot",
-  isSrv: false,
-  isLocalHost: true,
-  tlsFlag: "unspecified",
-  requiresTlsHint: false,
-  masked: `mongodb://127.0.0.1:27017/${process.env.MONGODB_DB_NAME || "neurobot"}?degraded=${reason}`,
-  degraded: true,
-});
-
 const llmProviderInput = firstSet("LLM_MODE", "LLM_PROVIDER");
 const normalizedLlmMode = normalizeLlmProvider(llmProviderInput || "auto");
 const isProduction = (process.env.NODE_ENV || "production") === "production";
@@ -207,12 +193,7 @@ const managedFallbackUrl = isRender ? renderFallbackUrl : vercelFallbackUrl;
 const warnDeployConfig = (message) => {
   console.warn(`[neurobot] ${message}`);
 };
-const required = [
-  "DATABASE_URL",
-  "SESSION_SECRET",
-  "JWT_SECRET",
-  "CORS_ORIGIN",
-];
+const required = ["MONGODB_URI", "SESSION_SECRET", "JWT_SECRET", "CORS_ORIGIN", "APP_BASE_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"];
 
 export const env = {
   nodeEnv: process.env.NODE_ENV || "production",
@@ -243,7 +224,7 @@ export const env = {
   ollamaBackupBaseUrl: normalizeOllamaBaseUrl(process.env.OLLAMA_BACKUP_BASE_URL || process.env.OLLAMA_BASE_URL),
   ollamaBackupModel: process.env.OLLAMA_BACKUP_MODEL || "",
   ollamaBackupNumPredict: clamp(process.env.OLLAMA_BACKUP_NUM_PREDICT, 32, 1024, 96),
-  mongoUri: firstSet("DATABASE_URL", "MONGODB_URI"),
+  mongoUri: firstSet("MONGODB_URI", "DATABASE_URL"),
   redisUrl: process.env.REDIS_URL || "",
   sessionSecret: process.env.SESSION_SECRET || "",
   jwtSecret: process.env.JWT_SECRET || "",
@@ -314,8 +295,8 @@ export const env = {
     process.env.PUBLIC_SERVER_URL ||
     process.env.RENDER_EXTERNAL_URL ||
     (isProduction ? "" : `http://localhost:${Number(process.env.NEUROBOT_PORT || 8787)}`),
-  googleOauthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID || "",
-  googleOauthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || "",
+  googleOauthClientId: firstSet("GOOGLE_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_ID", "VITE_GOOGLE_CLIENT_ID"),
+  googleOauthClientSecret: firstSet("GOOGLE_CLIENT_SECRET", "GOOGLE_OAUTH_CLIENT_SECRET"),
   enableGoogleLocalhost:
     process.env.ENABLE_GOOGLE_LOCALHOST != null
       ? process.env.ENABLE_GOOGLE_LOCALHOST === "true"
@@ -406,18 +387,6 @@ if (isVercel) {
   if (!env.googleAuthorizedOrigins.length) {
     env.googleAuthorizedOrigins = [...env.corsOrigins];
   }
-  if (!env.sessionSecret) {
-    env.sessionSecret = "vercel-session-secret-placeholder-0000000000000000";
-    warnDeployConfig("SESSION_SECRET missing during Vercel build/runtime. Using a placeholder secret until env is configured.");
-  }
-  if (!env.jwtSecret) {
-    env.jwtSecret = "vercel-jwt-secret-placeholder-000000000000000000000000";
-    warnDeployConfig("JWT_SECRET missing during Vercel build/runtime. Using a placeholder secret until env is configured.");
-  }
-  if (!env.dbEncryptionKey) {
-    env.dbEncryptionKey = "vercel-db-encryption-key-placeholder-000000000000000";
-    warnDeployConfig("DB_ENCRYPTION_KEY missing during Vercel build/runtime. Using a placeholder key until env is configured.");
-  }
 }
 if (isRender) {
   if (!env.appBaseUrl) {
@@ -435,18 +404,6 @@ if (isRender) {
   env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
   if (!env.googleAuthorizedOrigins.length) {
     env.googleAuthorizedOrigins = [...env.corsOrigins];
-  }
-  if (!env.sessionSecret) {
-    env.sessionSecret = "render-session-secret-placeholder-0000000000000000";
-    warnDeployConfig("SESSION_SECRET missing during Render startup. Using a placeholder secret until env is configured.");
-  }
-  if (!env.jwtSecret) {
-    env.jwtSecret = "render-jwt-secret-placeholder-000000000000000000000000";
-    warnDeployConfig("JWT_SECRET missing during Render startup. Using a placeholder secret until env is configured.");
-  }
-  if (!env.dbEncryptionKey) {
-    env.dbEncryptionKey = "render-db-encryption-key-placeholder-000000000000000";
-    warnDeployConfig("DB_ENCRYPTION_KEY missing during Render startup. Using a placeholder key until env is configured.");
   }
 }
 if (!env.googleRedirectUri && env.backendPublicUrl) {
@@ -472,18 +429,17 @@ env.authOtpPreviewEnabled = isExplicitTrue(process.env.AUTH_OTP_PREVIEW_ENABLED)
       : env.nodeEnv !== "production" || localLikeAppHost;
 
 const missing = required.filter((key) => {
-  if (key === "DATABASE_URL") return !env.mongoUri;
+  if (key === "MONGODB_URI") return !env.mongoUri;
   if (key === "CORS_ORIGIN") return !env.corsOrigin;
   if (key === "JWT_SECRET") return !env.jwtSecret;
+  if (key === "GOOGLE_CLIENT_ID") return !env.googleOauthClientId;
+  if (key === "GOOGLE_CLIENT_SECRET") return !env.googleOauthClientSecret;
+  if (key === "APP_BASE_URL") return !env.appBaseUrl;
   return !process.env[key] || !String(process.env[key]).trim();
 });
 
 if (missing.length) {
-  if (isManagedDeploy) {
-    warnDeployConfig(`Missing required env vars during managed deployment: ${missing.join(", ")}. API will run in degraded mode until these are configured.`);
-  } else {
-    throw new Error(`[neurobot] Missing required env vars: ${missing.join(", ")}`);
-  }
+  throw new Error(`[neurobot] Missing required env vars: ${missing.join(", ")}`);
 }
 
 if (!Number.isFinite(env.port) || env.port <= 0 || env.port > 65535) {
@@ -550,22 +506,7 @@ if (env.nodeEnv === "production") {
   }
 }
 
-if (!env.mongoUri) {
-  env.mongo = createDegradedMongoConfig("missing");
-} else {
-  try {
-    env.mongo = parseMongoUrl(env.mongoUri);
-  } catch (error) {
-    if (isManagedDeploy) {
-      warnDeployConfig(
-        `DATABASE_URL is unavailable or malformed during deployment startup. Using degraded API mode until it is configured.`
-      );
-      env.mongo = createDegradedMongoConfig("invalid");
-    } else {
-      throw error;
-    }
-  }
-}
+env.mongo = parseMongoUrl(env.mongoUri);
 
 const supportedProviders = new Set(["openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup"]);
 const supportedModes = new Set(["auto", "openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup"]);

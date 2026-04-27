@@ -23,7 +23,7 @@ services:
         sync: false
       - key: CORS_ORIGIN
         sync: false
-      - key: DATABASE_URL
+      - key: MONGODB_URI
         sync: false
       - key: SESSION_SECRET
         sync: false
@@ -51,9 +51,9 @@ services:
         sync: false
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false
-      - key: GOOGLE_OAUTH_CLIENT_ID
+      - key: GOOGLE_CLIENT_ID
         sync: false
-      - key: GOOGLE_OAUTH_CLIENT_SECRET
+      - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: AUTH_EMAIL_ENABLED
         sync: false

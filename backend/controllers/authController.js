@@ -252,44 +252,26 @@ export const logout = async (req, res) => {
 };
 
 export const getAuthProviders = async (req, res) => {
-  try {
-    const hasGoogleClient = Boolean(env.googleOauthClientId);
-    const hasGoogleRedirectFlow = Boolean(env.googleOauthClientId && env.googleOauthClientSecret && env.googleRedirectUri);
-    const startPath = resolvePublicAuthPath(req, "/google");
-    const callbackPath = resolvePublicAuthPath(req, "/google/callback");
-    const startUrl = hasGoogleRedirectFlow ? resolveBackendAuthUrl(req, startPath) : "";
-    const callbackUrl = hasGoogleRedirectFlow ? resolveBackendAuthUrl(req, callbackPath) : "";
-    res.json({
-      status: "ok",
-      google: {
-        enabled: hasGoogleClient,
-        clientId: env.googleOauthClientId || "",
-        backendFlow: hasGoogleRedirectFlow,
-        popupFlow: true,
-        startUrl,
-        callbackUrl,
-        redirectUri: hasGoogleRedirectFlow ? (env.googleRedirectUri || callbackUrl) : "",
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
-    });
-  } catch (error) {
-    logError("Auth providers lookup failed", error, { requestId: req.requestId || "" });
-    res.status(200).json({
-      status: "ok",
-      google: {
-        enabled: false,
-        clientId: "",
-        backendFlow: false,
-        popupFlow: true,
-        startUrl: "",
-        callbackUrl: "",
-        redirectUri: "",
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
-    });
-  }
+  const hasGoogleRedirectFlow = Boolean(env.googleOauthClientId && env.googleOauthClientSecret && env.googleRedirectUri);
+  const startPath = resolvePublicAuthPath(req, "/google");
+  const callbackPath = resolvePublicAuthPath(req, "/google/callback");
+  const startUrl = resolveBackendAuthUrl(req, startPath);
+  const callbackUrl = resolveBackendAuthUrl(req, callbackPath);
+  res.json({
+    status: "ok",
+    providers: ["google"],
+    google: {
+      enabled: true,
+      clientId: env.googleOauthClientId || "",
+      backendFlow: hasGoogleRedirectFlow,
+      popupFlow: true,
+      startUrl,
+      callbackUrl,
+      redirectUri: env.googleRedirectUri || callbackUrl,
+      frontendOrigin: env.appBaseUrl || "",
+      authorizedOrigins: env.googleAuthorizedOrigins || [],
+    },
+  });
 };
 
 export const getCsrf = async (req, res) => {

@@ -135,7 +135,7 @@ const AuthPage = () => {
         }
         setGoogleClientId("");
         setGoogleStartUrl("");
-        setGoogleStatus("Google sign-in is currently unavailable. You can continue with email login.");
+        setGoogleStatus("Google sign-in is not configured correctly on the backend. Check Google OAuth production environment variables.");
       })
       .catch((error) => {
         if (!active) return;
@@ -145,12 +145,12 @@ const AuthPage = () => {
         if (isApiError(error) && error.status === 404) {
           const fallbackStatus =
             isHostedRuntime && !hasRuntimeApiBase
-              ? "Google sign-in endpoint is temporarily unavailable. Please verify production auth environment variables."
-              : "Google sign-in endpoint is temporarily unavailable. Please retry shortly.";
+              ? "Google OAuth backend configuration is incomplete. Verify the production auth environment variables."
+              : "Google OAuth backend configuration is incomplete. Please retry after the backend is updated.";
           setGoogleStatus(fallbackStatus);
           return;
         }
-        setGoogleStatus(isApiError(error) ? (error.message || "Google sign-in is temporarily unavailable.") : "Google sign-in is temporarily unavailable.");
+        setGoogleStatus(isApiError(error) ? (error.message || "Google OAuth configuration check failed.") : "Google OAuth configuration check failed.");
       });
     return () => {
       active = false;
@@ -195,7 +195,7 @@ const AuthPage = () => {
     if (!isApiError(error)) return "Authentication failed.";
     if (error.status === 429) return error.message;
     if (error.code === "google_auth_not_configured") {
-      return "Google sign-in is temporarily unavailable. Please continue with email login.";
+      return "Google OAuth is not configured correctly on the backend.";
     }
     if (error.code === "google_token_required") {
       return "Google did not return a valid credential.";

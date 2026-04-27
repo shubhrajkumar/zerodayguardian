@@ -11,83 +11,15 @@ import { buildCookieOptions } from "../../src/utils/cookiePolicy.mjs";
 import { createBlindIndex, decryptSensitive, encryptSensitive, sanitizeText } from "../../src/utils/security.mjs";
 
 const USERS = "users";
-
-// In-memory store for when database is unavailable
-const inMemoryUsers = new Map();
-let inMemoryUserIdCounter = 1;
-
-// Clear in-memory store on startup to ensure clean state
-// Users should register fresh through the API
-logInfo("In-memory user store initialized (empty)", { count: inMemoryUsers.size });
 let googleOauthClient = null;
 let googleOauthWebClient = null;
 
-const isDbAvailable = () => {
-  const pool = getDbPoolStatus();
-  return pool.initialized && pool.connected;
-};
-
 const getCollection = (name) => {
-  if (isDbAvailable()) {
-    return getDb().collection(name);
+  const pool = getDbPoolStatus();
+  if (!pool.initialized || !pool.connected) {
+    throw createError("Database connection is required for authentication.", 503, "db_unavailable_auth");
   }
-  // Return in-memory store interface
-  return {
-    findOne: async (query) => {
-      if (query.$or && Array.isArray(query.$or)) {
-        for (const clause of query.$or) {
-          const found = await getCollection(name).findOne(clause);
-          if (found) return found;
-        }
-      }
-      if (query.googleId) {
-        for (const user of inMemoryUsers.values()) {
-          if (user.googleId === query.googleId) return user;
-        }
-      }
-      if (query.email || query.emailHash) {
-        for (const user of inMemoryUsers.values()) {
-          if (query.email && user.email === query.email) return user;
-          if (query.emailHash && user.emailHash === query.emailHash) return user;
-        }
-      }
-      if (query._id) {
-        const id = query._id.toString ? query._id.toString() : query._id;
-        return inMemoryUsers.get(id) || null;
-      }
-      return null;
-    },
-    insertOne: async (doc) => {
-      const id = `mem_${inMemoryUserIdCounter++}`;
-      const user = { ...doc, _id: id };
-      inMemoryUsers.set(id, user);
-      return { insertedId: id };
-    },
-    updateOne: async (query, update) => {
-      let user = null;
-      if (query.email || query.emailHash) {
-        for (const u of inMemoryUsers.values()) {
-          if ((query.email && u.email === query.email) || (query.emailHash && u.emailHash === query.emailHash)) {
-            user = u;
-            break;
-          }
-        }
-      }
-      if (query._id) {
-        const id = query._id.toString ? query._id.toString() : query._id;
-        user = inMemoryUsers.get(id);
-      }
-      if (user && update.$set) {
-        Object.assign(user, update.$set);
-      }
-      if (user && update.$unset) {
-        for (const key of Object.keys(update.$unset)) {
-          delete user[key];
-        }
-      }
-      return { modifiedCount: user ? 1 : 0 };
-    },
-  };
+  return getDb().collection(name);
 };
 const ACCESS_COOKIE = "neurobot_at";
 const REFRESH_COOKIE = "neurobot_rt";
@@ -123,7 +55,7 @@ const normalizeUrl = (value = "") => {
     return "";
   }
 };
-const isGoogleAuthConfigured = () => Boolean(env.googleOauthClientId);
+const isGoogleAuthConfigured = () => Boolean(env.googleOauthClientId && env.googleOauthClientSecret);
 const getGoogleOauthClient = () => {
   if (!isGoogleAuthConfigured()) {
     throw createError("Google sign-in is not configured", 503, "google_auth_not_configured");
@@ -535,13 +467,6 @@ export const loginUser = async ({ email, password }) => {
   });
 
   if (!user) {
-    if (!isDbAvailable()) {
-      throw createError(
-        "Database unavailable. Existing accounts cannot be loaded right now. Check your MongoDB connection and try again.",
-        503,
-        "db_unavailable_auth"
-      );
-    }
     throw createError("User not found", 404, "user_not_found");
   }
 
