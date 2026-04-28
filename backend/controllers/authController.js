@@ -25,7 +25,7 @@ const resolveBackendBaseUrl = (req) => {
   } catch {
     // ignore host parsing errors
   }
-  return env.corsOrigin || env.appBaseUrl || `http://localhost:${env.port || 8787}`;
+  return env.appBaseUrl;
 };
 
 const resolveBackendAuthUrl = (req, path) => {
@@ -33,7 +33,7 @@ const resolveBackendAuthUrl = (req, path) => {
   try {
     return new URL(path, `${base}/`).toString();
   } catch {
-    const fallbackBase = (env.backendPublicUrl || env.corsOrigin || env.appBaseUrl || `http://localhost:${env.port || 8787}`).replace(/\/+$/, "");
+    const fallbackBase = (env.backendPublicUrl || env.appBaseUrl).replace(/\/+$/, "");
     return `${fallbackBase}${path.startsWith("/") ? path : `/${path}`}`;
   }
 };
