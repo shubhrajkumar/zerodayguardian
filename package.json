@@ -12,6 +12,8 @@
     "dev:server": "node backend/server.js",
     "dev:server:full": "node scripts/dev-server-full.mjs",
     "dev:otp": "node scripts/otp-server.mjs",
+    "env:render:format-key": "node scripts/render-key-format.mjs",
+    "env:render:sync": "node scripts/render-env-sync.mjs",
     "start": "node backend/server.js",
     "health:stack": "node scripts/health-check.mjs",
     "ops:weekly-digest": "node scripts/send-weekly-digests.mjs",
