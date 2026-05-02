@@ -1,5 +1,4 @@
 import { verifyDbConnection } from "../../src/config/db.mjs";
-import { verifyAiEngine } from "../../src/ai-engine/index.mjs";
 import { getRuntimeState } from "../../src/state/runtimeState.mjs";
 import { env } from "../../src/config/env.mjs";
 import { logWarn } from "../../src/utils/logger.mjs";
@@ -113,27 +112,39 @@ export const getReadiness = async () => {
       payload: {
         status: readinessCache.status,
         db: readinessCache.db,
-        llm: readinessCache.llm,
+        auth: readinessCache.auth,
         responseTime: Date.now() - startedAt,
       },
     };
   }
 
   let db = "down";
-  let llm = "down";
+  let auth = "down";
 
-  const [dbResult, llmResult] = await Promise.allSettled([
+  const authProbe = async () => {
+    const hasGoogleConfig = Boolean(
+      String(env.googleOauthClientId || "").trim() &&
+      String(env.googleOauthClientSecret || "").trim() &&
+      String(env.googleRedirectUri || "").trim() &&
+      String(env.appBaseUrl || "").trim() &&
+      String(env.backendPublicUrl || "").trim()
+    );
+    if (!hasGoogleConfig) throw new Error("google_auth_not_ready");
+    return { ok: true };
+  };
+
+  const [dbResult, authResult] = await Promise.allSettled([
     withTimeout(verifyDbConnection(), PROBE_TIMEOUT_MS),
-    withTimeout(verifyAiEngine({ timeoutMs: PROBE_TIMEOUT_MS }), PROBE_TIMEOUT_MS),
+    withTimeout(authProbe(), PROBE_TIMEOUT_MS),
   ]);
 
   if (dbResult.status === "fulfilled") db = "up";
   else if (env.nodeEnv !== "production") logWarn("Readiness DB check failed");
 
-  if (llmResult.status === "fulfilled") llm = "up";
-  else if (env.nodeEnv !== "production") logWarn("Readiness LLM check failed");
+  if (authResult.status === "fulfilled") auth = "up";
+  else if (env.nodeEnv !== "production") logWarn("Readiness auth check failed");
 
-  const ready = db === "up" && llm === "up";
+  const ready = db === "up" && auth === "up";
   if (ready) {
     resetProbeFailures("readyz");
     logProbeState("readyz", true);
@@ -144,7 +155,7 @@ export const getReadiness = async () => {
   const payload = {
     status: ready ? "ready" : "not_ready",
     db,
-    llm,
+    auth,
     responseTime: Date.now() - startedAt,
   };
   readinessCache = {

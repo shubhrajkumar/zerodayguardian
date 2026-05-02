@@ -524,7 +524,7 @@ export const createApp = () => {
       const { http, payload } = await getReadiness();
       res.status(http).json(payload);
     } catch {
-      res.status(503).json({ status: "not_ready", db: "down", llm: "down", responseTime: 0 });
+      res.status(503).json({ status: "not_ready", db: "down", auth: "down", responseTime: 0 });
     }
     }
   );

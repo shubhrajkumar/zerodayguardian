@@ -1,7 +1,6 @@
 import { MongoClient } from "mongodb";
-import net from "node:net";
 import { env } from "./env.mjs";
-import { logError, logInfo, logWarn } from "../utils/logger.mjs";
+import { logInfo } from "../utils/logger.mjs";
 
 let client;
 let db;
@@ -15,25 +14,6 @@ const createDbUnavailableError = (message = "Database not initialized. Call conn
   return error;
 };
 
-const checkTcpPort = (host, port, timeoutMs = 1200) =>
-  new Promise((resolve) => {
-    const socket = new net.Socket();
-    let settled = false;
-
-    const finish = (ok) => {
-      if (settled) return;
-      settled = true;
-      socket.destroy();
-      resolve(ok);
-    };
-
-    socket.setTimeout(timeoutMs);
-    socket.once("connect", () => finish(true));
-    socket.once("timeout", () => finish(false));
-    socket.once("error", () => finish(false));
-    socket.connect(port, host);
-  });
-
 export const getDbPoolStatus = () => ({
   initialized: !!db,
   connected: !!client,
@@ -42,93 +22,54 @@ export const getDbPoolStatus = () => ({
   source: db ? "mongodb" : "none",
 });
 
+const deriveIndexName = (keys = {}) =>
+  Object.entries(keys)
+    .map(([field, direction]) => `${field}_${direction}`)
+    .join("_");
+
+const ensureIndex = async (collection, keys, options = {}) => {
+  try {
+    await collection.createIndex(keys, options);
+  } catch (error) {
+    const conflict = Number(error?.code || 0);
+    if (![85, 86].includes(conflict)) throw error;
+    const name = String(options.name || deriveIndexName(keys)).trim();
+    if (!name) throw error;
+    await collection.dropIndex(name).catch(() => {});
+    await collection.createIndex(keys, options);
+  }
+};
+
 export const connectDb = async () => {
   if (db) return db;
-  if (!String(env.mongoUri || "").trim()) {
-    logWarn("Database URL missing, continuing without MongoDB connection");
-    return null;
-  }
-  
-  // Check if we should skip database connection in development
-  const skipDb = process.env.SKIP_DB_CONNECTION === "true";
-  if (skipDb) {
-    logInfo("Skipping database connection (SKIP_DB_CONNECTION=true)");
-    return null;
-  }
-  
-  if (!env.mongo.isSrv) {
-    const reachable = await checkTcpPort(env.mongo.host, env.mongo.port, 1200);
-    if (!reachable) {
-      const error = new Error(`DB host unreachable ${env.mongo.host}:${env.mongo.port}`);
-      logError("Database TCP precheck failed", error, {
-        dbHost: env.mongo.host,
-        dbPort: env.mongo.port,
-        dbUri: env.mongo.masked,
-      });
-      if (env.strictDependencyStartup) throw error;
-      logWarn("Database unavailable, continuing with in-memory storage");
-      return null;
-    }
-  }
 
-  if (env.mongo.requiresTlsHint) {
-    logWarn("DATABASE_URL likely requires TLS for remote host; add tls=true/ssl=true if your provider mandates it.", {
-      dbHost: env.mongo.host,
-      dbUri: env.mongo.masked,
-    });
+  const mongoUri = String(process.env.MONGODB_URI || env.mongoUri || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
+  if (!mongoUri) {
+    throw new Error("Missing required environment variable: MONGODB_URI");
   }
 
   const startedAt = Date.now();
-  let connected = false;
-  let lastError = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    client = new MongoClient(env.mongoUri, {
-      maxPoolSize: 30,
-      minPoolSize: 5,
-      maxIdleTimeMS: 30000,
-      serverSelectionTimeoutMS: 3000,
-      connectTimeoutMS: 3000,
-      socketTimeoutMS: 8000,
-    });
-    try {
-      await client.connect();
-      await client.db("admin").command({ ping: 1 });
-      connected = true;
-      break;
-    } catch (error) {
-      lastError = error;
-      logWarn(`Database connection attempt ${attempt + 1} failed`, { error: error.message });
-      try {
-        await client.close();
-      } catch {
-        // ignore close failure
-      }
-      client = null;
-      if (attempt < 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
-  }
-  if (!connected) {
-    logError("Database connection failed, using in-memory storage", lastError, {
-      dbHost: env.mongo.host,
-      dbPort: env.mongo.port,
-      dbName: env.mongo.dbName,
-      dbUri: env.mongo.masked,
-    });
-    // Don't throw error, just return null to use in-memory storage
-    client = null;
-    db = null;
-    return null;
-  }
-  db = client.db(process.env.MONGODB_DB_NAME || "neurobot");
+  client = new MongoClient(mongoUri, {
+    maxPoolSize: 30,
+    minPoolSize: 5,
+    maxIdleTimeMS: 30000,
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 10000,
+  });
+
+  await client.connect();
+  await client.db("admin").command({ ping: 1 });
+  db = client.db();
 
   if (!indexesEnsured) {
-    await db.collection("conversations").createIndex({ sessionId: 1 }, { unique: true });
-    await db.collection("conversations").createIndex({ userId: 1, updatedAt: -1 });
-    await db.collection("users").createIndex({ email: 1 }, { unique: true });
-    await db.collection("users").createIndex({ role: 1 });
-    await db.collection("users").createIndex(
+    await ensureIndex(db.collection("conversations"), { sessionId: 1 }, { unique: true });
+    await ensureIndex(db.collection("conversations"), { userId: 1, updatedAt: -1 });
+    await ensureIndex(db.collection("users"), { email: 1 }, { unique: true });
+    await ensureIndex(db.collection("users"), { role: 1 });
+    await ensureIndex(db.collection("users"),
       { emailHash: 1 },
       { unique: true, partialFilterExpression: { emailHash: { $type: "string" } } }
     );
@@ -138,7 +79,7 @@ export const connectDb = async () => {
     } catch {
       // ignore if the legacy index is absent
     }
-    await db.collection("users").createIndex(
+    await ensureIndex(db.collection("users"),
       { googleId: 1 },
       {
         unique: true,
@@ -146,40 +87,37 @@ export const connectDb = async () => {
         name: "googleId_1",
       }
     );
-    await db.collection("users").createIndex({ resetOtpExpire: 1 }, { sparse: true });
-    await db.collection("stream_checkpoints").createIndex({ streamId: 1 }, { unique: true });
-    await db.collection("stream_checkpoints").createIndex({ sessionId: 1, updatedAt: -1 });
-    await db.collection("stream_checkpoints").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-    await db.collection("osint_queries").createIndex({ userId: 1, createdAt: -1 });
-    await db.collection("scans").createIndex({ userId: 1, createdAt: -1 });
-    await db.collection("user_notifications").createIndex({ userId: 1, createdAt: -1 });
-    await db.collection("user_notifications").createIndex({ userId: 1, read: 1 });
-    await db.collection("adaptive_events").createIndex({ userId: 1, createdAt: -1 });
-    await db.collection("adaptive_events").createIndex({ surface: 1, type: 1, createdAt: -1 });
-    await db.collection("security_events").createIndex({ kind: 1, createdAt: -1 });
-    await db.collection("security_events").createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 14 });
-    await db.collection("security_events").createIndex({ identifierHash: 1, createdAt: -1 });
-    await db.collection("growth_push_subscriptions").createIndex({ userId: 1, endpoint: 1 }, { unique: true });
-    await db.collection("growth_push_subscriptions").createIndex({ createdAt: -1 });
-    await db.collection("growth_digest_preferences").createIndex({ userId: 1 }, { unique: true });
-    await db.collection("growth_digest_preferences").createIndex({ enabled: 1, updatedAt: -1 });
-    await db.collection("growth_streak_freezes").createIndex({ userId: 1 }, { unique: true });
-    await db.collection("growth_user_certifications").createIndex({ userId: 1, pathId: 1 }, { unique: true });
-    await db.collection("growth_ctf_events").createIndex({ weekKey: 1 }, { unique: true });
-    await db.collection("growth_ctf_events").createIndex({ startsAt: -1, endsAt: -1 });
-    await db.collection("growth_ctf_submissions").createIndex({ userId: 1, eventId: 1 });
-    await db.collection("growth_ctf_submissions").createIndex({ eventId: 1, correct: 1, createdAt: -1 });
-    await db.collection("growth_github_integrations").createIndex({ userId: 1 }, { unique: true });
-    await db.collection("growth_billing_subscriptions").createIndex({ userId: 1 }, { unique: true });
-    await db.collection("growth_billing_subscriptions").createIndex({ status: 1, updatedAt: -1 });
+    await ensureIndex(db.collection("users"), { resetOtpExpire: 1 }, { sparse: true });
+    await ensureIndex(db.collection("stream_checkpoints"), { streamId: 1 }, { unique: true });
+    await ensureIndex(db.collection("stream_checkpoints"), { sessionId: 1, updatedAt: -1 });
+    await ensureIndex(db.collection("stream_checkpoints"), { expiresAt: 1 }, { expireAfterSeconds: 0 });
+    await ensureIndex(db.collection("osint_queries"), { userId: 1, createdAt: -1 });
+    await ensureIndex(db.collection("scans"), { userId: 1, createdAt: -1 });
+    await ensureIndex(db.collection("user_notifications"), { userId: 1, createdAt: -1 });
+    await ensureIndex(db.collection("user_notifications"), { userId: 1, read: 1 });
+    await ensureIndex(db.collection("adaptive_events"), { userId: 1, createdAt: -1 });
+    await ensureIndex(db.collection("adaptive_events"), { surface: 1, type: 1, createdAt: -1 });
+    await ensureIndex(db.collection("security_events"), { kind: 1, createdAt: -1 });
+    await ensureIndex(db.collection("security_events"), { createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 14 });
+    await ensureIndex(db.collection("security_events"), { identifierHash: 1, createdAt: -1 });
+    await ensureIndex(db.collection("growth_push_subscriptions"), { userId: 1, endpoint: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_push_subscriptions"), { createdAt: -1 });
+    await ensureIndex(db.collection("growth_digest_preferences"), { userId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_digest_preferences"), { enabled: 1, updatedAt: -1 });
+    await ensureIndex(db.collection("growth_streak_freezes"), { userId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_user_certifications"), { userId: 1, pathId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_ctf_events"), { weekKey: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_ctf_events"), { startsAt: -1, endsAt: -1 });
+    await ensureIndex(db.collection("growth_ctf_submissions"), { userId: 1, eventId: 1 });
+    await ensureIndex(db.collection("growth_ctf_submissions"), { eventId: 1, correct: 1, createdAt: -1 });
+    await ensureIndex(db.collection("growth_github_integrations"), { userId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_billing_subscriptions"), { userId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_billing_subscriptions"), { status: 1, updatedAt: -1 });
     indexesEnsured = true;
   }
 
   logInfo("Database connected successfully", {
-    dbHost: env.mongo.host,
-    dbPort: env.mongo.port,
-    dbName: env.mongo.dbName,
-    dbUri: env.mongo.masked,
+    dbName: db.databaseName,
     latencyMs: Date.now() - startedAt,
     pool: getDbPoolStatus(),
   });

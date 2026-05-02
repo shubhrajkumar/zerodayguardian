@@ -83,7 +83,21 @@ const bootstrap = async () => {
 };
 
 bootstrap().catch(async (error) => {
-  logError("Failed to bootstrap rebuilt backend", error);
+  logError("Failed to bootstrap rebuilt backend", error, {
+    code: String(error?.code || ""),
+    issues: Array.isArray(error?.issues) ? error.issues : [],
+    requiredEnv: [
+      "MONGODB_URI",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "SESSION_SECRET",
+      "JWT_SECRET",
+      "APP_BASE_URL",
+      "BACKEND_PUBLIC_URL",
+      "CORS_ORIGIN",
+      "GOOGLE_REDIRECT_URI",
+    ],
+  });
   await shutdownTelemetry();
   process.exit(1);
 });
