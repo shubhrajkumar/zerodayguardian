@@ -16,6 +16,8 @@ npm install
 npm run dev
 ```
 
+Copy `.env.example` to `.env` and fill in the backend values before starting the full stack.
+
 The dev runner starts:
 
 - Vite frontend on `http://localhost:8080`
@@ -55,11 +57,13 @@ Set these on the live Node backend:
 APP_BASE_URL=https://your-frontend.vercel.app
 BACKEND_PUBLIC_URL=https://zerodayguardian-backend.onrender.com
 CORS_ORIGIN=https://your-frontend.vercel.app
-DATABASE_URL=<your-mongodb-uri>
+MONGODB_URI=<your-mongodb-uri>
+GOOGLE_CLIENT_ID=<your-google-client-id>
+GOOGLE_CLIENT_SECRET=<your-google-client-secret>
 SESSION_SECRET=<strong-random-secret>
 JWT_SECRET=<strong-random-jwt-secret>
-GOOGLE_AUTHORIZED_ORIGINS=https://your-frontend.vercel.app
 GOOGLE_REDIRECT_URI=https://zerodayguardian-backend.onrender.com/auth/google/callback
+DB_ENCRYPTION_KEY=<strong-random-encryption-key>
 ```
 
 If the backend should call a separate Python service:

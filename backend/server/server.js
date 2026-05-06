@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { env } from "../src/config/env.mjs";
+import { env, REQUIRED_ENV_KEYS, getStartupEnvValidation } from "../src/config/env.mjs";
 import { createServerApp } from "./app.js";
 import { validateStartupConfig } from "./utils/startupValidation.js";
 import { logError, logInfo, logWarn } from "../src/utils/logger.mjs";
@@ -14,7 +14,7 @@ const PORT = Number(process.env.NEUROBOT_PORT || env.port || 8787);
 
 const bootstrap = async () => {
   await startTelemetry();
-  validateStartupConfig();
+  const startupValidation = validateStartupConfig({ enforceInProduction: true });
   try {
     validateLlmStartupConfig();
   } catch (error) {
@@ -23,7 +23,15 @@ const bootstrap = async () => {
     });
   }
 
-  await connectDb();
+  if (env.mongoUri && env.mongo) {
+    await connectDb();
+  } else {
+    logWarn("Database startup skipped because env validation is incomplete", {
+      missingKeys: startupValidation.report.missingKeys,
+      mongoConfigured: Boolean(env.mongoUri),
+      mongoValid: Boolean(env.mongo),
+    });
+  }
   if (env.redisUrl) {
     try {
       await connectRedis();
@@ -51,7 +59,13 @@ const bootstrap = async () => {
   startNewsIngestionScheduler({ intervalMs: env.newsRefreshIntervalMs });
 
   server.on("listening", () => {
-    logInfo("Backend listening", { host: HOST, port: PORT, mode: "rebuild" });
+    logInfo("Backend listening", {
+      host: HOST,
+      port: PORT,
+      mode: "rebuild",
+      startupEnvOk: startupValidation.report.ok,
+      missingEnv: startupValidation.report.missingKeys,
+    });
   });
 
   let shuttingDown = false;
@@ -86,17 +100,8 @@ bootstrap().catch(async (error) => {
   logError("Failed to bootstrap rebuilt backend", error, {
     code: String(error?.code || ""),
     issues: Array.isArray(error?.issues) ? error.issues : [],
-    requiredEnv: [
-      "MONGODB_URI",
-      "GOOGLE_CLIENT_ID",
-      "GOOGLE_CLIENT_SECRET",
-      "SESSION_SECRET",
-      "JWT_SECRET",
-      "APP_BASE_URL",
-      "BACKEND_PUBLIC_URL",
-      "CORS_ORIGIN",
-      "GOOGLE_REDIRECT_URI",
-    ],
+    requiredEnv: REQUIRED_ENV_KEYS,
+    startupEnv: getStartupEnvValidation(),
   });
   await shutdownTelemetry();
   process.exit(1);

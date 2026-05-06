@@ -97,6 +97,11 @@ const normalizeLlmProvider = (value = "") => {
   if (!raw || ["auto", "dual", "both", "all"].includes(raw)) return "auto";
   return ["openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup", "auto"].includes(raw) ? raw : raw;
 };
+const isHttpUrl = (value = "") => /^https?:\/\//.test(String(value || "").trim());
+const normalizeNodeEnv = (value = "") => {
+  const raw = String(value || "").trim().toLowerCase();
+  return raw || "development";
+};
 const parseMongoUrl = (raw) => {
   let parsed;
   try {
@@ -181,7 +186,8 @@ const parseMongoUrl = (raw) => {
 
 const llmProviderInput = firstSet("LLM_MODE", "LLM_PROVIDER");
 const normalizedLlmMode = normalizeLlmProvider(llmProviderInput || "auto");
-const isProduction = (process.env.NODE_ENV || "production") === "production";
+const normalizedNodeEnv = normalizeNodeEnv(process.env.NODE_ENV);
+const isProduction = normalizedNodeEnv === "production";
 const isVercel = ["1", "true"].includes(String(process.env.VERCEL || "").trim().toLowerCase());
 const isRender =
   ["1", "true"].includes(String(process.env.RENDER || "").trim().toLowerCase()) ||
@@ -193,7 +199,7 @@ const managedFallbackUrl = isRender ? renderFallbackUrl : vercelFallbackUrl;
 const warnDeployConfig = (message) => {
   console.warn(`[neurobot] ${message}`);
 };
-const required = [
+export const REQUIRED_ENV_KEYS = [
   "MONGODB_URI",
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
@@ -206,7 +212,7 @@ const required = [
 ];
 
 export const env = {
-  nodeEnv: process.env.NODE_ENV || "production",
+  nodeEnv: normalizedNodeEnv,
   port: Number(process.env.PORT || process.env.NEUROBOT_PORT || 10000),
   corsOrigin: process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"),
   openaiBaseUrl: normalizeApiBaseUrl(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1", "OPENAI_BASE_URL"),
@@ -393,69 +399,134 @@ env.authOtpPreviewEnabled = isExplicitTrue(process.env.AUTH_OTP_PREVIEW_ENABLED)
     ? false
       : env.nodeEnv !== "production" || localLikeAppHost;
 
-const missing = required.filter((key) => {
-  if (key === "MONGODB_URI") return !env.mongoUri;
-  if (key === "CORS_ORIGIN") return !env.corsOrigin;
-  if (key === "JWT_SECRET") return !env.jwtSecret;
-  if (key === "GOOGLE_CLIENT_ID") return !env.googleOauthClientId;
-  if (key === "GOOGLE_CLIENT_SECRET") return !env.googleOauthClientSecret;
-  if (key === "APP_BASE_URL") return !env.appBaseUrl;
-  if (key === "BACKEND_PUBLIC_URL") return !env.backendPublicUrl;
-  if (key === "GOOGLE_REDIRECT_URI") return !env.googleRedirectUri;
-  return !process.env[key] || !String(process.env[key]).trim();
-});
+const createIssue = (key, message, severity = "error") => ({ key, message, severity });
+const createErrorFromValidation = (report) => {
+  const error = new Error(
+    `[neurobot] Startup env validation failed: ${report.errors.map((issue) => `${issue.key}: ${issue.message}`).join("; ")}`
+  );
+  error.code = "startup_env_validation_failed";
+  error.issues = report.errors;
+  error.report = report;
+  return error;
+};
+const addIssue = (issues, key, message, severity = "error") => {
+  issues.push(createIssue(key, message, severity));
+};
+const buildStartupEnvValidation = () => {
+  const issues = [];
+  const requiredValueMap = {
+    MONGODB_URI: env.mongoUri,
+    GOOGLE_CLIENT_ID: env.googleOauthClientId,
+    GOOGLE_CLIENT_SECRET: env.googleOauthClientSecret,
+    SESSION_SECRET: env.sessionSecret,
+    JWT_SECRET: env.jwtSecret,
+    APP_BASE_URL: env.appBaseUrl,
+    BACKEND_PUBLIC_URL: env.backendPublicUrl,
+    CORS_ORIGIN: env.corsOrigin,
+    GOOGLE_REDIRECT_URI: env.googleRedirectUri,
+  };
+  for (const key of REQUIRED_ENV_KEYS) {
+    if (String(requiredValueMap[key] || "").trim()) continue;
+    addIssue(
+      issues,
+      key,
+      "Missing required environment variable",
+      isProduction ? "error" : "warn"
+    );
+  }
 
-if (missing.length) {
-  throw new Error(`[neurobot] Missing required env vars: ${missing.join(", ")}`);
-}
-
-if (!Number.isFinite(env.port) || env.port <= 0 || env.port > 65535) {
-  throw new Error("[neurobot] Invalid NEUROBOT_PORT");
-}
-if (String(env.jwtSecret || "").length < 32) {
-  if (isManagedDeploy) {
-    warnDeployConfig("JWT_SECRET is shorter than 32 characters. Configure a real production secret in your deployment env.");
-  } else {
-    throw new Error("[neurobot] JWT_SECRET must be at least 32 characters");
+  if (!Number.isFinite(env.port) || env.port <= 0 || env.port > 65535) {
+    addIssue(issues, "NEUROBOT_PORT", "Must be a valid TCP port between 1 and 65535");
   }
-}
-if (env.llmRetryMaxMs < env.llmRetryBaseMs) {
-  throw new Error("[neurobot] LLM_RETRY_MAX_MS must be >= LLM_RETRY_BASE_MS");
-}
-if (env.streamRetryMaxMs < env.streamRetryMinMs) {
-  throw new Error("[neurobot] STREAM_RETRY_MAX_MS must be >= STREAM_RETRY_MIN_MS");
-}
-if (env.llmCriticalTimeoutMs < 4000) {
-  throw new Error("[neurobot] LLM_CRITICAL_TIMEOUT_MS must be >= 4000");
-}
-if (!new Set(["info", "warn", "error"]).has(env.alertMinLevel)) {
-  throw new Error("[neurobot] ALERT_MIN_LEVEL must be one of: info|warn|error");
-}
-
-if (env.nodeEnv === "production") {
-  if (!env.appBaseUrl || !/^https?:\/\//.test(env.appBaseUrl)) {
-    throw new Error("[neurobot] APP_BASE_URL must be set to an absolute https:// or http:// URL in production");
+  if (String(env.sessionSecret || "").trim() && String(env.sessionSecret || "").length < 32) {
+    addIssue(
+      issues,
+      "SESSION_SECRET",
+      "Should be at least 32 characters",
+      isProduction ? "error" : "warn"
+    );
   }
-  if (!env.backendPublicUrl || !/^https?:\/\//.test(env.backendPublicUrl)) {
-    throw new Error("[neurobot] BACKEND_PUBLIC_URL must be set to an absolute https:// or http:// URL in production");
-  }
-  if (!env.googleRedirectUri || !/^https?:\/\//.test(env.googleRedirectUri)) {
-    throw new Error("[neurobot] GOOGLE_REDIRECT_URI must be set to an absolute https:// or http:// URL in production");
-  }
-  if (String(env.dbEncryptionKey || "").length < 32) {
-    throw new Error("[neurobot] DB_ENCRYPTION_KEY must be at least 32 characters in production");
-  }
-  if (!env.corsOrigins.length) {
-    throw new Error("[neurobot] CORS_ORIGIN must include at least one origin in production");
-  }
-  for (const origin of env.corsOrigins) {
-    if (!/^https?:\/\//.test(origin)) {
-      throw new Error("[neurobot] CORS_ORIGIN entries must be absolute URLs in production");
+  if (String(env.jwtSecret || "").trim() && String(env.jwtSecret || "").length < 32) {
+    const severity = isManagedDeploy ? "warn" : isProduction ? "error" : "warn";
+    addIssue(issues, "JWT_SECRET", "Should be at least 32 characters", severity);
+    if (isManagedDeploy) {
+      warnDeployConfig("JWT_SECRET is shorter than 32 characters. Configure a real production secret in your deployment env.");
     }
   }
-}
+  if (env.llmRetryMaxMs < env.llmRetryBaseMs) {
+    addIssue(issues, "LLM_RETRY_MAX_MS", "Must be greater than or equal to LLM_RETRY_BASE_MS");
+  }
+  if (env.streamRetryMaxMs < env.streamRetryMinMs) {
+    addIssue(issues, "STREAM_RETRY_MAX_MS", "Must be greater than or equal to STREAM_RETRY_MIN_MS");
+  }
+  if (env.llmCriticalTimeoutMs < 4000) {
+    addIssue(issues, "LLM_CRITICAL_TIMEOUT_MS", "Must be at least 4000");
+  }
+  if (!new Set(["info", "warn", "error"]).has(env.alertMinLevel)) {
+    addIssue(issues, "ALERT_MIN_LEVEL", "Must be one of: info, warn, error");
+  }
+  if (env.appBaseUrl && !isHttpUrl(env.appBaseUrl)) {
+    addIssue(issues, "APP_BASE_URL", "Must be an absolute http:// or https:// URL", isProduction ? "error" : "warn");
+  }
+  if (env.backendPublicUrl && !isHttpUrl(env.backendPublicUrl)) {
+    addIssue(
+      issues,
+      "BACKEND_PUBLIC_URL",
+      "Must be an absolute http:// or https:// URL",
+      isProduction ? "error" : "warn"
+    );
+  }
+  if (env.googleRedirectUri && !isHttpUrl(env.googleRedirectUri)) {
+    addIssue(
+      issues,
+      "GOOGLE_REDIRECT_URI",
+      "Must be an absolute http:// or https:// URL",
+      isProduction ? "error" : "warn"
+    );
+  }
+  if (env.nodeEnv === "production" && String(env.dbEncryptionKey || "").length < 32) {
+    addIssue(issues, "DB_ENCRYPTION_KEY", "Must be at least 32 characters in production");
+  }
+  if (env.nodeEnv === "production" && !env.corsOrigins.length) {
+    addIssue(issues, "CORS_ORIGIN", "Must include at least one origin in production");
+  }
+  if (env.nodeEnv === "production") {
+    for (const origin of env.corsOrigins) {
+      if (!isHttpUrl(origin)) {
+        addIssue(issues, "CORS_ORIGIN", `Entry "${origin}" must be an absolute URL in production`);
+      }
+    }
+  }
+  try {
+    env.mongo = env.mongoUri ? parseMongoUrl(env.mongoUri) : null;
+  } catch (error) {
+    env.mongo = null;
+    addIssue(issues, "MONGODB_URI", String(error?.message || error));
+  }
 
-env.mongo = parseMongoUrl(env.mongoUri);
+  const errors = issues.filter((issue) => issue.severity === "error");
+  const warnings = issues.filter((issue) => issue.severity === "warn");
+  return {
+    ok: errors.length === 0,
+    environment: env.nodeEnv,
+    issues,
+    errors,
+    warnings,
+    missingKeys: issues
+      .filter((issue) => issue.message === "Missing required environment variable")
+      .map((issue) => issue.key),
+    requiredKeys: [...REQUIRED_ENV_KEYS],
+  };
+};
+
+export const startupEnvValidation = buildStartupEnvValidation();
+export const getStartupEnvValidation = () => startupEnvValidation;
+export const assertStartupEnv = ({ enforceProduction = true } = {}) => {
+  if (!startupEnvValidation.ok && (!enforceProduction || env.nodeEnv === "production")) {
+    throw createErrorFromValidation(startupEnvValidation);
+  }
+  return startupEnvValidation;
+};
 
 const supportedProviders = new Set(["openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup"]);
 const supportedModes = new Set(["auto", "openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup"]);

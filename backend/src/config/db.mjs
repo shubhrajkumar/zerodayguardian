@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
-import { env } from "./env.mjs";
-import { logInfo } from "../utils/logger.mjs";
+import { env, getStartupEnvValidation } from "./env.mjs";
+import { logInfo, logWarn } from "../utils/logger.mjs";
 
 let client;
 let db;
@@ -47,7 +47,15 @@ export const connectDb = async () => {
     .trim()
     .replace(/^['"]|['"]$/g, "");
   if (!mongoUri) {
-    throw new Error("Missing required environment variable: MONGODB_URI");
+    const report = getStartupEnvValidation();
+    const error = new Error("Database connection skipped: MONGODB_URI is missing");
+    error.code = "missing_env_var";
+    error.issues = report.issues.filter((issue) => issue.key === "MONGODB_URI");
+    logWarn("Database connection skipped because MONGODB_URI is not configured", {
+      environment: env.nodeEnv,
+      issues: error.issues,
+    });
+    throw error;
   }
 
   const startedAt = Date.now();
