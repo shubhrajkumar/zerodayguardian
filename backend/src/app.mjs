@@ -45,6 +45,7 @@ import { getAiRoutingSnapshot, runAiSelfDiagnosis, validateAiStartupConfig } fro
 import { logWarn } from "./utils/logger.mjs";
 import { requireAuth } from "./middleware/auth.mjs";
 import { buildCookieOptions } from "./utils/cookiePolicy.mjs";
+import { getGoogleAuthConfigStatus } from "../services/security-service/authService.mjs";
 
 const COOKIE_NAME = "neurobot_ss";
 const ONE_WEEK = 60 * 60 * 24 * 7;
@@ -104,6 +105,7 @@ const buildPublicAuthPath = (req, suffix = "") => {
   return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
 };
 const buildAuthProvidersPayload = (req) => {
+  const googleAuth = getGoogleAuthConfigStatus();
   const startPath = buildPublicAuthPath(req, "/google");
   const callbackPath = buildPublicAuthPath(req, "/google/callback");
   const startUrl = buildBackendUrl(req, startPath);
@@ -111,17 +113,19 @@ const buildAuthProvidersPayload = (req) => {
 
   return {
     status: "ok",
-    providers: ["google"],
+    providers: googleAuth.enabled ? ["google"] : [],
     google: {
-      enabled: true,
+      enabled: googleAuth.enabled,
       clientId: env.googleOauthClientId || "",
-      backendFlow: true,
-      popupFlow: true,
-      startUrl,
+      backendFlow: googleAuth.enabled,
+      popupFlow: googleAuth.enabled,
+      startUrl: googleAuth.enabled ? startUrl : "",
       callbackUrl,
-      redirectUri: env.googleRedirectUri || callbackUrl,
+      redirectUri: googleAuth.hasExplicitRedirectUri ? googleAuth.redirectUri : callbackUrl,
       frontendOrigin: env.appBaseUrl || "",
       authorizedOrigins: env.googleAuthorizedOrigins || [],
+      missingKeys: googleAuth.missingKeys,
+      action: googleAuth.enabled ? "" : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.",
     },
   };
 };

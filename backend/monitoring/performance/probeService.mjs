@@ -2,6 +2,7 @@ import { verifyDbConnection } from "../../src/config/db.mjs";
 import { getRuntimeState } from "../../src/state/runtimeState.mjs";
 import { env } from "../../src/config/env.mjs";
 import { logWarn } from "../../src/utils/logger.mjs";
+import { getGoogleAuthConfigStatus } from "../../services/security-service/authService.mjs";
 
 const READINESS_CACHE_TTL_MS = 7000;
 let readinessCache = null;
@@ -122,14 +123,19 @@ export const getReadiness = async () => {
   let auth = "down";
 
   const authProbe = async () => {
-    const hasGoogleConfig = Boolean(
-      String(env.googleOauthClientId || "").trim() &&
-      String(env.googleOauthClientSecret || "").trim() &&
-      String(env.googleRedirectUri || "").trim() &&
+    const hasCoreAuthConfig = Boolean(
+      String(env.jwtSecret || "").trim() &&
+      String(env.sessionSecret || "").trim() &&
       String(env.appBaseUrl || "").trim() &&
       String(env.backendPublicUrl || "").trim()
     );
-    if (!hasGoogleConfig) throw new Error("google_auth_not_ready");
+    if (!hasCoreAuthConfig) throw new Error("core_auth_not_ready");
+    const googleAuth = getGoogleAuthConfigStatus();
+    if (!googleAuth.enabled && env.nodeEnv !== "production") {
+      logWarn("Readiness auth check continuing with Google auth disabled", {
+        missingKeys: googleAuth.missingKeys,
+      });
+    }
     return { ok: true };
   };
 

@@ -55,21 +55,48 @@ const normalizeUrl = (value = "") => {
     return "";
   }
 };
-const isGoogleAuthConfigured = () => Boolean(env.googleOauthClientId && env.googleOauthClientSecret);
+const GOOGLE_AUTH_REQUIRED_KEYS = ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"];
+const buildDefaultGoogleRedirectUri = () => {
+  const base = String(env.backendPublicUrl || "").trim() || `http://127.0.0.1:${env.port || 8787}`;
+  return `${base.replace(/\/+$/, "")}/auth/google/callback`;
+};
+export const getGoogleAuthConfigStatus = () => {
+  const missingKeys = GOOGLE_AUTH_REQUIRED_KEYS.filter((key) => {
+    if (key === "GOOGLE_CLIENT_ID") return !String(env.googleOauthClientId || "").trim();
+    if (key === "GOOGLE_CLIENT_SECRET") return !String(env.googleOauthClientSecret || "").trim();
+    return false;
+  });
+  const resolvedRedirectUri = String(env.googleRedirectUri || "").trim() || buildDefaultGoogleRedirectUri();
+  return {
+    enabled: missingKeys.length === 0,
+    missingKeys,
+    redirectUri: resolvedRedirectUri,
+    hasExplicitRedirectUri: Boolean(String(env.googleRedirectUri || "").trim()),
+  };
+};
+const isGoogleAuthConfigured = () => getGoogleAuthConfigStatus().enabled;
+const createGoogleConfigError = (message = "Google sign-in is disabled because GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not configured.") => {
+  const status = getGoogleAuthConfigStatus();
+  const error = createError(message, 503, "google_auth_not_configured");
+  error.missingKeys = status.missingKeys;
+  error.action = "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.";
+  return error;
+};
 const getGoogleOauthClient = () => {
   if (!isGoogleAuthConfigured()) {
-    throw createError("Google sign-in is not configured", 503, "google_auth_not_configured");
+    throw createGoogleConfigError();
   }
   if (!googleOauthClient) googleOauthClient = new OAuth2Client(env.googleOauthClientId);
   return googleOauthClient;
 };
 
 const getGoogleOauthWebClient = () => {
-  if (!isGoogleAuthConfigured() || !env.googleOauthClientSecret || !env.googleRedirectUri) {
-    throw createError("Google OAuth redirect flow is not configured", 503, "google_oauth_redirect_not_configured");
+  const googleAuth = getGoogleAuthConfigStatus();
+  if (!googleAuth.enabled) {
+    throw createGoogleConfigError("Google OAuth redirect flow is disabled because GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not configured.");
   }
   if (!googleOauthWebClient) {
-    googleOauthWebClient = new OAuth2Client(env.googleOauthClientId, env.googleOauthClientSecret, env.googleRedirectUri);
+    googleOauthWebClient = new OAuth2Client(env.googleOauthClientId, env.googleOauthClientSecret, googleAuth.redirectUri);
   }
   return googleOauthWebClient;
 };

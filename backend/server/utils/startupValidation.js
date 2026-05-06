@@ -1,5 +1,6 @@
 import { env, REQUIRED_ENV_KEYS, assertStartupEnv, getStartupEnvValidation } from "../../src/config/env.mjs";
 import { logInfo, logWarn } from "../../src/utils/logger.mjs";
+import { getGoogleAuthConfigStatus } from "../../services/security-service/authService.mjs";
 
 const requirePair = (a, b, label, issues) => {
   const hasA = !!String(a || "").trim();
@@ -26,6 +27,13 @@ export const validateStartupConfig = ({ enforceInProduction = true } = {}) => {
   if (report.warnings.length) {
     logWarn("Startup env validation warnings", {
       issues: report.warnings.map((issue) => `${issue.key}: ${issue.message}`),
+    });
+  }
+  const googleAuth = getGoogleAuthConfigStatus();
+  if (!googleAuth.enabled) {
+    logWarn("Google auth disabled due to missing environment variables", {
+      missingKeys: googleAuth.missingKeys,
+      action: "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.",
     });
   }
 

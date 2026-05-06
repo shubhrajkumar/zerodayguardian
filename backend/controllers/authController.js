@@ -3,6 +3,7 @@ import {
   authenticateGoogleUser,
   buildGoogleOauthRedirectUrl,
   clearAuthCookies,
+  getGoogleAuthConfigStatus,
   getUserById,
   loginUser,
   refreshAuth,
@@ -96,6 +97,8 @@ const sendAuthError = (req, res, error) => {
     status: "error",
     code: error.code || "INTERNAL_SERVER_ERROR",
     message: error.message || "An unexpected error occurred.",
+    ...(Array.isArray(error?.missingKeys) ? { missingKeys: error.missingKeys } : {}),
+    ...(error?.action ? { action: String(error.action) } : {}),
     ...(error?.retryAfterSec ? { retryAfterSec: Number(error.retryAfterSec) || 0 } : {}),
     requestId: req.requestId || "",
   });
@@ -252,24 +255,33 @@ export const logout = async (req, res) => {
 };
 
 export const getAuthProviders = async (req, res) => {
-  const hasGoogleRedirectFlow = Boolean(env.googleOauthClientId && env.googleOauthClientSecret && env.googleRedirectUri);
+  const googleAuth = getGoogleAuthConfigStatus();
   const startPath = resolvePublicAuthPath(req, "/google");
   const callbackPath = resolvePublicAuthPath(req, "/google/callback");
   const startUrl = resolveBackendAuthUrl(req, startPath);
   const callbackUrl = resolveBackendAuthUrl(req, callbackPath);
+  if (!googleAuth.enabled) {
+    logInfo("Google auth provider disabled", {
+      requestId: req.requestId || "",
+      missingKeys: googleAuth.missingKeys,
+      action: "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable Google sign-in.",
+    });
+  }
   res.json({
     status: "ok",
-    providers: ["google"],
+    providers: googleAuth.enabled ? ["google"] : [],
     google: {
-      enabled: true,
+      enabled: googleAuth.enabled,
       clientId: env.googleOauthClientId || "",
-      backendFlow: hasGoogleRedirectFlow,
-      popupFlow: true,
-      startUrl,
+      backendFlow: googleAuth.enabled,
+      popupFlow: googleAuth.enabled,
+      startUrl: googleAuth.enabled ? startUrl : "",
       callbackUrl,
-      redirectUri: env.googleRedirectUri || callbackUrl,
+      redirectUri: googleAuth.hasExplicitRedirectUri ? googleAuth.redirectUri : callbackUrl,
       frontendOrigin: env.appBaseUrl || "",
       authorizedOrigins: env.googleAuthorizedOrigins || [],
+      missingKeys: googleAuth.missingKeys,
+      action: googleAuth.enabled ? "" : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.",
     },
   });
 };

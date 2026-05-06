@@ -36,6 +36,8 @@ type AuthProvidersResponse = {
     frontendOrigin?: string;
     authorizedOrigins?: string[];
     redirectUri?: string;
+    missingKeys?: string[];
+    action?: string;
   };
 };
 
@@ -135,7 +137,9 @@ const AuthPage = () => {
         }
         setGoogleClientId("");
         setGoogleStartUrl("");
-        setGoogleStatus("Google sign-in is not configured correctly on the backend. Check Google OAuth production environment variables.");
+        const missingKeys = payload?.google?.missingKeys?.length ? ` Missing: ${payload.google.missingKeys.join(", ")}.` : "";
+        const action = payload?.google?.action ? ` ${payload.google.action}` : "";
+        setGoogleStatus(`Google sign-in is disabled on the backend.${missingKeys}${action}`);
       })
       .catch((error) => {
         if (!active) return;

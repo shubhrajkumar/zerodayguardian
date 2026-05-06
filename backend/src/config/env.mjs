@@ -427,11 +427,17 @@ const buildStartupEnvValidation = () => {
   };
   for (const key of REQUIRED_ENV_KEYS) {
     if (String(requiredValueMap[key] || "").trim()) continue;
+    const severity =
+      key === "GOOGLE_CLIENT_ID" || key === "GOOGLE_CLIENT_SECRET"
+        ? "warn"
+        : isProduction
+          ? "error"
+          : "warn";
     addIssue(
       issues,
       key,
       "Missing required environment variable",
-      isProduction ? "error" : "warn"
+      severity
     );
   }
 
