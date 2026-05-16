@@ -38,6 +38,11 @@ IS_VERCEL = os.getenv("VERCEL", "").strip().lower() in {"1", "true"}
 SERVERLESS_STORAGE_ROOT = Path("/tmp/zeroday-guardian-osint") if IS_VERCEL else Path(__file__).resolve().parent.parent
 
 
+def _path_from_env(env_name: str, fallback: Path) -> Path:
+    raw = os.getenv(env_name, "").strip()
+    return Path(raw).expanduser() if raw else fallback
+
+
 @dataclass(frozen=True)
 class SourceConfig:
     name: str
@@ -70,8 +75,8 @@ class MonitorSettings:
     max_raw_text_chars: int = int(os.getenv("PY_OSINT_MAX_RAW_TEXT_CHARS", "1200"))
     max_alerts_per_cycle: int = int(os.getenv("PY_OSINT_MAX_ALERTS_PER_CYCLE", "20"))
     allow_http_sources: bool = os.getenv("PY_OSINT_ALLOW_HTTP_SOURCES", "false").lower() == "true"
-    log_file: Path = Path(os.getenv("PY_OSINT_LOG_FILE", SERVERLESS_STORAGE_ROOT / "osint-monitor.log"))
-    storage_file: Path = Path(os.getenv("PY_OSINT_STORAGE_FILE", SERVERLESS_STORAGE_ROOT / "osint-storage.json"))
+    log_file: Path = _path_from_env("PY_OSINT_LOG_FILE", SERVERLESS_STORAGE_ROOT / "osint-monitor.log")
+    storage_file: Path = _path_from_env("PY_OSINT_STORAGE_FILE", SERVERLESS_STORAGE_ROOT / "osint-storage.json")
     sources_file: Path | None = (
         Path(os.getenv("PY_OSINT_SOURCES_FILE")).expanduser()
         if os.getenv("PY_OSINT_SOURCES_FILE", "").strip()

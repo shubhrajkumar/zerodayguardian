@@ -55,21 +55,34 @@ const normalizeUrl = (value = "") => {
     return "";
   }
 };
-const GOOGLE_AUTH_REQUIRED_KEYS = ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"];
+const GOOGLE_AUTH_REQUIRED_KEYS = ["GOOGLE_CLIENT_ID or GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_CLIENT_SECRET or GOOGLE_OAUTH_CLIENT_SECRET"];
 const buildDefaultGoogleRedirectUri = () => {
   const base = String(env.backendPublicUrl || "").trim() || `http://127.0.0.1:${env.port || 8787}`;
   return `${base.replace(/\/+$/, "")}/auth/google/callback`;
 };
+const isValidHttpUrl = (value = "") => {
+  try {
+    const parsed = new URL(String(value || "").trim());
+    return ["http:", "https:"].includes(parsed.protocol) && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+};
 export const getGoogleAuthConfigStatus = () => {
   const missingKeys = GOOGLE_AUTH_REQUIRED_KEYS.filter((key) => {
-    if (key === "GOOGLE_CLIENT_ID") return !String(env.googleOauthClientId || "").trim();
-    if (key === "GOOGLE_CLIENT_SECRET") return !String(env.googleOauthClientSecret || "").trim();
+    if (key.includes("CLIENT_ID")) return !String(env.googleOauthClientId || "").trim();
+    if (key.includes("CLIENT_SECRET")) return !String(env.googleOauthClientSecret || "").trim();
     return false;
   });
   const resolvedRedirectUri = String(env.googleRedirectUri || "").trim() || buildDefaultGoogleRedirectUri();
+  const invalidKeys = [];
+  if (String(env.googleRedirectUri || "").trim() && !isValidHttpUrl(env.googleRedirectUri)) {
+    invalidKeys.push("GOOGLE_REDIRECT_URI");
+  }
   return {
-    enabled: missingKeys.length === 0,
+    enabled: missingKeys.length === 0 && invalidKeys.length === 0,
     missingKeys,
+    invalidKeys,
     redirectUri: resolvedRedirectUri,
     hasExplicitRedirectUri: Boolean(String(env.googleRedirectUri || "").trim()),
   };
@@ -79,7 +92,10 @@ const createGoogleConfigError = (message = "Google sign-in is disabled because G
   const status = getGoogleAuthConfigStatus();
   const error = createError(message, 503, "google_auth_not_configured");
   error.missingKeys = status.missingKeys;
-  error.action = "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.";
+  error.invalidKeys = status.invalidKeys;
+  error.action = status.invalidKeys.length
+    ? "Fix GOOGLE_REDIRECT_URI or remove it to disable Google sign-in safely."
+    : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.";
   return error;
 };
 const getGoogleOauthClient = () => {
@@ -597,6 +613,20 @@ export const sendResetOtp = async ({ email }) => {
   );
 
   if (!mailConfigured()) {
+    if (env.authOtpPreviewEnabled) {
+      logWarn("Password reset OTP email skipped; preview mode is enabled", {
+        email: safeEmail,
+        delivery: "preview",
+      });
+      return {
+        sent: true,
+        delivery: "preview",
+        destination: maskEmail(safeEmail),
+        expiresInMinutes: resetOtpExpiresInMinutes,
+        otpPreview: otp,
+        message: "Password reset OTP generated in preview mode.",
+      };
+    }
     throw createError("Password reset email is not configured", 503, "mail_not_configured");
   }
 

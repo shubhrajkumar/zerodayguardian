@@ -56,6 +56,17 @@ const setProbeNoStore = (_req, res, next) => {
 };
 const normalizeCorsOrigin = (value = "") => String(value || "").trim().replace(/\/+$/, "");
 const isLocalLikeOrigin = (value = "") => /^(https?:\/\/)(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|::1)(:\d+)?$/i.test(normalizeCorsOrigin(value));
+const isKnownVercelAppOrigin = (value = "") => {
+  try {
+    const { hostname, protocol } = new URL(normalizeCorsOrigin(value));
+    return (
+      protocol === "https:" &&
+      /^(zerodayguardian|zeroday-guardian)(-[a-z0-9-]+)?\.vercel\.app$/i.test(hostname)
+    );
+  } catch {
+    return false;
+  }
+};
 const allowCorsOrigin = (origin, callback) => {
   if (!origin) {
     callback(null, true);
@@ -64,6 +75,10 @@ const allowCorsOrigin = (origin, callback) => {
   const normalizedOrigin = normalizeCorsOrigin(origin);
   // Always allow if explicitly configured
   if ((env.corsOrigins || []).includes(normalizedOrigin)) {
+    callback(null, true);
+    return;
+  }
+  if (isKnownVercelAppOrigin(normalizedOrigin)) {
     callback(null, true);
     return;
   }
@@ -110,9 +125,17 @@ const buildAuthProvidersPayload = (req) => {
   const callbackPath = buildPublicAuthPath(req, "/google/callback");
   const startUrl = buildBackendUrl(req, startPath);
   const callbackUrl = buildBackendUrl(req, callbackPath);
+  const googleAction = googleAuth.enabled
+    ? ""
+    : googleAuth.invalidKeys?.length
+      ? "Fix invalid Google OAuth environment variables or remove them to keep Google sign-in disabled."
+      : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.";
 
   return {
     status: "ok",
+    degraded: !googleAuth.enabled,
+    message: googleAuth.enabled ? "" : "Google sign-in is disabled on the backend.",
+    action: googleAction,
     providers: googleAuth.enabled ? ["google"] : [],
     google: {
       enabled: googleAuth.enabled,
@@ -125,7 +148,8 @@ const buildAuthProvidersPayload = (req) => {
       frontendOrigin: env.appBaseUrl || "",
       authorizedOrigins: env.googleAuthorizedOrigins || [],
       missingKeys: googleAuth.missingKeys,
-      action: googleAuth.enabled ? "" : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.",
+      invalidKeys: googleAuth.invalidKeys,
+      action: googleAction,
     },
   };
 };

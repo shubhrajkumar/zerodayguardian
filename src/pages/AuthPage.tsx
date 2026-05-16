@@ -20,13 +20,17 @@ type BackendAuthPayload = {
 
 type ResetOtpResponse = {
   sent?: boolean;
-  delivery?: "email";
+  delivery?: "email" | "preview";
   destination?: string;
   expiresInMinutes?: number;
+  otpPreview?: string;
   message?: string;
 };
 
 type AuthProvidersResponse = {
+  degraded?: boolean;
+  message?: string;
+  action?: string;
   google?: {
     enabled?: boolean;
     clientId?: string;
@@ -37,6 +41,7 @@ type AuthProvidersResponse = {
     authorizedOrigins?: string[];
     redirectUri?: string;
     missingKeys?: string[];
+    invalidKeys?: string[];
     action?: string;
   };
 };
@@ -81,6 +86,22 @@ const resetSchema = z.object({
   otp: z.string().length(6),
   password: z.string().min(10).regex(/[A-Z]/).regex(/[a-z]/).regex(/\d/).regex(/[^A-Za-z0-9]/),
 });
+
+const getProviderStatusMessage = (payload: AuthProvidersResponse) => {
+  const missingKeys = payload?.google?.missingKeys?.length ? ` Missing: ${payload.google.missingKeys.join(", ")}.` : "";
+  const invalidKeys = payload?.google?.invalidKeys?.length ? ` Invalid: ${payload.google.invalidKeys.join(", ")}.` : "";
+  const action = payload?.google?.action || payload?.action || "";
+  const base = payload?.message || "Google sign-in is disabled on the backend.";
+  return `${base}${missingKeys}${invalidKeys}${action ? ` ${action}` : ""}`;
+};
+
+const getProviderErrorMessage = (error: unknown) => {
+  if (!isApiError(error)) return "Google OAuth configuration check failed.";
+  if (error.code === "backend_starting") return "Backend auth service is starting. Retry in a minute, then refresh this page.";
+  if (error.code === "db_unavailable_auth") return "Backend auth database is unavailable. Check the Render MongoDB environment and redeploy.";
+  if (error.code === "cors_blocked") return "The backend CORS settings do not allow this frontend origin.";
+  return error.message || "Google OAuth configuration check failed.";
+};
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -137,9 +158,7 @@ const AuthPage = () => {
         }
         setGoogleClientId("");
         setGoogleStartUrl("");
-        const missingKeys = payload?.google?.missingKeys?.length ? ` Missing: ${payload.google.missingKeys.join(", ")}.` : "";
-        const action = payload?.google?.action ? ` ${payload.google.action}` : "";
-        setGoogleStatus(`Google sign-in is disabled on the backend.${missingKeys}${action}`);
+        setGoogleStatus(getProviderStatusMessage(payload));
       })
       .catch((error) => {
         if (!active) return;
@@ -154,7 +173,7 @@ const AuthPage = () => {
           setGoogleStatus(fallbackStatus);
           return;
         }
-        setGoogleStatus(isApiError(error) ? (error.message || "Google OAuth configuration check failed.") : "Google OAuth configuration check failed.");
+        setGoogleStatus(getProviderErrorMessage(error));
       });
     return () => {
       active = false;
@@ -231,6 +250,8 @@ const AuthPage = () => {
     if (error.code === "invalid_otp") return "That OTP doesn't match. Double-check the code and try again.";
     if (error.code === "mail_not_configured") return "Password reset email is temporarily unavailable. Please try again shortly.";
     if (error.code === "mail_delivery_failed") return "We couldn't send the reset email right now. Please try again shortly.";
+    if (error.code === "backend_starting") return "Backend auth service is starting. Retry in a minute, then request the OTP again.";
+    if (error.code === "db_unavailable_auth") return "Password reset is unavailable because the backend database is not connected.";
     return error.message || fallback;
   };
 
@@ -303,7 +324,11 @@ const AuthPage = () => {
 
       if (payload.destination) {
         const expiry = payload.expiresInMinutes ? ` It expires in ${payload.expiresInMinutes} minutes.` : "";
-        setResetStatus(`A 6-digit OTP was sent to ${payload.destination}. Check your inbox and spam folder, then enter it below.${expiry}`);
+        const preview = payload.otpPreview ? ` Preview OTP: ${payload.otpPreview}.` : "";
+        const deliveryText = payload.delivery === "preview"
+          ? `A 6-digit OTP was generated for ${payload.destination}.${preview}`
+          : `A 6-digit OTP was sent to ${payload.destination}. Check your inbox and spam folder, then enter it below.`;
+        setResetStatus(`${deliveryText}${expiry}`);
       } else {
         setResetStatus(payload.message || "Reset OTP sent successfully.");
       }
@@ -458,7 +483,6 @@ const AuthPage = () => {
                 </div>
               ) : null}
             </div>
-            {googleStatus ? <p className="text-sm text-muted-foreground">{googleStatus}</p> : null}
             {backendHint ? <p className="text-xs text-muted-foreground/80">{backendHint}</p> : null}
           </div>
 

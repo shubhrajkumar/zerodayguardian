@@ -64,6 +64,10 @@ SESSION_SECRET=<strong-random-secret>
 JWT_SECRET=<strong-random-jwt-secret>
 GOOGLE_REDIRECT_URI=https://zerodayguardian-backend.onrender.com/auth/google/callback
 DB_ENCRYPTION_KEY=<strong-random-encryption-key>
+AUTH_EMAIL_ENABLED=true
+AUTH_EMAIL_FROM=<verified-sender-email>
+AUTH_EMAIL_USER=<gmail-or-smtp-user>
+AUTH_EMAIL_APP_PASSWORD=<gmail-app-password>
 ```
 
 If the backend should call a separate Python service:

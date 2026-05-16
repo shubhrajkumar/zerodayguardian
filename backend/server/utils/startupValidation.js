@@ -10,12 +10,15 @@ const requirePair = (a, b, label, issues) => {
 
 export const validateStartupConfig = ({ enforceInProduction = true } = {}) => {
   const report = getStartupEnvValidation();
-  const issues = [...report.issues.map((issue) => `${issue.key}: ${issue.message}`)];
+  const warningIssues = report.warnings.map((issue) => `${issue.key}: ${issue.message}`);
+  const blockingIssues = report.errors.map((issue) => `${issue.key}: ${issue.message}`);
   const llmMode = String(env.llmMode || "ollama").toLowerCase();
   const hasOllama = !!String(env.ollamaBaseUrl || "").trim() && !!String(env.ollamaModel || "").trim();
-  if (llmMode === "ollama" && !hasOllama) issues.push("OLLAMA_BASE_URL and OLLAMA_MODEL are required for LLM mode ollama");
+  if (llmMode === "ollama" && !hasOllama) {
+    blockingIssues.push("OLLAMA_BASE_URL and OLLAMA_MODEL are required for LLM mode ollama");
+  }
 
-  requirePair(env.githubOauthClientId, env.githubOauthClientSecret, "GitHub OAuth", issues);
+  requirePair(env.githubOauthClientId, env.githubOauthClientSecret, "GitHub OAuth", blockingIssues);
 
   logInfo("Startup env validation complete", {
     environment: env.nodeEnv,
@@ -33,28 +36,33 @@ export const validateStartupConfig = ({ enforceInProduction = true } = {}) => {
   if (!googleAuth.enabled) {
     logWarn("Google auth disabled due to missing environment variables", {
       missingKeys: googleAuth.missingKeys,
-      action: "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.",
+      invalidKeys: googleAuth.invalidKeys,
+      action: googleAuth.invalidKeys?.length
+        ? "Fix invalid Google OAuth environment variables or remove them to keep Google sign-in disabled."
+        : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.",
     });
   }
 
-  if (issues.length) {
+  const issues = [...blockingIssues, ...warningIssues];
+  if (blockingIssues.length) {
     const shouldEnforce = enforceInProduction && env.nodeEnv === "production";
     if (shouldEnforce) {
       assertStartupEnv({ enforceProduction: true });
-      const error = new Error(`Startup validation failed: ${issues.join("; ")}`);
+      const error = new Error(`Startup validation failed: ${blockingIssues.join("; ")}`);
       error.code = "startup_validation_failed";
-      error.issues = issues;
+      error.issues = blockingIssues;
       throw error;
     }
     logWarn("Startup validation issues detected; continuing because production enforcement is disabled", {
-      issues,
+      issues: blockingIssues,
     });
   }
 
   return {
-    ok: issues.length === 0,
+    ok: blockingIssues.length === 0,
     enforced: enforceInProduction && env.nodeEnv === "production",
-    issues,
+    issues: blockingIssues,
+    warnings: warningIssues,
     report,
   };
 };

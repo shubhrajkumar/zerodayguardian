@@ -49,6 +49,21 @@ const splitCsv = (value = "") =>
     .split(",")
     .map((v) => v.trim())
     .filter(Boolean);
+const normalizeOriginList = (value = "") =>
+  splitCsv(value)
+    .map((origin) => {
+      try {
+        const parsed = new URL(origin);
+        if (!["http:", "https:"].includes(parsed.protocol)) return "";
+        parsed.pathname = "";
+        parsed.search = "";
+        parsed.hash = "";
+        return parsed.toString().replace(/\/+$/, "");
+      } catch {
+        return "";
+      }
+    })
+    .filter(Boolean);
 const isExplicitTrue = (value) => String(value || "").trim().toLowerCase() === "true";
 const isExplicitFalse = (value) => String(value || "").trim().toLowerCase() === "false";
 
@@ -196,18 +211,40 @@ const isManagedDeploy = isVercel || isRender;
 const vercelFallbackUrl = process.env.VERCEL_URL ? `https://${String(process.env.VERCEL_URL).trim()}` : "https://zeroday-guardian.invalid";
 const renderFallbackUrl = String(process.env.RENDER_EXTERNAL_URL || "").trim() || "https://zerodayguardian-backend.onrender.com";
 const managedFallbackUrl = isRender ? renderFallbackUrl : vercelFallbackUrl;
+const knownFrontendOrigins = uniqueList(
+  normalizeOriginList(
+    [
+      process.env.APP_BASE_URL,
+      process.env.VITE_SITE_URL,
+      process.env.FRONTEND_PUBLIC_URL,
+      process.env.GOOGLE_AUTHORIZED_ORIGINS,
+      "https://zerodayguardian-delta.vercel.app",
+      "https://zeroday-guardian.vercel.app",
+    ]
+      .filter(Boolean)
+      .join(",")
+  )
+);
+const authEmailCredentialsConfigured = Boolean(
+  firstSet("AUTH_EMAIL_FROM", "GMAIL_USER") &&
+  firstSet("AUTH_EMAIL_USER", "GMAIL_USER") &&
+  firstSet("AUTH_EMAIL_APP_PASSWORD", "GMAIL_PASS")
+);
+const authEmailEnabled = isExplicitTrue(process.env.AUTH_EMAIL_ENABLED) || authEmailCredentialsConfigured;
 const warnDeployConfig = (message) => {
   console.warn(`[neurobot] ${message}`);
 };
 export const REQUIRED_ENV_KEYS = [
   "MONGODB_URI",
-  "GOOGLE_CLIENT_ID",
-  "GOOGLE_CLIENT_SECRET",
   "SESSION_SECRET",
   "JWT_SECRET",
   "APP_BASE_URL",
   "BACKEND_PUBLIC_URL",
   "CORS_ORIGIN",
+];
+export const OPTIONAL_GOOGLE_OAUTH_ENV_KEYS = [
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
   "GOOGLE_REDIRECT_URI",
 ];
 
@@ -240,7 +277,7 @@ export const env = {
   ollamaBackupBaseUrl: normalizeOllamaBaseUrl(process.env.OLLAMA_BACKUP_BASE_URL || process.env.OLLAMA_BASE_URL),
   ollamaBackupModel: process.env.OLLAMA_BACKUP_MODEL || "",
   ollamaBackupNumPredict: clamp(process.env.OLLAMA_BACKUP_NUM_PREDICT, 32, 1024, 96),
-  mongoUri: firstSet("MONGODB_URI"),
+  mongoUri: firstSet("MONGODB_URI", "DATABASE_URL"),
   redisUrl: process.env.REDIS_URL || "",
   sessionSecret: process.env.SESSION_SECRET || "",
   jwtSecret: process.env.JWT_SECRET || "",
@@ -307,13 +344,13 @@ export const env = {
   forceLocalFallback: (process.env.FORCE_LOCAL_FALLBACK || "false") === "true",
   appBaseUrl: process.env.APP_BASE_URL || "",
   backendPublicUrl: process.env.BACKEND_PUBLIC_URL || "",
-  googleOauthClientId: firstSet("GOOGLE_CLIENT_ID"),
-  googleOauthClientSecret: firstSet("GOOGLE_CLIENT_SECRET"),
+  googleOauthClientId: firstSet("GOOGLE_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_ID", "VITE_GOOGLE_CLIENT_ID"),
+  googleOauthClientSecret: firstSet("GOOGLE_CLIENT_SECRET", "GOOGLE_OAUTH_CLIENT_SECRET"),
   enableGoogleLocalhost:
     process.env.ENABLE_GOOGLE_LOCALHOST != null
       ? process.env.ENABLE_GOOGLE_LOCALHOST === "true"
       : true,
-  googleAuthorizedOrigins: uniqueList(splitCsv(process.env.APP_BASE_URL || "")),
+  googleAuthorizedOrigins: knownFrontendOrigins,
   googleRedirectUri: process.env.GOOGLE_REDIRECT_URI || "",
   githubOauthClientId: process.env.GITHUB_OAUTH_CLIENT_ID || "",
   githubOauthClientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET || "",
@@ -349,7 +386,7 @@ export const env = {
   osintPdfBrandColor: process.env.OSINT_PDF_BRAND_COLOR || "#38bdf8",
   osintPdfLogoBase64: process.env.OSINT_PDF_LOGO_BASE64 || "",
   authRequireEmailVerification: (process.env.AUTH_REQUIRE_EMAIL_VERIFICATION || "false") === "true",
-  authEmailEnabled: (process.env.AUTH_EMAIL_ENABLED || "false") === "true",
+  authEmailEnabled,
   authEmailFromName: process.env.AUTH_EMAIL_FROM_NAME || "ZeroDay Guardian Security",
   authEmailFrom: firstSet("AUTH_EMAIL_FROM", "GMAIL_USER"),
   authEmailUser: firstSet("AUTH_EMAIL_USER", "GMAIL_USER"),
@@ -378,11 +415,11 @@ export const env = {
   labAllowlistCidrs: splitCsv(process.env.LAB_ALLOWLIST_CIDRS || ""),
   labAllowedBins: splitCsv(process.env.LAB_ALLOWED_BINS || ""),
 };
-env.corsOrigins = uniqueList(splitCsv(env.corsOrigin));
+env.corsOrigins = uniqueList([...normalizeOriginList(env.corsOrigin), ...knownFrontendOrigins]);
 env.googleAuthorizedOrigins = uniqueList(env.googleAuthorizedOrigins);
-env.corsOrigins = uniqueList([...splitCsv(env.corsOrigin), ...splitCsv(env.appBaseUrl)]);
+env.corsOrigins = uniqueList([...normalizeOriginList(env.corsOrigin), ...knownFrontendOrigins]);
 env.googleAuthorizedOrigins = uniqueList(
-  env.googleAuthorizedOrigins.length ? env.googleAuthorizedOrigins : [env.appBaseUrl].filter(Boolean)
+  env.googleAuthorizedOrigins.length ? env.googleAuthorizedOrigins : normalizeOriginList(env.appBaseUrl)
 );
 
 const appBaseHost = (() => {
@@ -416,28 +453,42 @@ const buildStartupEnvValidation = () => {
   const issues = [];
   const requiredValueMap = {
     MONGODB_URI: env.mongoUri,
-    GOOGLE_CLIENT_ID: env.googleOauthClientId,
-    GOOGLE_CLIENT_SECRET: env.googleOauthClientSecret,
     SESSION_SECRET: env.sessionSecret,
     JWT_SECRET: env.jwtSecret,
     APP_BASE_URL: env.appBaseUrl,
     BACKEND_PUBLIC_URL: env.backendPublicUrl,
     CORS_ORIGIN: env.corsOrigin,
-    GOOGLE_REDIRECT_URI: env.googleRedirectUri,
   };
   for (const key of REQUIRED_ENV_KEYS) {
     if (String(requiredValueMap[key] || "").trim()) continue;
-    const severity =
-      key === "GOOGLE_CLIENT_ID" || key === "GOOGLE_CLIENT_SECRET"
-        ? "warn"
-        : isProduction
-          ? "error"
-          : "warn";
     addIssue(
       issues,
       key,
       "Missing required environment variable",
-      severity
+      isProduction ? "error" : "warn"
+    );
+  }
+
+  const googleOauthValues = {
+    GOOGLE_CLIENT_ID: env.googleOauthClientId,
+    GOOGLE_CLIENT_SECRET: env.googleOauthClientSecret,
+    GOOGLE_REDIRECT_URI: env.googleRedirectUri,
+  };
+  const configuredGoogleOauthKeys = OPTIONAL_GOOGLE_OAUTH_ENV_KEYS.filter((key) =>
+    String(googleOauthValues[key] || "").trim()
+  );
+  const hasGoogleClientId = Boolean(String(env.googleOauthClientId || "").trim());
+  const hasGoogleClientSecret = Boolean(String(env.googleOauthClientSecret || "").trim());
+  if (configuredGoogleOauthKeys.length && (!hasGoogleClientId || !hasGoogleClientSecret)) {
+    const missingGoogleKeys = [
+      !hasGoogleClientId ? "GOOGLE_CLIENT_ID" : "",
+      !hasGoogleClientSecret ? "GOOGLE_CLIENT_SECRET" : "",
+    ].filter(Boolean);
+    addIssue(
+      issues,
+      "GOOGLE_OAUTH",
+      `Google OAuth is disabled because optional configuration is incomplete. Missing: ${missingGoogleKeys.join(", ")}`,
+      "warn"
     );
   }
 
@@ -486,8 +537,8 @@ const buildStartupEnvValidation = () => {
     addIssue(
       issues,
       "GOOGLE_REDIRECT_URI",
-      "Must be an absolute http:// or https:// URL",
-      isProduction ? "error" : "warn"
+      "Google OAuth is disabled because GOOGLE_REDIRECT_URI must be an absolute http:// or https:// URL",
+      "warn"
     );
   }
   if (env.nodeEnv === "production" && String(env.dbEncryptionKey || "").length < 32) {

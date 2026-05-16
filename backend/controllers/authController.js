@@ -260,15 +260,24 @@ export const getAuthProviders = async (req, res) => {
   const callbackPath = resolvePublicAuthPath(req, "/google/callback");
   const startUrl = resolveBackendAuthUrl(req, startPath);
   const callbackUrl = resolveBackendAuthUrl(req, callbackPath);
+  const googleAction = googleAuth.enabled
+    ? ""
+    : googleAuth.invalidKeys?.length
+      ? "Fix invalid Google OAuth environment variables or remove them to keep Google sign-in disabled."
+      : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.";
   if (!googleAuth.enabled) {
     logInfo("Google auth provider disabled", {
       requestId: req.requestId || "",
       missingKeys: googleAuth.missingKeys,
-      action: "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable Google sign-in.",
+      invalidKeys: googleAuth.invalidKeys,
+      action: googleAction,
     });
   }
   res.json({
     status: "ok",
+    degraded: !googleAuth.enabled,
+    message: googleAuth.enabled ? "" : "Google sign-in is disabled on the backend.",
+    action: googleAction,
     providers: googleAuth.enabled ? ["google"] : [],
     google: {
       enabled: googleAuth.enabled,
@@ -281,7 +290,8 @@ export const getAuthProviders = async (req, res) => {
       frontendOrigin: env.appBaseUrl || "",
       authorizedOrigins: env.googleAuthorizedOrigins || [],
       missingKeys: googleAuth.missingKeys,
-      action: googleAuth.enabled ? "" : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.",
+      invalidKeys: googleAuth.invalidKeys,
+      action: googleAction,
     },
   });
 };

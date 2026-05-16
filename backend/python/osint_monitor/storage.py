@@ -23,6 +23,8 @@ class SeenRecord:
 class JsonDedupStore:
     def __init__(self, storage_file: Path) -> None:
         self.storage_file = Path(storage_file)
+        if self.storage_file.exists() and self.storage_file.is_dir():
+            self.storage_file = self.storage_file / "osint-storage.json"
         self.storage_file.parent.mkdir(parents=True, exist_ok=True)
         self._records: dict[str, SeenRecord] = {}
         self._load()
@@ -92,4 +94,3 @@ def _parse_dt(value: str) -> datetime:
         return datetime.fromisoformat(value)
     except ValueError:
         return utc_now()
-
