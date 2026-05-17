@@ -24,7 +24,14 @@ const bootstrap = async () => {
   }
 
   if (env.mongoUri && env.mongo) {
-    await connectDb();
+    try {
+      await connectDb();
+    } catch (error) {
+      logError("Database startup failed; continuing with auth database unavailable", error, {
+        code: String(error?.code || ""),
+        name: String(error?.name || ""),
+      });
+    }
   } else {
     logWarn("Database startup skipped because env validation is incomplete", {
       missingKeys: startupValidation.report.missingKeys,
