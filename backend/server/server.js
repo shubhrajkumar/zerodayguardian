@@ -23,6 +23,22 @@ const bootstrap = async () => {
     });
   }
 
+  const app = createServerApp();
+  const server = app.listen(PORT, HOST);
+  server.requestTimeout = 20_000;
+  server.headersTimeout = 25_000;
+  server.keepAliveTimeout = 8_000;
+
+  server.on("listening", () => {
+    logInfo("Backend listening", {
+      host: HOST,
+      port: PORT,
+      mode: "rebuild",
+      startupEnvOk: startupValidation.report.ok,
+      missingEnv: startupValidation.report.missingKeys,
+    });
+  });
+
   if (env.mongoUri && env.mongo) {
     try {
       await connectDb();
@@ -56,24 +72,7 @@ const bootstrap = async () => {
     });
   }
 
-  const app = createServerApp();
-  
-  const server = app.listen(PORT, HOST);
-  server.requestTimeout = 20_000;
-  server.headersTimeout = 25_000;
-  server.keepAliveTimeout = 8_000;
-
   startNewsIngestionScheduler({ intervalMs: env.newsRefreshIntervalMs });
-
-  server.on("listening", () => {
-    logInfo("Backend listening", {
-      host: HOST,
-      port: PORT,
-      mode: "rebuild",
-      startupEnvOk: startupValidation.report.ok,
-      missingEnv: startupValidation.report.missingKeys,
-    });
-  });
 
   let shuttingDown = false;
   const shutdown = async (signal = "SIGTERM") => {
