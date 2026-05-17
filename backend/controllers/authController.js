@@ -65,6 +65,15 @@ const appendQueryParam = (target, key, value) => {
   }
 };
 
+const isLocalAuthUrl = (target = "") => {
+  try {
+    const hostname = new URL(String(target || "")).hostname.toLowerCase();
+    return ["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(hostname);
+  } catch {
+    return false;
+  }
+};
+
 const toPublicUser = (user) =>
   user
       ? {
@@ -260,6 +269,9 @@ export const getAuthProviders = async (req, res) => {
   const callbackPath = resolvePublicAuthPath(req, "/google/callback");
   const startUrl = resolveBackendAuthUrl(req, startPath);
   const callbackUrl = resolveBackendAuthUrl(req, callbackPath);
+  const redirectUri = googleAuth.hasExplicitRedirectUri && !isLocalAuthUrl(googleAuth.redirectUri)
+    ? googleAuth.redirectUri
+    : callbackUrl;
   const googleAction = googleAuth.enabled
     ? ""
     : googleAuth.invalidKeys?.length
@@ -286,7 +298,7 @@ export const getAuthProviders = async (req, res) => {
       popupFlow: googleAuth.enabled,
       startUrl: googleAuth.enabled ? startUrl : "",
       callbackUrl,
-      redirectUri: googleAuth.hasExplicitRedirectUri ? googleAuth.redirectUri : callbackUrl,
+      redirectUri,
       frontendOrigin: env.appBaseUrl || "",
       authorizedOrigins: env.googleAuthorizedOrigins || [],
       missingKeys: googleAuth.missingKeys,

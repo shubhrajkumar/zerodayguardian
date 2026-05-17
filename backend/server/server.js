@@ -11,6 +11,26 @@ import { startNewsIngestionScheduler, stopNewsIngestionScheduler } from "../src/
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.NEUROBOT_PORT || env.port || 8787);
+let dbRetryTimer = null;
+
+const scheduleDbReconnect = () => {
+  if (dbRetryTimer || !env.mongoUri || !env.mongo) return;
+  dbRetryTimer = setInterval(async () => {
+    try {
+      await connectDb();
+      clearInterval(dbRetryTimer);
+      dbRetryTimer = null;
+      logInfo("Database reconnect succeeded");
+    } catch (error) {
+      logWarn("Database reconnect attempt failed", {
+        code: String(error?.code || ""),
+        name: String(error?.name || ""),
+        message: String(error?.message || "Database reconnect failed"),
+      });
+    }
+  }, 30_000);
+  dbRetryTimer.unref?.();
+};
 
 const bootstrap = async () => {
   await startTelemetry();
@@ -47,6 +67,7 @@ const bootstrap = async () => {
         code: String(error?.code || ""),
         name: String(error?.name || ""),
       });
+      scheduleDbReconnect();
     }
   } else {
     logWarn("Database startup skipped because env validation is incomplete", {

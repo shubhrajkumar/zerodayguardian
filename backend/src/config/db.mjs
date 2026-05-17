@@ -63,7 +63,7 @@ const buildMongoUriFromParts = () => {
 };
 
 const mongoUriCandidates = () => {
-  const candidates = [
+  const rawCandidates = [
     process.env.MONGODB_URI,
     process.env.DATABASE_URL,
     process.env.MONGODB_URL,
@@ -75,7 +75,33 @@ const mongoUriCandidates = () => {
   ]
     .map((value) => String(value || "").trim().replace(/^['"]|['"]$/g, ""))
     .filter(Boolean);
+  const candidates = [];
+  for (const uri of rawCandidates) {
+    candidates.push(uri, ...mongoAuthVariants(uri));
+  }
   return [...new Set(candidates)];
+};
+
+const mongoAuthVariants = (uri) => {
+  const variants = [];
+  try {
+    const parsed = new URL(uri);
+    if (!["mongodb:", "mongodb+srv:"].includes(parsed.protocol)) return variants;
+    if (!parsed.searchParams.has("authSource")) {
+      const withAdminAuth = new URL(uri);
+      withAdminAuth.searchParams.set("authSource", "admin");
+      variants.push(withAdminAuth.toString());
+    }
+    for (const mechanism of ["SCRAM-SHA-256", "SCRAM-SHA-1"]) {
+      const withMechanism = new URL(uri);
+      if (!withMechanism.searchParams.has("authSource")) withMechanism.searchParams.set("authSource", "admin");
+      withMechanism.searchParams.set("authMechanism", mechanism);
+      variants.push(withMechanism.toString());
+    }
+  } catch {
+    // Keep the original URI only if URL parsing fails.
+  }
+  return variants;
 };
 
 export const connectDb = async () => {

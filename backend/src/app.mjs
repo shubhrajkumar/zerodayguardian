@@ -119,12 +119,23 @@ const buildPublicAuthPath = (req, suffix = "") => {
   const normalizedSuffix = suffix.startsWith("/") ? suffix : `/${suffix}`;
   return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
 };
+const isLocalAuthUrl = (target = "") => {
+  try {
+    const hostname = new URL(String(target || "")).hostname.toLowerCase();
+    return ["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(hostname);
+  } catch {
+    return false;
+  }
+};
 const buildAuthProvidersPayload = (req) => {
   const googleAuth = getGoogleAuthConfigStatus();
   const startPath = buildPublicAuthPath(req, "/google");
   const callbackPath = buildPublicAuthPath(req, "/google/callback");
   const startUrl = buildBackendUrl(req, startPath);
   const callbackUrl = buildBackendUrl(req, callbackPath);
+  const redirectUri = googleAuth.hasExplicitRedirectUri && !isLocalAuthUrl(googleAuth.redirectUri)
+    ? googleAuth.redirectUri
+    : callbackUrl;
   const googleAction = googleAuth.enabled
     ? ""
     : googleAuth.invalidKeys?.length
@@ -144,7 +155,7 @@ const buildAuthProvidersPayload = (req) => {
       popupFlow: googleAuth.enabled,
       startUrl: googleAuth.enabled ? startUrl : "",
       callbackUrl,
-      redirectUri: googleAuth.hasExplicitRedirectUri ? googleAuth.redirectUri : callbackUrl,
+      redirectUri,
       frontendOrigin: env.appBaseUrl || "",
       authorizedOrigins: env.googleAuthorizedOrigins || [],
       missingKeys: googleAuth.missingKeys,
