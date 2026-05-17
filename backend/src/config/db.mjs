@@ -40,21 +40,49 @@ const ensureIndex = async (collection, keys, options = {}) => {
   }
 };
 
+const firstSet = (...keys) => {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (value != null && String(value).trim()) return String(value).trim();
+  }
+  return "";
+};
+
+const buildMongoUriFromParts = () => {
+  const host = firstSet("MONGODB_HOST", "MONGO_HOST", "DB_HOST");
+  const username = firstSet("MONGODB_USER", "MONGO_USER", "DB_USER");
+  const password = firstSet("MONGODB_PASSWORD", "MONGO_PASSWORD", "DB_PASSWORD");
+  if (!host || !username || !password) return "";
+
+  const protocol = firstSet("MONGODB_PROTOCOL", "MONGO_PROTOCOL") || (host.includes("mongodb.net") ? "mongodb+srv" : "mongodb");
+  const database = firstSet("MONGODB_DB_NAME", "MONGO_DB_NAME", "DB_NAME") || "zeroday_guardian";
+  const query = firstSet("MONGODB_OPTIONS", "MONGO_OPTIONS") || "retryWrites=true&w=majority";
+  const credentials = `${encodeURIComponent(username)}:${encodeURIComponent(password)}`;
+  const normalizedHost = host.replace(/^mongodb(?:\+srv)?:\/\//i, "").replace(/\/+$/, "");
+  return `${protocol}://${credentials}@${normalizedHost}/${encodeURIComponent(database)}${query ? `?${query.replace(/^\?/, "")}` : ""}`;
+};
+
+const mongoUriCandidates = () => {
+  const candidates = [
+    process.env.MONGODB_URI,
+    process.env.DATABASE_URL,
+    process.env.MONGODB_URL,
+    process.env.MONGO_URI,
+    process.env.MONGO_URL,
+    process.env.DB_URI,
+    buildMongoUriFromParts(),
+    env.mongoUri,
+  ]
+    .map((value) => String(value || "").trim().replace(/^['"]|['"]$/g, ""))
+    .filter(Boolean);
+  return [...new Set(candidates)];
+};
+
 export const connectDb = async () => {
   if (db) return db;
 
-  const mongoUri = String(
-    process.env.MONGODB_URI ||
-    process.env.DATABASE_URL ||
-    process.env.MONGODB_URL ||
-    process.env.MONGO_URI ||
-    process.env.MONGO_URL ||
-    env.mongoUri ||
-    ""
-  )
-    .trim()
-    .replace(/^['"]|['"]$/g, "");
-  if (!mongoUri) {
+  const candidates = mongoUriCandidates();
+  if (!candidates.length) {
     const report = getStartupEnvValidation();
     const error = new Error("Database connection skipped: MONGODB_URI is missing");
     error.code = "missing_env_var";
@@ -67,18 +95,37 @@ export const connectDb = async () => {
   }
 
   const startedAt = Date.now();
-  client = new MongoClient(mongoUri, {
-    maxPoolSize: 30,
-    minPoolSize: 5,
-    maxIdleTimeMS: 30000,
-    serverSelectionTimeoutMS: 10000,
-    connectTimeoutMS: 10000,
-    socketTimeoutMS: 10000,
-  });
+  let lastError;
+  for (const mongoUri of candidates) {
+    const candidateClient = new MongoClient(mongoUri, {
+      maxPoolSize: 30,
+      minPoolSize: 5,
+      maxIdleTimeMS: 30000,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 10000,
+    });
 
-  await client.connect();
-  await client.db("admin").command({ ping: 1 });
-  db = client.db();
+    try {
+      await candidateClient.connect();
+      await candidateClient.db("admin").command({ ping: 1 });
+      client = candidateClient;
+      db = client.db();
+      break;
+    } catch (error) {
+      lastError = error;
+      await candidateClient.close().catch(() => {});
+      logWarn("MongoDB connection candidate failed", {
+        code: String(error?.code || ""),
+        name: String(error?.name || ""),
+        message: String(error?.message || "MongoDB connection failed"),
+      });
+    }
+  }
+
+  if (!db) {
+    throw lastError || createDbUnavailableError("Database connection failed for all configured MongoDB URIs.");
+  }
 
   if (!indexesEnsured) {
     await ensureIndex(db.collection("conversations"), { sessionId: 1 }, { unique: true });

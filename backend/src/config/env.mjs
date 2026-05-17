@@ -24,6 +24,37 @@ const firstSet = (...keys) => {
   return "";
 };
 
+const GOOGLE_CLIENT_ID_KEYS = [
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_OAUTH_CLIENT_ID",
+  "GOOGLE_AUTH_CLIENT_ID",
+  "GOOGLE_WEB_CLIENT_ID",
+  "GOOGLE_ID",
+  "VITE_GOOGLE_CLIENT_ID",
+  "REACT_APP_GOOGLE_CLIENT_ID",
+];
+const GOOGLE_CLIENT_SECRET_KEYS = [
+  "GOOGLE_CLIENT_SECRET",
+  "GOOGLE_OAUTH_CLIENT_SECRET",
+  "GOOGLE_AUTH_CLIENT_SECRET",
+  "GOOGLE_WEB_CLIENT_SECRET",
+  "GOOGLE_SECRET",
+  "VITE_GOOGLE_CLIENT_SECRET",
+  "REACT_APP_GOOGLE_CLIENT_SECRET",
+];
+const MONGO_URI_KEYS = ["MONGODB_URI", "DATABASE_URL", "MONGODB_URL", "MONGO_URI", "MONGO_URL", "DB_URI"];
+const AUTH_EMAIL_FROM_KEYS = ["AUTH_EMAIL_FROM", "EMAIL_FROM", "MAIL_FROM", "SMTP_FROM", "GMAIL_USER"];
+const AUTH_EMAIL_USER_KEYS = ["AUTH_EMAIL_USER", "EMAIL_USER", "MAIL_USER", "SMTP_USER", "GMAIL_USER"];
+const AUTH_EMAIL_PASSWORD_KEYS = [
+  "AUTH_EMAIL_APP_PASSWORD",
+  "AUTH_EMAIL_PASSWORD",
+  "EMAIL_PASSWORD",
+  "MAIL_PASSWORD",
+  "SMTP_PASS",
+  "SMTP_PASSWORD",
+  "GMAIL_PASS",
+];
+
 const clamp = (value, min, max, fallback) => {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
@@ -111,6 +142,21 @@ const normalizeLlmProvider = (value = "") => {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw || ["auto", "dual", "both", "all"].includes(raw)) return "auto";
   return ["openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup", "auto"].includes(raw) ? raw : raw;
+};
+
+const buildMongoUriFromParts = () => {
+  const host = firstSet("MONGODB_HOST", "MONGO_HOST", "DB_HOST");
+  const username = firstSet("MONGODB_USER", "MONGO_USER", "DB_USER");
+  const password = firstSet("MONGODB_PASSWORD", "MONGO_PASSWORD", "DB_PASSWORD");
+  if (!host || !username || !password) return "";
+
+  const protocol = firstSet("MONGODB_PROTOCOL", "MONGO_PROTOCOL") || (host.includes("mongodb.net") ? "mongodb+srv" : "mongodb");
+  const database = firstSet("MONGODB_DB_NAME", "MONGO_DB_NAME", "DB_NAME") || "zeroday_guardian";
+  const query = firstSet("MONGODB_OPTIONS", "MONGO_OPTIONS") || "retryWrites=true&w=majority";
+  const credentials = `${encodeURIComponent(username)}:${encodeURIComponent(password)}`;
+  const normalizedHost = host.replace(/^mongodb(?:\+srv)?:\/\//i, "").replace(/\/+$/, "");
+  const dbPath = database ? `/${encodeURIComponent(database)}` : "";
+  return `${protocol}://${credentials}@${normalizedHost}${dbPath}${query ? `?${query.replace(/^\?/, "")}` : ""}`;
 };
 const isHttpUrl = (value = "") => /^https?:\/\//.test(String(value || "").trim());
 const normalizeNodeEnv = (value = "") => {
@@ -226,9 +272,9 @@ const knownFrontendOrigins = uniqueList(
   )
 );
 const authEmailCredentialsConfigured = Boolean(
-  firstSet("AUTH_EMAIL_FROM", "GMAIL_USER") &&
-  firstSet("AUTH_EMAIL_USER", "GMAIL_USER") &&
-  firstSet("AUTH_EMAIL_APP_PASSWORD", "GMAIL_PASS")
+  firstSet(...AUTH_EMAIL_FROM_KEYS) &&
+  firstSet(...AUTH_EMAIL_USER_KEYS) &&
+  firstSet(...AUTH_EMAIL_PASSWORD_KEYS)
 );
 const authEmailEnabled = isExplicitTrue(process.env.AUTH_EMAIL_ENABLED) || authEmailCredentialsConfigured;
 const warnDeployConfig = (message) => {
@@ -277,7 +323,7 @@ export const env = {
   ollamaBackupBaseUrl: normalizeOllamaBaseUrl(process.env.OLLAMA_BACKUP_BASE_URL || process.env.OLLAMA_BASE_URL),
   ollamaBackupModel: process.env.OLLAMA_BACKUP_MODEL || "",
   ollamaBackupNumPredict: clamp(process.env.OLLAMA_BACKUP_NUM_PREDICT, 32, 1024, 96),
-  mongoUri: firstSet("MONGODB_URI", "DATABASE_URL", "MONGODB_URL", "MONGO_URI", "MONGO_URL"),
+  mongoUri: firstSet(...MONGO_URI_KEYS) || buildMongoUriFromParts(),
   redisUrl: process.env.REDIS_URL || "",
   sessionSecret: process.env.SESSION_SECRET || "",
   jwtSecret: process.env.JWT_SECRET || "",
@@ -344,8 +390,8 @@ export const env = {
   forceLocalFallback: (process.env.FORCE_LOCAL_FALLBACK || "false") === "true",
   appBaseUrl: process.env.APP_BASE_URL || "",
   backendPublicUrl: process.env.BACKEND_PUBLIC_URL || "",
-  googleOauthClientId: firstSet("GOOGLE_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_ID", "VITE_GOOGLE_CLIENT_ID"),
-  googleOauthClientSecret: firstSet("GOOGLE_CLIENT_SECRET", "GOOGLE_OAUTH_CLIENT_SECRET"),
+  googleOauthClientId: firstSet(...GOOGLE_CLIENT_ID_KEYS),
+  googleOauthClientSecret: firstSet(...GOOGLE_CLIENT_SECRET_KEYS),
   enableGoogleLocalhost:
     process.env.ENABLE_GOOGLE_LOCALHOST != null
       ? process.env.ENABLE_GOOGLE_LOCALHOST === "true"
@@ -388,9 +434,9 @@ export const env = {
   authRequireEmailVerification: (process.env.AUTH_REQUIRE_EMAIL_VERIFICATION || "false") === "true",
   authEmailEnabled,
   authEmailFromName: process.env.AUTH_EMAIL_FROM_NAME || "ZeroDay Guardian Security",
-  authEmailFrom: firstSet("AUTH_EMAIL_FROM", "GMAIL_USER"),
-  authEmailUser: firstSet("AUTH_EMAIL_USER", "GMAIL_USER"),
-  authEmailAppPassword: firstSet("AUTH_EMAIL_APP_PASSWORD", "GMAIL_PASS"),
+  authEmailFrom: firstSet(...AUTH_EMAIL_FROM_KEYS),
+  authEmailUser: firstSet(...AUTH_EMAIL_USER_KEYS),
+  authEmailAppPassword: firstSet(...AUTH_EMAIL_PASSWORD_KEYS),
   digestEmailEnabled: (process.env.DIGEST_EMAIL_ENABLED || process.env.AUTH_EMAIL_ENABLED || "false") === "true",
   digestEmailFromName: process.env.DIGEST_EMAIL_FROM_NAME || "ZeroDay Guardian Digest",
   digestEmailFrom: firstSet("DIGEST_EMAIL_FROM", "AUTH_EMAIL_FROM", "GMAIL_USER"),
@@ -481,8 +527,8 @@ const buildStartupEnvValidation = () => {
   const hasGoogleClientSecret = Boolean(String(env.googleOauthClientSecret || "").trim());
   if (configuredGoogleOauthKeys.length && (!hasGoogleClientId || !hasGoogleClientSecret)) {
     const missingGoogleKeys = [
-      !hasGoogleClientId ? "GOOGLE_CLIENT_ID or GOOGLE_OAUTH_CLIENT_ID" : "",
-      !hasGoogleClientSecret ? "GOOGLE_CLIENT_SECRET or GOOGLE_OAUTH_CLIENT_SECRET" : "",
+      !hasGoogleClientId ? GOOGLE_CLIENT_ID_KEYS.join(" or ") : "",
+      !hasGoogleClientSecret ? GOOGLE_CLIENT_SECRET_KEYS.join(" or ") : "",
     ].filter(Boolean);
     addIssue(
       issues,

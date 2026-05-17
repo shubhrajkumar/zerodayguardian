@@ -55,7 +55,7 @@ const normalizeUrl = (value = "") => {
     return "";
   }
 };
-const GOOGLE_AUTH_REQUIRED_KEYS = ["GOOGLE_CLIENT_ID or GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_CLIENT_SECRET or GOOGLE_OAUTH_CLIENT_SECRET"];
+const GOOGLE_AUTH_REQUIRED_KEYS = ["Google OAuth client ID", "Google OAuth client secret"];
 const buildDefaultGoogleRedirectUri = () => {
   const base = String(env.backendPublicUrl || "").trim() || `http://127.0.0.1:${env.port || 8787}`;
   return `${base.replace(/\/+$/, "")}/auth/google/callback`;

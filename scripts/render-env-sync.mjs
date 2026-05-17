@@ -23,7 +23,16 @@ const OPTIONAL_GOOGLE_OAUTH_KEYS = [
 const LEGACY_GOOGLE_OAUTH_KEYS = [
   "GOOGLE_OAUTH_CLIENT_ID",
   "GOOGLE_OAUTH_CLIENT_SECRET",
+  "GOOGLE_AUTH_CLIENT_ID",
+  "GOOGLE_AUTH_CLIENT_SECRET",
+  "GOOGLE_WEB_CLIENT_ID",
+  "GOOGLE_WEB_CLIENT_SECRET",
+  "GOOGLE_ID",
+  "GOOGLE_SECRET",
   "VITE_GOOGLE_CLIENT_ID",
+  "VITE_GOOGLE_CLIENT_SECRET",
+  "REACT_APP_GOOGLE_CLIENT_ID",
+  "REACT_APP_GOOGLE_CLIENT_SECRET",
 ];
 
 const OPTIONAL_AUTH_EMAIL_KEYS = [
@@ -34,7 +43,12 @@ const OPTIONAL_AUTH_EMAIL_KEYS = [
 ];
 
 const OPTIONAL_ESCAPE_KEYS = new Set(["FIREBASE_PRIVATE_KEY"]);
-const MONGO_URI_KEYS = ["MONGODB_URI", "DATABASE_URL", "MONGODB_URL", "MONGO_URI", "MONGO_URL"];
+const MONGO_URI_KEYS = ["MONGODB_URI", "DATABASE_URL", "MONGODB_URL", "MONGO_URI", "MONGO_URL", "DB_URI"];
+const GOOGLE_ID_KEYS = ["GOOGLE_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_AUTH_CLIENT_ID", "GOOGLE_WEB_CLIENT_ID", "GOOGLE_ID", "VITE_GOOGLE_CLIENT_ID", "REACT_APP_GOOGLE_CLIENT_ID"];
+const GOOGLE_SECRET_KEYS = ["GOOGLE_CLIENT_SECRET", "GOOGLE_OAUTH_CLIENT_SECRET", "GOOGLE_AUTH_CLIENT_SECRET", "GOOGLE_WEB_CLIENT_SECRET", "GOOGLE_SECRET", "VITE_GOOGLE_CLIENT_SECRET", "REACT_APP_GOOGLE_CLIENT_SECRET"];
+const EMAIL_FROM_KEYS = ["AUTH_EMAIL_FROM", "EMAIL_FROM", "MAIL_FROM", "SMTP_FROM", "GMAIL_USER"];
+const EMAIL_USER_KEYS = ["AUTH_EMAIL_USER", "EMAIL_USER", "MAIL_USER", "SMTP_USER", "GMAIL_USER"];
+const EMAIL_PASS_KEYS = ["AUTH_EMAIL_APP_PASSWORD", "AUTH_EMAIL_PASSWORD", "EMAIL_PASSWORD", "MAIL_PASSWORD", "SMTP_PASS", "SMTP_PASSWORD", "GMAIL_PASS"];
 
 const normalizeMultilineValueForRender = (value = "") =>
   String(value || "")
@@ -59,8 +73,9 @@ const missingKeys = REQUIRED_KEYS.filter((key) => {
   if (key === "MONGODB_URI") return !hasMongoUri;
   return !String(env[key] || "").trim();
 });
-const googleClientId = String(env.GOOGLE_CLIENT_ID || env.GOOGLE_OAUTH_CLIENT_ID || env.VITE_GOOGLE_CLIENT_ID || "").trim();
-const googleClientSecret = String(env.GOOGLE_CLIENT_SECRET || env.GOOGLE_OAUTH_CLIENT_SECRET || "").trim();
+const firstEnv = (keys) => keys.some((key) => String(env[key] || "").trim());
+const googleClientId = firstEnv(GOOGLE_ID_KEYS);
+const googleClientSecret = firstEnv(GOOGLE_SECRET_KEYS);
 const configuredGoogleOauthKeys = [...OPTIONAL_GOOGLE_OAUTH_KEYS, ...LEGACY_GOOGLE_OAUTH_KEYS].filter((key) => String(env[key] || "").trim());
 const missingGoogleOauthKeys =
   configuredGoogleOauthKeys.length === 0
@@ -70,12 +85,12 @@ const missingGoogleOauthKeys =
         googleClientSecret ? "" : "GOOGLE_CLIENT_SECRET or GOOGLE_OAUTH_CLIENT_SECRET",
       ].filter(Boolean);
 const authEmailEnabled = String(env.AUTH_EMAIL_ENABLED || "").trim().toLowerCase() === "true" ||
-  Boolean((env.AUTH_EMAIL_FROM || env.GMAIL_USER) && (env.AUTH_EMAIL_USER || env.GMAIL_USER) && (env.AUTH_EMAIL_APP_PASSWORD || env.GMAIL_PASS));
+  Boolean(firstEnv(EMAIL_FROM_KEYS) && firstEnv(EMAIL_USER_KEYS) && firstEnv(EMAIL_PASS_KEYS));
 const missingAuthEmailKeys = authEmailEnabled
   ? [
-      (env.AUTH_EMAIL_FROM || env.GMAIL_USER) ? "" : "AUTH_EMAIL_FROM or GMAIL_USER",
-      (env.AUTH_EMAIL_USER || env.GMAIL_USER) ? "" : "AUTH_EMAIL_USER or GMAIL_USER",
-      (env.AUTH_EMAIL_APP_PASSWORD || env.GMAIL_PASS) ? "" : "AUTH_EMAIL_APP_PASSWORD or GMAIL_PASS",
+      firstEnv(EMAIL_FROM_KEYS) ? "" : EMAIL_FROM_KEYS.join(" or "),
+      firstEnv(EMAIL_USER_KEYS) ? "" : EMAIL_USER_KEYS.join(" or "),
+      firstEnv(EMAIL_PASS_KEYS) ? "" : EMAIL_PASS_KEYS.join(" or "),
     ].filter(Boolean)
   : [];
 
