@@ -9,6 +9,7 @@ import { env } from "../../src/config/env.mjs";
 import { logInfo, logWarn } from "../../src/utils/logger.mjs";
 import { buildCookieOptions } from "../../src/utils/cookiePolicy.mjs";
 import { createBlindIndex, decryptSensitive, encryptSensitive, sanitizeText } from "../../src/utils/security.mjs";
+import { getAuthFallbackCollection } from "./authFallbackStore.mjs";
 
 const USERS = "users";
 let googleOauthClient = null;
@@ -17,7 +18,8 @@ let googleOauthWebClient = null;
 const getCollection = (name) => {
   const pool = getDbPoolStatus();
   if (!pool.initialized || !pool.connected) {
-    throw createError("Database connection is required for authentication.", 503, "db_unavailable_auth");
+    logWarn("Using auth fallback store because MongoDB is unavailable", { collection: name });
+    return getAuthFallbackCollection(name);
   }
   return getDb().collection(name);
 };
