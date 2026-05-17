@@ -277,7 +277,7 @@ export const env = {
   ollamaBackupBaseUrl: normalizeOllamaBaseUrl(process.env.OLLAMA_BACKUP_BASE_URL || process.env.OLLAMA_BASE_URL),
   ollamaBackupModel: process.env.OLLAMA_BACKUP_MODEL || "",
   ollamaBackupNumPredict: clamp(process.env.OLLAMA_BACKUP_NUM_PREDICT, 32, 1024, 96),
-  mongoUri: firstSet("MONGODB_URI", "DATABASE_URL"),
+  mongoUri: firstSet("MONGODB_URI", "DATABASE_URL", "MONGODB_URL", "MONGO_URI", "MONGO_URL"),
   redisUrl: process.env.REDIS_URL || "",
   sessionSecret: process.env.SESSION_SECRET || "",
   jwtSecret: process.env.JWT_SECRET || "",
@@ -481,8 +481,8 @@ const buildStartupEnvValidation = () => {
   const hasGoogleClientSecret = Boolean(String(env.googleOauthClientSecret || "").trim());
   if (configuredGoogleOauthKeys.length && (!hasGoogleClientId || !hasGoogleClientSecret)) {
     const missingGoogleKeys = [
-      !hasGoogleClientId ? "GOOGLE_CLIENT_ID" : "",
-      !hasGoogleClientSecret ? "GOOGLE_CLIENT_SECRET" : "",
+      !hasGoogleClientId ? "GOOGLE_CLIENT_ID or GOOGLE_OAUTH_CLIENT_ID" : "",
+      !hasGoogleClientSecret ? "GOOGLE_CLIENT_SECRET or GOOGLE_OAUTH_CLIENT_SECRET" : "",
     ].filter(Boolean);
     addIssue(
       issues,

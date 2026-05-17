@@ -43,7 +43,15 @@ const ensureIndex = async (collection, keys, options = {}) => {
 export const connectDb = async () => {
   if (db) return db;
 
-  const mongoUri = String(process.env.MONGODB_URI || process.env.DATABASE_URL || env.mongoUri || "")
+  const mongoUri = String(
+    process.env.MONGODB_URI ||
+    process.env.DATABASE_URL ||
+    process.env.MONGODB_URL ||
+    process.env.MONGO_URI ||
+    process.env.MONGO_URL ||
+    env.mongoUri ||
+    ""
+  )
     .trim()
     .replace(/^['"]|['"]$/g, "");
   if (!mongoUri) {

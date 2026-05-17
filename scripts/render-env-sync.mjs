@@ -34,6 +34,7 @@ const OPTIONAL_AUTH_EMAIL_KEYS = [
 ];
 
 const OPTIONAL_ESCAPE_KEYS = new Set(["FIREBASE_PRIVATE_KEY"]);
+const MONGO_URI_KEYS = ["MONGODB_URI", "DATABASE_URL", "MONGODB_URL", "MONGO_URI", "MONGO_URL"];
 
 const normalizeMultilineValueForRender = (value = "") =>
   String(value || "")
@@ -53,7 +54,11 @@ for (const key of OPTIONAL_ESCAPE_KEYS) {
   if (env[key]) env[key] = normalizeMultilineValueForRender(env[key]);
 }
 
-const missingKeys = REQUIRED_KEYS.filter((key) => !String(env[key] || "").trim());
+const hasMongoUri = MONGO_URI_KEYS.some((key) => String(env[key] || "").trim());
+const missingKeys = REQUIRED_KEYS.filter((key) => {
+  if (key === "MONGODB_URI") return !hasMongoUri;
+  return !String(env[key] || "").trim();
+});
 const googleClientId = String(env.GOOGLE_CLIENT_ID || env.GOOGLE_OAUTH_CLIENT_ID || env.VITE_GOOGLE_CLIENT_ID || "").trim();
 const googleClientSecret = String(env.GOOGLE_CLIENT_SECRET || env.GOOGLE_OAUTH_CLIENT_SECRET || "").trim();
 const configuredGoogleOauthKeys = [...OPTIONAL_GOOGLE_OAUTH_KEYS, ...LEGACY_GOOGLE_OAUTH_KEYS].filter((key) => String(env[key] || "").trim());
@@ -87,6 +92,7 @@ const configuredCorsOrigins = String(env.CORS_ORIGIN || "")
 const audit = {
   envPath,
   requiredKeys: [...REQUIRED_KEYS, ...OPTIONAL_GOOGLE_OAUTH_KEYS],
+  mongoUriAliases: MONGO_URI_KEYS,
   legacyGoogleOauthKeys: LEGACY_GOOGLE_OAUTH_KEYS,
   passwordResetEmailKeys: OPTIONAL_AUTH_EMAIL_KEYS,
   missingKeys,
