@@ -16,10 +16,26 @@ if (!loadedEnv) {
   dotenv.config();
 }
 
+const normalizeEnvScalar = (value = "") =>
+  String(value || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\n/g, "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
+
+const normalizeMongoUriEnv = (value = "") => {
+  let normalized = normalizeEnvScalar(value);
+  const prefixed = normalized.match(/^(?:MONGODB_URI|DATABASE_URL|MONGODB_URL|MONGO_URI|MONGO_URL|DB_URI)\s*=\s*(.+)$/i);
+  if (prefixed?.[1]) normalized = prefixed[1].trim();
+  const pastedTail = normalized.search(/(?:^|[\s&])(?:GOOGLE_|VITE_GOOGLE_|SESSION_SECRET=|JWT_SECRET=)/i);
+  if (pastedTail > 0) normalized = normalized.slice(0, pastedTail).trim();
+  return normalized;
+};
+
 const firstSet = (...keys) => {
   for (const key of keys) {
     const value = process.env[key];
-    if (value != null && String(value).trim()) return String(value).trim();
+    if (value != null && String(value).trim()) return normalizeEnvScalar(value);
   }
   return "";
 };
@@ -323,7 +339,7 @@ export const env = {
   ollamaBackupBaseUrl: normalizeOllamaBaseUrl(process.env.OLLAMA_BACKUP_BASE_URL || process.env.OLLAMA_BASE_URL),
   ollamaBackupModel: process.env.OLLAMA_BACKUP_MODEL || "",
   ollamaBackupNumPredict: clamp(process.env.OLLAMA_BACKUP_NUM_PREDICT, 32, 1024, 96),
-  mongoUri: firstSet(...MONGO_URI_KEYS) || buildMongoUriFromParts(),
+  mongoUri: normalizeMongoUriEnv(firstSet(...MONGO_URI_KEYS)) || buildMongoUriFromParts(),
   redisUrl: process.env.REDIS_URL || "",
   sessionSecret: process.env.SESSION_SECRET || "",
   jwtSecret: process.env.JWT_SECRET || "",
