@@ -1,0 +1,113 @@
+services:
+  - type: web
+    name: zerodayguardian-backend
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install --no-fund --no-audit
+    startCommand: node backend/server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: NPM_CONFIG_PRODUCTION
+        value: false
+      - key: APP_BASE_URL
+        sync: false
+      - key: BACKEND_PUBLIC_URL
+        sync: false
+      - key: VITE_API_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: GOOGLE_AUTHORIZED_ORIGINS
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: MONGO_URL
+        sync: false
+      - key: DB_URI
+        sync: false
+      - key: MONGODB_HOST
+        sync: false
+      - key: MONGODB_USER
+        sync: false
+      - key: MONGODB_PASSWORD
+        sync: false
+      - key: MONGODB_DB_NAME
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: DB_ENCRYPTION_KEY
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: VITE_FIREBASE_API_KEY
+        sync: false
+      - key: VITE_FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: VITE_FIREBASE_PROJECT_ID
+        sync: false
+      - key: VITE_FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: VITE_FIREBASE_MESSAGING_SENDER_ID
+        sync: false
+      - key: VITE_FIREBASE_APP_ID
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_AUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_AUTH_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_WEB_CLIENT_ID
+        sync: false
+      - key: GOOGLE_WEB_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: AUTH_EMAIL_ENABLED
+        sync: false
+      - key: AUTH_EMAIL_FROM
+        sync: false
+      - key: AUTH_EMAIL_USER
+        sync: false
+      - key: AUTH_EMAIL_APP_PASSWORD
+        sync: false
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_PASS
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: AUTH_OTP_PREVIEW_ENABLED
+        sync: false

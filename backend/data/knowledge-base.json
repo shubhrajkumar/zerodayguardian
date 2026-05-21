@@ -1,0 +1,38 @@
+[
+  {
+    "id": "owasp-top-10",
+    "title": "OWASP Top 10",
+    "keywords": ["owasp", "top 10", "web security", "xss", "sqli"],
+    "patterns": ["owasp top 10", "explain owasp"],
+    "answer": "OWASP Top 10 is a practical list of major web application security risks like broken access control, injection, insecure design, and security misconfiguration.",
+    "bullets": [
+      "Use it as a prioritization guide, not a full security standard.",
+      "Map each risk to prevention, detection, and validation steps.",
+      "Start with access control, injection, and secrets handling for fast impact."
+    ]
+  },
+  {
+    "id": "phishing-triage",
+    "title": "Phishing Triage Checklist",
+    "keywords": ["phishing", "email", "triage", "malicious mail"],
+    "patterns": ["phishing email", "triage email"],
+    "answer": "For phishing triage, first preserve the message, inspect sender/domain indicators, review links and attachments safely, and decide on containment before broad communication.",
+    "bullets": [
+      "Do not click links or open attachments on the primary workstation.",
+      "Check sender spoofing, reply-to mismatch, and urgent language.",
+      "Contain impacted accounts, then collect indicators for blocking and awareness."
+    ]
+  },
+  {
+    "id": "secure-coding",
+    "title": "Secure Coding Checklist",
+    "keywords": ["secure coding", "security checklist", "best practices", "code review"],
+    "patterns": ["secure coding checklist", "security checklist"],
+    "answer": "A solid secure coding checklist covers input validation, authentication and authorization, secret handling, output encoding, dependency hygiene, and logging without leaking sensitive data.",
+    "bullets": [
+      "Validate and normalize untrusted input at system boundaries.",
+      "Use least privilege for data access and background jobs.",
+      "Keep dependencies patched and remove dead packages."
+    ]
+  }
+]
