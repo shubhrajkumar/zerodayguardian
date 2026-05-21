@@ -45,9 +45,13 @@ const bootstrap = async () => {
 
   const app = createServerApp();
   const server = app.listen(PORT, HOST);
-  server.requestTimeout = 20_000;
-  server.headersTimeout = 25_000;
-  server.keepAliveTimeout = 8_000;
+  // Render's load balancer idle timeout is ~60s; keep Node timeouts above it to avoid RST on reuse.
+  const isRender =
+    ["1", "true"].includes(String(process.env.RENDER || "").trim().toLowerCase()) ||
+    Boolean(String(process.env.RENDER_EXTERNAL_URL || "").trim());
+  server.requestTimeout = isRender ? 120_000 : 20_000;
+  server.headersTimeout = isRender ? 125_000 : 25_000;
+  server.keepAliveTimeout = isRender ? 65_000 : 8_000;
 
   server.on("listening", () => {
     logInfo("Backend listening", {
@@ -80,7 +84,7 @@ const bootstrap = async () => {
     try {
       await connectRedis();
     } catch (error) {
-      logWarn("Redis unavailable at startup", { error: String(error?.message || error) });
+      logWarn("Redis unavailable at startup; continuing without cache", { error: String(error?.message || error) });
       if (env.strictDependencyStartup) throw error;
     }
   }

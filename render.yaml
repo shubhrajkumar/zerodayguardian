@@ -11,6 +11,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: RENDER
+        value: "true"
+      - key: STRICT_DEPENDENCY_STARTUP
+        value: "false"
       - key: PORT
         value: 10000
       - key: NPM_CONFIG_PRODUCTION

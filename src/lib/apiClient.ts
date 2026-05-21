@@ -226,7 +226,19 @@ let redirectingToAuth = false;
 let meRequestInFlight: Promise<Response> | null = null;
 const meAbortController = new AbortController();
 const AUTO_RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+const AUTH_ROUTE_PATTERN = /^\/api\/auth\//i;
 const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+const isNetworkFetchError = (error: unknown) => {
+  if (!(error instanceof TypeError)) return false;
+  const message = String(error.message || "").toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("networkerror") ||
+    message.includes("network error") ||
+    message.includes("load failed") ||
+    message.includes("connection")
+  );
+};
 const makeRequestId = () => `web-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 export class ApiError extends Error {
@@ -250,6 +262,14 @@ export class ApiError extends Error {
     this.requestId = requestId;
   }
 }
+
+const toNetworkApiError = (error: unknown, url: string, method: string) =>
+  new ApiError(
+    "Backend connection was interrupted. Retrying usually fixes this on cold start.",
+    503,
+    "network_error",
+    { url, method, cause: String((error as Error)?.message || error) }
+  );
 
 const emitAssistantSignal = (detail: {
   kind: "api_failure";
@@ -354,7 +374,10 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   const isAuthMe = url === "/api/users/profile" && method === "GET";
   const cachedAuth = getStoredAuthState();
   const requestId = makeRequestId();
-  const maxAttempts = method === "GET" ? 2 : (requestUrl.includes("/pyapi/mission-control") ? 2 : 1);
+  const isAuthRoute = AUTH_ROUTE_PATTERN.test(url);
+  const maxAttempts =
+    method === "GET" ? 2 : isAuthRoute ? 3 : requestUrl.includes("/pyapi/mission-control") ? 2 : 1;
+  const maxNetworkAttempts = isAuthRoute ? 3 : method === "GET" ? 2 : 1;
   
   logDebug(`[API] ${method} ${requestUrl} - Starting request`);
 
@@ -429,16 +452,36 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   const request = () =>
     fetch(requestUrl, { ...init, headers, credentials: "include", signal: isAuthMe ? meAbortController.signal : init.signal });
   const execute = async () => {
-    const response = await request();
-    const duration = Date.now() - startTime;
-    logDebug(`[API] ${method} ${requestUrl} - Response: ${response.status} (${duration}ms)`);
-    recordRuntimeDebugEvent({
-      level: response.ok ? "info" : "warning",
-      source: "apiFetch",
-      message: `${method} ${requestUrl} -> ${response.status}`,
-      metadata: { requestId, duration, status: response.status },
-    });
-    return response;
+    let lastNetworkError: unknown = null;
+    for (let networkAttempt = 1; networkAttempt <= maxNetworkAttempts; networkAttempt += 1) {
+      try {
+        const response = await request();
+        const duration = Date.now() - startTime;
+        logDebug(`[API] ${method} ${requestUrl} - Response: ${response.status} (${duration}ms)`);
+        recordRuntimeDebugEvent({
+          level: response.ok ? "info" : "warning",
+          source: "apiFetch",
+          message: `${method} ${requestUrl} -> ${response.status}`,
+          metadata: { requestId, duration, status: response.status, networkAttempt },
+        });
+        return response;
+      } catch (error) {
+        if (!isNetworkFetchError(error) || networkAttempt >= maxNetworkAttempts) {
+          if (isNetworkFetchError(error)) throw toNetworkApiError(error, url, method);
+          throw error;
+        }
+        lastNetworkError = error;
+        const backoffMs = 450 * networkAttempt;
+        recordRuntimeDebugEvent({
+          level: "warning",
+          source: "apiFetch",
+          message: `Network retry ${networkAttempt} for ${method} ${requestUrl}`,
+          metadata: { requestId, backoffMs, cause: String((error as Error)?.message || error) },
+        });
+        await sleep(backoffMs);
+      }
+    }
+    throw toNetworkApiError(lastNetworkError, url, method);
   };
 
   let response = isAuthMe

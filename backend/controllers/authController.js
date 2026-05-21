@@ -165,6 +165,22 @@ export const signup = async (req, res) => {
   }
 };
 
+const mapAuthDependencyError = (error) => {
+  const message = String(error?.message || "").toLowerCase();
+  if (
+    error?.code === "db_unavailable" ||
+    message.includes("timed out") ||
+    message.includes("timeout") ||
+    message.includes("server selection")
+  ) {
+    const mapped = new Error("Authentication database is temporarily unavailable. Please retry in a few seconds.");
+    mapped.status = 503;
+    mapped.code = "db_unavailable_auth";
+    return mapped;
+  }
+  return error;
+};
+
 export const login = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
@@ -174,9 +190,10 @@ export const login = async (req, res) => {
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
     res.json({ status: "ok", user: toPublicUser(user), accessToken });
   } catch (error) {
-    await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: error?.code || "login_failed" });
-    logError("Auth login failed", error, { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
-    sendAuthError(req, res, error);
+    const normalized = mapAuthDependencyError(error);
+    await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: normalized?.code || "login_failed" });
+    logError("Auth login failed", normalized, { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
+    sendAuthError(req, res, normalized);
   }
 };
 

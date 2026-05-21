@@ -121,16 +121,30 @@ export const connectDb = async () => {
   }
 
   const startedAt = Date.now();
+  const isRender =
+    ["1", "true"].includes(String(process.env.RENDER || "").trim().toLowerCase()) ||
+    Boolean(String(process.env.RENDER_EXTERNAL_URL || "").trim());
+  const poolOptions = isRender
+    ? {
+        maxPoolSize: 10,
+        minPoolSize: 0,
+        maxIdleTimeMS: 20_000,
+        serverSelectionTimeoutMS: 8_000,
+        connectTimeoutMS: 8_000,
+        socketTimeoutMS: 20_000,
+      }
+    : {
+        maxPoolSize: 30,
+        minPoolSize: 5,
+        maxIdleTimeMS: 30_000,
+        serverSelectionTimeoutMS: 10_000,
+        connectTimeoutMS: 10_000,
+        socketTimeoutMS: 10_000,
+      };
+
   let lastError;
   for (const mongoUri of candidates) {
-    const candidateClient = new MongoClient(mongoUri, {
-      maxPoolSize: 30,
-      minPoolSize: 5,
-      maxIdleTimeMS: 30000,
-      serverSelectionTimeoutMS: 10000,
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 10000,
-    });
+    const candidateClient = new MongoClient(mongoUri, poolOptions);
 
     try {
       await candidateClient.connect();

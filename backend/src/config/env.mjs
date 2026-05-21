@@ -385,12 +385,14 @@ export const env = {
   alertWebhookUrl: process.env.ALERT_WEBHOOK_URL || "",
   alertMinLevel: (process.env.ALERT_MIN_LEVEL || "warn").toLowerCase(),
   alertCooldownMs: Math.max(30_000, Math.min(3_600_000, toNum(process.env.ALERT_COOLDOWN_MS, 300_000))),
-  strictDependencyStartup:
-    isProduction
-      ? process.env.STRICT_DEPENDENCY_STARTUP != null
-        ? process.env.STRICT_DEPENDENCY_STARTUP === "true"
-        : true
-      : false,
+  strictDependencyStartup: (() => {
+    if (process.env.STRICT_DEPENDENCY_STARTUP != null) {
+      return process.env.STRICT_DEPENDENCY_STARTUP === "true";
+    }
+    // Render free tier: optional Redis must not crash the API during auth.
+    if (isRender) return false;
+    return isProduction;
+  })(),
   streamHeartbeatMs: Math.max(10_000, Math.min(60_000, toNum(process.env.STREAM_HEARTBEAT_MS, 20_000))),
   streamInitTimeoutMs: Math.max(500, Math.min(8_000, toNum(process.env.STREAM_INIT_TIMEOUT_MS, 1_800))),
   streamRetryMinMs: Math.max(500, Math.min(15000, toNum(process.env.STREAM_RETRY_MIN_MS, 1200))),
@@ -477,8 +479,6 @@ export const env = {
   labAllowlistCidrs: splitCsv(process.env.LAB_ALLOWLIST_CIDRS || ""),
   labAllowedBins: splitCsv(process.env.LAB_ALLOWED_BINS || ""),
 };
-env.corsOrigins = uniqueList([...normalizeOriginList(env.corsOrigin), ...knownFrontendOrigins]);
-env.googleAuthorizedOrigins = uniqueList(env.googleAuthorizedOrigins);
 env.corsOrigins = uniqueList([...normalizeOriginList(env.corsOrigin), ...knownFrontendOrigins]);
 env.googleAuthorizedOrigins = uniqueList(
   env.googleAuthorizedOrigins.length ? env.googleAuthorizedOrigins : normalizeOriginList(env.appBaseUrl)
