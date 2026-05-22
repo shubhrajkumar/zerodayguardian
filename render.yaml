@@ -115,3 +115,7 @@ services:
         sync: false
       - key: AUTH_OTP_PREVIEW_ENABLED
         sync: false
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
