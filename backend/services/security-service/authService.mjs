@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 import crypto from "node:crypto";
 import { ObjectId } from "mongodb";
 import { OAuth2Client } from "google-auth-library";
-import { getDb, getDbPoolStatus } from "../../src/config/db.mjs";
+import { getDb, getDbPoolStatus, getMongoCollectionCandidates } from "../../src/config/db.mjs";
 import { env } from "../../src/config/env.mjs";
 import { logInfo, logWarn } from "../../src/utils/logger.mjs";
 import { buildCookieOptions } from "../../src/utils/cookiePolicy.mjs";
@@ -22,6 +22,9 @@ const getCollection = (name) => {
     return getAuthFallbackCollection(name);
   }
   return getDb().collection(name);
+};
+const ensurePersistentAuthStore = (users) => {
+  if (users?.__authFallbackStore) throw createDbUnavailableAuthError();
 };
 const ACCESS_COOKIE = "neurobot_at";
 const REFRESH_COOKIE = "neurobot_rt";
@@ -57,7 +60,16 @@ const normalizeUrl = (value = "") => {
     return "";
   }
 };
-const GOOGLE_AUTH_REQUIRED_KEYS = ["Google OAuth client ID", "Google OAuth client secret"];
+
+const createDbUnavailableAuthError = () =>
+  createError("Authentication database is unavailable. Check MONGODB_URI and redeploy.", 503, "db_unavailable_auth");
+const GOOGLE_POPUP_REQUIRED_KEYS = [
+  { label: "GOOGLE_CLIENT_ID", value: () => env.googleOauthClientId },
+];
+const GOOGLE_REDIRECT_REQUIRED_KEYS = [
+  ...GOOGLE_POPUP_REQUIRED_KEYS,
+  { label: "GOOGLE_CLIENT_SECRET", value: () => env.googleOauthClientSecret },
+];
 const buildDefaultGoogleRedirectUri = () => {
   const base = String(env.backendPublicUrl || "").trim() || `http://127.0.0.1:${env.port || 8787}`;
   return `${base.replace(/\/+$/, "")}/auth/google/callback`;
@@ -71,25 +83,32 @@ const isValidHttpUrl = (value = "") => {
   }
 };
 export const getGoogleAuthConfigStatus = () => {
-  const missingKeys = GOOGLE_AUTH_REQUIRED_KEYS.filter((key) => {
-    if (key.includes("CLIENT_ID")) return !String(env.googleOauthClientId || "").trim();
-    if (key.includes("CLIENT_SECRET")) return !String(env.googleOauthClientSecret || "").trim();
-    return false;
-  });
+  const missingPopupKeys = GOOGLE_POPUP_REQUIRED_KEYS
+    .filter((key) => !String(key.value() || "").trim())
+    .map((key) => key.label);
+  const missingRedirectKeys = GOOGLE_REDIRECT_REQUIRED_KEYS
+    .filter((key) => !String(key.value() || "").trim())
+    .map((key) => key.label);
   const resolvedRedirectUri = String(env.googleRedirectUri || "").trim() || buildDefaultGoogleRedirectUri();
   const invalidKeys = [];
   if (String(env.googleRedirectUri || "").trim() && !isValidHttpUrl(env.googleRedirectUri)) {
     invalidKeys.push("GOOGLE_REDIRECT_URI");
   }
+  const popupEnabled = missingPopupKeys.length === 0;
+  const redirectEnabled = missingRedirectKeys.length === 0 && invalidKeys.length === 0;
   return {
-    enabled: missingKeys.length === 0 && invalidKeys.length === 0,
-    missingKeys,
+    enabled: popupEnabled || redirectEnabled,
+    popupEnabled,
+    redirectEnabled,
+    missingKeys: redirectEnabled ? [] : missingRedirectKeys,
+    missingPopupKeys,
+    missingRedirectKeys,
     invalidKeys,
     redirectUri: resolvedRedirectUri,
     hasExplicitRedirectUri: Boolean(String(env.googleRedirectUri || "").trim()),
   };
 };
-const isGoogleAuthConfigured = () => getGoogleAuthConfigStatus().enabled;
+const isGooglePopupAuthConfigured = () => getGoogleAuthConfigStatus().popupEnabled;
 const createGoogleConfigError = (message = "Google sign-in is disabled because GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not configured.") => {
   const status = getGoogleAuthConfigStatus();
   const error = createError(message, 503, "google_auth_not_configured");
@@ -101,8 +120,8 @@ const createGoogleConfigError = (message = "Google sign-in is disabled because G
   return error;
 };
 const getGoogleOauthClient = () => {
-  if (!isGoogleAuthConfigured()) {
-    throw createGoogleConfigError();
+  if (!isGooglePopupAuthConfigured()) {
+    throw createGoogleConfigError("Google sign-in is disabled because GOOGLE_CLIENT_ID is not configured.");
   }
   if (!googleOauthClient) googleOauthClient = new OAuth2Client(env.googleOauthClientId);
   return googleOauthClient;
@@ -110,7 +129,7 @@ const getGoogleOauthClient = () => {
 
 const getGoogleOauthWebClient = () => {
   const googleAuth = getGoogleAuthConfigStatus();
-  if (!googleAuth.enabled) {
+  if (!googleAuth.redirectEnabled) {
     throw createGoogleConfigError("Google OAuth redirect flow is disabled because GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not configured.");
   }
   if (!googleOauthWebClient) {
@@ -229,8 +248,98 @@ const getMailTransporter = async () => {
 
 const findUserByEmailRecord = async (users, email) => {
   const safeEmail = normalizeEmail(email);
-  const user = await users.findOne(emailLookupQuery(safeEmail));
-  return hydrateUser(user);
+  const directUser = await users.findOne(emailLookupQuery(safeEmail));
+  if (directUser) return hydrateUser(directUser);
+
+  if (typeof users.find !== "function") return null;
+
+  const legacyUsers = await users
+    .find({
+      $or: [
+        { emailHash: { $exists: false } },
+        { emailHash: null },
+        { emailHash: "" },
+        { email: /^enc:/ },
+      ],
+    })
+    .limit(5000)
+    .toArray();
+
+  for (const legacyUser of legacyUsers) {
+    const hydrated = hydrateUser(legacyUser);
+    if (normalizeEmail(hydrated?.email || "") !== safeEmail) continue;
+
+    await users.updateOne(
+      { _id: legacyUser._id },
+      {
+        $set: {
+          emailHash: buildEmailHash(safeEmail),
+          updatedAt: now(),
+        },
+      }
+    );
+    return hydrated;
+  }
+
+  return null;
+};
+
+const findUserByEmailAcrossMongoDatabases = async (email) => {
+  const safeEmail = normalizeEmail(email);
+  const candidates = await getMongoCollectionCandidates(USERS);
+  for (const candidate of candidates) {
+    const user = await findUserByEmailRecord(candidate.collection, safeEmail);
+    if (!user) continue;
+    if (!candidate.primary) {
+      logWarn("Auth user found outside primary database", {
+        email: safeEmail,
+        sourceDatabase: candidate.databaseName,
+      });
+    }
+    return { user, sourceDatabase: candidate.databaseName, primary: candidate.primary };
+  }
+  return { user: null, sourceDatabase: "", primary: false };
+};
+
+const findUserByGoogleIdAcrossMongoDatabases = async (googleId) => {
+  const safeGoogleId = String(googleId || "").trim();
+  if (!safeGoogleId) return { user: null, sourceDatabase: "", primary: false };
+  const candidates = await getMongoCollectionCandidates(USERS);
+  for (const candidate of candidates) {
+    const user = hydrateUser(await candidate.collection.findOne({ googleId: safeGoogleId }));
+    if (!user) continue;
+    if (!candidate.primary) {
+      logWarn("Google auth user found outside primary database", {
+        sourceDatabase: candidate.databaseName,
+      });
+    }
+    return { user, sourceDatabase: candidate.databaseName, primary: candidate.primary };
+  }
+  return { user: null, sourceDatabase: "", primary: false };
+};
+
+const migrateUserToPrimaryDatabase = async (user, sourceDatabase = "") => {
+  if (!user || !sourceDatabase) return user;
+  const users = getCollection(USERS);
+  if (users.__authFallbackStore) return user;
+  const existingUser = await users.findOne({ _id: user._id }).catch(() => null);
+  if (existingUser) return hydrateUser(existingUser);
+  const existingByEmail = await findUserByEmailRecord(users, user.email).catch(() => null);
+  if (existingByEmail) return existingByEmail;
+
+  const document = {
+    ...user,
+    emailHash: user.emailHash || buildEmailHash(user.email),
+    migratedFromDatabase: sourceDatabase,
+    migratedAt: now(),
+    updatedAt: now(),
+  };
+  await users.insertOne(document);
+  logWarn("Auth user migrated into primary database", {
+    email: user.email,
+    sourceDatabase,
+  });
+  return sanitizeUser(document);
 };
 
 const signAccessToken = (user) => {
@@ -369,10 +478,11 @@ const sanitizeUser = (user) => {
 
 export const registerUser = async ({ email, password, name }) => {
   const users = getCollection(USERS);
+  ensurePersistentAuthStore(users);
   const safeEmail = normalizeEmail(email);
   const safeName = normalizeName(name);
 
-  const existingUser = await findUserByEmailRecord(users, safeEmail);
+  const existingUser = (await findUserByEmailAcrossMongoDatabases(safeEmail)).user;
   if (existingUser) {
     throw createError("User already exists", 409, "user_exists");
   }
@@ -404,7 +514,9 @@ export const registerUser = async ({ email, password, name }) => {
 
 export const getUserByEmail = async ({ email }) => {
   const safeEmail = normalizeEmail(email);
-  const user = await findUserByEmailRecord(getCollection(USERS), safeEmail);
+  const users = getCollection(USERS);
+  ensurePersistentAuthStore(users);
+  const user = (await findUserByEmailAcrossMongoDatabases(safeEmail)).user;
   logInfo("User fetch", {
     email: safeEmail,
     found: Boolean(user),
@@ -412,7 +524,11 @@ export const getUserByEmail = async ({ email }) => {
   return user;
 };
 
-export const getUserById = async (id) => sanitizeUser(await getCollection(USERS).findOne({ _id: toObjectId(id) }));
+export const getUserById = async (id) => {
+  const users = getCollection(USERS);
+  ensurePersistentAuthStore(users);
+  return sanitizeUser(await users.findOne({ _id: toObjectId(id) }));
+};
 
 export const authenticateGoogleUser = async ({ idToken }) => {
   const token = String(idToken || "").trim();
@@ -434,11 +550,19 @@ export const authenticateGoogleUser = async ({ idToken }) => {
   if (!emailVerified) throw createError("Google email is not verified", 403, "google_email_not_verified");
 
   const users = getCollection(USERS);
+  ensurePersistentAuthStore(users);
   const timestamp = now();
-  let user = hydrateUser(await users.findOne({ googleId }));
-  if (!user) user = await findUserByEmailRecord(users, email);
+  let match = await findUserByGoogleIdAcrossMongoDatabases(googleId);
+  let user = match.user;
+  if (!user) {
+    match = await findUserByEmailAcrossMongoDatabases(email);
+    user = match.user;
+  }
 
   if (user) {
+    if (!match.primary && match.sourceDatabase) {
+      user = await migrateUserToPrimaryDatabase(user, match.sourceDatabase);
+    }
     const updates = {
       ...protectUserFields({
         name: displayName || String(user.name || ""),
@@ -503,12 +627,15 @@ export const authenticateGoogleCode = async ({ code }) => {
 
 export const loginUser = async ({ email, password }) => {
   const users = getCollection(USERS);
+  ensurePersistentAuthStore(users);
   const safeEmail = normalizeEmail(email);
-  const user = await findUserByEmailRecord(users, safeEmail);
+  const match = await findUserByEmailAcrossMongoDatabases(safeEmail);
+  let user = match.user;
 
   logInfo("User fetch", {
     email: safeEmail,
     found: Boolean(user),
+    sourceDatabase: match.sourceDatabase,
   });
 
   if (!user) {
@@ -530,7 +657,9 @@ export const loginUser = async ({ email, password }) => {
     throw createError("Wrong password", 401, "wrong_password");
   }
 
-  if (user.password !== storedPassword) {
+  if (!match.primary && match.sourceDatabase) {
+    user = await migrateUserToPrimaryDatabase({ ...user, password: storedPassword }, match.sourceDatabase);
+  } else if (user.password !== storedPassword) {
     await users.updateOne(
       { _id: user._id },
       {
@@ -586,12 +715,15 @@ export const refreshAuth = async (refreshToken) => {
 
 export const sendResetOtp = async ({ email }) => {
   const users = getCollection(USERS);
+  ensurePersistentAuthStore(users);
   const safeEmail = normalizeEmail(email);
-  const user = await findUserByEmailRecord(users, safeEmail);
+  const match = await findUserByEmailAcrossMongoDatabases(safeEmail);
+  let user = match.user;
 
   logInfo("User fetch", {
     email: safeEmail,
     found: Boolean(user),
+    sourceDatabase: match.sourceDatabase,
     purpose: "send_reset_otp",
   });
 
@@ -602,6 +734,9 @@ export const sendResetOtp = async ({ email }) => {
   const otp = generateOtp();
   const otpHash = await bcrypt.hash(otp, BCRYPT_ROUNDS);
   const expiresAt = now() + RESET_OTP_TTL_MS;
+  if (!match.primary && match.sourceDatabase) {
+    user = await migrateUserToPrimaryDatabase(user, match.sourceDatabase);
+  }
 
   await users.updateOne(
     { _id: user._id },
@@ -693,13 +828,16 @@ export const sendResetOtp = async ({ email }) => {
 
 export const resetPassword = async ({ email, otp, password }) => {
   const users = getCollection(USERS);
+  ensurePersistentAuthStore(users);
   const safeEmail = normalizeEmail(email);
   const safeOtp = String(otp || "").trim();
-  const user = await findUserByEmailRecord(users, safeEmail);
+  const match = await findUserByEmailAcrossMongoDatabases(safeEmail);
+  let user = match.user;
 
   logInfo("User fetch", {
     email: safeEmail,
     found: Boolean(user),
+    sourceDatabase: match.sourceDatabase,
     purpose: "reset_password",
   });
 
@@ -709,6 +847,9 @@ export const resetPassword = async ({ email, otp, password }) => {
 
   if (!user.resetOtp || !user.resetOtpExpire) {
     throw createError("OTP not requested", 400, "otp_not_requested");
+  }
+  if (!match.primary && match.sourceDatabase) {
+    user = await migrateUserToPrimaryDatabase(user, match.sourceDatabase);
   }
 
   if (Number(user.resetOtpExpire) < now()) {

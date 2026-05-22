@@ -5,6 +5,7 @@ import { logInfo, logWarn } from "../utils/logger.mjs";
 let client;
 let db;
 let indexesEnsured = false;
+const SYSTEM_DATABASES = new Set(["admin", "config", "local"]);
 
 const createDbUnavailableError = (message = "Database not initialized. Call connectDb first.") => {
   const error = new Error(message);
@@ -82,6 +83,32 @@ const mongoUriCandidates = () => {
   return [...new Set(candidates)];
 };
 
+const extractDbNameFromMongoUri = (uri = "") => {
+  try {
+    const parsed = new URL(String(uri || "").trim());
+    if (!["mongodb:", "mongodb+srv:"].includes(parsed.protocol)) return "";
+    const dbName = decodeURIComponent(String(parsed.pathname || "").replace(/^\/+/, "").split("/")[0] || "");
+    return dbName && !SYSTEM_DATABASES.has(dbName) ? dbName : "";
+  } catch {
+    return "";
+  }
+};
+
+const configuredDatabaseNames = () => {
+  const names = [
+    db?.databaseName,
+    firstSet("MONGODB_DB_NAME", "MONGO_DB_NAME", "DB_NAME"),
+    ...mongoUriCandidates().map(extractDbNameFromMongoUri),
+    "zeroday_guardian",
+    "ZeroDay",
+    "zeroday",
+    "test",
+  ]
+    .map((value) => String(value || "").trim())
+    .filter((value) => value && !SYSTEM_DATABASES.has(value));
+  return [...new Set(names)];
+};
+
 const mongoAuthVariants = (uri) => {
   const variants = [];
   try {
@@ -103,6 +130,11 @@ const mongoAuthVariants = (uri) => {
   }
   return variants;
 };
+
+const isMongoAuthFailure = (error) =>
+  Number(error?.code || 0) === 8000 ||
+  String(error?.codeName || "").toLowerCase() === "atlaserror" ||
+  /bad auth|authentication failed/i.test(String(error?.message || ""));
 
 export const connectDb = async () => {
   if (db) return db;
@@ -146,6 +178,7 @@ export const connectDb = async () => {
         name: String(error?.name || ""),
         message: String(error?.message || "MongoDB connection failed"),
       });
+      if (isMongoAuthFailure(error)) break;
     }
   }
 
@@ -217,6 +250,27 @@ export const connectDb = async () => {
 export const getDb = () => {
   if (!db) throw createDbUnavailableError();
   return db;
+};
+
+export const getMongoCollectionCandidates = async (collectionName) => {
+  if (!client || !db) return [];
+
+  const databaseNames = configuredDatabaseNames();
+  try {
+    const listed = await client.db("admin").admin().listDatabases({ nameOnly: true });
+    for (const item of listed?.databases || []) {
+      const name = String(item?.name || "").trim();
+      if (name && !SYSTEM_DATABASES.has(name) && !databaseNames.includes(name)) databaseNames.push(name);
+    }
+  } catch {
+    // Atlas users with limited roles may not be allowed to list databases.
+  }
+
+  return databaseNames.map((databaseName) => ({
+    databaseName,
+    collection: client.db(databaseName).collection(collectionName),
+    primary: databaseName === db.databaseName,
+  }));
 };
 
 export const verifyDbConnection = async () => {

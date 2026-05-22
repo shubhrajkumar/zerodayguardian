@@ -34,7 +34,9 @@ export const validateStartupConfig = ({ enforceInProduction = true } = {}) => {
   }
   const googleAuth = getGoogleAuthConfigStatus();
   if (!googleAuth.enabled) {
-    logWarn("Google auth disabled due to missing environment variables", {
+    const hasInvalidConfig = Boolean(googleAuth.invalidKeys?.length);
+    const logGoogleAuthStatus = hasInvalidConfig ? logWarn : logInfo;
+    logGoogleAuthStatus("Google auth disabled", {
       missingKeys: googleAuth.missingKeys,
       invalidKeys: googleAuth.invalidKeys,
       action: googleAuth.invalidKeys?.length

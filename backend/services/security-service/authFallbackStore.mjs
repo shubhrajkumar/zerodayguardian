@@ -48,6 +48,7 @@ export const getAuthFallbackCollection = (name) => {
   load();
   if (name !== "users") throw new Error(`Auth fallback collection ${name} is not supported`);
   return {
+    __authFallbackStore: true,
     async findOne(query) {
       return state.users.find((item) => matchesQuery(item, query)) || null;
     },

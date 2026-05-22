@@ -9,7 +9,14 @@ import { applyReferralSignup, findReferrerByCode } from "@/lib/firestoreGrowth";
 
 declare global {
   interface Window {
-    google?: unknown;
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (options: { client_id: string; callback: (response: { credential?: string }) => void }) => void;
+          renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
+        };
+      };
+    };
   }
 }
 
@@ -35,12 +42,15 @@ type AuthProvidersResponse = {
     enabled?: boolean;
     clientId?: string;
     backendFlow?: boolean;
+    popupFlow?: boolean;
     startUrl?: string;
     callbackUrl?: string;
     frontendOrigin?: string;
     authorizedOrigins?: string[];
     redirectUri?: string;
     missingKeys?: string[];
+    missingPopupKeys?: string[];
+    missingRedirectKeys?: string[];
     invalidKeys?: string[];
     action?: string;
   };
@@ -124,11 +134,17 @@ const AuthPage = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [googleClientId, setGoogleClientId] = useState("");
   const [googleStartUrl, setGoogleStartUrl] = useState("");
+  const [googlePopupFlow, setGooglePopupFlow] = useState(false);
+  const [googleBackendFlow, setGoogleBackendFlow] = useState(false);
   const [googleStatus, setGoogleStatus] = useState("");
   const [googleConfigResolved, setGoogleConfigResolved] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement | null>(null);
+  const googleButtonRenderedRef = useRef(false);
   const resetOtpInputRef = useRef<HTMLInputElement | null>(null);
   const requestedResetEmailRef = useRef("");
-  const canUseGoogleOauth = Boolean(googleConfigResolved && googleStartUrl && googleClientId);
+  const canUseGoogleRedirect = Boolean(googleConfigResolved && googleBackendFlow && googleStartUrl && googleClientId);
+  const canUseGooglePopup = Boolean(googleConfigResolved && googlePopupFlow && googleClientId);
+  const canUseGoogleOauth = canUseGoogleRedirect || canUseGooglePopup;
   const referralCode = String(searchParams.get("ref") || localStorage.getItem("zdg:referral_code") || "").trim().toUpperCase();
 
   useEffect(() => {
@@ -150,14 +166,18 @@ const AuthPage = () => {
         const clientId = String(payload?.google?.clientId || envClientId || "").trim();
         const startUrl = String(payload?.google?.startUrl || "").trim();
         setGoogleStartUrl(startUrl);
+        setGooglePopupFlow(Boolean(payload?.google?.popupFlow));
+        setGoogleBackendFlow(Boolean(payload?.google?.backendFlow));
         setGoogleConfigResolved(true);
-        if (payload?.google?.enabled && clientId && startUrl) {
+        if (payload?.google?.enabled && clientId && (payload?.google?.popupFlow || (payload?.google?.backendFlow && startUrl))) {
           setGoogleClientId(clientId);
           setGoogleStatus("");
           return;
         }
         setGoogleClientId("");
         setGoogleStartUrl("");
+        setGooglePopupFlow(false);
+        setGoogleBackendFlow(false);
         setGoogleStatus(getProviderStatusMessage(payload));
       })
       .catch((error) => {
@@ -165,6 +185,8 @@ const AuthPage = () => {
         setGoogleConfigResolved(true);
         setGoogleClientId("");
         setGoogleStartUrl("");
+        setGooglePopupFlow(false);
+        setGoogleBackendFlow(false);
         if (isApiError(error) && error.status === 404) {
           const fallbackStatus =
             isHostedRuntime && !hasRuntimeApiBase
@@ -181,11 +203,65 @@ const AuthPage = () => {
   }, []);
 
   const startGoogleOauth = () => {
-    if (!canUseGoogleOauth) return;
+    if (!canUseGoogleRedirect) return;
     const next = encodeURIComponent("/dashboard");
     const separator = googleStartUrl.includes("?") ? "&" : "?";
     window.location.assign(`${googleStartUrl}${separator}next=${next}`);
   };
+
+  useEffect(() => {
+    if (!canUseGooglePopup || !googleButtonRef.current || googleButtonRenderedRef.current) return;
+
+    const handleGoogleCredential = async (response: { credential?: string }) => {
+      const credential = String(response?.credential || "").trim();
+      if (!credential) {
+        setGoogleStatus("Google did not return a valid credential.");
+        return;
+      }
+      setGoogleStatus("");
+      try {
+        const payload = await apiPostJson<BackendAuthPayload>("/api/auth/google", { credential });
+        if (payload.accessToken) {
+          setStoredAccessToken(payload.accessToken);
+          await refreshAuth();
+        }
+        window.setTimeout(() => navigate("/dashboard", { replace: true }), 250);
+      } catch (error) {
+        setGoogleStatus(getAuthErrorMessage(error, "login"));
+      }
+    };
+
+    const renderGoogleButton = () => {
+      if (!googleButtonRef.current || !window.google?.accounts?.id) return false;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleCredential,
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        width: googleButtonRef.current.offsetWidth || 320,
+      });
+      googleButtonRenderedRef.current = true;
+      return true;
+    };
+
+    if (renderGoogleButton()) return;
+
+    const existingScript = document.querySelector<HTMLScriptElement>('script[src="https://accounts.google.com/gsi/client"]');
+    if (existingScript) {
+      existingScript.addEventListener("load", renderGoogleButton, { once: true });
+      return () => existingScript.removeEventListener("load", renderGoogleButton);
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.addEventListener("load", renderGoogleButton, { once: true });
+    document.head.appendChild(script);
+    return () => script.removeEventListener("load", renderGoogleButton);
+  }, [canUseGooglePopup, googleClientId, navigate, refreshAuth]);
 
   const backendHint = useMemo(() => {
     if (canUseGoogleOauth) return "";
@@ -469,13 +545,17 @@ const AuthPage = () => {
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Google Sign-In</p>
             <div className="min-h-[44px]">
               {canUseGoogleOauth ? (
-                <button
-                  type="button"
-                  onClick={startGoogleOauth}
-                  className="inline-flex h-11 w-full items-center justify-center rounded-md border border-primary/20 bg-background px-3 text-sm transition-colors hover:bg-muted"
-                >
-                  Continue with Google
-                </button>
+                canUseGooglePopup ? (
+                  <div ref={googleButtonRef} className="w-full" />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={startGoogleOauth}
+                    className="inline-flex h-11 w-full items-center justify-center rounded-md border border-primary/20 bg-background px-3 text-sm transition-colors hover:bg-muted"
+                  >
+                    Continue with Google
+                  </button>
+                )
               ) : null}
               {!canUseGoogleOauth && googleStatus ? (
                 <div className="rounded-xl border border-amber-300/20 bg-amber-500/8 px-4 py-3 text-sm leading-6 text-amber-100/90">

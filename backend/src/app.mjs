@@ -140,7 +140,7 @@ const buildAuthProvidersPayload = (req) => {
     ? ""
     : googleAuth.invalidKeys?.length
       ? "Fix invalid Google OAuth environment variables or remove them to keep Google sign-in disabled."
-      : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.";
+      : "Set GOOGLE_CLIENT_ID in the backend environment to enable Google sign-in.";
 
   return {
     status: "ok",
@@ -151,14 +151,16 @@ const buildAuthProvidersPayload = (req) => {
     google: {
       enabled: googleAuth.enabled,
       clientId: env.googleOauthClientId || "",
-      backendFlow: googleAuth.enabled,
-      popupFlow: googleAuth.enabled,
-      startUrl: googleAuth.enabled ? startUrl : "",
+      backendFlow: googleAuth.redirectEnabled,
+      popupFlow: googleAuth.popupEnabled,
+      startUrl: googleAuth.redirectEnabled ? startUrl : "",
       callbackUrl,
       redirectUri,
       frontendOrigin: env.appBaseUrl || "",
       authorizedOrigins: env.googleAuthorizedOrigins || [],
       missingKeys: googleAuth.missingKeys,
+      missingPopupKeys: googleAuth.missingPopupKeys,
+      missingRedirectKeys: googleAuth.missingRedirectKeys,
       invalidKeys: googleAuth.invalidKeys,
       action: googleAction,
     },

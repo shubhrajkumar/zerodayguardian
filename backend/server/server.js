@@ -13,8 +13,21 @@ const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.NEUROBOT_PORT || env.port || 8787);
 let dbRetryTimer = null;
 
-const scheduleDbReconnect = () => {
+const isPermanentMongoAuthFailure = (error) =>
+  Number(error?.code || 0) === 8000 ||
+  String(error?.codeName || "").toLowerCase() === "atlaserror" ||
+  /bad auth|authentication failed/i.test(String(error?.message || ""));
+
+const scheduleDbReconnect = (startupError = null) => {
   if (dbRetryTimer || !env.mongoUri || !env.mongo) return;
+  if (isPermanentMongoAuthFailure(startupError)) {
+    logWarn("Database reconnect disabled until MongoDB credentials are fixed", {
+      code: String(startupError?.code || ""),
+      name: String(startupError?.name || ""),
+      message: "MongoDB authentication failed. Update MONGODB_URI credentials in Render, then redeploy.",
+    });
+    return;
+  }
   dbRetryTimer = setInterval(async () => {
     try {
       await connectDb();
@@ -22,6 +35,16 @@ const scheduleDbReconnect = () => {
       dbRetryTimer = null;
       logInfo("Database reconnect succeeded");
     } catch (error) {
+      if (isPermanentMongoAuthFailure(error)) {
+        clearInterval(dbRetryTimer);
+        dbRetryTimer = null;
+        logWarn("Database reconnect stopped because MongoDB authentication is failing", {
+          code: String(error?.code || ""),
+          name: String(error?.name || ""),
+          message: "Update MONGODB_URI credentials in Render, then redeploy.",
+        });
+        return;
+      }
       logWarn("Database reconnect attempt failed", {
         code: String(error?.code || ""),
         name: String(error?.name || ""),
@@ -67,7 +90,7 @@ const bootstrap = async () => {
         code: String(error?.code || ""),
         name: String(error?.name || ""),
       });
-      scheduleDbReconnect();
+      scheduleDbReconnect(error);
     }
   } else {
     logWarn("Database startup skipped because env validation is incomplete", {

@@ -520,12 +520,9 @@ const buildStartupEnvValidation = () => {
     GOOGLE_CLIENT_SECRET: env.googleOauthClientSecret,
     GOOGLE_REDIRECT_URI: env.googleRedirectUri,
   };
-  const configuredGoogleOauthKeys = OPTIONAL_GOOGLE_OAUTH_ENV_KEYS.filter((key) =>
-    String(googleOauthValues[key] || "").trim()
-  );
   const hasGoogleClientId = Boolean(String(env.googleOauthClientId || "").trim());
   const hasGoogleClientSecret = Boolean(String(env.googleOauthClientSecret || "").trim());
-  if (configuredGoogleOauthKeys.length && (!hasGoogleClientId || !hasGoogleClientSecret)) {
+  if ((hasGoogleClientId || hasGoogleClientSecret) && (!hasGoogleClientId || !hasGoogleClientSecret)) {
     const missingGoogleKeys = [
       !hasGoogleClientId ? GOOGLE_CLIENT_ID_KEYS.join(" or ") : "",
       !hasGoogleClientSecret ? GOOGLE_CLIENT_SECRET_KEYS.join(" or ") : "",
