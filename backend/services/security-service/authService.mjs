@@ -227,9 +227,11 @@ const getMailTransporter = async () => {
   return transporterPromise;
 };
 
+const AUTH_DB_MAX_TIME_MS = 8_000;
+
 const findUserByEmailRecord = async (users, email) => {
   const safeEmail = normalizeEmail(email);
-  const user = await users.findOne(emailLookupQuery(safeEmail));
+  const user = await users.findOne(emailLookupQuery(safeEmail), { maxTimeMS: AUTH_DB_MAX_TIME_MS });
   return hydrateUser(user);
 };
 
@@ -301,7 +303,8 @@ const persistRefreshSession = async (user, refreshToken, { rememberMe = false, j
         refreshSession: refreshState,
         updatedAt: timestamp,
       },
-    }
+    },
+    { maxTimeMS: AUTH_DB_MAX_TIME_MS }
   );
   return refreshState;
 };

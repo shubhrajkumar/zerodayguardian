@@ -217,7 +217,15 @@ const AuthPage = () => {
   }, [resetPassword]);
 
   const getAuthErrorMessage = (error: unknown, currentMode: "login" | "signup") => {
-    if (!isApiError(error)) return "Authentication failed.";
+    if (!isApiError(error)) {
+      if (error instanceof TypeError) {
+        return "Backend connection failed. Wait a few seconds and try again (Render may be waking up).";
+      }
+      return "Authentication failed.";
+    }
+    if (error.code === "network_error" || error.status === 503) {
+      return error.message || "Backend connection failed. Wait a few seconds and try again.";
+    }
     if (error.status === 429) return error.message;
     if (error.code === "google_auth_not_configured") {
       return "Google OAuth is not configured correctly on the backend.";

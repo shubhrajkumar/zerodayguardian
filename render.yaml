@@ -1,16 +1,20 @@
 services:
   - type: web
-    name: zeroday-guardian
+    name: zerodayguardian-backend
     runtime: node
     plan: free
     rootDir: .
     buildCommand: npm install --no-fund --no-audit
     startCommand: node backend/server.js
-    healthCheckPath: /health
+    healthCheckPath: /api/health
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: RENDER
+        value: "true"
+      - key: STRICT_DEPENDENCY_STARTUP
+        value: "false"
       - key: PORT
         value: 10000
       - key: NPM_CONFIG_PRODUCTION
