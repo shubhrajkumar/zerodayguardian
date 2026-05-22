@@ -114,7 +114,7 @@ services:
       - key: SMTP_PASS
         sync: false
       - key: AUTH_OTP_PREVIEW_ENABLED
-        sync: false
+        value: "false"
       - key: SEED_ADMIN_EMAIL
         sync: false
       - key: SEED_ADMIN_PASSWORD
