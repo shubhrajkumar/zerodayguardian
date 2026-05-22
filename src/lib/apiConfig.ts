@@ -35,11 +35,15 @@ const BUILD_PY_API_PUBLIC_URL = normalizeBaseUrl(
 );
 
 export const API_BASE_URL = (() => {
-  const runtimeProcessBase = normalizeBaseUrl(readProcessEnv("VITE_API_URL") || readProcessEnv("BACKEND_PUBLIC_URL"));
+  const runtimeProcessBase = normalizeBaseUrl(
+    readProcessEnv("VITE_API_URL") || readProcessEnv("VITE_API_BASE_URL") || readProcessEnv("BACKEND_PUBLIC_URL")
+  );
   if (runtimeProcessBase) return runtimeProcessBase;
   const explicitBase = normalizeBaseUrl(String(import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || ""));
   if (explicitBase) return explicitBase;
-  const runtimeWindowBase = normalizeBaseUrl(readWindowEnv("VITE_API_URL") || readWindowEnv("BACKEND_PUBLIC_URL"));
+  const runtimeWindowBase = normalizeBaseUrl(
+    readWindowEnv("VITE_API_URL") || readWindowEnv("VITE_API_BASE_URL") || readWindowEnv("BACKEND_PUBLIC_URL")
+  );
   if (runtimeWindowBase) return runtimeWindowBase;
   if (BUILD_BACKEND_PUBLIC_URL) return BUILD_BACKEND_PUBLIC_URL;
   return DEFAULT_RENDER_BACKEND_URL;

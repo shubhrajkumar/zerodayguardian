@@ -3,7 +3,7 @@ import { Eye, EyeOff, Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
-import { hasConfiguredApiBase, resolveBackendUrl } from "@/lib/apiConfig";
+import { API_BASE_URL, hasConfiguredApiBase, resolveBackendUrl } from "@/lib/apiConfig";
 import { ApiError, apiGetJson, apiPostJson, resolvePublicApiUrl, setStoredAccessToken } from "@/lib/apiClient";
 import { applyReferralSignup, findReferrerByCode } from "@/lib/firestoreGrowth";
 
@@ -190,9 +190,11 @@ const AuthPage = () => {
   const backendHint = useMemo(() => {
     if (canUseGoogleOauth) return "";
     if (hasRuntimeApiBase) return `Backend target: ${configuredAuthProvidersUrl}`;
-    if (isHostedRuntime) return "Production note: this frontend needs BACKEND_PUBLIC_URL or VITE_API_BASE_URL pointing at the live backend.";
+    if (isHostedRuntime) {
+      return `Production note: this frontend needs BACKEND_PUBLIC_URL or VITE_API_BASE_URL pointing at the live backend. Current target is ${API_BASE_URL}`;
+    }
     return "";
-  }, [canUseGoogleOauth]);
+  }, [API_BASE_URL, canUseGoogleOauth]);
 
   const signupPasswordStrength = useMemo(() => {
     let score = 0;
@@ -248,8 +250,10 @@ const AuthPage = () => {
     if (error.code === "otp_not_requested") return "Request a reset OTP first, then enter it here.";
     if (error.code === "otp_expired") return "That OTP has expired. Request a fresh one and try again.";
     if (error.code === "invalid_otp") return "That OTP doesn't match. Double-check the code and try again.";
-    if (error.code === "mail_not_configured") return "Password reset email is temporarily unavailable. Please try again shortly.";
-    if (error.code === "mail_delivery_failed") return "We couldn't send the reset email right now. Please try again shortly.";
+    if (error.code === "mail_not_configured")
+      return "Password reset email is not configured on the backend. Set AUTH_EMAIL_ENABLED and AUTH_EMAIL_APP_PASSWORD, or enable AUTH_OTP_PREVIEW_ENABLED for preview OTP in your deployment.";
+    if (error.code === "mail_delivery_failed")
+      return "Password reset email could not be sent. Confirm SMTP / email environment variables, then retry.";
     if (error.code === "backend_starting") return "Backend auth service is starting. Retry in a minute, then request the OTP again.";
     if (error.code === "db_unavailable_auth") return "Password reset is unavailable because the backend database is not connected.";
     return error.message || fallback;

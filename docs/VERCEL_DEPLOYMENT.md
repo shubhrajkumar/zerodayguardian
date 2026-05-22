@@ -61,6 +61,12 @@ GOOGLE_REDIRECT_URI=https://zerodayguardian-backend.onrender.com/auth/google/cal
 SESSION_SECRET=<strong-random-secret>
 JWT_SECRET=<strong-random-jwt-secret>
 DATABASE_URL=<your-mongodb-connection-string>
+AUTH_EMAIL_ENABLED=true
+AUTH_EMAIL_USER=<smtp-username>
+AUTH_EMAIL_APP_PASSWORD=<smtp-app-password>
+AUTH_EMAIL_FROM="ZeroDay Guardian <no-reply@yourdomain.com>"
+# Optional: enable OTP preview mode for password reset when SMTP is not configured
+AUTH_OTP_PREVIEW_ENABLED=true
 ```
 
 If the Node backend needs to bridge to a separate Python service:
