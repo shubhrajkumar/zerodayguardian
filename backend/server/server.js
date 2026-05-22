@@ -8,6 +8,7 @@ import { connectDb, closeDb } from "../src/config/db.mjs";
 import { connectRedis, closeRedis } from "../src/config/redis.mjs";
 import { validateLlmStartupConfig, verifyLlmConnection } from "../src/services/llmService.mjs";
 import { startNewsIngestionScheduler, stopNewsIngestionScheduler } from "../src/services/newsService.mjs";
+import { seedDefaults } from "../src/seed/seedDefaults.mjs";
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.NEUROBOT_PORT || env.port || 8787);
@@ -62,6 +63,14 @@ const bootstrap = async () => {
   if (env.mongoUri && env.mongo) {
     try {
       await connectDb();
+      // Auto-seed default admin user if it doesn't exist.
+      // Safe to call every startup — skips existing users.
+      // Set SEED_SKIP=true env var to disable auto-seeding.
+      if (process.env.SEED_SKIP !== "true") {
+        await seedDefaults({ adminOnly: true }).catch((seedErr) => {
+          logWarn("Auto-seed failed (non-blocking)", { error: String(seedErr?.message || seedErr) });
+        });
+      }
     } catch (error) {
       logError("Database startup failed; continuing with auth database unavailable", error, {
         code: String(error?.code || ""),
