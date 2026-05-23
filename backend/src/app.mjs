@@ -377,7 +377,14 @@ export const createApp = () => {
       ts: new Date().toISOString(),
     });
   });
-  app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+  app.get("/api/health", (_req, res) =>
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      environment: env.nodeEnv,
+      uptime: Math.floor(process.uptime()),
+    })
+  );
   app.get("/api/health/chatbot", async (req, res) => {
     const startedAt = Date.now();
     const websocket = isChatStreamAvailable(app);

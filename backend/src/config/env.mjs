@@ -282,6 +282,8 @@ const knownFrontendOrigins = uniqueList(
       process.env.GOOGLE_AUTHORIZED_ORIGINS,
       "https://zerodayguardian.vercel.app",
       "https://zeroday-guardian.vercel.app",
+      "https://zerodayguardian-delta.vercel.app",
+      "https://zerodayguardian-zero-day-guardian.vercel.app",
     ]
       .filter(Boolean)
       .join(",")
