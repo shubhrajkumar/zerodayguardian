@@ -129,7 +129,7 @@ const fadeSlideUp = {
   initial: { opacity: 0, y: 16, scale: 0.98 },
   animate: { opacity: 1, y: 0, scale: 1 },
   exit: { opacity: 0, y: -8, scale: 0.97 },
-  transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+  transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 };
 
 const AuthPage = () => {
@@ -158,7 +158,6 @@ const AuthPage = () => {
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [otpExpired, setOtpExpired] = useState(false);
   const [otpPreviewCode, setOtpPreviewCode] = useState("");
-  const [showPreviewOtp, setShowPreviewOtp] = useState(false);
 
   // Google state
   const [googleClientId, setGoogleClientId] = useState("");
@@ -235,7 +234,7 @@ const AuthPage = () => {
       return `Production note: this frontend needs BACKEND_PUBLIC_URL or VITE_API_BASE_URL pointing at the live backend. Current target is ${API_BASE_URL}`;
     }
     return "";
-  }, [API_BASE_URL, canUseGoogleOauth]);
+  }, [canUseGoogleOauth]);
 
   const signupStrength = useMemo(() => passwordStrengthScore(password), [password]);
   const signupStrengthMeta = useMemo(() => strengthLabel(signupStrength), [signupStrength]);
@@ -339,7 +338,6 @@ const AuthPage = () => {
       setOtpCountdown(expiresInMinutes * 60);
       setOtpExpired(false);
       setOtpPreviewCode(payload.otpPreview || "");
-      setShowPreviewOtp(Boolean(payload.otpPreview));
 
       if (payload.delivery === "preview") {
         toast.info(
@@ -363,7 +361,6 @@ const AuthPage = () => {
       setOtpCountdown(0);
       setOtpExpired(false);
       setOtpPreviewCode("");
-      setShowPreviewOtp(false);
       const message = getResetErrorMessage(error, "Unable to send reset OTP.");
       toast.error(message);
     } finally {
@@ -454,7 +451,6 @@ const AuthPage = () => {
       setOtpCountdown(0);
       setOtpExpired(false);
       setOtpPreviewCode("");
-      setShowPreviewOtp(false);
     }
   };
 
@@ -698,7 +694,7 @@ const AuthPage = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
                 className="mt-3 space-y-2 overflow-hidden"
               >
                 {/* Delivery indicator */}
