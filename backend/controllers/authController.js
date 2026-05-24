@@ -255,8 +255,9 @@ export const resetUserPassword = async (req, res) => {
 
 export const refreshSession = async (req, res) => {
   try {
-    logInfo("Auth refresh request", { requestId: req.requestId || "", hasRefreshCookie: Boolean(req.cookies?.neurobot_rt) });
-    const { user, rememberMe } = await refreshAuth(req.cookies?.neurobot_rt);
+    const refreshToken = req.cookies?.zdg_refresh || req.cookies?.neurobot_rt;
+    logInfo("Auth refresh request", { requestId: req.requestId || "", hasRefreshCookie: Boolean(refreshToken) });
+    const { user, rememberMe } = await refreshAuth(refreshToken);
     const { accessToken } = await setAuthCookies(res, user, { rememberMe });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
     res.json({ status: "ok", user: toPublicUser(user), accessToken });
@@ -271,7 +272,7 @@ export const refreshSession = async (req, res) => {
 export const logout = async (req, res) => {
   try {
     logInfo("Auth logout request", { requestId: req.requestId || "" });
-    await revokeRefreshSession(req.cookies?.neurobot_rt);
+    await revokeRefreshSession(req.cookies?.zdg_refresh || req.cookies?.neurobot_rt);
     clearAuthCookies(res);
     res.status(204).end();
   } catch (error) {
@@ -382,6 +383,32 @@ export const getAuthStatus = async (req, res) => {
       message: error.message || "An unexpected error occurred.",
       requestId: req.requestId || "",
     });
+  }
+};
+
+export const verifyAuth = async (req, res) => {
+  try {
+    if (!req.user?.sub) {
+      res.status(401).json({
+        success: false,
+        error: "Unauthorized",
+        message: "Valid authentication required",
+        requestId: req.requestId || "",
+      });
+      return;
+    }
+
+    const dbUser = await getUserById(req.user.sub).catch(() => null);
+    res.json({
+      success: true,
+      status: "ok",
+      authenticated: true,
+      user: toPublicUser(dbUser) || toTokenBackedUser(req.user),
+      requestId: req.requestId || "",
+    });
+  } catch (error) {
+    logError("Auth verify failed", error, { requestId: req.requestId || "", userId: req.user?.sub || "" });
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 };
 

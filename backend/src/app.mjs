@@ -49,6 +49,7 @@ import { getGoogleAuthConfigStatus } from "../services/security-service/authServ
 
 const COOKIE_NAME = "neurobot_ss";
 const ONE_WEEK = 60 * 60 * 24 * 7;
+const PRODUCTION_FRONTEND_ORIGIN = "https://zerodayguardian-delta.vercel.app";
 const SLOW_API_THRESHOLD_MS = 1500;
 const setProbeNoStore = (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
@@ -269,11 +270,11 @@ export const createApp = () => {
 
   app.use(
     cors({
-      origin: allowCorsOrigin,
+      origin: env.nodeEnv === "production" ? [PRODUCTION_FRONTEND_ORIGIN] : allowCorsOrigin,
       credentials: true,
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Last-Event-ID", "X-Request-Id"],
-      exposedHeaders: ["X-Request-Id"],
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Cookie", "Last-Event-ID", "X-Request-Id"],
+      exposedHeaders: ["Set-Cookie", "X-Request-Id"],
       maxAge: 600,
       optionsSuccessStatus: 204,
     })
@@ -381,8 +382,8 @@ export const createApp = () => {
     res.json({
       status: "ok",
       timestamp: new Date().toISOString(),
-      environment: env.nodeEnv,
-      uptime: Math.floor(process.uptime()),
+      environment: process.env.NODE_ENV,
+      version: "1.0.0",
     })
   );
   app.get("/api/health/chatbot", async (req, res) => {
@@ -583,13 +584,13 @@ export const createApp = () => {
   app.use("/api/users", requireCsrf, requireAuth, mutationRateLimit, userRoutes);
   app.use("/api/notifications", requireCsrf, requireAuth, intelligenceRateLimit, notificationRoutes);
   app.use("/api/scans", requireCsrf, requireAuth, intelligenceRateLimit, scanRoutes);
-  app.use("/api/osint", requireCsrf, osintRateLimit, osintRoutes);
+  app.use("/api/osint", requireCsrf, requireAuth, osintRateLimit, osintRoutes);
   app.use("/api/dashboard", requireCsrf, requireAuth, intelligenceRateLimit, dashboardRoutes);
   app.use("/api/platform", requireCsrf, requireAuth, apiReadRateLimit, platformRoutes);
   app.use("/api/neurobot/chat", chatRateLimit, chatAbuseDetection);
-  app.use("/api/neurobot", requireCsrf, neurobotRateLimit, neurobotRoutes);
+  app.use("/api/neurobot", requireCsrf, requireAuth, neurobotRateLimit, neurobotRoutes);
   app.use("/api/files", requireCsrf, requireAuth, fileUploadRateLimit, fileRoutes);
-  app.use("/api/intelligence", requireCsrf, intelligenceRateLimit, intelligenceRoutes);
+  app.use("/api/intelligence", requireCsrf, requireAuth, intelligenceRateLimit, intelligenceRoutes);
   app.use("/pyapi", requireCsrf, osintRateLimit, pyApiCompatRoutes);
   app.use("/api", (req, res) => {
     res.status(404).json({

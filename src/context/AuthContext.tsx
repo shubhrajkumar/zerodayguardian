@@ -1,5 +1,15 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { apiGetJson, apiPostJson, bootstrapAuthSession, clearAuthState, setStoredAuthState } from "@/lib/apiClient";
+import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
+import {
+  apiGetJson,
+  apiPostJson,
+  bootstrapAuthSession,
+  clearAuthState,
+  getStoredAccessToken,
+  setStoredAccessToken,
+  setStoredAuthState,
+} from "@/lib/apiClient";
+import { firebaseAuth } from "@/lib/firebase";
 
 const MOCK_AUTH_KEY = "zdg_mock_auth";
 const MOCK_USER: AuthUser = {
@@ -21,25 +31,46 @@ export type AuthUser = {
 type AuthContextValue = {
   authState: AuthState;
   loading: boolean;
+  isLoading: boolean;
   isAuthenticated: boolean;
   isVerified: boolean;
   user: AuthUser | null;
+  token: string;
+  login: (payload: { token: string; user: AuthUser }) => void;
   refreshAuth: (force?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const toFirebaseAuthUser = (firebaseUser: FirebaseUser): AuthUser => ({
+  id: firebaseUser.uid,
+  name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Guardian",
+  email: firebaseUser.email || "",
+  role: "user",
+});
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState("");
 
   const syncAuthState = useCallback((nextUser: AuthUser | null) => {
     setUser(nextUser);
+    const storedToken = getStoredAccessToken();
+    setToken(nextUser ? storedToken : "");
     if (!nextUser) clearAuthState();
     else setStoredAuthState({ isAuthenticated: true, user: nextUser, timestamp: Date.now() });
     setAuthState(nextUser ? "authenticated" : "unauthenticated");
     return Boolean(nextUser);
+  }, []);
+
+  const login = useCallback((payload: { token: string; user: AuthUser }) => {
+    setStoredAccessToken(payload.token);
+    setStoredAuthState({ isAuthenticated: true, user: payload.user, timestamp: Date.now() });
+    setToken(payload.token);
+    setUser(payload.user);
+    setAuthState("authenticated");
   }, []);
 
   const refreshAuth = useCallback(async () => {
@@ -52,22 +83,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // localStorage unavailable (SSR / incognito) — fall through to real auth
     }
 
+    if (firebaseAuth?.currentUser) {
+      return syncAuthState(toFirebaseAuthUser(firebaseAuth.currentUser));
+    }
+
     const session = await bootstrapAuthSession();
     if (!session.ok) return syncAuthState(null);
 
     try {
-      const payload = await apiGetJson<{ user?: AuthUser }>("/api/users/profile");
-      return syncAuthState(payload.user ?? null);
+      const payload = await apiGetJson<{ authenticated?: boolean; user?: AuthUser }>("/api/auth/verify");
+      return syncAuthState(payload.authenticated ? payload.user ?? null : null);
     } catch {
       return syncAuthState(null);
     }
   }, [syncAuthState]);
 
   useEffect(() => {
-    refreshAuth().catch(() => syncAuthState(null));
+    if (!firebaseAuth) {
+      refreshAuth().catch(() => syncAuthState(null));
+      return;
+    }
+
+    return onAuthStateChanged(firebaseAuth, (firebaseUser) => {
+      if (firebaseUser) {
+        syncAuthState(toFirebaseAuthUser(firebaseUser));
+        return;
+      }
+      refreshAuth().catch(() => syncAuthState(null));
+    });
   }, [refreshAuth, syncAuthState]);
 
   const logout = useCallback(async () => {
+    if (firebaseAuth?.currentUser) {
+      try {
+        await signOut(firebaseAuth);
+      } catch {
+        // Ignore Firebase logout failures and still clear local state.
+      }
+    }
     try {
       await apiPostJson("/api/auth/logout", {});
     } catch {
@@ -80,13 +133,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     () => ({
       authState,
       loading: authState === "loading",
+      isLoading: authState === "loading",
       isAuthenticated: authState === "authenticated",
       isVerified: Boolean(user),
       user,
+      token,
+      login,
       refreshAuth,
       logout,
     }),
-    [authState, logout, refreshAuth, user]
+    [authState, login, logout, refreshAuth, token, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

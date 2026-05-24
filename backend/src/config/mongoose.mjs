@@ -4,7 +4,7 @@ import { logInfo, logWarn, logError } from "../utils/logger.mjs";
 
 let connected = false;
 const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 2000;
+const RETRY_DELAY_MS = 3000;
 
 const attachConnectionHandlers = () => {
   mongoose.connection.on("connected", () => {
@@ -54,7 +54,7 @@ export const connectMongoose = async (options = {}) => {
         socketTimeoutMS: 30000,
       });
       connected = true;
-      logInfo("Mongoose connected successfully", {
+      logInfo("MongoDB connected successfully", {
         dbName: process.env.MONGODB_DB_NAME || "neurobot",
         attempt,
       });
@@ -75,7 +75,8 @@ export const connectMongoose = async (options = {}) => {
           uri: uri.replace(/\/\/[^:]+:[^@]+@/, "//***:***@"),
           attempts: maxRetries,
         });
-        throw error;
+        if (options.exitOnFailure === false) throw error;
+        process.exit(1);
       }
     }
   }

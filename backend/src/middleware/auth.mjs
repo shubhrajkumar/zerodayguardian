@@ -3,12 +3,15 @@ import { env } from "../config/env.mjs";
 import { logInfo } from "../utils/logger.mjs";
 
 const ACCESS_COOKIE = "neurobot_at";
+const ZDG_ACCESS_COOKIE = "zdg_token";
 
 const sendAuthError = (req, res, status, code, error) => {
   res.status(status).json({
+    success: false,
     status: "error",
     code,
     error,
+    message: status === 401 ? "Valid authentication required" : error,
     requestId: req.requestId || "",
   });
 };
@@ -53,7 +56,7 @@ export const optionalAuth = (req, _res, next) => {
   }
 
   const tokenFromHeader = parseBearerToken(req.headers.authorization);
-  const tokenFromCookie = req.cookies?.[ACCESS_COOKIE];
+  const tokenFromCookie = req.cookies?.[ZDG_ACCESS_COOKIE] || req.cookies?.[ACCESS_COOKIE];
   const tokenFromQuery = parseQueryToken(req.query?.access_token);
   if (!tokenFromHeader && !tokenFromCookie && !tokenFromQuery) {
     req.user = null;
@@ -122,6 +125,8 @@ export const requireAuth = (req, res, next) => {
   }
   next();
 };
+
+export const authenticateToken = requireAuth;
 
 const normalizeRole = (value = "") => String(value || "").trim().toLowerCase();
 

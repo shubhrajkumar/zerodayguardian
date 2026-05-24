@@ -26,13 +26,12 @@ const cookieDomain = LOCALHOST_LIKE_HOSTS.has(derivedCookieDomain) ? "" : derive
 export const usesCrossSiteCookies = Boolean(frontendOrigin && backendOrigin && frontendOrigin !== backendOrigin);
 
 export const buildCookieOptions = (overrides = {}) => {
-  const isProduction = env.nodeEnv === "production";
-  const secure = isProduction ? true : usesCrossSiteCookies;
-  const sameSite = isProduction ? "none" : usesCrossSiteCookies ? "none" : "lax";
   return {
     path: "/",
-    secure,
-    sameSite,
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     ...(cookieDomain ? { domain: cookieDomain } : {}),
     ...overrides,
   };

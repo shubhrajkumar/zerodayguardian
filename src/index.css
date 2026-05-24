@@ -38,6 +38,15 @@
   --theme-overlay: rgba(255, 255, 255, 0.05);
   --theme-overlay-hover: rgba(255, 255, 255, 0.1);
   --theme-glow: rgba(0, 212, 255, 0.15);
+  --zdg-bg: #0a0a0f;
+  --zdg-primary: #00d4ff;
+  --zdg-secondary: #00ff88;
+  --zdg-surface: rgba(255,255,255,0.05);
+  --zdg-border: rgba(0,212,255,0.2);
+  --zdg-text: #e2e8f0;
+  --zdg-muted: #64748b;
+  --zdg-error: #ff4757;
+  --zdg-success: #00ff88;
 }
 
 /* Light Theme */
@@ -93,6 +102,40 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.auth-screen {
+  background: #0a0a0f;
+  color: #e2e8f0;
+  isolation: isolate;
+}
+
+.auth-grid-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.08) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 72%);
+  animation: auth-grid-pan 18s linear infinite;
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32), 0 0 42px rgba(0, 212, 255, 0.08);
+}
+
+@keyframes auth-grid-pan {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 42px 42px, 42px 42px; }
 }
 
 /* ── Theme Transition ── */

@@ -25,6 +25,9 @@ const getCollection = (name) => {
 };
 const ACCESS_COOKIE = "neurobot_at";
 const REFRESH_COOKIE = "neurobot_rt";
+const ZDG_ACCESS_COOKIE = "zdg_token";
+const ZDG_REFRESH_COOKIE = "zdg_refresh";
+const AUTH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const ACCESS_TTL = "15m";
 const REFRESH_TTL = "7d";
 const REFRESH_TTL_LONG = "30d";
@@ -344,11 +347,19 @@ export const setAuthCookies = async (res, user, options = {}) => {
 
   res.cookie(ACCESS_COOKIE, accessToken, {
     ...cookieOptions(),
-    maxAge: 15 * 60 * 1000,
+    maxAge: AUTH_COOKIE_MAX_AGE,
+  });
+  res.cookie(ZDG_ACCESS_COOKIE, accessToken, {
+    ...cookieOptions(),
+    maxAge: AUTH_COOKIE_MAX_AGE,
   });
   res.cookie(REFRESH_COOKIE, refreshToken, {
     ...cookieOptions(),
-    maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000,
+    maxAge: AUTH_COOKIE_MAX_AGE,
+  });
+  res.cookie(ZDG_REFRESH_COOKIE, refreshToken, {
+    ...cookieOptions(),
+    maxAge: AUTH_COOKIE_MAX_AGE,
   });
 
   return { accessToken, refreshToken };
@@ -357,6 +368,8 @@ export const setAuthCookies = async (res, user, options = {}) => {
 export const clearAuthCookies = (res) => {
   res.clearCookie(ACCESS_COOKIE, cookieOptions());
   res.clearCookie(REFRESH_COOKIE, cookieOptions());
+  res.clearCookie(ZDG_ACCESS_COOKIE, cookieOptions());
+  res.clearCookie(ZDG_REFRESH_COOKIE, cookieOptions());
 };
 
 const sanitizeUser = (user) => {

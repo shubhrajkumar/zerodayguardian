@@ -2,6 +2,8 @@ import { toast } from "@/hooks/use-toast";
 import { resolveApiUrl, resolveBackendUrl } from "@/lib/apiConfig";
 import { recordClientDiagnostic, recordRuntimeDebugEvent } from "@/lib/runtimeDiagnostics";
 export const ACCESS_TOKEN_KEY = "neurobot_access_token";
+export const ZDG_ACCESS_TOKEN_KEY = "zdg_token";
+export const ZDG_USER_KEY = "zdg_user";
 const REFRESH_BLOCK_KEY = "neurobot_refresh_block_until";
 const CSRF_TOKEN_KEY = "neurobot_csrf_token";
 
@@ -86,7 +88,7 @@ export const ensureCsrf = async () => {
 
 export const getStoredAccessToken = () => {
   try {
-    return localStorage.getItem(ACCESS_TOKEN_KEY) || "";
+    return localStorage.getItem(ZDG_ACCESS_TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY) || "";
   } catch {
     return "";
   }
@@ -114,6 +116,7 @@ const isStoredAccessTokenExpired = (token: string, skewSeconds = 30) => {
 export const setStoredAccessToken = (token: string) => {
   try {
     if (token) {
+      localStorage.setItem(ZDG_ACCESS_TOKEN_KEY, token);
       localStorage.setItem(ACCESS_TOKEN_KEY, token);
       localStorage.removeItem(REFRESH_BLOCK_KEY);
     }
@@ -124,6 +127,7 @@ export const setStoredAccessToken = (token: string) => {
 
 export const clearStoredAccessToken = () => {
   try {
+    localStorage.removeItem(ZDG_ACCESS_TOKEN_KEY);
     localStorage.removeItem(ACCESS_TOKEN_KEY);
   } catch {
     // ignore storage failures
@@ -175,6 +179,7 @@ export const getStoredAuthState = (): StoredAuthState | null => {
 export const setStoredAuthState = (authData: StoredAuthState): void => {
   try {
     localStorage.setItem("auth_state", JSON.stringify(authData));
+    if (authData.user) localStorage.setItem(ZDG_USER_KEY, JSON.stringify(authData.user));
   } catch (error) {
     logDebugError("[API] Error storing auth state:", error);
   }
@@ -183,6 +188,7 @@ export const setStoredAuthState = (authData: StoredAuthState): void => {
 export const clearAuthState = (): void => {
   try {
     localStorage.removeItem("auth_state");
+    localStorage.removeItem(ZDG_USER_KEY);
     localStorage.removeItem(REFRESH_BLOCK_KEY);
     clearStoredAccessToken();
     setStoredCsrfToken("");
@@ -805,12 +811,18 @@ export const bootstrapAuthSession = async () => {
     if (!token) return { ok: false, reason: "missing_token" as const };
   }
   try {
-    const response = await apiFetch("/api/users/profile", { method: "GET" });
+    const response = await apiFetch("/api/auth/verify", { method: "GET" });
     if (!response.ok) {
       clearStoredAccessToken();
       return { ok: false, reason: "invalid_token" as const };
     }
-    return { ok: true as const };
+    const payload = (await response.clone().json().catch(() => null)) as { authenticated?: boolean; user?: Record<string, unknown> } | null;
+    if (payload?.authenticated && payload.user) {
+      setStoredAuthState({ isAuthenticated: true, user: payload.user, timestamp: Date.now() });
+      return { ok: true as const };
+    }
+    clearStoredAccessToken();
+    return { ok: false, reason: "signed_out" as const };
   } catch {
     clearStoredAccessToken();
     return { ok: false, reason: "network_error" as const };

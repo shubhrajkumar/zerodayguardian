@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { resolvePublicApiUrl } from "@/lib/apiClient";
+import { apiFetch } from "@/lib/apiClient";
 
 type BackendState = "checking" | "online" | "degraded" | "offline";
 
@@ -47,9 +47,8 @@ const BackendStatusBanner = () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);
       try {
-        const response = await fetch(resolvePublicApiUrl("/api/ping"), {
+        const response = await apiFetch("/api/ping", {
           method: "GET",
-          credentials: "include",
           signal: controller.signal,
         });
         clearTimeout(timeout);

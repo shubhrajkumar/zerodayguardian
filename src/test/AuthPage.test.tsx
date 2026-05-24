@@ -8,6 +8,11 @@ import { MemoryRouter } from "react-router-dom";
 const mockNavigate = vi.fn();
 const mockUseSearchParams = vi.fn(() => [new URLSearchParams(), vi.fn()]);
 const mockUseAuth = vi.fn();
+const mockRefreshAuth = vi.fn();
+const mockLogin = vi.fn();
+const mockApiPostJson = vi.fn();
+const mockSetStoredAccessToken = vi.fn();
+const mockSetStoredAuthState = vi.fn();
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -23,8 +28,6 @@ vi.mock("@/context/AuthContext", () => ({
 }));
 
 const mockSignInWithPopup = vi.fn();
-const mockCreateUserWithEmailAndPassword = vi.fn();
-const mockSignInWithEmailAndPassword = vi.fn();
 const mockSendPasswordResetEmail = vi.fn();
 const mockSendEmailVerification = vi.fn();
 
@@ -33,8 +36,6 @@ vi.mock("firebase/auth", () => ({
     setCustomParameters: vi.fn(),
   })),
   signInWithPopup: (...args: unknown[]) => mockSignInWithPopup(...args),
-  createUserWithEmailAndPassword: (...args: unknown[]) => mockCreateUserWithEmailAndPassword(...args),
-  signInWithEmailAndPassword: (...args: unknown[]) => mockSignInWithEmailAndPassword(...args),
   sendPasswordResetEmail: (...args: unknown[]) => mockSendPasswordResetEmail(...args),
   sendEmailVerification: (...args: unknown[]) => mockSendEmailVerification(...args),
 }));
@@ -42,6 +43,12 @@ vi.mock("firebase/auth", () => ({
 vi.mock("@/lib/firebase", () => ({
   firebaseAuth: {} as any,
   isFirebaseConfigured: true,
+}));
+
+vi.mock("@/lib/apiClient", () => ({
+  apiPostJson: (...args: unknown[]) => mockApiPostJson(...args),
+  setStoredAccessToken: (...args: unknown[]) => mockSetStoredAccessToken(...args),
+  setStoredAuthState: (...args: unknown[]) => mockSetStoredAuthState(...args),
 }));
 
 vi.mock("@/components/AnimatedCyberBackground", () => ({
@@ -65,13 +72,18 @@ describe("AuthPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseSearchParams.mockReturnValue([new URLSearchParams(), vi.fn()]);
-    mockUseAuth.mockReturnValue({ user: null, loading: false });
+    mockRefreshAuth.mockResolvedValue(true);
+    mockApiPostJson.mockResolvedValue({
+      user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
+      accessToken: "test-access-token",
+    });
+    mockUseAuth.mockReturnValue({ user: null, loading: false, refreshAuth: mockRefreshAuth, login: mockLogin });
   });
 
   // ── Loading State ──
 
   it("renders loading spinner when auth is loading", () => {
-    mockUseAuth.mockReturnValue({ user: null, loading: true });
+    mockUseAuth.mockReturnValue({ user: null, loading: true, refreshAuth: mockRefreshAuth, login: mockLogin });
     renderAuthPage();
     expect(document.querySelector(".spinner-cyber")).toBeTruthy();
   });
@@ -80,7 +92,7 @@ describe("AuthPage", () => {
 
   it("renders login form by default", () => {
     renderAuthPage();
-    expect(screen.getByText("Sign in to your secure dashboard")).toBeTruthy();
+    expect(screen.getByText("Master Cybersecurity with AI")).toBeTruthy();
     expect(screen.getByLabelText("Email address")).toBeTruthy();
     expect(screen.getByLabelText("Password")).toBeTruthy();
     expect(screen.getByText("Sign In")).toBeTruthy();
@@ -96,7 +108,7 @@ describe("AuthPage", () => {
     renderAuthPage();
     expect(screen.getByText("ZeroDay")).toBeTruthy();
     expect(screen.getByText("Guardian")).toBeTruthy();
-    expect(screen.getByText(/Protected by end-to-end encryption/)).toBeTruthy();
+    expect(screen.getByText(/Secure/)).toBeTruthy();
   });
 
   it("renders forgot password link in login mode", () => {
@@ -114,6 +126,8 @@ describe("AuthPage", () => {
     mockUseAuth.mockReturnValue({
       user: { id: "1", name: "Test", email: "test@example.com", role: "user" },
       loading: false,
+      refreshAuth: mockRefreshAuth,
+      login: mockLogin,
     });
     renderAuthPage();
     expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
@@ -124,7 +138,7 @@ describe("AuthPage", () => {
   it("switches to register mode showing confirm password", async () => {
     renderAuthPage();
     await userEvent.click(screen.getByText("Sign up"));
-    expect(screen.getByText("Create your security command center")).toBeTruthy();
+    expect(screen.getByText("Master Cybersecurity with AI")).toBeTruthy();
     expect(screen.getByLabelText("Confirm password")).toBeTruthy();
     expect(screen.getByText("Create Account")).toBeTruthy();
     expect(screen.getByText("Already have an account?")).toBeTruthy();
@@ -159,7 +173,7 @@ describe("AuthPage", () => {
     renderAuthPage();
     await userEvent.click(screen.getByText("Forgot your password?"));
     await userEvent.click(screen.getByText("Back to sign in"));
-    expect(screen.getByText("Sign in to your secure dashboard")).toBeTruthy();
+    expect(screen.getByText("Master Cybersecurity with AI")).toBeTruthy();
     expect(screen.getByLabelText("Password")).toBeTruthy();
   });
 
@@ -180,17 +194,19 @@ describe("AuthPage", () => {
 
   it("shows error for short password", async () => {
     renderAuthPage();
+    await userEvent.click(screen.getByText("Sign up"));
     await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
     await userEvent.type(screen.getByLabelText("Password"), "ab");
-    await userEvent.click(screen.getByText("Sign In"));
-    expect(screen.getByText("Password must be at least 6 characters")).toBeTruthy();
+    await userEvent.type(screen.getByLabelText("Confirm password"), "ab");
+    await userEvent.click(screen.getByText("Create Account"));
+    expect(screen.getByText("Password must be at least 10 characters")).toBeTruthy();
   });
 
   it("shows error when passwords do not match in register mode", async () => {
     renderAuthPage();
     await userEvent.click(screen.getByText("Sign up"));
     await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.type(screen.getByLabelText("Confirm password"), "different");
     await userEvent.click(screen.getByText("Create Account"));
     expect(screen.getByText("Passwords do not match")).toBeTruthy();
@@ -198,29 +214,29 @@ describe("AuthPage", () => {
 
   // ── Login Form Submit ──
 
-  it("calls signInWithEmailAndPassword on login submit", async () => {
-    mockSignInWithEmailAndPassword.mockResolvedValue({ user: { uid: "123" } });
+  it("calls backend login on login submit", async () => {
     renderAuthPage();
     await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByText("Sign In"));
     await waitFor(() => {
-      expect(mockSignInWithEmailAndPassword).toHaveBeenCalledWith(
-        expect.any(Object),
-        "test@example.com",
-        "password123"
-      );
+      expect(mockApiPostJson).toHaveBeenCalledWith("/api/auth/login", {
+        email: "test@example.com",
+        password: "Password123!",
+        rememberMe: true,
+      });
     });
+    expect(mockSetStoredAccessToken).toHaveBeenCalledWith("test-access-token");
     expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
   });
 
   it("disables inputs and shows spinner while loading", async () => {
-    mockSignInWithEmailAndPassword.mockImplementation(
+    mockApiPostJson.mockImplementation(
       () => new Promise((resolve) => setTimeout(() => resolve({ user: { uid: "123" } }), 500))
     );
     renderAuthPage();
     await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByText("Sign In"));
 
     expect(screen.getByText("Signing in...")).toBeTruthy();
@@ -231,14 +247,14 @@ describe("AuthPage", () => {
 
   // ── Error Handling ──
 
-  it("displays firebase auth error messages", async () => {
-    mockSignInWithEmailAndPassword.mockRejectedValue({
+  it("displays auth error messages", async () => {
+    mockApiPostJson.mockRejectedValue({
       code: "auth/user-not-found",
       message: "User not found",
     });
     renderAuthPage();
     await userEvent.type(screen.getByLabelText("Email address"), "unknown@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByText("Sign In"));
     await waitFor(() => {
       expect(screen.getByText("No account with this email")).toBeTruthy();
@@ -246,13 +262,13 @@ describe("AuthPage", () => {
   });
 
   it("displays generic error for unknown error codes", async () => {
-    mockSignInWithEmailAndPassword.mockRejectedValue({
+    mockApiPostJson.mockRejectedValue({
       code: "auth/unknown",
       message: "Something went wrong",
     });
     renderAuthPage();
     await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByText("Sign In"));
     await waitFor(() => {
       expect(screen.getByText("Something went wrong")).toBeTruthy();
@@ -261,20 +277,19 @@ describe("AuthPage", () => {
 
   // ── Register Flow ──
 
-  it("calls createUser and sendEmailVerification on register", async () => {
-    mockCreateUserWithEmailAndPassword.mockResolvedValue({
-      user: { uid: "123" },
-    });
-    mockSendEmailVerification.mockResolvedValue(undefined);
+  it("calls backend signup on register", async () => {
     renderAuthPage();
     await userEvent.click(screen.getByText("Sign up"));
     await userEvent.type(screen.getByLabelText("Email address"), "new@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "password123");
-    await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
+    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "Password123!");
     await userEvent.click(screen.getByText("Create Account"));
     await waitFor(() => {
-      expect(mockCreateUserWithEmailAndPassword).toHaveBeenCalled();
-      expect(mockSendEmailVerification).toHaveBeenCalled();
+      expect(mockApiPostJson).toHaveBeenCalledWith("/api/auth/signup", {
+        name: "new",
+        email: "new@example.com",
+        password: "Password123!",
+      });
       // "Account created" appears in both inline success and toast
       expect(screen.getAllByText(/Account created/).length).toBeGreaterThanOrEqual(1);
     });
@@ -358,12 +373,12 @@ describe("AuthPage", () => {
 
   it("shows correct loading text per mode", async () => {
     // Login mode
-    mockSignInWithEmailAndPassword.mockImplementation(
+    mockApiPostJson.mockImplementation(
       () => new Promise(() => {}) // never resolves
     );
     renderAuthPage();
     await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByText("Sign In"));
     expect(screen.getByText("Signing in...")).toBeTruthy();
   });

@@ -45,8 +45,8 @@ const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
 
-const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "https://zerodayguardian.vercel.app").replace(/\/+$/, "");
-const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/placeholder.svg`;
+const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "").replace(/\/+$/, "");
+const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-image.png`;
 const SUPPORT_EMAIL = "ksubhraj28@gmail.com";
 
 const shouldRetryRequest = (failureCount: number, error: unknown) => {
@@ -241,7 +241,7 @@ const RouteSeo = () => {
       <meta property="og:site_name" content="ZeroDay Guardian" />
       <meta property="og:url" content={canonical} />
       <meta property="og:image" content={DEFAULT_OG_IMAGE} />
-      <meta property="og:image:alt" content="ZeroDay Guardian cyber-AI platform" />
+      <meta property="og:image:alt" content="ZeroDay Guardian - AI Cybersecurity Platform" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={seo.title} />
       <meta name="twitter:description" content={seo.description} />
@@ -308,26 +308,26 @@ type AppRouteDefinition = {
 
 const appRoutes: AppRouteDefinition[] = [
   { path: "/", component: IndexPage },
-  { path: "/tools", component: ToolsPage },
-  { path: "/tools/:id", component: ToolDetail },
-  { path: "/learn", component: LearnPage },
-  { path: "/program", component: ProgramPage },
-  { path: "/assistant", component: AssistantPage },
+  { path: "/tools", component: ToolsPage, requiresAuth: true },
+  { path: "/tools/:id", component: ToolDetail, requiresAuth: true },
+  { path: "/learn", component: LearnPage, requiresAuth: true },
+  { path: "/program", component: ProgramPage, requiresAuth: true },
+  { path: "/assistant", component: AssistantPage, requiresAuth: true },
   { path: "/program/day/:day", component: ProgramLabPage, requiresAuth: true },
-  { path: "/lab", component: LabPage },
-  { path: "/blog", component: BlogPage },
-  { path: "/blog/:slug", component: BlogDetail },
-  { path: "/resources", component: ResourcesPage },
-  { path: "/community", component: CommunityPage },
+  { path: "/lab", component: LabPage, requiresAuth: true },
+  { path: "/blog", component: BlogPage, requiresAuth: true },
+  { path: "/blog/:slug", component: BlogDetail, requiresAuth: true },
+  { path: "/resources", component: ResourcesPage, requiresAuth: true },
+  { path: "/community", component: CommunityPage, requiresAuth: true },
   { path: "/osint", component: OsintPage, requiresAuth: true },
-  { path: "/osint/share/:shareId", component: OsintSharePage },
-  { path: "/about", component: AboutPage },
-  { path: "/privacy", component: PrivacyPage },
-  { path: "/terms", component: TermsPage },
-  { path: "/contact", component: ContactPage },
+  { path: "/osint/share/:shareId", component: OsintSharePage, requiresAuth: true },
+  { path: "/about", component: AboutPage, requiresAuth: true },
+  { path: "/privacy", component: PrivacyPage, requiresAuth: true },
+  { path: "/terms", component: TermsPage, requiresAuth: true },
+  { path: "/contact", component: ContactPage, requiresAuth: true },
   { path: "/auth", component: AuthPage },
-  { path: "/verify-email", component: VerifyEmailPage },
-  { path: "/u/:handle", component: PublicProfilePage },
+  { path: "/verify-email", component: VerifyEmailPage, requiresAuth: true },
+  { path: "/u/:handle", component: PublicProfilePage, requiresAuth: true },
   { path: "/security", component: SecuritySettingsPage, requiresAuth: true },
   { path: "/dashboard", component: DashboardPage, requiresAuth: true },
 ];
