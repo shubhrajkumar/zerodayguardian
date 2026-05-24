@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { visualizer } from "rollup-plugin-visualizer";
 
 const trimTrailingSlash = (value = "") => String(value || "").replace(/\/+$/, "");
 
@@ -47,7 +48,16 @@ export default defineConfig(() => {
         overlay: false,
       },
     },
-    plugins: [react()],
+    plugins: [
+      react(),
+      visualizer({
+        filename: "dist/stats-treemap.html",
+        template: "treemap",
+        gzipSize: true,
+        brotliSize: true,
+        open: false,
+      }),
+    ],
     define: {
       __BACKEND_PUBLIC_URL__: JSON.stringify(backendPublicUrl),
       __PY_API_PUBLIC_URL__: JSON.stringify(pyApiPublicUrl),
@@ -62,18 +72,28 @@ export default defineConfig(() => {
       target: "es2020",
       sourcemap: false,
       reportCompressedSize: false,
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
           manualChunks(id) {
             if (!id.includes("node_modules")) return;
             if (id.includes("react-router") || id.includes("@remix-run")) return "router-vendor";
             if (id.includes("react-helmet-async") || id.includes("react-hot-toast") || id.includes("sonner")) return "react-ui-vendor";
+            if (id.includes("lucide-react")) return "icons-vendor";
+            if (id.includes("react-day-picker")) return "datepicker-vendor";
+            if (id.includes("react-hook-form") || id.includes("@hookform")) return "forms-vendor";
+            if (id.includes("react-window")) return "virtual-vendor";
             if (id.includes("react") || id.includes("scheduler")) return "react-vendor";
             if (id.includes("@tanstack") || id.includes("react-query")) return "query-vendor";
             if (id.includes("firebase")) return "firebase-vendor";
             if (id.includes("framer-motion")) return "motion-vendor";
             if (id.includes("recharts")) return "charts-vendor";
-            if (id.includes("lucide-react") || id.includes("@radix-ui")) return "ui-vendor";
+            if (id.includes("@radix-ui")) return "ui-vendor";
+            if (id.includes("canvas-confetti")) return "confetti-vendor";
+            if (id.includes("date-fns")) return "date-vendor";
+            if (id.includes("zod")) return "validation-vendor";
+            if (id.includes("cmdk")) return "command-vendor";
+            if (id.includes("html2canvas") || id.includes("embla-carousel")) return "ui-utils-vendor";
           },
         },
       },

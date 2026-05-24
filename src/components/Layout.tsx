@@ -38,8 +38,8 @@ const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#070b11]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(96,165,250,0.08),transparent_26%),radial-gradient(circle_at_82%_8%,rgba(148,163,184,0.06),transparent_22%),linear-gradient(180deg,#070b11_0%,#0b1018_48%,#070b11_100%)]" />
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden" style={{ backgroundColor: "var(--theme-bg)" }}>
+      <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: "radial-gradient(circle at 18% 12%, rgba(96,165,250,0.08), transparent 26%), radial-gradient(circle at 82% 8%, rgba(148,163,184,0.06), transparent 22%), linear-gradient(180deg, var(--theme-bg) 0%, color-mix(in srgb, var(--theme-bg) 60%, var(--theme-accent-blue) 5%) 48%, var(--theme-bg) 100%)" }} />
       {showAmbientVisuals ? (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <Suspense fallback={null}>

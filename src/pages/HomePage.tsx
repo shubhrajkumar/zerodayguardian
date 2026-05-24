@@ -37,14 +37,14 @@ const HomePage = () => {
   );
 
   return (
-    <div className="ui-shell relative min-h-[calc(100vh-4rem)] overflow-hidden bg-[#0a0a0f]">
+    <div className="ui-shell relative min-h-[calc(100vh-4rem)] overflow-hidden" style={{ backgroundColor: "var(--theme-bg)" }}>
       <Seo
         title="ZeroDay Guardian | The One Line of Defense"
         description="AI-guided cybersecurity platform with real progress, referrals, public profiles, mission streaks, and ZORVIX assistance."
         path="/"
       />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,102,255,0.14),transparent_22%),radial-gradient(circle_at_80%_18%,rgba(0,255,136,0.08),transparent_20%),linear-gradient(180deg,#0a0a0f_0%,#10101a_100%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:44px_44px] opacity-20" />
+      <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: "radial-gradient(circle at top, color-mix(in srgb, var(--theme-accent-blue) 14%, transparent), transparent 22%), radial-gradient(circle at 80% 18%, color-mix(in srgb, var(--theme-accent-green) 8%, transparent), transparent 20%), linear-gradient(180deg, var(--theme-bg) 0%, color-mix(in srgb, var(--theme-bg) 80%, var(--theme-accent-blue) 10%) 100%)" }} />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.12]" style={{ background: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)", backgroundSize: "44px 44px" }} />
 
       <motion.div
         className="pointer-events-none absolute inset-x-0 top-[-18%] mx-auto h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(circle,rgba(0,102,255,0.18)_0%,rgba(0,255,136,0.1)_36%,transparent_70%)] blur-3xl"

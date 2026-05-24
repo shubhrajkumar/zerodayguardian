@@ -1,6 +1,14 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { apiGetJson, apiPostJson, bootstrapAuthSession, clearAuthState, setStoredAuthState } from "@/lib/apiClient";
 
+const MOCK_AUTH_KEY = "zdg_mock_auth";
+const MOCK_USER: AuthUser = {
+  id: "mock-user-1",
+  name: "Test Guardian",
+  email: "test@zerodayguardian.com",
+  role: "user",
+};
+
 type AuthState = "loading" | "authenticated" | "unauthenticated";
 
 export type AuthUser = {
@@ -12,6 +20,7 @@ export type AuthUser = {
 
 type AuthContextValue = {
   authState: AuthState;
+  loading: boolean;
   isAuthenticated: boolean;
   isVerified: boolean;
   user: AuthUser | null;
@@ -34,6 +43,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refreshAuth = useCallback(async () => {
+    try {
+      if (localStorage.getItem(MOCK_AUTH_KEY) === "true") {
+        syncAuthState(MOCK_USER);
+        return true;
+      }
+    } catch {
+      // localStorage unavailable (SSR / incognito) — fall through to real auth
+    }
+
     const session = await bootstrapAuthSession();
     if (!session.ok) return syncAuthState(null);
 
@@ -61,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo<AuthContextValue>(
     () => ({
       authState,
+      loading: authState === "loading",
       isAuthenticated: authState === "authenticated",
       isVerified: Boolean(user),
       user,

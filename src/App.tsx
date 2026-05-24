@@ -7,8 +7,9 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
 import ErrorBoundary from "./components/ErrorBoundary";
 import FirebaseStatusBadge from "./components/FirebaseStatusBadge";
 import Layout from "./components/Layout";
-import RewardExperience from "./components/platform/RewardExperience";
 import RequireAuth from "./components/RequireAuth";
+
+const RewardExperience = lazy(() => import("./components/platform/RewardExperience"));
 import { clearAnonymousClientState } from "./lib/apiClient";
 import { UserProgressProvider, useUserProgress } from "./context/UserProgressContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -406,6 +407,7 @@ const AppShell = () => {
                   },
                 }}
               />
+              <div id="toast-container" className="toast-container" />
             </BrowserRouter>
           </AdaptiveMentorProvider>
         </LearningModeProvider>
