@@ -6,9 +6,11 @@ const ACCESS_COOKIE = "neurobot_at";
 
 const sendAuthError = (req, res, status, code, error) => {
   res.status(status).json({
+    error: "Unauthorized",
+    message: "Valid token required",
     status: "error",
     code,
-    error,
+    technicalError: error,
     requestId: req.requestId || "",
   });
 };

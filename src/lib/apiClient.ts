@@ -419,17 +419,20 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
     bearerPreview: bearer ? "Bearer " + bearer.substring(0, 8) + "..." : "none"
   });
 
-  const headers = {
+  const getHeaders = (currentBearer: string) => ({
     ...(init.headers || {}),
     "X-Request-Id": requestId,
     ...(csrf && !["GET", "HEAD", "OPTIONS"].includes(method) ? { "X-CSRF-Token": csrf } : {}),
-    ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
-  };
+    ...(currentBearer ? { Authorization: `Bearer ${currentBearer}` } : {}),
+  });
 
-  const request = () =>
-    fetch(requestUrl, { ...init, headers, credentials: "include", signal: isAuthMe ? meAbortController.signal : init.signal });
-  const execute = async () => {
-    const response = await request();
+  const execute = async (currentBearer: string) => {
+    const response = await fetch(requestUrl, {
+      ...init,
+      headers: getHeaders(currentBearer),
+      credentials: "include",
+      signal: isAuthMe ? meAbortController.signal : init.signal,
+    });
     const duration = Date.now() - startTime;
     logDebug(`[API] ${method} ${requestUrl} - Response: ${response.status} (${duration}ms)`);
     recordRuntimeDebugEvent({
@@ -443,12 +446,12 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
 
   let response = isAuthMe
     ? await (() => {
-      meRequestInFlight = execute().finally(() => {
+      meRequestInFlight = execute(bearer).finally(() => {
         meRequestInFlight = null;
       });
       return meRequestInFlight;
     })()
-    : await execute();
+    : await execute(bearer);
 
   let attempt = 1;
   while (attempt < maxAttempts && AUTO_RETRY_STATUS.has(response.status)) {
@@ -461,7 +464,7 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
       metadata: { requestId, attempt, backoffMs, status: response.status },
     });
     await sleep(backoffMs);
-    response = await execute();
+    response = await execute(getStoredAccessToken() || bearer);
     attempt += 1;
   }
 
@@ -498,15 +501,7 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
       logDebug(`[API] ${method} ${requestUrl} - Refresh succeeded without stored bearer, returning 401`);
       return response;
     }
-    response = await fetch(requestUrl, {
-      ...init,
-      headers: {
-        ...headers,
-        Authorization: `Bearer ${refreshedBearer}`,
-      },
-      credentials: "include",
-      signal: isAuthMe ? meAbortController.signal : init.signal,
-    });
+    response = await execute(refreshedBearer);
   }
 
   if (response.status !== 401 || url.startsWith("/api/auth/")) return response;
@@ -521,7 +516,7 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   }
 
   logDebug(`[API] ${method} ${requestUrl} - Session refreshed, retrying request`);
-  response = await request();
+  response = await execute(getStoredAccessToken() || bearer);
   if (response.status === 401) {
     logDebug(`[API] ${method} ${requestUrl} - Still 401 after refresh, redirecting to auth`);
     clearStoredAccessToken();

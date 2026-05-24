@@ -848,7 +848,13 @@ router.post("/preferences", validateBody(preferencesSchema), async (req, res, ne
 
 router.get("/memory/summary", async (req, res, next) => {
   try {
-    const userId = req.user?.sub || null;
+    if (!req.user || !req.user.sub) {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "Valid token required"
+      });
+    }
+    const userId = req.user.sub;
     const sessionId = req.neurobotSessionId || null;
     const snapshot = await getUserMemorySnapshot({ userId, sessionId });
     const stats = await getMemoryStats({ userId, sessionId });
