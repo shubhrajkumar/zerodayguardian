@@ -155,9 +155,9 @@ export const signup = async (req, res) => {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth signup request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
     const user = await registerUser(req.validatedBody);
-    const { accessToken } = await setAuthCookies(res, user);
+    const { accessToken, refreshToken } = await setAuthCookies(res, user);
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.status(201).json({ status: "ok", user: toPublicUser(user), accessToken });
+    res.status(201).json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: error?.code || "signup_failed" });
     logError("Auth signup failed", error, { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -186,9 +186,9 @@ export const login = async (req, res) => {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth login request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
     const user = await loginUser(req.validatedBody);
-    const { accessToken } = await setAuthCookies(res, user, { rememberMe: req.validatedBody.rememberMe === true });
+    const { accessToken, refreshToken } = await setAuthCookies(res, user, { rememberMe: req.validatedBody.rememberMe === true });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.json({ status: "ok", user: toPublicUser(user), accessToken });
+    res.json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
     const normalized = mapAuthDependencyError(error);
     await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: normalized?.code || "login_failed" });
@@ -202,9 +202,9 @@ export const googleLogin = async (req, res) => {
     await assertAuthAttemptAllowed({ req, identifier: "google-oauth" });
     logInfo("Auth Google login request", { requestId: req.requestId || "" });
     const user = await authenticateGoogleUser({ idToken: req.validatedBody?.credential });
-    const { accessToken } = await setAuthCookies(res, user, { rememberMe: true });
+    const { accessToken, refreshToken } = await setAuthCookies(res, user, { rememberMe: true });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.json({ status: "ok", user: toPublicUser(user), accessToken });
+    res.json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: "google-oauth", reason: error?.code || "google_login_failed" });
     logError("Auth Google login failed", error, { requestId: req.requestId || "" });
@@ -243,9 +243,9 @@ export const resetUserPassword = async (req, res) => {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth reset password request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
     const user = await resetPassword(req.validatedBody);
-    const { accessToken } = await setAuthCookies(res, user);
+    const { accessToken, refreshToken } = await setAuthCookies(res, user);
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.json({ status: "ok", message: "Password reset successful", user: toPublicUser(user), accessToken });
+    res.json({ status: "ok", message: "Password reset successful", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: error?.code || "reset_password_failed" });
     logError("Auth reset password failed", error, { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -255,12 +255,12 @@ export const resetUserPassword = async (req, res) => {
 
 export const refreshSession = async (req, res) => {
   try {
-    const refreshToken = req.cookies?.zdg_refresh || req.cookies?.neurobot_rt;
-    logInfo("Auth refresh request", { requestId: req.requestId || "", hasRefreshCookie: Boolean(refreshToken) });
+    const refreshToken = req.validatedBody?.refreshToken || req.cookies?.zdg_refresh || req.cookies?.neurobot_rt;
+    logInfo("Auth refresh request", { requestId: req.requestId || "", hasRefreshCookie: Boolean(refreshToken), hasRefreshBody: Boolean(req.validatedBody?.refreshToken) });
     const { user, rememberMe } = await refreshAuth(refreshToken);
-    const { accessToken } = await setAuthCookies(res, user, { rememberMe });
+    const { accessToken, refreshToken: newRefreshToken } = await setAuthCookies(res, user, { rememberMe });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.json({ status: "ok", user: toPublicUser(user), accessToken });
+    res.json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken: newRefreshToken });
   } catch (error) {
     const normalizedError = normalizeRefreshError(error);
     await safeRecordAuthFailure({ req, identifier: req.ip || "refresh", reason: normalizedError?.code || "refresh_failed" });

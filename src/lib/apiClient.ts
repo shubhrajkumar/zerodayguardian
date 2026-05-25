@@ -6,6 +6,7 @@ export const ZDG_ACCESS_TOKEN_KEY = "zdg_token";
 export const ZDG_USER_KEY = "zdg_user";
 const REFRESH_BLOCK_KEY = "neurobot_refresh_block_until";
 const CSRF_TOKEN_KEY = "neurobot_csrf_token";
+export const ZDG_REFRESH_TOKEN_KEY = "zdg_refresh";
 
 const verboseApiLogging =
   import.meta.env.DEV ||
@@ -94,6 +95,14 @@ export const getStoredAccessToken = () => {
   }
 };
 
+export const getStoredRefreshToken = () => {
+  try {
+    return localStorage.getItem(ZDG_REFRESH_TOKEN_KEY) || "";
+  } catch {
+    return "";
+  }
+};
+
 const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
   try {
     const [, payload = ""] = String(token || "").split(".");
@@ -125,10 +134,21 @@ export const setStoredAccessToken = (token: string) => {
   }
 };
 
+export const setStoredRefreshToken = (token: string) => {
+  try {
+    if (token) {
+      localStorage.setItem(ZDG_REFRESH_TOKEN_KEY, token);
+    }
+  } catch {
+    // ignore storage failures
+  }
+};
+
 export const clearStoredAccessToken = () => {
   try {
     localStorage.removeItem(ZDG_ACCESS_TOKEN_KEY);
     localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(ZDG_REFRESH_TOKEN_KEY);
   } catch {
     // ignore storage failures
   }
@@ -154,10 +174,11 @@ export const clearAnonymousClientState = () => {
 };
 
 // Enhanced authentication state management
-type StoredAuthState = {
+export type StoredAuthState = {
   isAuthenticated: boolean;
   user?: Record<string, unknown>;
   timestamp?: number;
+  accessToken?: string; 
 };
 
 export const getStoredAuthState = (): StoredAuthState | null => {
@@ -349,18 +370,22 @@ const tryRefreshSession = async () => {
         }
         if (response.status === 404) continue;
         if (response.ok) {
-          const payload = (await response.json()) as { accessToken?: string };
-          if (payload?.accessToken) setStoredAccessToken(payload.accessToken);
-          else setRefreshBlockFor(30_000);
-        } else if (response.status === 401 || response.status === 403) {
-          clearAuthState();
-          setRefreshBlockFor(5 * 60_000);
-        } else if (response.status >= 500) {
-          setRefreshBlockFor(30_000);
-        }
-        return response.ok;
-      }
-      clearAuthState();
+     const payload = (await response.json()) as { accessToken?: string; refreshToken?: string };
+           if (payload?.accessToken && payload?.refreshToken) {
+             setStoredAccessToken(payload.accessToken);
+             setStoredRefreshToken(payload.refreshToken);
+           } else {
+             setRefreshBlockFor(30_000);
+           }
+         } else if (response.status === 401 || response.status === 403) {
+           clearAuthState();
+           setRefreshBlockFor(5 * 60_000);
+         } else if (response.status >= 500) {
+           setRefreshBlockFor(30_000);
+         }
+         return response.ok;
+       }
+       clearAuthState();
       setRefreshBlockFor(5 * 60_000);
       return false;
     } catch {

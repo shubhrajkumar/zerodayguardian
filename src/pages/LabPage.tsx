@@ -1,7 +1,7 @@
 import { FormEvent, startTransition, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Bot, Fingerprint, Flag, Globe, PlayCircle, Radar, Search, Shield } from "lucide-react";
-import { apiGetJson, apiPostJson } from "@/lib/apiClient";
+import api from "@/lib/api";
 import { getPyApiUserMessage, pyGetJson, pyPostJson } from "@/lib/pyApiClient";
 import PlatformHero from "@/components/platform/PlatformHero";
 import LabExecutionModal from "@/components/LabExecutionModal";
@@ -304,7 +304,8 @@ const LabPage = () => {
       }
 
       try {
-        const dashboard = await apiGetJson<DashboardLite>("/api/intelligence/dashboard");
+        const dashboardRes = await api.get<DashboardLite>("/api/intelligence/dashboard");
+        const dashboard = dashboardRes.data;
         if (mounted) {
           setCompletedLabs(dashboard.intelligence.completedLabs || 0);
           setTotalLabsTouched(dashboard.intelligence.totalLabsTouched || 0);
@@ -317,15 +318,15 @@ const LabPage = () => {
       }
 
       try {
-        const progressionPayload = await apiGetJson<{ progression: ProgressionProfile }>("/api/intelligence/progression/me");
-        if (mounted) setProgression(progressionPayload.progression || null);
+        const progressionRes = await api.get<{ progression: ProgressionProfile }>("/api/intelligence/progression/me");
+        if (mounted) setProgression(progressionRes.data.progression || null);
       } catch {
         if (mounted) setProgression(null);
       }
 
       try {
-        const board = await apiGetJson<{ leaderboard: LeaderboardRow[] }>("/api/intelligence/progression/leaderboard?period=weekly&limit=5");
-        if (mounted) setLeaderboard(board.leaderboard || []);
+        const boardRes = await api.get<{ leaderboard: LeaderboardRow[] }>("/api/intelligence/progression/leaderboard?period=weekly&limit=5");
+        if (mounted) setLeaderboard(boardRes.data.leaderboard || []);
       } catch {
         if (mounted) setLeaderboard([]);
       }
@@ -443,7 +444,7 @@ const LabPage = () => {
       }
       const completed = Boolean(result.state?.completed || result.code === "completed");
       setMissionPulse({ tone: completed ? "success" : result.ok ? "info" : "warning", title: completed ? "Mission complete" : result.ok ? "Mission updated" : "Command blocked", detail: completed ? `${activeLab.title} validated successfully. Reward flow updated and next progression unlocked.` : result.explanation || result.output || "The mission state has been updated." });
-      await apiPostJson("/api/intelligence/labs/progress", { labId: activeLab.id, status: completed ? "completed" : "active" }).catch(() => undefined);
+      await api.post("/api/intelligence/labs/progress", { labId: activeLab.id, status: completed ? "completed" : "active" }).catch(() => undefined);
       if (completed) await recordAction("sandbox_mission_complete", { target: activeLab.id, metadata: { mode: missionMode } }).catch(() => undefined);
       await refreshProgress().catch(() => undefined);
       await refreshMissionData().catch(() => undefined);

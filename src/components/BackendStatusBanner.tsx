@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { apiFetch } from "@/lib/apiClient";
+import api from "@/lib/api";
 
 type BackendState = "checking" | "online" | "degraded" | "offline";
 
@@ -47,22 +47,21 @@ const BackendStatusBanner = () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);
       try {
-        const response = await apiFetch("/api/ping", {
-          method: "GET",
+        const response = await api.get("/api/ping", {
           signal: controller.signal,
         });
         clearTimeout(timeout);
         const elapsed = Math.round(performance.now() - started);
         if (!mountedRef.current) return;
 
-        if (!response.ok) {
+        if (response.status < 200 || response.status >= 400) {
           setState(response.status >= 500 ? "degraded" : "offline");
           setLatencyMs(elapsed);
           setNote(`Ping failed (${response.status}).`);
           return;
         }
 
-        const payload = (await response.json()) as PingPayload;
+        const payload = response.data as PingPayload;
         setState(payload.status === "ok" ? "online" : "degraded");
         setLatencyMs(elapsed);
         setNote(payload.message ? `${payload.message} (${elapsed}ms)` : `Healthy (${elapsed}ms)`);

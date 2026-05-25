@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+const pyapi = axios.create({
+  baseURL: import.meta.env.VITE_PYAPI_URL || import.meta.env.VITE_API_URL,
   withCredentials: true,
   timeout: 15000,
   headers: {
@@ -10,8 +10,8 @@ const api = axios.create({
 });
 
 // REQUEST INTERCEPTOR
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('zdg_token');
+pyapi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("zdg_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -20,11 +20,11 @@ api.interceptors.request.use((config) => {
 
 // RESPONSE INTERCEPTOR
 let isRefreshing = false;
-let failedQueue: any[] = [];
+let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: any) => void }> = [];
 
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+pyapi.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
     const originalRequest = error.config;
     
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -54,7 +54,7 @@ api.interceptors.response.use(
           failedQueue = [];
           
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return api(originalRequest);
+          return pyapi(originalRequest);
           
         } catch (refreshError) {
           failedQueue.forEach(p => p.reject(refreshError));
@@ -79,4 +79,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+export default pyapi;

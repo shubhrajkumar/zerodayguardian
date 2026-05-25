@@ -1,5 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { ApiError, apiGetJson, apiPostJson, getStoredAccessToken } from "@/lib/apiClient";
+import { getStoredAccessToken } from "@/lib/apiClient";
+import api from "@/lib/api";
+import { AxiosError } from "axios";
 import { useAuth } from "@/context/AuthContext";
 
 type DashboardPayload = {
@@ -133,10 +135,12 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
     }
     setLoading(true);
     try {
-      const [dash, prog] = await Promise.all([
-        apiGetJson<DashboardPayload>("/api/intelligence/dashboard"),
-        apiGetJson<ProgressionPayload>("/api/intelligence/progression/me"),
+      const [dashRes, progRes] = await Promise.all([
+        api.get<DashboardPayload>("/api/intelligence/dashboard"),
+        api.get<ProgressionPayload>("/api/intelligence/progression/me"),
       ]);
+      const dash = dashRes.data;
+      const prog = progRes.data;
       setProgress((prev) => ({
         ...prev,
         xp: Number(dash?.intelligence?.xp || 0),
@@ -155,7 +159,7 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
         skillGraph: dash?.intelligence?.skillGraph || prev.skillGraph,
       }));
     } catch (error) {
-      if (error instanceof ApiError && [401, 403].includes(error.status)) {
+      if (error instanceof AxiosError && error.response?.status && [401, 403].includes(error.response.status)) {
         setProgress(defaultProgress);
         return;
       }
@@ -205,7 +209,7 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
   }) => {
     if (!getStoredAccessToken()) return;
     try {
-      const response = await apiPostJson<{
+      const response = (await api.post<{
         status: string;
         result?: {
           intent: string;
@@ -217,7 +221,7 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
         complexity?: number;
         xpGain?: number;
         profile?: { xp?: number; rank?: string; streak?: number };
-      }>("/api/intelligence/telemetry/event", payload);
+      }>("/api/intelligence/telemetry/event", payload)).data;
       const result = response?.result || response;
       const xpGain = Number(result?.xpGain || 0);
       setProgress((prev) => ({
@@ -230,7 +234,7 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
         todayActions: prev.todayActions + 1,
       }));
     } catch (error) {
-      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      if (error instanceof AxiosError && (error.response?.status === 401 || error.response?.status === 403)) {
         return;
       }
       // keep gamification non-blocking

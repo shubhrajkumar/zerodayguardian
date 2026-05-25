@@ -8,14 +8,16 @@ import {
 } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
 import { AuthUser, useAuth } from "@/context/AuthContext";
-import { apiPostJson, setStoredAccessToken, setStoredAuthState } from "@/lib/apiClient";
+import api from "@/lib/api";
+import { setStoredAuthState } from "@/lib/apiClient";
 
 type AuthMode = "login" | "register" | "reset";
 
-type BackendAuthResponse = {
-  user?: AuthUser;
-  accessToken?: string;
-};
+  type BackendAuthResponse = {
+    user?: AuthUser;
+    accessToken: string;
+    refreshToken: string;
+  };
 
 const getDisplayNameFromEmail = (value: string) => {
   const name = value.split("@")[0]?.replace(/[._-]+/g, " ").trim();
@@ -63,7 +65,7 @@ export default function AuthPage() {
     if (!container) return;
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
-    const icon = type === "success" ? "✓" : type === "error" ? "✕" : "ℹ";
+    const icon = type === "success" ? "âœ“" : type === "error" ? "âœ•" : "â„¹";
     toast.innerHTML = `<span style="flex-shrink:0;font-weight:700;font-size:1.1rem">${icon}</span><span>${message}</span>`;
     container.appendChild(toast);
     setTimeout(() => {
@@ -75,13 +77,19 @@ export default function AuthPage() {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
-      setError(null);
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      await signInWithPopup(auth, provider);
-      await refreshAuth();
-      showToast("Signed in with Google successfully", "success");
-      navigate("/dashboard", { replace: true });
+       setError(null);
+       const provider = new GoogleAuthProvider();
+       provider.setCustomParameters({ prompt: "select_account" });
+       const result = await signInWithPopup(auth, provider);
+       const idToken = await result.user.getIdToken();
+
+       const payload = await api.post<BackendAuthResponse>("/api/auth/google", {
+         idToken,
+       });
+
+       login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
+       showToast("Signed in with Google successfully", "success");
+       navigate("/dashboard", { replace: true });
     } catch (err: any) {
       const message = err?.code === "auth/popup-closed-by-user"
         ? "Sign-in cancelled"
@@ -120,14 +128,12 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       if (mode === "register") {
-        const payload = await apiPostJson<BackendAuthResponse>("/api/auth/signup", {
+        const payload = await api.post<BackendAuthResponse>("/api/auth/signup", {
           name: getDisplayNameFromEmail(email),
           email,
           password,
         });
-        if (payload.accessToken) setStoredAccessToken(payload.accessToken);
-        if (payload.user) setStoredAuthState({ isAuthenticated: true, user: payload.user, timestamp: Date.now() });
-        if (payload.accessToken && payload.user) login({ token: payload.accessToken, user: payload.user });
+        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
         try {
           if (auth.currentUser) await sendEmailVerification(auth.currentUser);
           setSuccess("Account created. Welcome to your dashboard.");
@@ -136,7 +142,6 @@ export default function AuthPage() {
           setSuccess("Account created. Welcome to your dashboard.");
           showToast("Account created successfully.", "success");
         }
-        await refreshAuth();
         navigate("/dashboard", { replace: true });
       } else if (mode === "reset") {
         await sendPasswordResetEmail(auth, email);
@@ -144,15 +149,12 @@ export default function AuthPage() {
         showToast("Reset email sent!", "success");
         setTimeout(() => setMode("login"), 3000);
       } else {
-        const payload = await apiPostJson<BackendAuthResponse>("/api/auth/login", {
+        const payload = await api.post<BackendAuthResponse>("/api/auth/login", {
           email,
           password,
           rememberMe: true,
         });
-        if (payload.accessToken) setStoredAccessToken(payload.accessToken);
-        if (payload.user) setStoredAuthState({ isAuthenticated: true, user: payload.user, timestamp: Date.now() });
-        if (payload.accessToken && payload.user) login({ token: payload.accessToken, user: payload.user });
-        await refreshAuth();
+        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
         showToast("Welcome back!", "success");
         navigate("/dashboard", { replace: true });
       }
@@ -187,7 +189,7 @@ export default function AuthPage() {
       <div className="auth-screen relative min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center animate-fade-in-up">
           <div className="glass-card p-8 cyber-glow">
-            <div className="text-red-400 text-4xl mb-4">⚠</div>
+            <div className="text-red-400 text-4xl mb-4">âš </div>
             <h2 className="text-xl font-bold mb-2" style={{ color: "var(--theme-text)" }}>Authentication Unavailable</h2>
             <p className="text-sm mb-4" style={{ color: "var(--theme-text-muted)" }}>
               Authentication service is not configured. Please contact your administrator.
@@ -290,7 +292,7 @@ export default function AuthPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="input-cyber"
                   autoComplete={mode === "register" ? "new-password" : "current-password"}
                   disabled={isLoading}
@@ -308,7 +310,7 @@ export default function AuthPage() {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="input-cyber"
                   autoComplete="new-password"
                   disabled={isLoading}
@@ -382,7 +384,7 @@ export default function AuthPage() {
 
         {/* Security Notice */}
         <p className="text-center mt-6 text-xs" style={{ color: "var(--theme-text-dim)" }}>
-          Secure � Private � Encrypted
+          Secure • Private • Encrypted
         </p>
       </div>
     </div>

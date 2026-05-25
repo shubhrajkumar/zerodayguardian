@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Award, MessageCircle, Shield, ThumbsUp, Users, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiGetJson, apiPostJson } from "@/lib/apiClient";
+import api from "@/lib/api";
 
 type LeaderboardRow = { position: number; alias: string; rank: string; points: number; streak: number; level: number };
 type Mission = { id: string; title: string; objective: string; rewardPoints: number };
@@ -23,9 +23,9 @@ const CommunityPage = () => {
 
   const load = useCallback(async (sortBy: "trending" | "new" | "unanswered" = sort) => {
     const [board, weekly, threadData] = await Promise.all([
-      apiGetJson<{ leaderboard: LeaderboardRow[] }>("/api/intelligence/progression/leaderboard?period=alltime&limit=20"),
-      apiGetJson<{ challenges: Mission[] }>("/api/intelligence/progression/weekly-challenges"),
-      apiGetJson<{ threads: Thread[] }>(`/api/intelligence/community/threads?sort=${sortBy}&limit=80`),
+      (await api.get<{ leaderboard: LeaderboardRow[] }>("/api/intelligence/progression/leaderboard?period=alltime&limit=20")).data,
+      (await api.get<{ challenges: Mission[] }>("/api/intelligence/progression/weekly-challenges")).data,
+      (await api.get<{ threads: Thread[] }>(`/api/intelligence/community/threads?sort=${sortBy}&limit=80`)).data,
     ]);
     setLeaderboard(board.leaderboard || []);
     setMissions(weekly.challenges || []);
@@ -52,7 +52,7 @@ const CommunityPage = () => {
     event.preventDefault();
     setStatus("");
     try {
-      await apiPostJson("/api/intelligence/community/threads", { title, content, roleTag });
+      await api.post("/api/intelligence/community/threads", { title, content, roleTag });
       setTitle("");
       setContent("");
       setRoleTag("Beginner");
@@ -68,7 +68,7 @@ const CommunityPage = () => {
     if (!text) return;
     setStatus("");
     try {
-      await apiPostJson("/api/intelligence/community/replies", { parentId, content: text });
+      await api.post("/api/intelligence/community/replies", { parentId, content: text });
       setReplyDraft((prev) => ({ ...prev, [parentId]: "" }));
       setStatus("Reply posted. XP reward applied.");
       await load();
@@ -79,7 +79,7 @@ const CommunityPage = () => {
 
   const upvote = async (threadId: string) => {
     try {
-      await apiPostJson("/api/intelligence/community/vote", { threadId, direction: "up" });
+      await api.post("/api/intelligence/community/vote", { threadId, direction: "up" });
       await load();
     } catch {
       setStatus("Upvote could not be applied.");

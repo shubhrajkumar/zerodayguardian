@@ -1,14 +1,11 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
 import {
-  apiGetJson,
-  apiPostJson,
-  bootstrapAuthSession,
   clearAuthState,
   getStoredAccessToken,
-  setStoredAccessToken,
   setStoredAuthState,
 } from "@/lib/apiClient";
+import api from "@/lib/api";
 import { firebaseAuth } from "@/lib/firebase";
 
 const MOCK_AUTH_KEY = "zdg_mock_auth";
@@ -36,7 +33,7 @@ type AuthContextValue = {
   isVerified: boolean;
   user: AuthUser | null;
   token: string;
-  login: (payload: { token: string; user: AuthUser }) => void;
+  login: (payload: { accessToken: string; refreshToken: string; user: AuthUser }) => void;
   refreshAuth: (force?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
 };
@@ -60,15 +57,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedToken = getStoredAccessToken();
     setToken(nextUser ? storedToken : "");
     if (!nextUser) clearAuthState();
-    else setStoredAuthState({ isAuthenticated: true, user: nextUser, timestamp: Date.now() });
+    else setStoredAuthState({ isAuthenticated: true, user: nextUser, timestamp: Date.now(), accessToken: storedToken });
     setAuthState(nextUser ? "authenticated" : "unauthenticated");
     return Boolean(nextUser);
   }, []);
 
-  const login = useCallback((payload: { token: string; user: AuthUser }) => {
-    setStoredAccessToken(payload.token);
-    setStoredAuthState({ isAuthenticated: true, user: payload.user, timestamp: Date.now() });
-    setToken(payload.token);
+  const login = useCallback((payload: { accessToken: string; refreshToken: string; user: AuthUser }) => {
+    localStorage.setItem("zdg_token", payload.accessToken);
+    localStorage.setItem("zdg_refresh", payload.refreshToken);
+    setStoredAuthState({ isAuthenticated: true, user: payload.user, timestamp: Date.now(), accessToken: payload.accessToken });
+    setToken(payload.accessToken);
     setUser(payload.user);
     setAuthState("authenticated");
   }, []);
@@ -87,15 +85,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return syncAuthState(toFirebaseAuthUser(firebaseAuth.currentUser));
     }
 
-    const session = await bootstrapAuthSession();
-    if (!session.ok) return syncAuthState(null);
-
-    try {
-      const payload = await apiGetJson<{ authenticated?: boolean; user?: AuthUser }>("/api/auth/verify");
-      return syncAuthState(payload.authenticated ? payload.user ?? null : null);
-    } catch {
-      return syncAuthState(null);
+    const storedToken = localStorage.getItem("zdg_token");
+    const storedRefreshToken = localStorage.getItem("zdg_refresh");
+    
+    if (storedToken) {
+      try {
+        // Attempt to verify the token
+        const response = await api.get<{ authenticated?: boolean; user?: AuthUser }>("/api/auth/verify");
+        if (response.data.authenticated && response.data.user) {
+          return syncAuthState(response.data.user);
+        }
+      } catch (error) {
+        console.error("Token verification failed:", error);
+      }
     }
+
+    // If no valid token, try refreshing
+    if (storedRefreshToken) {
+      try {
+        const response = await api.post<{ accessToken: string; refreshToken: string; user: AuthUser }>("/api/auth/refresh", { refreshToken: storedRefreshToken });
+        if (response.data.accessToken) {
+          localStorage.setItem("zdg_token", response.data.accessToken);
+        }
+        if (response.data.refreshToken) {
+          localStorage.setItem("zdg_refresh", response.data.refreshToken);
+        }
+        if (response.data.user) {
+          return syncAuthState(response.data.user);
+        }
+      } catch (error) {
+        console.error("Refresh token failed:", error);
+      }
+    }
+
+    return syncAuthState(null);
   }, [syncAuthState]);
 
   useEffect(() => {
@@ -122,10 +145,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     try {
-      await apiPostJson("/api/auth/logout", {});
+      await api.post("/api/auth/logout", {});
     } catch {
       // Ignore backend logout failures and still clear client auth state.
     }
+    localStorage.clear();
     syncAuthState(null);
   }, [syncAuthState]);
 

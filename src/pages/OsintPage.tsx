@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { apiFetch, apiGetJson, apiPostJson, getStoredAccessToken } from "@/lib/apiClient";
+import { getStoredAccessToken } from "@/lib/apiClient";
+import api from "@/lib/api";
 import { getPyApiUserMessage, pyGetJson, pyPostJson, resolvePublicPyApiUrl } from "@/lib/pyApiClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -106,8 +107,8 @@ const OsintPage = () => {
 
   const loadProviders = useCallback(async () => {
     try {
-      const payload = await apiGetJson<{ providers: unknown }>("/api/osint/providers");
-      setProviders(payload.providers);
+      const response = await api.get<{ providers: unknown }>("/api/osint/providers");
+      setProviders(response.data.providers);
     } catch {
       setProviders(null);
     }
@@ -124,7 +125,7 @@ const OsintPage = () => {
     }
     setLoading(true);
     try {
-      const payload = await apiPostJson<OsintResolveResponse>("/api/osint/resolve", {
+      const response = await api.post<OsintResolveResponse>("/api/osint/resolve", {
         query: query.trim(),
         modules,
         options: {
@@ -134,7 +135,7 @@ const OsintPage = () => {
           includeCertificateHistory: includeCertHistory,
         },
       });
-      setResult(payload);
+      setResult(response.data);
       const event = {
         at: Date.now(),
         type: "investigation_run",
@@ -146,7 +147,7 @@ const OsintPage = () => {
           event_type: "osint_lookup",
           surface: "osint",
           target: query.trim(),
-          metadata: { modules, verified: Boolean(payload?.verified) },
+          metadata: { modules, verified: Boolean(response.data?.verified) },
         });
       } catch {
         // best-effort telemetry only
@@ -174,13 +175,13 @@ const OsintPage = () => {
     setUploadError("");
     try {
       const base64 = await readFileAsBase64(uploadFile);
-      const payload = await apiPostJson<UploadAnalysisResponse>("/api/intelligence/tools/metadata-upload", {
+      const response = await api.post<UploadAnalysisResponse>("/api/intelligence/tools/metadata-upload", {
         filename: uploadFile.name,
         mimeType: uploadFile.type || "application/octet-stream",
         size: uploadFile.size,
         base64,
       });
-      setUploadResult(payload?.result || payload);
+      setUploadResult(response.data?.result || response.data);
       const event = {
         at: Date.now(),
         type: "evidence_upload",
@@ -196,8 +197,8 @@ const OsintPage = () => {
 
   const loadCases = useCallback(async () => {
     try {
-      const payload = await apiGetJson<{ cases: any[] }>("/api/osint/cases?limit=40");
-      setCases(payload.cases || []);
+      const response = await api.get<{ cases: any[] }>("/api/osint/cases?limit=40");
+      setCases(response.data.cases || []);
     } catch {
       setCases([]);
     }
@@ -205,8 +206,8 @@ const OsintPage = () => {
 
   const loadWatchlists = useCallback(async () => {
     try {
-      const payload = await apiGetJson<{ watchlists: any[] }>("/api/osint/watchlists");
-      setWatchlists(payload.watchlists || []);
+      const response = await api.get<{ watchlists: any[] }>("/api/osint/watchlists");
+      setWatchlists(response.data.watchlists || []);
     } catch {
       setWatchlists([]);
     }
@@ -214,8 +215,8 @@ const OsintPage = () => {
 
   const loadAlerts = useCallback(async () => {
     try {
-      const payload = await apiGetJson<{ alerts: any[] }>("/api/osint/alerts?limit=40");
-      setAlerts(payload.alerts || []);
+      const response = await api.get<{ alerts: any[] }>("/api/osint/alerts?limit=40");
+      setAlerts(response.data.alerts || []);
     } catch {
       setAlerts([]);
     }
@@ -275,8 +276,8 @@ const OsintPage = () => {
 
   const selectCase = async (id: string) => {
     try {
-      const payload = await apiGetJson<{ case: any }>(`/api/osint/cases/${id}`);
-      const row = payload.case;
+      const response = await api.get<{ case: any }>(`/api/osint/cases/${id}`);
+      const row = response.data.case;
       setActiveCaseId(row?._id || id);
       setCaseTitle(row?.title || "");
       setCaseSummary(row?.summary || "");
@@ -299,7 +300,7 @@ const OsintPage = () => {
       return;
     }
     try {
-      const payload = await apiPostJson<{ case: any }>("/api/osint/cases", {
+      const response = await api.post<{ case: any }>("/api/osint/cases", {
         title: caseTitle || `OSINT - ${query.trim()}`,
         target: query.trim(),
         summary: caseSummary,
@@ -310,7 +311,7 @@ const OsintPage = () => {
         modules,
         results: result,
       });
-      setActiveCaseId(payload.case?._id || null);
+      setActiveCaseId(response.data.case?._id || null);
       setShareUrl(null);
       loadCases();
       toast({ title: "Case saved." });
@@ -322,19 +323,14 @@ const OsintPage = () => {
   const updateCase = async () => {
     if (!activeCaseId) return;
     try {
-      const response = await apiFetch(`/api/osint/cases/${activeCaseId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: caseTitle,
-          summary: caseSummary,
-          notes: caseNotes,
-          folder: caseFolder,
-          tags: caseTags,
-          entities,
-        }),
+      await api.patch(`/api/osint/cases/${activeCaseId}`, {
+        title: caseTitle,
+        summary: caseSummary,
+        notes: caseNotes,
+        folder: caseFolder,
+        tags: caseTags,
+        entities,
       });
-      if (!response.ok) throw new Error("Update failed.");
       loadCases();
       toast({ title: "Case updated." });
     } catch (error: any) {
@@ -345,8 +341,8 @@ const OsintPage = () => {
   const generateShare = async () => {
     if (!activeCaseId) return;
     try {
-      const payload = await apiPostJson<{ shareUrl: string }>(`/api/osint/cases/${activeCaseId}/share`, {});
-      setShareUrl(payload.shareUrl);
+      const response = await api.post<{ shareUrl: string }>(`/api/osint/cases/${activeCaseId}/share`, {});
+      setShareUrl(response.data.shareUrl);
       toast({ title: "Share link generated." });
     } catch (error: any) {
       toast({ title: "Share failed", description: error?.message || "Sharing disabled." });
@@ -380,18 +376,18 @@ const OsintPage = () => {
       toast({ title: "Save the case before exporting." });
       return;
     }
-    const response = await apiFetch(`/api/osint/cases/${activeCaseId}/export.${format}`);
-    if (!response.ok) {
+    try {
+      const response = await api.get(`/api/osint/cases/${activeCaseId}/export.${format}`, { responseType: "blob" });
+      const blob = new Blob([response.data]);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `osint-${activeCaseId}.${format}`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
       toast({ title: `Export ${format.toUpperCase()} failed.` });
-      return;
     }
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `osint-${activeCaseId}.${format}`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   const summary = useMemo(() => {
@@ -787,7 +783,7 @@ const OsintPage = () => {
                         return;
                       }
                       try {
-                        await apiPostJson("/api/osint/watchlists", {
+                        await api.post("/api/osint/watchlists", {
                           label: watchLabel || watchTarget,
                           target: watchTarget,
                           intervalMinutes: watchInterval,
@@ -976,7 +972,7 @@ const OsintPage = () => {
                           <button
                             type="button"
                             onClick={async () => {
-                              await apiPostJson(`/api/osint/watchlists/${watch._id}/run`, {});
+                              await api.post(`/api/osint/watchlists/${watch._id}/run`, {});
                               loadAlerts();
                             }}
                             className="rounded-full border border-white/10 px-3 py-1 text-[10px] text-slate-200 hover:border-cyan-300/40"
@@ -986,32 +982,28 @@ const OsintPage = () => {
                           <button
                             type="button"
                             onClick={async () => {
-                              await apiFetch(`/api/osint/watchlists/${watch._id}`, {
-                                method: "PATCH",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                  rules: {
-                                    minRiskScore: ruleMinRiskScore,
-                                    breachThreshold: ruleBreachThreshold,
-                                    alertOnNoDns: ruleAlertNoDns,
-                                    alertOnMissingTls: ruleAlertMissingTls,
-                                  },
-                                  routing: {
-                                    minSeverity: routingMinSeverity,
-                                    email: routingEmail,
-                                    webhook: routingWebhook,
-                                    slack: routingSlack,
-                                    mode: routingMode,
-                                    severityMap:
-                                      routingMode === "severity"
-                                        ? {
-                                            low: routingLow,
-                                            medium: routingMedium,
-                                            high: routingHigh,
-                                          }
-                                        : undefined,
-                                  },
-                                }),
+                              await api.patch(`/api/osint/watchlists/${watch._id}`, {
+                                rules: {
+                                  minRiskScore: ruleMinRiskScore,
+                                  breachThreshold: ruleBreachThreshold,
+                                  alertOnNoDns: ruleAlertNoDns,
+                                  alertOnMissingTls: ruleAlertMissingTls,
+                                },
+                                routing: {
+                                  minSeverity: routingMinSeverity,
+                                  email: routingEmail,
+                                  webhook: routingWebhook,
+                                  slack: routingSlack,
+                                  mode: routingMode,
+                                  severityMap:
+                                    routingMode === "severity"
+                                      ? {
+                                          low: routingLow,
+                                          medium: routingMedium,
+                                          high: routingHigh,
+                                        }
+                                      : undefined,
+                                },
                               });
                               loadWatchlists();
                             }}
@@ -1022,11 +1014,7 @@ const OsintPage = () => {
                           <button
                             type="button"
                             onClick={async () => {
-                              await apiFetch(`/api/osint/watchlists/${watch._id}`, {
-                                method: "PATCH",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ active: !watch.active }),
-                              });
+                              await api.patch(`/api/osint/watchlists/${watch._id}`, { active: !watch.active });
                               loadWatchlists();
                             }}
                             className="rounded-full border border-white/10 px-3 py-1 text-[10px] text-slate-200 hover:border-amber-300/40"
@@ -1036,7 +1024,7 @@ const OsintPage = () => {
                           <button
                             type="button"
                             onClick={async () => {
-                              await apiFetch(`/api/osint/watchlists/${watch._id}`, { method: "DELETE" });
+                              await api.delete(`/api/osint/watchlists/${watch._id}`);
                               loadWatchlists();
                             }}
                             className="rounded-full border border-white/10 px-3 py-1 text-[10px] text-slate-200 hover:border-rose-300/40"

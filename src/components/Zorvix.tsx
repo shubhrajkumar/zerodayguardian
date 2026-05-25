@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { toast } from "@/hooks/use-toast";
-import { ApiError, apiFetch, apiGetJson, apiPostJson, getStoredAccessToken } from "@/lib/apiClient";
+import { ApiError, apiFetch, getStoredAccessToken } from "@/lib/apiClient";
+import api from "@/lib/api";
 import { NeuroMessage, NeuroTopicContext } from "@/lib/neurobotEngine";
 import { useAuth } from "@/context/AuthContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
@@ -780,7 +781,7 @@ const Zorvix = () => {
       setAssistantProfile(nextProfile);
       if (!canUseSyncedSession) return;
       try {
-        await apiPostJson("/api/neurobot/preferences", { assistantProfile: nextProfile });
+        await api.post("/api/neurobot/preferences", { assistantProfile: nextProfile });
       } catch {
         // ignore preference save failures
       }
@@ -795,10 +796,11 @@ const Zorvix = () => {
     }
     setMemoryLoading(true);
     try {
-      const payload = await apiGetJson<{
+      const response = await api.get<{
         snapshot?: { preferences?: { assistantProfile?: AssistantProfile } };
         stats?: Record<string, number>;
       }>("/api/neurobot/memory/summary");
+      const payload = response.data;
       setMemorySummary(payload);
       const prefProfile = payload?.snapshot?.preferences?.assistantProfile as AssistantProfile | undefined;
       if (prefProfile) {
@@ -918,8 +920,8 @@ const Zorvix = () => {
 
   const syncBackendHealth = useCallback(async () => {
     try {
-      const response = await apiFetch("/api/health/chatbot");
-      const payload = (await response.json().catch(() => null)) as ChatbotHealthResponse | null;
+      const healthResponse = await api.get<ChatbotHealthResponse>("/api/health/chatbot");
+      const payload = healthResponse.data as ChatbotHealthResponse | null;
       if (payload) {
         setBackendHealth({
           ...payload,
@@ -952,9 +954,8 @@ const Zorvix = () => {
     }
     setStatusHint("Preparing the ZORVIX workspace...");
     try {
-      const response = await apiFetch("/api/neurobot/session");
-      if (!response.ok) throw new Error("session_load_failed");
-      const payload = (await response.json()) as SessionResponse;
+      const sessionResponse = await api.get<SessionResponse>("/api/neurobot/session");
+      const payload = sessionResponse.data;
       const nextMessages = normalizeMessages(payload.messages || []);
       setMessages(nextMessages);
       setActiveTopic(payload.activeTopic ?? null);
@@ -984,11 +985,7 @@ const Zorvix = () => {
       streamAbortRef.current?.abort();
       const streamId = currentStreamIdRef.current;
       if (streamId) {
-        apiFetch("/api/neurobot/chat/stream/abort", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ streamId }),
-        }).catch(() => undefined);
+        api.post("/api/neurobot/chat/stream/abort", { streamId }).catch(() => undefined);
       }
       flushAssistantBuffer();
       currentStreamIdRef.current = "";
@@ -1016,11 +1013,11 @@ const Zorvix = () => {
         let payload: SessionResponse | null = null;
         for (let attempt = 0; attempt < 2; attempt += 1) {
           try {
-            payload = await apiPostJson<SessionResponse>("/api/neurobot/chat", {
+            const chatResponse = await api.post<SessionResponse>("/api/neurobot/chat", {
               message: prompt,
               assistantProfile: assistantProfile || DEFAULT_PROFILE,
-              attachments: attachmentPayload ? [attachmentPayload] : [],
-            });
+              attachments: attachmentPayload ? [attachmentPayload] : [],              });
+            payload = chatResponse.data;
             break;
           } catch (error) {
             const retryable = !(error instanceof ApiError) || error.status === 429 || error.status >= 500;
@@ -1255,7 +1252,7 @@ const Zorvix = () => {
     setPreviewError("");
     setPreviewText("");
     try {
-      const payload = await apiPostJson<{ response?: string }>("/api/neurobot/preview", {
+      const previewResponse = await api.post<{ response?: string }>("/api/neurobot/preview", {
         message: prompt,
         assistantProfile: assistantProfile || DEFAULT_PROFILE,
         attachments: composerAttachment ? [composerAttachment] : [],
@@ -1268,7 +1265,7 @@ const Zorvix = () => {
             }
           : null,
       });
-      setPreviewText(String(payload?.response || "").trim());
+      setPreviewText(String(previewResponse.data?.response || "").trim());
     } catch (error) {
       const detail = error instanceof ApiError ? error.message : "Preview failed.";
       setPreviewError(detail);
@@ -1389,10 +1386,11 @@ const Zorvix = () => {
       setSuggestionCycle((current) => current + 1);
 
       if (canUseSyncedSession) {
-        apiPostJson<SessionResponse>("/api/neurobot/topic", { topic })
-          .then((payload) => {
-            setMessages(normalizeMessages(payload.messages || []));
-            setActiveTopic(payload.activeTopic ?? topic);
+        api.post<SessionResponse>("/api/neurobot/topic", { topic })
+          .then((topicResponse) => {
+            const topicPayload = topicResponse.data;
+            setMessages(normalizeMessages(topicPayload.messages || []));
+            setActiveTopic(topicPayload.activeTopic ?? topic);
           })
           .catch(() => {
             setStatusHint("Topic synced locally. Server sync will retry on the next message.");
@@ -1521,8 +1519,9 @@ const Zorvix = () => {
       return;
     }
     try {
-      const payload = await apiPostJson<SessionResponse>("/api/neurobot/history/clear", { scope: "session" });
-      setMessages(normalizeMessages(payload.messages || []));
+      const clearResponse = await api.post<SessionResponse>("/api/neurobot/history/clear", { scope: "session" });
+      const clearPayload = clearResponse.data;
+      setMessages(normalizeMessages(clearPayload.messages || []));
       setActiveTopic(null);
       setInput("");
       setLastFailure(null);

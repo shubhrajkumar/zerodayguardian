@@ -13,7 +13,7 @@ import {
   ShieldAlert,
   type LucideIcon,
 } from "lucide-react";
-import { apiGetJson } from "@/lib/apiClient";
+import api from "@/lib/api";
 
 export type ToolDefinition = {
   id: number;
@@ -114,6 +114,6 @@ export const relatedToolsFor = (tools: ToolDefinition[], tool: ToolDefinition, l
   tools.filter((item) => item.id !== tool.id && item.category === tool.category).slice(0, limit);
 
 export const getToolsCatalog = async () => {
-  const payload = await apiGetJson<{ tools?: ToolDefinition[] }>("/api/intelligence/tools/catalog");
+  const payload = (await api.get<{ tools?: ToolDefinition[] }>("/api/intelligence/tools/catalog")).data;
   return Array.isArray(payload.tools) ? payload.tools : [];
 };
