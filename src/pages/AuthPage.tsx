@@ -9,7 +9,6 @@ import {
 import { firebaseAuth } from "@/lib/firebase";
 import { AuthUser, useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
-import { setStoredAuthState } from "@/lib/apiClient";
 
 type AuthMode = "login" | "register" | "reset";
 
@@ -36,7 +35,7 @@ const getPasswordValidationError = (value: string) => {
 export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, loading: authLoading, refreshAuth, login } = useAuth();
+  const { user, loading: authLoading, login } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");

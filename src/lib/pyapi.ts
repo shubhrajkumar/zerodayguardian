@@ -1,7 +1,7 @@
-import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 const pyapi = axios.create({
-  baseURL: import.meta.env.VITE_PYAPI_URL || import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_PYAPI_URL || import.meta.env.VITE_PY_API_URL || import.meta.env.VITE_API_URL,
   withCredentials: true,
   timeout: 15000,
   headers: {
@@ -25,9 +25,9 @@ let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: a
 pyapi.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean } | undefined;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (originalRequest && error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -53,7 +53,9 @@ pyapi.interceptors.response.use(
           failedQueue.forEach(p => p.resolve(newToken));
           failedQueue = [];
           
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          }
           return pyapi(originalRequest);
           
         } catch (refreshError) {

@@ -925,11 +925,11 @@ const Zorvix = () => {
       if (payload) {
         setBackendHealth({
           ...payload,
-          status: payload.status || (response.ok ? "ok" : "down"),
+          status: payload.status || "ok",
         });
         return;
       }
-      setBackendHealth({ status: response.ok ? "ok" : "down" });
+      setBackendHealth({ status: "ok" });
     } catch {
       setBackendHealth({ status: "down" });
     }
