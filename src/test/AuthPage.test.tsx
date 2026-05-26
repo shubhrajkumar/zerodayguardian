@@ -10,6 +10,7 @@ const mockUseSearchParams = vi.fn(() => [new URLSearchParams(), vi.fn()]);
 const mockUseAuth = vi.fn();
 const mockRefreshAuth = vi.fn();
 const mockLogin = vi.fn();
+const mockApiPost = vi.fn();
 const mockApiPostJson = vi.fn();
 const mockSetStoredAccessToken = vi.fn();
 const mockSetStoredAuthState = vi.fn();
@@ -45,6 +46,12 @@ vi.mock("@/lib/firebase", () => ({
   isFirebaseConfigured: true,
 }));
 
+vi.mock("@/lib/api", () => ({
+  default: {
+    post: (...args: unknown[]) => mockApiPost(...args),
+  },
+}));
+
 vi.mock("@/lib/apiClient", () => ({
   apiPostJson: (...args: unknown[]) => mockApiPostJson(...args),
   setStoredAccessToken: (...args: unknown[]) => mockSetStoredAccessToken(...args),
@@ -73,9 +80,12 @@ describe("AuthPage", () => {
     vi.clearAllMocks();
     mockUseSearchParams.mockReturnValue([new URLSearchParams(), vi.fn()]);
     mockRefreshAuth.mockResolvedValue(true);
-    mockApiPostJson.mockResolvedValue({
-      user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
-      accessToken: "test-access-token",
+    mockApiPost.mockResolvedValue({
+      data: {
+        user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
+        accessToken: "test-access-token",
+        refreshToken: "test-refresh-token",
+      },
     });
     mockUseAuth.mockReturnValue({ user: null, loading: false, refreshAuth: mockRefreshAuth, login: mockLogin });
   });
@@ -220,19 +230,23 @@ describe("AuthPage", () => {
     await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByText("Sign In"));
     await waitFor(() => {
-      expect(mockApiPostJson).toHaveBeenCalledWith("/api/auth/login", {
+      expect(mockApiPost).toHaveBeenCalledWith("/api/auth/login", {
         email: "test@example.com",
         password: "Password123!",
         rememberMe: true,
       });
     });
-    expect(mockSetStoredAccessToken).toHaveBeenCalledWith("test-access-token");
+    expect(mockLogin).toHaveBeenCalledWith({
+      accessToken: "test-access-token",
+      refreshToken: "test-refresh-token",
+      user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
+    });
     expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
   });
 
   it("disables inputs and shows spinner while loading", async () => {
-    mockApiPostJson.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({ user: { uid: "123" } }), 500))
+    mockApiPost.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ data: { user: { uid: "123", accessToken: "tok", refreshToken: "rtok" } } }), 500))
     );
     renderAuthPage();
     await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
@@ -248,7 +262,8 @@ describe("AuthPage", () => {
   // ── Error Handling ──
 
   it("displays auth error messages", async () => {
-    mockApiPostJson.mockRejectedValue({
+    mockApiPost.mockRejectedValue({
+      response: { data: { code: "auth/user-not-found" } },
       code: "auth/user-not-found",
       message: "User not found",
     });
@@ -262,7 +277,7 @@ describe("AuthPage", () => {
   });
 
   it("displays generic error for unknown error codes", async () => {
-    mockApiPostJson.mockRejectedValue({
+    mockApiPost.mockRejectedValue({
       code: "auth/unknown",
       message: "Something went wrong",
     });
@@ -285,7 +300,7 @@ describe("AuthPage", () => {
     await userEvent.type(screen.getByLabelText("Confirm password"), "Password123!");
     await userEvent.click(screen.getByText("Create Account"));
     await waitFor(() => {
-      expect(mockApiPostJson).toHaveBeenCalledWith("/api/auth/signup", {
+      expect(mockApiPost).toHaveBeenCalledWith("/api/auth/signup", {
         name: "new",
         email: "new@example.com",
         password: "Password123!",
@@ -312,7 +327,7 @@ describe("AuthPage", () => {
   // ── Google Login ──
 
   it("calls Google sign-in when Google button is clicked", async () => {
-    mockSignInWithPopup.mockResolvedValue({ user: { uid: "google123" } });
+    mockSignInWithPopup.mockResolvedValue({ user: { uid: "google123", getIdToken: () => Promise.resolve("fake-id-token") } });
     renderAuthPage();
     await userEvent.click(screen.getByText("Continue with Google"));
     await waitFor(() => {
@@ -373,7 +388,7 @@ describe("AuthPage", () => {
 
   it("shows correct loading text per mode", async () => {
     // Login mode
-    mockApiPostJson.mockImplementation(
+    mockApiPost.mockImplementation(
       () => new Promise(() => {}) // never resolves
     );
     renderAuthPage();
