@@ -96,7 +96,7 @@ const missingAuthEmailKeys = authEmailEnabled
 
 const expectedGoogleRedirectUri = "https://zerodayguardian-backend.onrender.com/auth/google/callback";
 const expectedFrontendOrigins = [
-  "https://zerodayguardian.vercel.app",
+  "https://zerodayguardian-delta.vercel.app",
   "https://zeroday-guardian.vercel.app",
 ];
 const configuredCorsOrigins = String(env.CORS_ORIGIN || "")

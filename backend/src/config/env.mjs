@@ -280,7 +280,7 @@ const knownFrontendOrigins = uniqueList(
       process.env.VITE_SITE_URL,
       process.env.FRONTEND_PUBLIC_URL,
       process.env.GOOGLE_AUTHORIZED_ORIGINS,
-      "https://zerodayguardian.vercel.app",
+      "https://zerodayguardian-delta.vercel.app",
       "https://zeroday-guardian.vercel.app",
       "https://zerodayguardian-delta.vercel.app",
       "https://zerodayguardian-zero-day-guardian.vercel.app",

@@ -7,7 +7,7 @@ Usage: BACKEND_URL=https://<your-backend> FRONTEND_ORIGIN=https://<your-frontend
 
 Required:
   BACKEND_URL       Public URL of the deployed backend (example: https://zerodayguardian-backend.onrender.com)
-  FRONTEND_ORIGIN   Public origin of the deployed frontend (example: https://zerodayguardian.vercel.app)
+  FRONTEND_ORIGIN   Public origin of the deployed frontend (example: https://zerodayguardian-delta.vercel.app)
 
 Optional:
   DIAGNOSTIC_EMAIL  Email address used for send-otp test (default: test@example.com)
