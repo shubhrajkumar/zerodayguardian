@@ -1,10 +1,9 @@
 import { Router } from "express";
-import { authenticateToken } from "../src/middleware/auth.mjs";
 
 const router = Router();
 
 // GET /recommendations — Personalized learning recommendations
-router.get("/", authenticateToken, (_req, res) => {
+router.get("/", (_req, res) => {
   res.json({
     success: true,
     recommendations: [],

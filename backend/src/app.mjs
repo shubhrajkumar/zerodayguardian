@@ -600,7 +600,8 @@ export const createApp = () => {
   app.use("/api/osint", requireCsrf, requireAuth, osintRateLimit, osintRoutes);
   app.use("/api/dashboard", requireCsrf, requireAuth, intelligenceRateLimit, dashboardRoutes);
   app.use("/api/platform", requireCsrf, requireAuth, apiReadRateLimit, platformRoutes);
-  app.use("/api/labs", requireCsrf, requireAuth, intelligenceRateLimit, labsRoutes);
+  // Labs routes — public endpoints (no auth required)
+  app.use("/api/labs", intelligenceRateLimit, labsRoutes);
   app.use("/api/recommendations", requireCsrf, requireAuth, intelligenceRateLimit, recommendationsRoutes);
   app.use("/api/mission-control", requireCsrf, requireAuth, intelligenceRateLimit, missionControlRoutes);
   app.use("/api/neurobot/chat", chatRateLimit, chatAbuseDetection);
