@@ -52,9 +52,9 @@ export const API_BASE_URL = (() => {
 export const API_BASE = API_BASE_URL;
 
 export const PY_API_BASE_URL = (() => {
-  const runtimeProcessPyBase = normalizeBaseUrl(readProcessEnv("PY_API_PUBLIC_URL"));
+  const runtimeProcessPyBase = normalizeBaseUrl(readProcessEnv("PY_API_PUBLIC_URL") || readProcessEnv("VITE_PYAPI_URL"));
   if (runtimeProcessPyBase) return runtimeProcessPyBase;
-  const explicitPyBase = normalizeBaseUrl(String(import.meta.env.VITE_PY_API_URL || ""));
+  const explicitPyBase = normalizeBaseUrl(String(import.meta.env.VITE_PYAPI_URL || import.meta.env.VITE_PY_API_URL || ""));
   if (explicitPyBase) return explicitPyBase;
   const runtimeWindowPyBase = normalizeBaseUrl(readWindowEnv("PY_API_PUBLIC_URL"));
   if (runtimeWindowPyBase) return runtimeWindowPyBase;
