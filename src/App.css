@@ -57,16 +57,16 @@
 /* ── Glass Card Variants ── */
 .card-cyber {
   border-radius: var(--radius);
-  border: 1px solid rgba(42, 42, 62, 0.6);
-  background: rgba(26, 26, 46, 0.6);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition: all 0.3s ease;
 }
 
 .card-cyber:hover {
-  border-color: rgba(0, 212, 255, 0.2);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 24px var(--color-shadow);
 }
 
 /* ── Grid Background Pattern (subtle) ── */

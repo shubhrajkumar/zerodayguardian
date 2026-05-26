@@ -9,14 +9,15 @@ import {
 import { firebaseAuth } from "@/lib/firebase";
 import { AuthUser, useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 type AuthMode = "login" | "register" | "reset";
 
-  type BackendAuthResponse = {
-    user?: AuthUser;
-    accessToken: string;
-    refreshToken: string;
-  };
+type BackendAuthResponse = {
+  user?: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+};
 
 const getDisplayNameFromEmail = (value: string) => {
   const name = value.split("@")[0]?.replace(/[._-]+/g, " ").trim();
@@ -237,7 +238,13 @@ export default function AuthPage() {
               <button
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-3 px-8 py-3.5 rounded-lg bg-white text-[#1a1a1a] text-base font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_32px_rgba(0,212,255,0.25)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full flex items-center justify-center gap-3 px-8 py-3.5 rounded-lg text-base font-semibold transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  backgroundColor: 'var(--color-bg-secondary)',
+                  color: 'var(--color-text-primary)',
+                  border: '1px solid var(--color-border)',
+                  boxShadow: '0 1px 3px var(--color-shadow)'
+                }}
               >
                 {isLoading ? (
                   <div className="spinner-cyber" />
@@ -282,39 +289,28 @@ export default function AuthPage() {
             </div>
 
             {mode !== "reset" && (
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium mb-1.5" style={{ color: "var(--theme-text-muted)" }}>
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                  className="input-cyber"
-                  autoComplete={mode === "register" ? "new-password" : "current-password"}
-                  disabled={isLoading}
-                />
-              </div>
+              <PasswordInput
+                label="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete={mode === "register" ? "new-password" : "current-password"}
+                disabled={isLoading}
+                showStrength={mode === "register"}
+              />
             )}
 
             {mode === "register" && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1.5" style={{ color: "var(--theme-text-muted)" }}>
-                  Confirm password
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                  className="input-cyber"
-                  autoComplete="new-password"
-                  disabled={isLoading}
-                />
-              </div>
+              <PasswordInput
+                label="Confirm password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                name="confirmPassword"
+                id="confirmPassword"
+                autoComplete="new-password"
+                disabled={isLoading}
+              />
             )}
 
             {/* Error / Success Messages */}
@@ -381,10 +377,15 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* Security Notice */}
-        <p className="text-center mt-6 text-xs" style={{ color: "var(--theme-text-dim)" }}>
-          Secure • Private • Encrypted
-        </p>
+        {/* Footer */}
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>
+            Secure • Private • Encrypted
+          </p>
+          <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>
+            © 2025 ZeroDay Guardian • Secure Login
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Cyberpunk Dark Theme ── */
+/* ===== DARK MODE (Default) ===== */
+:root,
+[data-theme="dark"],
+.dark {
+  --color-bg-primary: #0a0a0f;
+  --color-bg-secondary: #0f0f1a;
+  --color-bg-card: rgba(255,255,255,0.04);
+  --color-bg-input: rgba(255,255,255,0.06);
+  --color-text-primary: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #475569;
+  --color-border: rgba(0,212,255,0.15);
+  --color-accent: #00d4ff;
+  --color-accent-green: #00ff88;
+  --color-btn-primary-bg: #00d4ff;
+  --color-btn-primary-text: #0a0a0f;
+  --color-btn-secondary-bg: transparent;
+  --color-btn-secondary-text: #00d4ff;
+  --color-btn-secondary-border: #00d4ff;
+  --color-btn-ghost-text: #e2e8f0;
+  --color-error: #ff4757;
+  --color-success: #00ff88;
+  --color-warning: #ffa502;
+  --color-tag-bg: rgba(0,212,255,0.1);
+  --color-tag-text: #00d4ff;
+  --color-tag-border: rgba(0,212,255,0.3);
+  --color-nav-bg: #0a0a0f;
+  --color-nav-item: #94a3b8;
+  --color-nav-active: #00d4ff;
+  --color-modal-bg: #0f0f1a;
+  --color-shadow: rgba(0,0,0,0.5);
+  --zdg-bg: #0a0a0f;
+  --zdg-primary: #00d4ff;
+  --zdg-secondary: #00ff88;
+  --zdg-surface: rgba(255,255,255,0.05);
+  --zdg-border: rgba(0,212,255,0.2);
+  --zdg-text: #e2e8f0;
+  --zdg-muted: #64748b;
+  --zdg-error: #ff4757;
+  --zdg-success: #00ff88;
+}
+
+/* ===== LIGHT MODE ===== */
+[data-theme="light"],
+.light {
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #ffffff;
+  --color-bg-card: rgba(0,0,0,0.03);
+  --color-bg-input: rgba(0,0,0,0.05);
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-border: rgba(0,100,200,0.15);
+  --color-accent: #0066cc;
+  --color-accent-green: #00875a;
+  --color-btn-primary-bg: #0066cc;
+  --color-btn-primary-text: #ffffff;
+  --color-btn-secondary-bg: transparent;
+  --color-btn-secondary-text: #0066cc;
+  --color-btn-secondary-border: #0066cc;
+  --color-btn-ghost-text: #0f172a;
+  --color-error: #dc2626;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-tag-bg: rgba(0,100,200,0.08);
+  --color-tag-text: #0066cc;
+  --color-tag-border: rgba(0,100,200,0.2);
+  --color-nav-bg: #ffffff;
+  --color-nav-item: #334155;
+  --color-nav-active: #0066cc;
+  --color-modal-bg: #ffffff;
+  --color-shadow: rgba(0,0,0,0.1);
+}
+
+/* ── Legacy Theme Variables ── */
 :root {
   --background: 240 10% 3.9%;
   --foreground: 0 0% 90%;
@@ -105,8 +179,8 @@ body {
 }
 
 .auth-screen {
-  background: #0a0a0f;
-  color: #e2e8f0;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
   isolation: isolate;
 }
 
@@ -126,11 +200,11 @@ body {
   position: relative;
   z-index: 1;
   border-radius: 16px;
-  border: 1px solid rgba(0, 212, 255, 0.2);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32), 0 0 42px rgba(0, 212, 255, 0.08);
+  box-shadow: 0 24px 80px var(--color-shadow);
 }
 
 @keyframes auth-grid-pan {
@@ -367,36 +441,52 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ===== LIGHT MODE OVERRIDES ===== */
-[data-theme="light"] .btn-cyber,
-[data-theme="light"] .btn-primary {
-  background: #0066cc !important;
-  color: #ffffff !important;
-  border: 1px solid #0055aa;
+[data-theme="light"] .btn-cyber {
+  background: var(--color-btn-primary-bg) !important;
+  color: var(--color-btn-primary-text) !important;
+  border: 1px solid var(--color-accent);
 }
 [data-theme="light"] .btn-cyber:hover {
   box-shadow: 0 0 12px rgba(0, 102, 204, 0.3);
 }
 [data-theme="light"] .btn-cyber-green {
-  background: #059669 !important;
+  background: var(--color-accent-green) !important;
   color: #ffffff !important;
 }
 [data-theme="light"] .btn-cyber-outline {
-  color: #0066cc !important;
-  border-color: #0066cc !important;
+  color: var(--color-btn-secondary-text) !important;
+  border-color: var(--color-btn-secondary-border) !important;
+}
+[data-theme="light"] .btn-cyber-ghost {
+  color: var(--color-btn-ghost-text) !important;
 }
 [data-theme="light"] .btn-cyber-ghost:hover,
+[data-theme="light"] .ghost-btn {
+  color: var(--color-btn-ghost-text) !important;
+}
 [data-theme="light"] .ghost-btn:hover {
   background: rgba(0, 0, 0, 0.06) !important;
 }
 [data-theme="light"] .cyber-btn {
-  background: linear-gradient(135deg, #0066cc, #0055aa) !important;
-  color: #ffffff !important;
+  background: var(--color-btn-primary-bg) !important;
+  color: var(--color-btn-primary-text) !important;
+}
+[data-theme="light"] .cyber-btn:hover {
+  box-shadow: 0 0 12px rgba(0, 102, 204, 0.3);
+}
+[data-theme="light"] .input-cyber {
+  background: var(--color-bg-input) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+[data-theme="light"] .input-cyber:focus {
+  border-color: var(--color-accent) !important;
 }
 [data-theme="light"] .tag,
 [data-theme="light"] .badge,
 [data-theme="light"] [class*="category"],
 [data-theme="light"] [class*="badge"] {
-  background: #e8ecf0 !important;
-  color: #1a1a2e !important;
-  border: 1px solid #c8ccd0 !important;
+  background: var(--color-tag-bg) !important;
+  color: var(--color-tag-text) !important;
+  border: 1px solid var(--color-tag-border) !important;
 }

@@ -6,6 +6,14 @@ export default {
   theme: {
     extend: {
       colors: {
+        // CSS variable-based theme colors
+        'bg-primary': 'var(--color-bg-primary)',
+        'bg-secondary': 'var(--color-bg-secondary)',
+        'bg-card': 'var(--color-bg-card)',
+        'text-primary': 'var(--color-text-primary)',
+        'text-secondary': 'var(--color-text-secondary)',
+        accent: 'var(--color-accent)',
+        'accent-green': 'var(--color-accent-green)',
         cyber: {
           bg: "#0a0a0f",
           surface: "#12121a",

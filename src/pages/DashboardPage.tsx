@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useUserProgress } from "@/context/UserProgressContext";
 import AnimatedCyberBackground from "@/components/AnimatedCyberBackground";
+import LiveClock from "@/components/ui/LiveClock";
 
 type SidebarItem = {
   label: string;
@@ -150,9 +151,12 @@ export default function DashboardPage() {
                   Your security command center is ready. {streak > 0 && `${streak}-day streak — keep it going!`}
                 </p>
               </div>
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent-green) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent-green) 20%, transparent)" }}>
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "var(--theme-accent-green)" }} />
-                <span className="text-xs font-medium" style={{ color: "var(--theme-accent-green)" }}>System Online</span>
+              <div className="hidden sm:flex flex-col items-end gap-2">
+                <LiveClock />
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent-green) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent-green) 20%, transparent)" }}>
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "var(--theme-accent-green)" }} />
+                  <span className="text-xs font-medium" style={{ color: "var(--theme-accent-green)" }}>System Online</span>
+                </div>
               </div>
             </div>
           </div>
