@@ -13,6 +13,7 @@ interface ImportMetaEnv {
   readonly VITE_APP_NAME?: string;
   readonly VITE_API_BASE_URL?: string;
   readonly VITE_API_PORT?: string;
+  readonly VITE_PYAPI_URL?: string;
   readonly VITE_PY_API_URL?: string;
   readonly VITE_PY_API_PORT?: string;
 }
