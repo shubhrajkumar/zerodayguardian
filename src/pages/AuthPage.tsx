@@ -188,7 +188,7 @@ export default function AuthPage() {
       <div className="auth-screen relative min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center animate-fade-in-up">
           <div className="glass-card p-8 cyber-glow">
-            <div className="text-red-400 text-4xl mb-4">âš </div>
+            <div className="text-red-400 text-4xl mb-4">⚠️</div>
             <h2 className="text-xl font-bold mb-2" style={{ color: "var(--theme-text)" }}>Authentication Unavailable</h2>
             <p className="text-sm mb-4" style={{ color: "var(--theme-text-muted)" }}>
               Authentication service is not configured. Please contact your administrator.
