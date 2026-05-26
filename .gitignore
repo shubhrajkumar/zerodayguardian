@@ -31,6 +31,8 @@ __pycache__/
 
 # Logs
 *.log
+vite-err.txt
+vite-output.txt
 server-auth-test.err.log
 server-auth-test.out.log
 

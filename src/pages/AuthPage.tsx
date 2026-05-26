@@ -80,7 +80,7 @@ export default function AuthPage() {
        setError(null);
        const provider = new GoogleAuthProvider();
        provider.setCustomParameters({ prompt: "select_account" });
-       const result = await signInWithPopup(auth, provider);
+       const result = await signInWithPopup(firebaseAuth, provider);
        const idToken = await result.user.getIdToken();
 
        const payload = await api.post<BackendAuthResponse>("/api/auth/google", {
@@ -135,7 +135,7 @@ export default function AuthPage() {
         });
         login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
         try {
-          if (auth.currentUser) await sendEmailVerification(auth.currentUser);
+          if (firebaseAuth.currentUser) await sendEmailVerification(firebaseAuth.currentUser);
           setSuccess("Account created. Welcome to your dashboard.");
           showToast("Account created successfully.", "success");
         } catch {
@@ -144,7 +144,7 @@ export default function AuthPage() {
         }
         navigate("/dashboard", { replace: true });
       } else if (mode === "reset") {
-        await sendPasswordResetEmail(auth, email);
+        await sendPasswordResetEmail(firebaseAuth, email);
         setSuccess("Password reset email sent! Check your inbox.");
         showToast("Reset email sent!", "success");
         setTimeout(() => setMode("login"), 3000);

@@ -381,12 +381,28 @@ export const createApp = () => {
       ts: new Date().toISOString(),
     });
   });
-  app.get("/api/health", (_req, res) =>
+  app.get("/api/health", (req, res) =>
     res.json({
       status: "ok",
+      service: "zero-day-guardian-backend",
+      requestId: req.requestId,
       timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
       environment: process.env.NODE_ENV,
       version: "1.0.0",
+      nodeVersion: process.version,
+      auth: {
+        google: getGoogleAuthConfigStatus()?.enabled === true,
+        session: true,
+      },
+      cors: {
+        origin: req.headers.origin || "",
+        configured: env.corsOrigins || [],
+      },
+      memory: {
+        heapUsed: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
+        heapTotal: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
+      },
     })
   );
   app.get("/api/health/chatbot", async (req, res) => {

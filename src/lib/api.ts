@@ -1,7 +1,10 @@
 import axios from 'axios';
+import { API_BASE_URL } from '@/lib/apiConfig';
+
+const resolvedBaseUrl = import.meta.env.VITE_API_URL || API_BASE_URL || '';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: resolvedBaseUrl,
   withCredentials: true,
   timeout: 15000,
   headers: {
@@ -77,8 +80,9 @@ api.interceptors.response.use(
       
       if (refreshToken) {
         try {
+          const refreshUrl = resolvedBaseUrl ? `${resolvedBaseUrl}/api/auth/refresh` : '/api/auth/refresh';
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL}/api/auth/refresh`,
+            refreshUrl,
             { refreshToken },
             { withCredentials: true }
           );

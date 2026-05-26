@@ -39,7 +39,7 @@ export default function DashboardPage() {
   const displayName = user?.name || user?.email?.split("@")[0] || "Guardian";
   const xp = progress?.xp ?? 1280;
   const streak = progress?.streak ?? 7;
-  const badges = progress?.badges ?? 12;
+  const badges = Array.isArray(progress?.badges) ? progress.badges.length : progress?.badges ?? 12;
   const rank = progress?.rank ?? "Cyber Sentinel";
 
   const stats = [
