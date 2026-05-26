@@ -365,3 +365,38 @@ body {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== LIGHT MODE OVERRIDES ===== */
+[data-theme="light"] .btn-cyber,
+[data-theme="light"] .btn-primary {
+  background: #0066cc !important;
+  color: #ffffff !important;
+  border: 1px solid #0055aa;
+}
+[data-theme="light"] .btn-cyber:hover {
+  box-shadow: 0 0 12px rgba(0, 102, 204, 0.3);
+}
+[data-theme="light"] .btn-cyber-green {
+  background: #059669 !important;
+  color: #ffffff !important;
+}
+[data-theme="light"] .btn-cyber-outline {
+  color: #0066cc !important;
+  border-color: #0066cc !important;
+}
+[data-theme="light"] .btn-cyber-ghost:hover,
+[data-theme="light"] .ghost-btn:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme="light"] .cyber-btn {
+  background: linear-gradient(135deg, #0066cc, #0055aa) !important;
+  color: #ffffff !important;
+}
+[data-theme="light"] .tag,
+[data-theme="light"] .badge,
+[data-theme="light"] [class*="category"],
+[data-theme="light"] [class*="badge"] {
+  background: #e8ecf0 !important;
+  color: #1a1a2e !important;
+  border: 1px solid #c8ccd0 !important;
+}

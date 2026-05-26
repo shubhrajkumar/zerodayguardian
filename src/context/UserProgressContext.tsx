@@ -119,6 +119,37 @@ const defaultProgress: UserProgress = {
   },
 };
 
+// Telemetry batching — collect events and send in batches
+const TELEMETRY_BATCH_INTERVAL = 30000; // 30 seconds
+const TELEMETRY_MAX_BATCH = 10;
+let telemetryBatch: Array<{ type: string; query?: string; tool?: string; durationMs?: number; depth?: number; success?: boolean; metadata?: Record<string, unknown> }> = [];
+let telemetryTimer: ReturnType<typeof setTimeout> | null = null;
+
+const flushTelemetryBatch = async () => {
+  if (telemetryBatch.length === 0) return;
+  const batch = telemetryBatch.splice(0, TELEMETRY_MAX_BATCH);
+  telemetryBatch = telemetryBatch.slice(TELEMETRY_MAX_BATCH);
+  try {
+    const token = localStorage.getItem('zdg_token');
+    if (!token) return;
+    await fetch(`${import.meta.env.VITE_API_URL}/api/intelligence/telemetry/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ batch, events: batch.length, timestamp: Date.now() }),
+    });
+  } catch {
+    // Telemetry is best-effort
+  }
+};
+
+const scheduleTelemetryFlush = () => {
+  if (telemetryTimer) clearTimeout(telemetryTimer);
+  telemetryTimer = setTimeout(() => {
+    flushTelemetryBatch();
+    if (telemetryBatch.length > 0) scheduleTelemetryFlush();
+  }, TELEMETRY_BATCH_INTERVAL);
+};
+
 const UserProgressContext = createContext<UserProgressContextValue | null>(null);
 
 export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
@@ -208,37 +239,21 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
     metadata?: Record<string, unknown>;
   }) => {
     if (!getStoredAccessToken()) return;
-    try {
-      const response = (await api.post<{
-        status: string;
-        result?: {
-          intent: string;
-          complexity: number;
-          xpGain: number;
-          profile?: { xp?: number; rank?: string; streak?: number };
-        };
-        intent?: string;
-        complexity?: number;
-        xpGain?: number;
-        profile?: { xp?: number; rank?: string; streak?: number };
-      }>("/api/intelligence/telemetry/event", payload)).data;
-      const result = response?.result || response;
-      const xpGain = Number(result?.xpGain || 0);
-      setProgress((prev) => ({
-        ...prev,
-        xp: Math.max(prev.xp, Number(result?.profile?.xp || prev.xp)),
-        points: Math.max(prev.points, Number(result?.profile?.xp || prev.points) || prev.points + xpGain),
-        rank: String(result?.profile?.rank || prev.rank),
-        streak: Math.max(prev.streak, Number(result?.profile?.streak || prev.streak)),
-        totalActions: prev.totalActions + 1,
-        todayActions: prev.todayActions + 1,
-      }));
-    } catch (error) {
-      if (error instanceof AxiosError && (error.response?.status === 401 || error.response?.status === 403)) {
-        return;
-      }
-      // keep gamification non-blocking
+    
+    // Queue into batch instead of sending immediately
+    telemetryBatch.push(payload);
+    if (telemetryBatch.length >= TELEMETRY_MAX_BATCH) {
+      flushTelemetryBatch();
+    } else if (!telemetryTimer) {
+      scheduleTelemetryFlush();
     }
+    
+    // Update local state optimistically
+    setProgress((prev) => ({
+      ...prev,
+      totalActions: prev.totalActions + 1,
+      todayActions: prev.todayActions + 1,
+    }));
   }, []);
 
   useEffect(() => {

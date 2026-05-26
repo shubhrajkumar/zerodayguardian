@@ -9,12 +9,30 @@ const api = axios.create({
   }
 });
 
+// ── Request deduplication ──
+// Prevents firing duplicate GET requests for the same URL simultaneously
+const pendingRequests = new Map<string, Promise<any>>();
+
+function getRequestKey(config: any): string {
+  return `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
+}
+
 // REQUEST INTERCEPTOR
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('zdg_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // Deduplicate GET requests — set key immediately to prevent concurrent duplicates
+  if (config.method?.toLowerCase() === 'get' && !config._retry) {
+    const key = getRequestKey(config);
+    if (pendingRequests.has(key)) {
+      return Promise.reject(new axios.Cancel('Duplicate request cancelled'));
+    }
+    pendingRequests.set(key, true);
+  }
+  
   return config;
 }, (error) => Promise.reject(error));
 
@@ -23,8 +41,26 @@ let isRefreshing = false;
 let failedQueue: any[] = [];
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Clean up dedup lock on success
+    if (response.config.method?.toLowerCase() === 'get' && !response.config._retry) {
+      const key = getRequestKey(response.config);
+      pendingRequests.delete(key);
+    }
+    return response;
+  },
   async (error) => {
+    // Clean up dedup lock on error (skip cancelled/deduplicated requests)
+    if (error.config && error.config.method?.toLowerCase() === 'get' && !(error.config as any)._retry) {
+      const key = getRequestKey(error.config);
+      pendingRequests.delete(key);
+    }
+    
+    // Skip processing for cancelled/deduplicated requests
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+    
     const originalRequest = error.config;
     
     if (error.response?.status === 401 && !originalRequest._retry) {

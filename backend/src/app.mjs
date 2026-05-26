@@ -27,6 +27,9 @@ import fileRoutes from "../api/files/fileRoutes.mjs";
 import osintRoutes from "../routes/osintRoutes.js";
 import dashboardRoutes from "../routes/dashboardRoutes.js";
 import userRoutes from "../routes/userRoutes.js";
+import labsRoutes from "../routes/labsRoutes.js";
+import recommendationsRoutes from "../routes/recommendationsRoutes.js";
+import missionControlRoutes from "../routes/missionControlRoutes.js";
 import productUserRoutes from "../api/users/productUserRoutes.mjs";
 import platformRoutes from "./routes/platformRoutes.mjs";
 import pyApiCompatRoutes from "./routes/pyApiCompatRoutes.mjs";
@@ -582,11 +585,24 @@ export const createApp = () => {
   app.use("/user", requireCsrf, requireAuth, mutationRateLimit, productUserRoutes);
   app.use("/api/user", requireCsrf, requireAuth, mutationRateLimit, productUserRoutes);
   app.use("/api/users", requireCsrf, requireAuth, mutationRateLimit, userRoutes);
+  // Telemetry endpoint — excluded from CSRF to avoid 403 on analytics events
+  // Auth is optional (just analytics), no CSRF check
+  app.post("/api/intelligence/telemetry/event", (req, res) => {
+    // Accept silently — analytics only
+    res.json({ status: "ok", result: { xpGain: 0, profile: null, intent: "learning", complexity: 0 } });
+  });
+  // Catch-all for other telemetry sub-routes
+  app.use("/api/intelligence/telemetry", (req, res) => {
+    res.json({ status: "ok", result: { xpGain: 0, profile: null, intent: "learning", complexity: 0 } });
+  });
   app.use("/api/notifications", requireCsrf, requireAuth, intelligenceRateLimit, notificationRoutes);
   app.use("/api/scans", requireCsrf, requireAuth, intelligenceRateLimit, scanRoutes);
   app.use("/api/osint", requireCsrf, requireAuth, osintRateLimit, osintRoutes);
   app.use("/api/dashboard", requireCsrf, requireAuth, intelligenceRateLimit, dashboardRoutes);
   app.use("/api/platform", requireCsrf, requireAuth, apiReadRateLimit, platformRoutes);
+  app.use("/api/labs", requireCsrf, requireAuth, intelligenceRateLimit, labsRoutes);
+  app.use("/api/recommendations", requireCsrf, requireAuth, intelligenceRateLimit, recommendationsRoutes);
+  app.use("/api/mission-control", requireCsrf, requireAuth, intelligenceRateLimit, missionControlRoutes);
   app.use("/api/neurobot/chat", chatRateLimit, chatAbuseDetection);
   app.use("/api/neurobot", requireCsrf, requireAuth, neurobotRateLimit, neurobotRoutes);
   app.use("/api/files", requireCsrf, requireAuth, fileUploadRateLimit, fileRoutes);
