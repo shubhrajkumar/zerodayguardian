@@ -357,7 +357,6 @@ export const createApp = () => {
     const secureToken = encryptSessionToken(sessionId);
     req.neurobotSessionId = sessionId;
     res.cookie(COOKIE_NAME, secureToken, buildCookieOptions({
-      httpOnly: true,
       maxAge: ONE_WEEK * 1000,
     }));
     next();

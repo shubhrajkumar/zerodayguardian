@@ -285,9 +285,8 @@ const signRefreshToken = (user, rememberMe = false, jti = createRefreshJti()) =>
   return { token, jti };
 };
 
-const cookieOptions = () => buildCookieOptions({
-  httpOnly: true,
-});
+/** Cookie options for auth tokens — inherits Secure + HttpOnly from buildCookieOptions. */
+const cookieOptions = () => buildCookieOptions();
 
 const persistRefreshSession = async (user, refreshToken, { rememberMe = false, jti = "", expiresAt = 0 } = {}) => {
   const users = getCollection(USERS);

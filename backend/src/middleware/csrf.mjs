@@ -21,7 +21,6 @@ const ensureCsrfCookie = (req, res) => {
   req.cookies[CSRF_COOKIE] = token;
   try {
     res.cookie(CSRF_COOKIE, token, buildCookieOptions({
-      httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7,
     }));
   } catch (error) {
