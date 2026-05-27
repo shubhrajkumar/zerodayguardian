@@ -1,0 +1,118 @@
+# ──────────────────────────────────────────────
+# ZeroDay Guardian — Monitoring Config
+# Prometheus ServiceMonitor + Service for metrics
+# ──────────────────────────────────────────────
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: zeroday-guardian-monitor
+  namespace: zeroday-guardian
+  labels:
+    app: zeroday-guardian
+    release: prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: zeroday-guardian
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+      - zeroday-guardian
+---
+# ──────────────────────────────────────────────
+# OpenTelemetry Collector configuration (sidecar)
+# ──────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: zeroday-guardian
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch:
+        timeout: 1s
+        send_batch_size: 1024
+    exporters:
+      prometheus:
+        endpoint: 0.0.0.0:8889
+        namespace: zdg
+      logging:
+        loglevel: warn
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [logging]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus, logging]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: zeroday-guardian
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:latest
+          args: ["--config=/etc/otel/config.yaml"]
+          ports:
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+            - containerPort: 8889
+              name: prometheus
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otel
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: zeroday-guardian
+  labels:
+    app: otel-collector
+spec:
+  ports:
+    - port: 4317
+      name: otlp-grpc
+      protocol: TCP
+    - port: 4318
+      name: otlp-http
+      protocol: TCP
+    - port: 8889
+      name: prometheus
+      protocol: TCP
+  selector:
+    app: otel-collector

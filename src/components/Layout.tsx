@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Zorvix from "@/components/Zorvix";
 import AssistantCommandPalette from "@/components/AssistantCommandPalette";
+import CookieConsent from "@/components/CookieConsent";
 
 const InteractiveScene = lazy(() => import("@/components/InteractiveScene"));
 const AnimatedCyberBackground = lazy(() => import("@/components/AnimatedCyberBackground"));
@@ -48,9 +49,17 @@ const Layout = ({ children }: LayoutProps) => {
           </Suspense>
         </div>
       ) : null}
+      {/* Accessibility: Skip-to-content link for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[9999] focus:rounded-xl focus:bg-[var(--theme-accent-blue)] focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-[var(--theme-bg)] focus:shadow-lg focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       <Navbar />
 
-      <main className="relative z-10 min-w-0 flex-1 pt-16">
+      <main id="main-content" className="relative z-10 min-w-0 flex-1 pt-16" role="main" tabIndex={-1}>
         {children}
       </main>
 
@@ -59,6 +68,7 @@ const Layout = ({ children }: LayoutProps) => {
       </div>
       <AssistantCommandPalette />
       <Zorvix />
+      <CookieConsent />
     </div>
   );
 };

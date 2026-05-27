@@ -1,0 +1,30 @@
+# ──────────────────────────────────────────────
+# ZeroDay Guardian — Kustomize overlay root
+# ──────────────────────────────────────────────
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: zeroday-guardian
+
+resources:
+  - deployment.yaml
+  - namespace.yaml
+
+commonLabels:
+  app: zeroday-guardian
+  managed-by: kustomize
+
+configMapGenerator:
+  - name: zdg-config
+    literals:
+      - NODE_ENV=production
+      - CORS_ORIGIN=https://zerodayguardian-delta.vercel.app
+      - TRUST_PROXY=true
+      - OTEL_SERVICE_NAME=zeroday-guardian
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+
+secretGenerator:
+  - name: zdg-secrets
+    envs:
+      - .env.k8s
+    type: Opaque

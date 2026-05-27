@@ -29,7 +29,7 @@ const AboutPage = () => {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="font-mono text-3xl md:text-4xl font-bold mb-4">
-            About <span className="text-accent">ZeroDay-Guardian</span>
+            About <span className="text-accent">ZeroDay Guardian</span>
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             We train cyber learners to think clearly under pressure, execute responsibly, and keep improving until excellence becomes habit.
@@ -39,8 +39,8 @@ const AboutPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-16">
           {pillars.map((value) => (
             <div key={value.title} className="glass-card rounded-lg p-6">
-              <value.icon className="h-7 w-7 text-primary mb-3" />
-              <h3 className="font-mono text-lg font-semibold mb-2">{value.title}</h3>
+              <value.icon className="h-7 w-7 text-primary mb-3" aria-hidden="true" />
+              <h2 className="font-mono text-lg font-semibold mb-2">{value.title}</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">{value.desc}</p>
             </div>
           ))}

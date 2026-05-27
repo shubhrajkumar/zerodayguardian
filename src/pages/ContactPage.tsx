@@ -35,9 +35,9 @@ const ContactPage = () => {
           <div className="grid gap-4 md:grid-cols-3">
             {contactChannels.map((channel) => (
               <article key={channel.title} className="cyber-card rounded-[24px] p-5 md:p-6">
-                <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-slate-500">{channel.title}</p>
-                <h2 className="mt-3 break-all text-white">{channel.detail}</h2>
-                <p className="mt-3 text-base leading-7 text-slate-300">{channel.note}</p>
+                <h2 className="terminal-font text-[11px] uppercase tracking-[0.2em]" style={{ color: 'var(--theme-text-dim)' }}>{channel.title}</h2>
+                <p className="mt-3 break-all text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>{channel.detail}</p>
+                <p className="mt-3 text-base leading-7" style={{ color: 'var(--theme-text-muted)' }}>{channel.note}</p>
               </article>
             ))}
           </div>

@@ -1,5 +1,36 @@
+# ── ZeroDay Guardian Robots.txt ──
+# Allow full crawl, specify sitemap
+# Last updated: 2026-05-27
+
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /verify-email
+
+# Crawl budget: prioritize fresh content
+User-agent: Googlebot
+Crawl-delay: 2
+
+User-agent: Bingbot
+Crawl-delay: 2
 
 Host: https://zerodayguardian-delta.vercel.app
 Sitemap: https://zerodayguardian-delta.vercel.app/sitemap.xml
+
+# SEO: Allow all indexable routes
+Allow: /dashboard$
+Allow: /program$
+Allow: /lab$
+Allow: /learn$
+Allow: /tools$
+Allow: /osint$
+Allow: /assistant$
+Allow: /blog$
+Allow: /community$
+Allow: /resources$
+Allow: /about$
+Allow: /privacy$
+Allow: /terms$
+Allow: /contact$
+Allow: /security$
