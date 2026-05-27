@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -69,9 +69,9 @@ def upsert_lesson_progress(db: Session, user_id: str, lesson_id: str, status: st
         progress.score = score
     if attempts is not None:
         progress.attempts = attempts
-    progress.last_activity_at = datetime.utcnow()
+    progress.last_activity_at = datetime.now(timezone.utc)
     if status == "completed":
-        progress.completed_at = datetime.utcnow()
+        progress.completed_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(progress)
 
@@ -97,9 +97,9 @@ def upsert_lesson_progress(db: Session, user_id: str, lesson_id: str, status: st
         db.add(module_progress)
     module_progress.progress_pct = progress_pct
     module_progress.status = "completed" if progress_pct >= 100 else "in_progress"
-    module_progress.last_activity_at = datetime.utcnow()
+    module_progress.last_activity_at = datetime.now(timezone.utc)
     if module_progress.status == "completed":
-        module_progress.completed_at = datetime.utcnow()
+        module_progress.completed_at = datetime.now(timezone.utc)
     db.commit()
 
     return progress, module_progress

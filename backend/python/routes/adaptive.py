@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
 
@@ -44,7 +44,7 @@ def adaptive_recommendations(request: Request, db: Session = Depends(get_db), us
     payload = build_adaptive_learning_recommendations(db, user_id)
     return AdaptiveRecommendationResponse(
         user_id=user_id,
-        generated_at=datetime.utcnow().isoformat(),
+        generated_at=datetime.now(timezone.utc).isoformat(),
         behavior=payload["behavior"],
         learning=payload["learning"],
         recommendations=payload["recommendations"],

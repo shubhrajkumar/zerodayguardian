@@ -14,9 +14,16 @@ const api = axios.create({
 
 // ── Request deduplication ──
 // Prevents firing duplicate GET requests for the same URL simultaneously
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pendingRequests = new Map<string, Promise<any>>();
 
-function getRequestKey(config: any): string {
+// Extend the Axios request config type to support our custom _retry flag
+interface ExtendedRequestConfig {
+  _retry?: boolean;
+  [key: string]: unknown;
+}
+
+function getRequestKey(config: { method?: string; url?: string; params?: Record<string, unknown> }): string {
   return `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
 }
 
@@ -27,13 +34,15 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
+  const extConfig = config as typeof config & ExtendedRequestConfig;
+
   // Deduplicate GET requests — set key immediately to prevent concurrent duplicates
-  if (config.method?.toLowerCase() === 'get' && !config._retry) {
+  if (config.method?.toLowerCase() === 'get' && !extConfig._retry) {
     const key = getRequestKey(config);
     if (pendingRequests.has(key)) {
       return Promise.reject(new axios.Cancel('Duplicate request cancelled'));
     }
-    pendingRequests.set(key, true);
+    pendingRequests.set(key, Promise.resolve());
   }
   
   return config;
@@ -41,12 +50,14 @@ api.interceptors.request.use((config) => {
 
 // RESPONSE INTERCEPTOR
 let isRefreshing = false;
-let failedQueue: any[] = [];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let failedQueue: Array<{ resolve: (value: any) => void; reject: (reason?: unknown) => void }> = [];
 
 api.interceptors.response.use(
   (response) => {
     // Clean up dedup lock on success
-    if (response.config.method?.toLowerCase() === 'get' && !response.config._retry) {
+    const extConfig = response.config as typeof response.config & ExtendedRequestConfig;
+    if (response.config.method?.toLowerCase() === 'get' && !extConfig._retry) {
       const key = getRequestKey(response.config);
       pendingRequests.delete(key);
     }
@@ -54,7 +65,8 @@ api.interceptors.response.use(
   },
   async (error) => {
     // Clean up dedup lock on error (skip cancelled/deduplicated requests)
-    if (error.config && error.config.method?.toLowerCase() === 'get' && !(error.config as any)._retry) {
+    const extConfig = error.config as typeof error.config & ExtendedRequestConfig;
+    if (error.config && error.config.method?.toLowerCase() === 'get' && !extConfig._retry) {
       const key = getRequestKey(error.config);
       pendingRequests.delete(key);
     }
@@ -64,7 +76,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
     
-    const originalRequest = error.config;
+    const originalRequest = error.config as typeof error.config & ExtendedRequestConfig;
     
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {

@@ -4,10 +4,16 @@
   "outputDirectory": "dist",
   "installCommand": "npm install --no-fund --no-audit --prefer-offline",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/favicon.ico", "destination": "/favicon.ico" },
+    { "source": "/og-image.png", "destination": "/og-image.png" },
+    { "source": "/robots.txt", "destination": "/robots.txt" },
+    { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
+    { "source": "/sw.js", "destination": "/sw.js" },
+    { "source": "/downloads/(.*)", "destination": "/downloads/$1" },
+    { "source": "/(.*)", "destination": "/api/index" }
   ],
   "headers": [
-    /* ── Security Headers (all routes) ── */
     {
       "source": "/(.*)",
       "headers": [
@@ -37,8 +43,6 @@
         }
       ]
     },
-
-    /* ── Caching Headers for Static Assets ── */
     {
       "source": "/assets/(.*)",
       "headers": [
@@ -102,8 +106,6 @@
         }
       ]
     },
-
-    /* ── API CORS Headers ── */
     {
       "source": "/api/(.*)",
       "headers": [
@@ -129,8 +131,6 @@
         }
       ]
     },
-
-    /* ── HTML: No cache (dynamic SPA) ── */
     {
       "source": "/index.html",
       "headers": [

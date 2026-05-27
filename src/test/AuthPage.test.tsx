@@ -118,7 +118,7 @@ describe("AuthPage", () => {
     renderAuthPage();
     expect(screen.getByText("ZeroDay")).toBeTruthy();
     expect(screen.getByText("Guardian")).toBeTruthy();
-    expect(screen.getByText(/Secure/)).toBeTruthy();
+    expect(screen.getAllByText(/Secure/).length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders forgot password link in login mode", () => {

@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 const trimTrailingSlash = (value = "") => String(value || "").replace(/\/+$/, "");
 
@@ -50,6 +51,16 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
+      // Sentry source map upload (opt-in via SENTRY_AUTH_TOKEN env var)
+      ...(process.env.SENTRY_AUTH_TOKEN
+        ? [
+            sentryVitePlugin({
+              org: process.env.SENTRY_ORG || "",
+              project: process.env.SENTRY_PROJECT || "",
+              authToken: process.env.SENTRY_AUTH_TOKEN,
+            }),
+          ]
+        : []),
       visualizer({
         filename: "dist/stats-treemap.html",
         template: "treemap",
@@ -70,7 +81,7 @@ export default defineConfig(() => {
     },
     build: {
       target: "es2020",
-      sourcemap: false,
+      sourcemap: process.env.SENTRY_AUTH_TOKEN ? "hidden" : false,
       reportCompressedSize: false,
       chunkSizeWarningLimit: 1000,
       rollupOptions: {

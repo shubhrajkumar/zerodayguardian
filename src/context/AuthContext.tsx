@@ -10,13 +10,7 @@ import {
 import api from "@/lib/api";
 import { firebaseAuth } from "@/lib/firebase";
 
-const MOCK_AUTH_KEY = "zdg_mock_auth";
-const MOCK_USER: AuthUser = {
-  id: "mock-user-1",
-  name: "Test Guardian",
-  email: "test@zerodayguardian.com",
-  role: "user",
-};
+// MOCK_AUTH removed for production — all auth flows go through Firebase + backend API
 
 type AuthState = "loading" | "authenticated" | "unauthenticated";
 
@@ -49,21 +43,7 @@ const toFirebaseAuthUser = (firebaseUser: FirebaseUser): AuthUser => ({
   role: "user",
 });
 
-/**
- * Checks for mock auth flag. If set, instantly returns the mock user.
- * This allows frontend-only development without a running backend.
- */
-const checkMockAuth = (): AuthUser | null => {
-  try {
-    if (localStorage.getItem(MOCK_AUTH_KEY) === "true") {
-      return MOCK_USER;
-    }
-  } catch {
-    // localStorage unavailable
-  }
-  return null;
-};
-
+// checkMockAuth removed for production — no mock auth path
 /**
  * Restore user from cached auth state (written by apiClient on successful API auth).
  */
@@ -127,16 +107,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refreshAuth = useCallback(async (_force?: boolean): Promise<boolean> => {
-    // 1. Try mock auth (fast path, no backend needed)
-    const mockUser = checkMockAuth();
-    if (mockUser) return syncAuthState(mockUser);
-
-    // 2. Try Firebase currentUser (fast path)
+    // 1. Try Firebase currentUser (fast path)
     if (firebaseAuth?.currentUser) {
       return syncAuthState(toFirebaseAuthUser(firebaseAuth.currentUser));
     }
 
-    // 3. Try bootstrapAuthSession from apiClient (handles token verify + refresh)
+    // 2. Try bootstrapAuthSession from apiClient (handles token verify + refresh)
     try {
       const result = await bootstrapAuthSession();
       if (result.ok) {
@@ -149,7 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // bootstrap failed, try direct token check
     }
 
-    // 4. Direct token check
+    // 3. Direct token check
     const storedToken = localStorage.getItem("zdg_token");
     const storedRefreshToken = localStorage.getItem("zdg_refresh");
 
@@ -166,7 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    // 5. Try refresh token
+    // 4. Try refresh token
     if (storedRefreshToken) {
       try {
         const response = await api.post<{ accessToken: string; refreshToken: string; user: AuthUser }>(
@@ -188,7 +164,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    // 6. Restore from cached auth state as last resort (allows offline viewing)
+    // 5. Restore from cached auth state as last resort (allows offline viewing)
     const cachedUser = restoreCachedUser();
     if (cachedUser) return syncAuthState(cachedUser);
 
@@ -228,7 +204,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       localStorage.removeItem("zdg_token");
       localStorage.removeItem("zdg_refresh");
-      localStorage.removeItem(MOCK_AUTH_KEY);
+      // MOCK_AUTH_KEY removed for production
     } catch {
       // storage unavailable
     }

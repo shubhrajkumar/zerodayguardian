@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 import hashlib
 import random
 from typing import Any
@@ -695,7 +695,7 @@ def run_sandbox_command(db: Session, user_id: str, lab_id: str, command: str) ->
     state.terminal_log = (list(state.terminal_log or []) + [f"$ {normalized}", output])[-40:]
     feedback = _derive_feedback(lab, normalized, max(0, len(completed_objectives) - 1), completed)
     state.last_feedback = feedback["status"]
-    state.updated_at = datetime.utcnow()
+    state.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     db.add(
@@ -840,7 +840,7 @@ def try_complete_missions(db: Session, user_id: str, lab_id: str, completed: boo
                 "id": mission["id"],
                 "title": mission["title"],
                 "detail": f"+{mission['points']} mission points awarded",
-                "earnedAt": int(datetime.utcnow().timestamp() * 1000),
+                "earnedAt": int(datetime.now(timezone.utc).timestamp() * 1000),
             }
         )
         completed_ids.append(mission["id"])

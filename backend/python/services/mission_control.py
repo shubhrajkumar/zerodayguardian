@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timezone, timedelta
 import hashlib
 from typing import Any
 
@@ -104,7 +104,7 @@ def _recent_rewards(db: Session, user_id: str) -> list[dict[str, Any]]:
         label = meta.get("title") or source
         detail = meta.get("detail") or f"+{int(row.points or 0)} XP awarded through {source.lower()}."
         tone = "badge" if "badge" in str(label).lower() else "streak" if "mission" in str(source).lower() else "xp"
-        awarded_at = int(row.created_at.timestamp() * 1000) if row.created_at else int(datetime.utcnow().timestamp() * 1000)
+        awarded_at = int(row.created_at.timestamp() * 1000) if row.created_at else int(datetime.now(timezone.utc).timestamp() * 1000)
         rewards.append(
             {
                 "id": row.id,
@@ -563,7 +563,7 @@ def build_mission_control_fallback(
         },
         "debug": {
             "request_id": request_id,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "auto_retry_ready": True,
             "validation_state": "degraded",
             "error_capture": "enabled",
@@ -772,7 +772,7 @@ def build_mission_control(db: Session, user_id: str, request_id: str = "mission-
         debug_warnings.append("All notification suggestions are disabled; reactivation risk is higher.")
     debug_state = {
         "request_id": request_id,
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "auto_retry_ready": True,
         "validation_state": "strict",
         "error_capture": "enabled",
@@ -895,15 +895,15 @@ def record_mission_action(
             )
             if share:
                 share.share_count = int(share.share_count or 0) + 1
-                share.updated_at = datetime.utcnow()
+                share.updated_at = datetime.now(timezone.utc)
         if action_type == "referral_invite_sent":
             referral.invite_count = int(referral.invite_count or 0) + max(1, int(metadata.get("count", 1) or 1))
-            referral.last_invite_at = datetime.utcnow()
+            referral.last_invite_at = datetime.now(timezone.utc)
         if action_type == "referral_signup_completed":
             referral.signup_count = int(referral.signup_count or 0) + 1
             referral.conversion_count = int(referral.conversion_count or 0) + 1
             referral.reward_points = int(referral.reward_points or 0) + points
-            referral.last_conversion_at = datetime.utcnow()
+            referral.last_conversion_at = datetime.now(timezone.utc)
         if points > 0:
             title = str(metadata.get("title") or target.replace("-", " ").title())
             detail = str(metadata.get("detail") or f"+{points} XP awarded for {title.lower()}.")
@@ -921,7 +921,7 @@ def record_mission_action(
                 "detail": detail,
                 "xp": int(xp.points or points),
                 "tone": "badge" if "hidden" in action_type else "xp",
-                "awarded_at": int(datetime.utcnow().timestamp() * 1000),
+                "awarded_at": int(datetime.now(timezone.utc).timestamp() * 1000),
             }
         _debug_log(
             db,
