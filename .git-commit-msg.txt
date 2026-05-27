@@ -1,4 +1,10 @@
-feat: add Sentry test button to dashboard for end-to-end verification
+feat: add SentryTestPanel component with comprehensive test capabilities
 
-- DashboardPage.tsx: added "Send Test Error" button using Sentry.captureException
-- Shows VITE_SENTRY_DSN status (truncated for security)
+- SentryTestPanel.tsx: standalone component with 6 test actions
+  (test error, test message, unhandled error, network error,
+  rich error with context, user context)
+- DashboardPage.tsx: replaced basic inline button with
+  SentryTestPanel component
+- mountedRef guards on all async callbacks
+- sendWithUserContext cleans up Sentry.setUser(null) after flush
+- Clear button for result log with live counter
