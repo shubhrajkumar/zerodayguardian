@@ -20,56 +20,49 @@ import {
 } from "react-router-dom";
 import React from "react";
 
-// ── Guard: skip Sentry init if no DSN (e.g. local dev builds) ──
-const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
-if (dsn) {
-  Sentry.init({
-    dsn,
-    environment: import.meta.env.MODE || "production",
-    release: import.meta.env.VITE_APP_VERSION as string | undefined,
+// Sentry SDK silently no-ops when DSN is undefined — no guard needed.
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN as string | undefined,
+  environment: import.meta.env.MODE || "production",
+  release: import.meta.env.VITE_APP_VERSION as string | undefined,
 
-    // ── PII: include IP / request headers for debugging ──
-    sendDefaultPii: true,
+  // ── PII: include IP / request headers for debugging ──
+  sendDefaultPii: true,
 
-    integrations: [
-      // Browser automatic tracing (page loads, navigation, XHR/fetch)
-      Sentry.browserTracingIntegration(),
+  integrations: [
+    // Browser automatic tracing (page loads, navigation, XHR/fetch)
+    Sentry.browserTracingIntegration(),
 
-      // React Router v6 — names transactions by route (/dashboard, /tools/:id, …)
-      Sentry.reactRouterV6BrowserTracingIntegration({
-        useEffect: React.useEffect,
-        useLocation,
-        useNavigationType,
-        createRoutesFromChildren,
-        matchRoutes,
-      }),
+    // React Router v6 — names transactions by route (/dashboard, /tools/:id, …)
+    Sentry.reactRouterV6BrowserTracingIntegration({
+      useEffect: React.useEffect,
+      useLocation,
+      useNavigationType,
+      createRoutesFromChildren,
+      matchRoutes,
+    }),
 
-      // Session replay — captures user interactions around errors
-      Sentry.replayIntegration({
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
-    ],
+    // Session replay — captures user interactions around errors
+    Sentry.replayIntegration({
+      maskAllText: true,
+      blockAllMedia: true,
+    }),
+  ],
 
-    // ── Tracing ──
-    tracesSampleRate: 0.1, // 10% in production — adjust as needed
-    tracePropagationTargets: [
-      "localhost",
-      /^https:\/\/api\.zerodayguardian\.com/, // adjust to match your backend
-    ],
+  // ── Tracing ──
+  tracesSampleRate: 1.0, // Full tracing for maximum visibility
+  tracePropagationTargets: [
+    "localhost",
+    /^https?:\/\/(zerodayguardian|zeroday-guardian)(-[a-z0-9-]+)?\.(vercel\.app|onrender\.com)/,
+  ],
 
-    // ── Session Replay ──
-    replaysSessionSampleRate: 0.1,  // 10% of all sessions
-    replaysOnErrorSampleRate: 1.0,  // 100% of sessions with errors
+  // ── Session Replay ──
+  replaysSessionSampleRate: 0.1,  // 10% of all sessions
+  replaysOnErrorSampleRate: 1.0,  // 100% of sessions with errors
 
-    // ── Logging ──
-    enableLogs: true,
+  // ── Logging ──
+  enableLogs: true,
 
-    // ── Debug (set debug: true temporarily to troubleshoot missing events) ──
-    // debug: import.meta.env.MODE === "development",
-  });
-
-  console.info("[sentry] SDK initialized with DSN.");
-} else {
-  console.info("[sentry] VITE_SENTRY_DSN not set — Sentry disabled.");
-}
+  // ── Debug (set debug: true temporarily to troubleshoot missing events) ──
+  // debug: import.meta.env.MODE === "development",
+});

@@ -11,7 +11,7 @@
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
     { "source": "/sw.js", "destination": "/sw.js" },
     { "source": "/downloads/(.*)", "destination": "/downloads/$1" },
-    { "source": "/(.*)", "destination": "/api/index" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {

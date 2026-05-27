@@ -3,6 +3,21 @@ import { requireAuth } from "../src/middleware/auth.mjs";
 
 const router = Router();
 
+// GET /labs — Root handler returning labs index
+router.get("/", (_req, res) => {
+  res.json({
+    success: true,
+    message: "Labs API",
+    endpoints: {
+      overview: "/api/labs/overview",
+      sandbox: "/api/labs/sandbox",
+      sandbox_status: "/api/labs/sandbox/status"
+    },
+    categories: ["Web", "Network", "Crypto", "Forensics", "OSINT"],
+    total: 0
+  });
+});
+
 // GET /labs/overview — Labs catalog overview
 router.get("/overview", (_req, res) => {
   res.json({
