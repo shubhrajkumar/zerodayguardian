@@ -1,0 +1,4 @@
+feat: add Sentry test button to dashboard for end-to-end verification
+
+- DashboardPage.tsx: added "Send Test Error" button using Sentry.captureException
+- Shows VITE_SENTRY_DSN status (truncated for security)

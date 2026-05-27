@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useUserProgress } from "@/context/UserProgressContext";
 import AnimatedCyberBackground from "@/components/AnimatedCyberBackground";
 import LiveClock from "@/components/ui/LiveClock";
+import * as Sentry from "@sentry/react";
 
 type SidebarItem = {
   label: string;
@@ -198,6 +199,32 @@ export default function DashboardPage() {
                   <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>{action.desc}</p>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Sentry Test — remove after verification */}
+          <div className="glass-card p-5 mb-6 animate-fade-in-up">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold" style={{ color: "var(--theme-text)" }}>Sentry Error Tracking</h2>
+                <p className="text-xs mt-1" style={{ color: "var(--theme-text-dim)" }}>
+                  VITE_SENTRY_DSN: {String(import.meta.env.VITE_SENTRY_DSN || "not set").slice(0, 12)}...
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  Sentry.captureException(new Error("[manual-test] Sentry integration verified ✓"));
+                  alert("Test error sent to Sentry! Check your Sentry dashboard.");
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--theme-accent-purple) 15%, transparent)",
+                  color: "var(--theme-accent-purple)",
+                  border: "1px solid color-mix(in srgb, var(--theme-accent-purple) 25%, transparent)",
+                }}
+              >
+                🧪 Send Test Error
+              </button>
             </div>
           </div>
 
