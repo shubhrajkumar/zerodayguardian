@@ -1,131 +1,138 @@
 # ZeroDay Guardian — Full Audit Summary
 
-**Audit Date:** May 27, 2026  
-**Audit Scope:** Full-stack review (React/TypeScript frontend, Node.js/Express backend, Python FastAPI sidecar)  
-**Version:** Production (Vercel + Render deployment)  
+## 1. Backend Audit
 
----
+### Architecture
+- **Framework:** Express.js with ES modules (`.mjs`)
+- **Entry Point:** `backend/server.js` → `backend/server/app.js` → `backend/src/app.mjs`
+- **Database:** MongoDB (native driver + Mongoose)
+- **Port:** 8787 (configurable via `NEUROBOT_PORT`)
 
-## 1. Architecture Overview
+### Routes (All Registered in app.mjs)
 
-| Layer | Technology | Status |
-|-------|-----------|--------|
-| Frontend | React 18 + TypeScript + Vite | ✅ Production-ready |
-| Styling | Tailwind CSS + Radix UI + Framer Motion | ✅ Production-ready |
-| Frontend Routing | React Router v6 (lazy loaded) | ✅ Production-ready |
-| Backend | Node.js + Express | ✅ Production-ready |
-| Python API | FastAPI (uvicorn) | ✅ Deployed as sidecar |
-| Database | MongoDB (Mongoose) + PostgreSQL (via Python) | ✅ Configured |
-| Cache | Redis | ✅ Configured |
-| Auth | Firebase Auth + JWT + Refresh Tokens | ✅ Production-ready |
-| Deployment | Vercel (frontend) + Render (backend) | ✅ Active |
+| Route | Status | Auth |
+|-------|--------|------|
+| `/` | ✅ 200 | Public |
+| `/health` | ✅ 200 | Public |
+| `/api/health` | ✅ 200 | Public |
+| `/api/labs` | ✅ 200 | Mixed (list public, detail auth) |
+| `/api/missions` | ✅ 401 (expected) | Auth required |
+| `/api/courses` | ✅ 401 (expected) | Auth required |
+| `/api/auth/*` | ✅ | Public + Auth |
+| `/api/users` | ✅ | Auth required |
+| `/api/compliance` | ✅ | Auth required |
+| `/api/dashboard` | ✅ | Auth required |
+| `/api/osint` | ✅ | Auth required |
+| `/api/neurobot/chat` | ✅ | Rate-limited |
+| `/api/intelligence` | ✅ | Auth required |
 
-## 2. Audit Findings Summary
+### Middleware Stack
+- CORS with production origin validation
+- Helmet (HSTS, X-Frame-Options, X-Content-Type-Options, etc.)
+- Cookie parser + session management
+- CSRF token verification
+- Rate limiting (per-endpoint)
+- Request logging + audit log
+- Compression (excluding SSE)
+- Input sanitization
+- Error handling with proper status codes
 
-| Category | Score | Critical Issues | Improvements Needed |
-|----------|-------|----------------|-------------------|
-| Authentication | 9/10 | None | None — all auth flows verified |
-| API Security | 9/10 | None | CSP headers configured in Vercel ✅ |
-| Error Tracking | 8/10 | None | Sentry configured with DSN + full tracing ✅ |
-| Observability | 7/10 | Prometheus endpoint exists | No dedicated metrics dashboard |
-| Route Coverage | 10/10 | None | All routes created and mounted ✅ |
-| Performance | 8/10 | Lazy loading, code splitting | Images not optimized (WebP) |
-| SEO | 9/10 | JSON-LD, OG tags, sitemap | Missing hreflang tags |
-| Accessibility | 7/10 | Keyboard nav works | Color contrast could be improved |
-| Compliance | 8/10 | GDPR cookie consent present | CCPA opt-out not implemented |
-| Infrastructure | 9/10 | Docker + K8s + CI/CD | Add Prometheus recording rules |
+### Models
+- `User` — email, password (hashed), role, settings
+- `Lab` — title, slug, category, difficulty, instructions, hints, tags
+- `Mission` — type (daily/weekly/special), objectives, XP rewards
+- `Course` — modules, quizzes, topics, difficulty levels
+- `LabProgress` — per-user lab tracking
+- `MissionProgress` — per-user mission tracking
+- `Scan` — security scan records
+- `OsintQuery` — OSINT investigation records
 
-## 3. Detailed Findings
+### Security Features
+- Password hashing (bcrypt)
+- JWT-based authentication
+- CSRF protection
+- Rate limiting (per-endpoint)
+- HTTPS enforcement in production
+- Helmet security headers
+- MongoDB injection prevention via parameterized queries
+- Request ID tracing
 
-### 3.1 Authentication ✅ (9/10)
-- **JWT-based** with access + refresh tokens
-- **Firebase Auth** integration for OAuth/Google
-- **CSRF protection** via double-submit cookie pattern
-- **Rate limiting** via `express-rate-limit` package
-- **HttpOnly, Secure, SameSite=Strict** cookies configured
-- **Status:** Fully production-ready
+## 2. Frontend Audit
 
-### 3.2 Data Layer ✅ (9/10)
-- **MongoDB** via Mongoose for primary storage
-- **Firestore** for gamification (transactions + server timestamps)
-- **PostgreSQL** via Python/FastAPI for analytics
-- **Redis** for session caching/rate limiting
-- **pyApiCompatRoutes** bridge between Node.js Express and Python FastAPI
-- **Status:** Dual-database architecture operational
+### Architecture
+- **Framework:** React 18 + TypeScript + Vite
+- **Routing:** React Router v6 with lazy loading
+- **State:** React Query, Context API
+- **Styling:** Tailwind CSS + CSS variables (dark/light themes)
 
-### 3.3 Security ✅ (8/10)
-- **Helmet.js** middleware installed ✅
-- **HSTS** configured in Vercel ✅
-- **X-Frame-Options:** DENY ✅
-- **X-Content-Type-Options:** nosniff ✅
-- **Permissions-Policy** set ✅
-- **CSP headers** configured in Vercel config ✅
-- **Sentry** configured with DSN + full tracing (`tracesSampleRate=1.0`) ✅
+### Pages
+- HomePage, DashboardPage, AuthPage, ToolsPage, ToolDetail
+- LearnPage, ProgramPage, ProgramLabPage
+- LabPage, BlogPage, BlogDetail, ResourcesPage
+- CommunityPage, AboutPage, ContactPage
+- PrivacyPage, TermsPage
+- OsintPage, OsintSharePage
+- AssistantPage, SecuritySettingsPage
+- PublicProfilePage, VerifyEmailPage
+- NotFound (404)
 
-### 3.4 Gamification ✅ (8/10)
-- **Full Firestore-backed** XP/streak/badge system
-- **Daily/weekly missions** with seeded rotation
-- **Quiz system** with XP rewards
-- **Level progression** with computed XP thresholds
-- **LocalStorage fallback** for offline mode
+### API Client (src/lib/apiClient.ts)
+- CSRF token auto-fetching
+- Bearer token management with auto-refresh
+- Retry logic (auto-retry on 408/425/429/500/502/503/504)
+- Network error handling with exponential backoff
+- Request deduplication via axios interceptor
+- Auth state caching and persistence
 
-### 3.5 Frontend Performance ✅ (8/10)
-- **Lazy-loaded routes** with Suspense
-- **Code splitting** via Vite
-- **TanStack Query** for caching/retry
-- **Route-based prefetching** (`warmHighIntentRoutes`)
-- **Missing:** Image optimization (WebP/AVIF), bundle analysis
+### SEO (Implemented)
+- Route-specific meta descriptions
+- Open Graph tags (og:title, og:description, og:image)
+- Twitter Card tags
+- JSON-LD schema (Organization, WebSite, WebApplication, Course)
+- Canonical URLs per route
+- robots meta tag (index, follow)
+- Keywords per route
 
-### 3.6 API Route Coverage ✅ (10/10)
-- **All requested routes created and verified:**
-  - `/api/labs` ✅ (root, overview, sandbox, sandbox/status)
-  - `/api/missions` ✅ (root, daily, weekly)
-  - `/api/courses` ✅ (root with course catalog)
-  - `/api/learning/paths` ✅ (learning paths endpoint)
-  - `/api/adaptive/recommendations` ✅ (adaptive recommendations)
-  - `/api/mission-control/actions` ✅ (mission control actions)
-  - `/api/users` ✅ (profile, update, sync)
-- **Backend health endpoints:** `/health`, `/healthz`, `/api/health`, `/api/ping`
-- **Vercel SPA routing:** Fixed catch-all rewrite → properly serves `index.html`
-- **Status:** All routes return valid JSON with consistent `success` / `error` format
+### Performance
+- Lazy-loaded routes (React.lazy + Suspense)
+- Route-based code splitting
+- Preconnect to Google Fonts, Firebase
+- Preload og-image for fast LCP
+- Inline critical CSS variables
+- Font display swap (non-blocking fonts)
+- Chunk size optimization in vite.config.ts
 
-### 3.7 Monitoring ✅ (8/10)
-- **Sentry** configured with DSN, full tracing, and session replay ✅
-- **OpenTelemetry** packages installed ✅
-- **Prometheus** scrape endpoints configured in K8s ✅
-- **Health check** endpoints exist ✅
-- **Missing:** No dedicated metrics dashboard
+### Accessibility
+- ARIA labels on interactive elements
+- Semantic HTML structure
+- Focus management
+- Keyboard navigation support
+- Reduced motion media query
+- Color contrast with CSS variable system
 
-## 4. Scorecard vs Competitors
+## 3. Compliance Audit
 
-| Feature | ZeroDay Guardian | TryHackMe | CyberMindSpace |
-|---------|-----------------|-----------|----------------|
-| JWT Auth | ✅ | ✅ | ✅ |
-| Gamification | ✅ (DB-backed) | ✅ | ✅ |
-| Interactive Labs | ✅ (Backend-integrated) | ✅ | ❌ |
-| OSINT Tools | ✅ | ❌ | ❌ |
-| API-first Architecture | ✅ | ❌ | ❌ |
-| AI Mentor (ZORVIX) | ✅ | ❌ | ❌ |
-| Kubernetes Ready | ✅ | ❌ | ❌ |
-| OpenTelemetry | ✅ | ❌ | ❌ |
-| GDPR Compliant | ✅ | ✅ | ❌ |
-| Custom Deployment | ✅ | ❌ | ❌ |
-| Firestore Sync | ✅ | ❌ | ❌ |
-| Progressive Unlock | ✅ | ✅ | ❌ |
-| 60-Day Program | ✅ | ✅ | ✅ |
-| Achievement Badges | ✅ | ✅ | ❌ |
-| Leaderboard | ✅ | ✅ | ❌ |
-| Mobile Responsive | ✅ | ✅ | ❌ |
+### GDPR / CCPA Features
+- ✅ CookieConsent component implemented
+- ✅ PrivacyPage with data collection disclosures
+- ✅ TermsPage with service terms
+- ✅ Compliance API endpoints:
+  - `GET /api/compliance/data` — Export all user data (Article 20)
+  - `DELETE /api/compliance/data` — Delete user data (Article 17)
+- ✅ Contact email (ksubhraj28@gmail.com) in privacy/terms
 
-## 5. Items Addressed (May 28, 2026)
+## 4. Deployment Audit
 
-1. **[DONE] Route coverage** — Created all missing routes: `/api/labs`, `/api/missions`, `/api/courses`, `/api/learning/paths`, `/api/adaptive/recommendations`, `/api/mission-control/actions`
-2. **[DONE] Vercel SPA routing** — Fixed catch-all rewrite from `/api/index` → `/index.html`
-3. **[DONE] Sentry** — `@sentry/react` initialized with DSN, `tracesSampleRate=1.0`, session replay
-4. **[DONE] CSP headers** — Configured in Vercel config (already present)
-5. **[DONE] Security headers** — HSTS, X-Frame-Options, X-Content-Type-Options, Permissions-Policy all set
-6. **[DONE] `.env` production config** — `VITE_API_BASE_URL`, `VITE_SITE_URL`, `VITE_SENTRY_DSN` configured
-7. **[DONE] Backend CORS** — Production origin `https://zerodayguardian-delta.vercel.app` allowed
-8. **[DONE] Trace propagation** — Updated for Vercel + Render deployments
-9. **[DONE] DEFAULT_RENDER_BACKEND_URL** — Set to `https://zerodayguardian-backend.onrender.com` in `apiConfig.ts` as final fallback
-10. **[DONE] Build verification** — Production build passes (2910 modules, 29.44s) with zero errors
+### Frontend (Vercel)
+- ✅ vercel.json configured
+- ✅ Build command: `npm run build`
+- ✅ Output directory: `dist`
+- ✅ Service worker registered
+- ✅ SEO meta tags in index.html
+
+### Backend (Render)
+- ✅ render.yaml configured
+- ✅ Dockerfile available
+- ✅ Node.js health checks
+- ✅ Graceful shutdown handlers
+- ✅ Environment variable validation at startup

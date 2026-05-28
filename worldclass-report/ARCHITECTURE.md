@@ -1,140 +1,118 @@
-# ZeroDay Guardian — Architecture Document
+# ZeroDay Guardian — Architecture
 
-**Version:** 1.0.0 | **Last Updated:** May 27, 2026
-
----
-
-## 1. System Architecture
+## System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Vercel (CDN)                            │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │              React SPA (Vite + TypeScript)                │  │
-│  │  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌─────────────┐  │  │
-│  │  │ Auth    │ │ Dashboard│ │ Labs     │ │ Tools Hub   │  │  │
-│  │  │ Layer   │ │ Module   │ │ Module   │ │ Module      │  │  │
-│  │  └────┬────┘ └────┬─────┘ └────┬─────┘ └──────┬──────┘  │  │
-│  │       │           │            │              │          │  │
-│  │  ┌────┴───────────┴────────────┴──────────────┴──────┐   │  │
-│  │  │           API Client Layer (apiClient.ts)          │   │  │
-│  │  └────────────────────────┬──────────────────────────┘   │  │
-│  └───────────────────────────┼──────────────────────────────┘  │
-└──────────────────────────────┼──────────────────────────────────┘
-                               │ HTTPS / REST
-┌──────────────────────────────┼──────────────────────────────────┐
-│                   Render (Node.js)                              │
-│  ┌───────────────────────────┴──────────────────────────────┐   │
-│  │              Express Server (server.js)                   │   │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐  │   │
-│  │  │ Auth     │ │ API      │ │ Intel    │ │ Telemetry  │  │   │
-│  │  │ Routes   │ │ Routes   │ │ Routes   │ │ Routes     │  │   │
-│  │  └────┬─────┘ └────┬─────┘ └────┬─────┘ └─────┬──────┘  │   │
-│  │       │            │            │              │          │   │
-│  │  ┌────┴────────────┴────────────┴──────────────┴──────┐   │   │
-│  │  │            Middleware Stack                         │   │   │
-│  │  │  Helmet │ CORS │ Rate Limit │ CSRF │ Auth │ Audit │   │   │
-│  │  └────────────────────────┬───────────────────────────┘   │   │
-│  └───────────────────────────┼───────────────────────────────┘   │
-└──────────────────────────────┼──────────────────────────────────┘
-                               │
-┌──────────────────────────────┼──────────────────────────────────┐
-│              Render (Python FastAPI)                            │
-│  ┌───────────────────────────┴──────────────────────────────┐   │
-│  │         Python API (uvicorn)                              │   │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐  │   │
-│  │  │ Labs     │ │ Adaptive │ │ Courses  │ │ Missions   │  │   │
-│  │  │ Routes   │ │ Routes   │ │ Routes   │ │ Routes     │  │   │
-│  │  └────┬─────┘ └────┬─────┘ └────┬─────┘ └─────┬──────┘  │   │
-│  └───────┼────────────┼────────────┼──────────────┼──────────┘   │
-└──────────┼────────────┼────────────┼──────────────┼──────────────┘
-           │            │            │              │
-    ┌──────┴──────┐ ┌───┴────┐ ┌────┴─────┐ ┌─────┴──────┐
-    │   MongoDB   │ │ Redis  │ │PostgreSQL│ │  Firestore │
-    │  (Primary)  │ │(Cache) │ │(Analytics)│ │(Gamification)│
-    └─────────────┘ └────────┘ └──────────┘ └────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                    Browser (User)                        │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │  React SPA (Vite + TypeScript)                    │  │
+│  │  • 23 lazy-loaded routes                          │  │
+│  │  • React Query for data fetching                  │  │
+│  │  • Context API for auth/progress/mission state    │  │
+│  │  • Tailwind CSS + CSS variables (dark/light mode) │  │
+│  └────────────┬──────────────────────────────────────┘  │
+└───────────────┼──────────────────────────────────────────┘
+                │ HTTPS / CORS / CSRF
+                ▼
+┌─────────────────────────────────────────────────────────┐
+│              Vercel (Frontend Hosting)                    │
+│  • Edge network                                         │
+│  • Serverless API function (api/index.mjs)              │
+│  • Static assets + CSP headers                          │
+└────────────┬────────────────────────────────────────────┘
+             │ HTTPS
+             ▼
+┌─────────────────────────────────────────────────────────┐
+│          Render (Backend Hosting)                        │
+│                                                          │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │  Express.js Server (backend/server.js)             │ │
+│  │                                                    │ │
+│  │  Middleware Stack:                                  │ │
+│  │  1. CORS (production origin validation)            │ │
+│  │  2. Helmet (security headers)                      │ │
+│  │  3. Cookie parser                                  │ │
+│  │  4. Request context + audit log                    │ │
+│  │  5. Compression (excluding SSE)                    │ │
+│  │  6. JSON body parser (1mb limit)                   │ │
+│  │  7. CSRF token issuance + verification             │ │
+│  │  8. Input sanitization                             │ │
+│  │  9. Request guard (request validation)             │ │
+│  │  10. Session management (encrypted cookies)        │ │
+│  │  11. Optional auth parsing                         │ │
+│  │  12. Rate limiting (per-endpoint)                  │ │
+│  │  13. Route handlers                                │ │
+│  │  14. 404 handler                                   │ │
+│  │  15. Error handler                                 │ │
+│  └────────────────────────────────────────────────────┘ │
+│                         │                                │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │  Routes:                                           │ │
+│  │  /api/auth/*      → authRoutes                     │ │
+│  │  /api/labs        → labsRoutes                     │ │
+│  │  /api/missions    → missionsRoutes                 │ │
+│  │  /api/courses     → coursesRoutes                  │ │
+│  │  /api/users       → userRoutes                     │ │
+│  │  /api/compliance  → complianceRoutes               │ │
+│  │  /api/dashboard   → dashboardRoutes                │ │
+│  │  /api/osint       → osintRoutes                    │ │
+│  │  /api/neurobot    → neurobotRoutes + chat          │ │
+│  │  /api/scans       → scanRoutes                     │ │
+│  │  /api/notifications → notificationRoutes           │ │
+│  │  /api/intelligence → intelligenceRoutes            │ │
+│  │  /api/adaptive    → adaptiveRoutes                 │ │
+│  │  /api/mission     → missionRoutes                  │ │
+│  │  /api/platform    → platformRoutes                 │ │
+│  │  /pyapi           → pyApiCompatRoutes              │ │
+│  └────────────────────────────────────────────────────┘ │
+│                         │                                │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │  Database Layer:                                    │ │
+│  │  • MongoDB (native driver + Mongoose)               │ │
+│  │  • Collections: users, labs, missions, courses,     │ │
+│  │    lab_progress, mission_progress, scans,           │ │
+│  │    osint_queries, conversations, security_events,   │ │
+│  │    growth_* (certifications, ctf, billing, etc.)   │ │
+│  │  • Redis (optional, for SSE checkpoint store)       │ │
+│  └────────────────────────────────────────────────────┘ │
+│                         │                                │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │  External Services:                                 │ │
+│  │  • OpenRouter / Google AI / OpenAI / DeepSeek (LLM) │ │
+│  │  • Firebase (optional auth)                         │ │
+│  │  • Stripe (subscription billing)                    │ │
+│  │  • WHOIS XML API (OSINT)                            │ │
+│  │  • LeakCheck / DeHashed (breach data)              │ │
+│  │  • Google OAuth                                     │ │
+│  └────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## 2. Component Tree (Frontend)
+## Data Flow
 
 ```
-App
-├── QueryClientProvider (TanStack Query)
-├── HelmetProvider (SEO)
-├── ErrorBoundary
-├── AuthProvider (Firebase + JWT)
-│   └── AppShell
-│       ├── UserProgressProvider
-│       ├── MissionSystemProvider
-│       ├── LearningModeProvider
-│       ├── AdaptiveMentorProvider
-│       ├── BrowserRouter
-│       │   ├── RouteSeo (per-route meta/JSON-LD)
-│       │   ├── GlobalScrollReveal
-│       │   ├── GamificationTracker
-│       │   ├── GrowthProfileSync
-│       │   ├── FirebaseStatusBadge
-│       │   ├── RewardExperience (confetti)
-│       │   ├── Layout
-│       │   │   ├── Navbar
-│       │   │   ├── Suspense (lazy routes)
-│       │   │   │   ├── HomePage
-│       │   │   │   ├── DashboardPage (RequireAuth)
-│       │   │   │   ├── LabPage (RequireAuth)
-│       │   │   │   ├── LearnPage (RequireAuth)
-│       │   │   │   ├── ToolsPage (RequireAuth)
-│       │   │   │   ├── AuthPage
-│       │   │   │   └── ...
-│       │   │   └── Footer
-│       │   ├── HotToaster
-│       │   └── SonnerToaster
+User Request → Vercel Edge → Express Server → Middleware Pipeline → Route Handler → MongoDB
+                                                                                         │
+                                                                                         ▼
+User Response ← JSON/SSE ← Middleware Pipeline ← Route Handler ← Model/Service Layer ←───┘
 ```
 
-## 3. Data Flow
+## Authentication Flow
 
 ```
-User Action → Component → apiClient.ts → Express Backend → MongoDB/Firestore
-                                                    ↓
-                                              Response ← Processing
-                                                    ↓
-Component ← State Update ← TanStack Query Cache ← JSON Response
+1. POST /api/auth/login → validates credentials → issues JWT (access + refresh)
+2. Frontend stores tokens → fetches CSRF token from /api/auth/csrf
+3. All API calls include: Authorization: Bearer <access_token> + X-CSRF-Token: <csrf>
+4. On 401 → POST /api/auth/refresh → new access token
+5. On refresh failure → clear state → redirect to /auth
 ```
 
-### Gamification Data Flow
-```
-Complete Mission → gamificationSystem.ts → Firestore Transaction
-                                         → LocalStorage Fallback
-                                         → XP Calculation
-                                         → Level Check
-                                         → Badge Award
-                                         → Reward Creation
-```
+## Key Design Decisions
 
-## 4. Auth Flow
-```
-Login Form → Firebase Auth (OAuth) / JWT Login
-           → Backend validates credentials
-           → Issues accessToken (15min) + refreshToken (7d)
-           → Stores in localStorage (zdg_token, zdg_refresh)
-           → CSRF token fetched via /api/auth/csrf
-           → AuthContext syncs state
-           
-Token Refresh:
-  401 Response → Axios Interceptor → POST /api/auth/refresh
-              → New tokens issued → Retry original request
-              → Queue concurrent 401 requests
-```
-
-## 5. Key Design Decisions
-
-| Decision | Rationale |
-|----------|-----------|
-| Express over Next.js | Simpler API server, separate from frontend build |
-| Vite over CRA | Faster builds, native ESM, better DX |
-| Firebase Auth | Social login, email/password, no self-hosted auth server |
-| Firestore for Gamification | Real-time sync, server timestamps, transaction safety |
-| MongoDB for Primary | Schema flexibility for lab/mission data |
-| PostgreSQL for Analytics | Structured querying for leaderboards/reports |
-| Python Sidecar for Labs | Rich ecosystem for security tools (nmap, requests, etc.) |
-| TanStack Query | Deduplication, caching, retry, stale-while-revalidate |
-| Tailwind CSS + Radix | Rapid UI development, accessible components |
+1. **Dual Database Drivers**: Native MongoDB driver for high-performance queries, Mongoose for schema validation and model layers
+2. **Token-based CSRF**: Double-submit cookie pattern prevents CSRF while allowing stateless API
+3. **Multi-provider LLM Routing**: Failover between OpenRouter, Google AI, OpenAI, DeepSeek with circuit breaker
+4. **Lazy-loaded Frontend**: All routes are lazy-loaded with Suspense for optimal initial bundle size
+5. **SSE for Chat**: Server-Sent Events for AI chat streaming with heartbeat and checkpoint store
+6. **Observability**: OpenTelemetry + Prometheus metrics + Sentry error tracking

@@ -37,6 +37,7 @@ import learningRoutes from "../routes/learningRoutes.js";
 import productUserRoutes from "../api/users/productUserRoutes.mjs";
 import platformRoutes from "./routes/platformRoutes.mjs";
 import pyApiCompatRoutes from "./routes/pyApiCompatRoutes.mjs";
+import complianceRoutes from "../routes/complianceRoutes.js";
 import { createSessionId, decryptSessionToken, encryptSessionToken } from "./utils/security.mjs";
 import { chatAbuseDetection } from "./middleware/abuseDetection.mjs";
 import { allowProbeAccess } from "./middleware/probeAccess.mjs";
@@ -627,6 +628,8 @@ export const createApp = () => {
   app.use("/api/recommendations", requireCsrf, requireAuth, intelligenceRateLimit, recommendationsRoutes);
   app.use("/api/adaptive", requireCsrf, requireAuth, intelligenceRateLimit, adaptiveRoutes);
   app.use("/api/mission-control", requireCsrf, requireAuth, intelligenceRateLimit, missionControlRoutes);
+  // Compliance / GDPR routes
+  app.use("/api/compliance", requireAuth, complianceRoutes);
   app.use("/api/neurobot/chat", chatRateLimit, chatAbuseDetection);
   app.use("/api/neurobot", requireCsrf, requireAuth, neurobotRateLimit, neurobotRoutes);
   app.use("/api/files", requireCsrf, requireAuth, fileUploadRateLimit, fileRoutes);

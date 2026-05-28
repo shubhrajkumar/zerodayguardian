@@ -8,6 +8,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import FirebaseStatusBadge from "./components/FirebaseStatusBadge";
 import Layout from "./components/Layout";
 import RequireAuth from "./components/RequireAuth";
+import CookieConsent from "./components/CookieConsent";
 
 const RewardExperience = lazy(() => import("./components/platform/RewardExperience"));
 import { clearAnonymousClientState } from "./lib/apiClient";
@@ -369,6 +370,7 @@ const AppShell = () => {
               <GrowthProfileSync />
               <FirebaseStatusBadge />
               <RewardExperience />
+              <CookieConsent />
               <Layout>
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>

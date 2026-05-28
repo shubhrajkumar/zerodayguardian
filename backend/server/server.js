@@ -5,6 +5,7 @@ import { validateStartupConfig } from "./utils/startupValidation.js";
 import { logError, logInfo, logWarn } from "../src/utils/logger.mjs";
 import { startTelemetry, shutdownTelemetry } from "../src/observability/sdk.mjs";
 import { connectDb, closeDb } from "../src/config/db.mjs";
+import { connectMongoose, disconnectMongoose } from "../src/config/mongoose.mjs";
 import { connectRedis, closeRedis } from "../src/config/redis.mjs";
 import { validateLlmStartupConfig, verifyLlmConnection } from "../src/services/llmService.mjs";
 import { startNewsIngestionScheduler, stopNewsIngestionScheduler } from "../src/services/newsService.mjs";
@@ -67,6 +68,12 @@ const bootstrap = async () => {
   if (env.mongoUri && env.mongo) {
     try {
       await connectDb();
+      // Connect Mongoose (for Mongoose-based models)
+      try {
+        await connectMongoose({ maxRetries: 1, exitOnFailure: false });
+      } catch (mongooseError) {
+        logWarn("Mongoose connection failed (non-blocking)", { error: String(mongooseError?.message || mongooseError) });
+      }
       // Auto-seed default admin user if it doesn't exist.
       // Safe to call every startup — skips existing users.
       // Set SEED_SKIP=true env var to disable auto-seeding.
@@ -115,11 +122,11 @@ const bootstrap = async () => {
     logInfo("Shutting down backend", { signal });
     server.close(async () => {
       stopNewsIngestionScheduler();
-      await Promise.allSettled([closeDb(), closeRedis(), shutdownTelemetry()]);
+      await Promise.allSettled([closeDb(), disconnectMongoose(), closeRedis(), shutdownTelemetry()]);
       process.exit(0);
     });
     setTimeout(async () => {
-      await Promise.allSettled([closeDb(), closeRedis(), shutdownTelemetry()]);
+      await Promise.allSettled([closeDb(), disconnectMongoose(), closeRedis(), shutdownTelemetry()]);
       process.exit(1);
     }, 10_000).unref();
   };

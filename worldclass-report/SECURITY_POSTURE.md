@@ -1,151 +1,63 @@
-# Security Posture — ZeroDay Guardian
+# ZeroDay Guardian — Security Posture
 
-> **Assessment Date:** April 2026  
-> **Scope:** Frontend SPA (React/Vite), Backend (Node.js/Express), Infrastructure (Vercel, Render, Docker, K8s)
+## HTTP Security Headers
 
----
+| Header | Value | Status |
+|--------|-------|--------|
+| `Strict-Transport-Security` | `max-age=15552000; includeSubDomains; preload` | ✅ HSTS (180 days) |
+| `X-Frame-Options` | `DENY` | ✅ Clickjacking protection |
+| `X-Content-Type-Options` | `nosniff` (Helmet default) | ✅ MIME sniffing prevention |
+| `Content-Security-Policy` | Set via API serverless function | ✅ Custom CSP with nonce |
+| `Referrer-Policy` | `no-referrer` | ✅ Referrer control |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=()` | ✅ Feature restriction |
+| `X-Permitted-Cross-Domain-Policies` | `none` | ✅ Adobe Flash restriction |
+| `X-DNS-Prefetch-Control` | `off` | ✅ Controlled prefetch |
+| `Origin-Agent-Cluster` | `?1` | ✅ Process isolation |
 
-## 1. Authentication & Identity
+## CORS Configuration
 
-| Control | Status | Notes |
-|---|---|---|
-| **Password-based auth** | ✅ | Firebase Auth with email/password; JWT access + refresh tokens |
-| **OAuth2 / Social login** | ✅ | Google OAuth via Firebase Auth (`google-auth-library`) |
-| **MFA / TOTP** | ✅ | `speakeasy` library installed; OTP server available (`scripts/otp-server.mjs`) |
-| **JWT signing** | ✅ | `jsonwebtoken` with RSA or HMAC; short-lived access tokens |
-| **Refresh token rotation** | ✅ | Backend invalidates old refresh tokens on rotation |
-| **Session management** | ✅ | `express-session` with secure, httpOnly cookies |
-| **Role-based access control** | ✅ | `RequireAuth` component; roles: `admin`, `user`, `guest` |
-| **Account verification** | ✅ | `VerifyEmailPage`; email verification flow via Firebase |
+- **Production origin:** `https://zerodayguardian-delta.vercel.app`
+- **Methods:** GET, POST, PUT, DELETE, OPTIONS
+- **Credentials:** true (cookies, auth headers)
+- **Allowed headers:** Content-Type, Authorization, X-CSRF-Token, Cookie, Last-Event-ID, X-Request-Id
+- **Max age:** 600 seconds (preflight caching)
+- **Dynamic origin validation:** localhost blocked in production
 
-### Mock auth — REMOVED
-The `MOCK_AUTH_KEY` fallback (`zdg_mock_auth`) was removed from `AuthContext.tsx`. All authentication now flows exclusively through Firebase Auth + backend JWT endpoints. No local-development-only auth bypass exists.
+## Authentication Flow
 
----
+1. User authenticates via `/api/auth/login` or Google OAuth
+2. Backend returns JWT access token + refresh token
+3. Frontend stores tokens in localStorage (zdg_token, zdg_refresh)
+4. CSRF token fetched from `/api/auth/csrf`
+5. All state-changing requests send X-CSRF-Token header
+6. On 401, frontend attempts token refresh via `/api/auth/refresh`
+7. On refresh failure, user redirected to `/auth`
 
-## 2. Transport & Network Security
+## Rate Limiting
 
-| Control | Status | Notes |
-|---|---|---|
-| **HTTPS enforcement** | ✅ | Vercel + Render enforce TLS; HSTS preload ready |
-| **HSTS** | ✅ | `max-age=63072000; includeSubDomains; preload` |
-| **TLS version** | ✅ | TLS 1.2+ only (Vercel edge, Render LB) |
-| **DNSSEC** | ⚠️ | Must be enabled at domain registrar (GoDaddy, Namecheap, etc.) |
-| **Certificate management** | ✅ | Automatic via Vercel (Let's Encrypt) |
+| Endpoint | Limit | Window |
+|----------|-------|--------|
+| `/api/auth/*` | Strict (apiReadRateLimit) | Per IP |
+| `/api/neurobot/chat` | chatRateLimit | Per session |
+| `/api/osint` | osintRateLimit | Per user |
+| `/api/mission` | mutationRateLimit | Per user |
+| File uploads | fileUploadRateLimit | Per IP |
+| Livez/Readyz probes | Probe rate limits | Per IP |
 
-### Content Security Policy — ADDED
-A strict CSP header is now served on all routes:
+## CSRF Protection
 
-```
-default-src 'self';
-script-src 'self' 'unsafe-inline' https://*.firebaseio.com https://apis.google.com;
-style-src 'self' 'unsafe-inline';
-img-src 'self' data: blob: https:;
-font-src 'self' data:;
-connect-src 'self' https://*.firebaseio.com https://identitytoolkit.googleapis.com
-              https://*.googleapis.com wss: https://api.zerodayguardian.com;
-frame-src 'none';
-object-src 'none';
-base-uri 'self';
-form-action 'self'
-```
+- Token-based (double-submit cookie pattern)
+- Token fetched on first state-changing request
+- Stored in sessionStorage
+- Verified on POST/PUT/DELETE requests
+- Automatic retry on 403 (token refresh)
 
-**Note:** `'unsafe-inline'` is required for Vite's dev mode HMR and some Firebase SDK injection. A future hardening pass can remove it by switching to a nonce-based policy with Vite's `generateScriptNonce` plugin.
+## Database Security
 
----
-
-## 3. API Security
-
-| Control | Status | Notes |
-|---|---|---|
-| **CSRF protection** | ✅ | `X-CSRF-Token` header validated; Axios interceptor injects token from cookie |
-| **Rate limiting** | ✅ | `express-rate-limit` on all API routes |
-| **Request validation** | ✅ | `zod` schemas validate all inputs on both client and server |
-| **SQL / NoSQL injection** | ✅ | Mongoose parameterized queries; no raw query building |
-| **XSS prevention** | ✅ | React auto-escapes; CSP restricts script sources; sanitize utility available |
-| **CORS** | ✅ | Whitelist-based; only `https://zerodayguardian-delta.vercel.app` allowed |
-| **API authentication** | ✅ | JWT Bearer tokens required for all protected routes |
-| **Audit logging** | ✅ | Backend logs auth events, admin actions, and sensitive mutations |
-
----
-
-## 4. Data Security
-
-| Control | Status | Notes |
-|---|---|---|
-| **Encryption at rest** | ✅ | Firestore encrypts at rest (AES-256); MongoDB with TLS + encryption |
-| **Encryption in transit** | ✅ | TLS 1.2+ for all external connections |
-| **Secrets management** | ✅ | `.env` files gitignored; Render env vars; Vercel env vars |
-| **PII minimization** | ✅ | Only email + display name stored; no addresses, no payment info stored locally |
-| **Data export / delete** | ⚠️ | GDPR export/delete flows should be verified end-to-end (PrivacyPage exists) |
-
----
-
-## 5. Infrastructure Security
-
-| Control | Status | Notes |
-|---|---|---|
-| **Docker hardening** | ✅ | Non-root user in Dockerfile; minimal base image |
-| **Kubernetes security** | ✅ | Pod Security Policy; network policies; read-only root filesystem |
-| **Secret scanning** | ✅ | GitHub secret scanning enabled; `.env` in `.gitignore` |
-| **Container scanning** | ✅ | Trivy scan in CI/CD pipeline |
-| **Dependency auditing** | ✅ | `npm audit` in CI; `dependabot` configured |
-| **Monitoring & alerting** | ⚠️ | OpenTelemetry SDK installed but exporter needs configuration |
-| **Intrusion detection** | ⚠️ | Rate limiting + audit logs in place; no dedicated IDS/IPS |
-
----
-
-## 6. Monitoring & Incident Response
-
-| Control | Status | Notes |
-|---|---|---|
-| **Error tracking** | ✅ | Sentry configured (`@sentry/react` installed, initialized via `VITE_SENTRY_DSN`) |
-| **Performance monitoring** | ✅ | OpenTelemetry auto-instrumentation; browser tracing via Sentry |
-| **Session replay** | ✅ | Sentry Replay integration (opt-in, masked content) |
-| **Health checks** | ✅ | `/health` endpoint; `scripts/health-check.mjs` for stack verification |
-| **Log aggregation** | ⚠️ | Console + structured logging; no dedicated log shipping (ELK/Datadog) yet |
-
----
-
-## 7. Compliance
-
-| Control | Status | Notes |
-|---|---|---|
-| **GDPR** | ✅ | Cookie consent banner; privacy policy; data export/delete options |
-| **CCPA** | ✅ | Opt-out mechanism via cookie consent |
-| **OWASP Top 10** | ✅ | CSRF, XSS, injection, broken auth controls all addressed |
-| **WCAG 2.2 AA** | ⚠️ | Semantic HTML + keyboard nav in place; automated contrast audit available (`scripts/fix-contrast.mjs`) |
-
----
-
-## 8. Security Headers (Vercel Edge)
-
-Delivered on every response:
-
-| Header | Value |
-|---|---|
-| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` |
-| `X-Frame-Options` | `DENY` |
-| `X-Content-Type-Options` | `nosniff` |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` |
-| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()…` |
-| `Content-Security-Policy` | Strict CSP (see §2) |
-| `X-DNS-Prefetch-Control` | `on` |
-
----
-
-## 9. Recommendations (Priority)
-
-1. **🔴 Enable DNSSEC** at your domain registrar (critical for preventing DNS spoofing).
-2. **🔴 Configure Sentry DSN** — set `VITE_SENTRY_DSN` in Vercel environment variables.
-3. **🟡 Remove `'unsafe-inline'` from CSP** — replace with a nonce-based strategy via Vite plugin.
-4. **🟡 Set up log shipping** — forward logs to a SIEM or log aggregator (ELK, Datadog, Grafana Loki).
-5. **🟡 Penetration test** — run OWASP ZAP or Burp Suite against the staging deployment.
-6. **🟢 Verify GDPR export/delete** — manually test the data export and account deletion flows.
-7. **🟢 Add security.txt** — create `/.well-known/security.txt` for vulnerability disclosure.
-
----
-
-## Summary
-
-ZeroDay Guardian has a **strong security foundation** — JWT auth, CSRF protection, rate limiting, CSP, Helmet, Docker/K8s hardening, and Sentry monitoring are all in place. The key remaining gaps are DNS-level security (DNSSEC), dedicated log shipping, and CSP nonce migration. The platform is production-ready for a security-conscious SaaS launch.
+- Parameterized queries (no raw string concatenation)
+- MongoDB injection prevention
+- Connection pooling with limits
+- Indexes on sensitive fields (email, userId)
+- Dead indexes cleaned on startup
+- Password hashing with bcryptjs
+- Secrets excluded from output (password, refreshToken, resetOtp)
