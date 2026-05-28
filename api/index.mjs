@@ -18,11 +18,13 @@ import crypto from "crypto";
 // ── CSP template — {nonce} is replaced per request ──
 const CSP_DIRECTIVES = [
   ["default-src", ["'self'"]],
-  ["script-src", ["'self'", "'nonce-{nonce}'", "https://*.firebaseio.com", "https://apis.google.com"]],
+  // 'unsafe-eval' required by Sentry & Firebase for dynamic code evaluation
+  ["script-src", ["'self'", "'unsafe-eval'", "'nonce-{nonce}'", "https://*.firebaseio.com", "https://apis.google.com"]],
   ["style-src", ["'self'", "'nonce-{nonce}'"]],
   ["img-src", ["'self'", "data:", "blob:", "https:"]],
   ["font-src", ["'self'", "data:", "https://fonts.gstatic.com"]],
-  ["connect-src", ["'self'", "https://*.firebaseio.com", "https://identitytoolkit.googleapis.com", "https://*.googleapis.com", "https://*.ingest.sentry.io", "wss:"]],
+  // connect-src: explicit allowlist for Firebase, Sentry, Google APIs, backend, and Vercel preview domains
+  ["connect-src", ["'self'", "https://*.firebaseio.com", "https://identitytoolkit.googleapis.com", "https://*.googleapis.com", "https://*.ingest.sentry.io", "https://*.vercel.app", "https://*.onrender.com", "wss:", "ws:"]],
   ["frame-src", ["'none'"]],
   ["object-src", ["'none'"]],
   ["base-uri", ["'self'"]],
@@ -89,6 +91,28 @@ export default async function handler(req, res) {
         '<script type="application/ld+json">',
         `<script type="application/ld+json" nonce="${nonce}">`
       );
+
+    // ── Fix preload crossorigin mismatch ──
+    // Sentry Vite plugin generates <link rel="modulepreload" href="data:..."> links that
+    // are missing the crossorigin attribute. The browser rejects them because the credentials
+    // mode doesn't match the main module script. Add crossorigin="anonymous" to all
+    // modulepreload links that lack it.
+    modifiedHtml = modifiedHtml.replace(
+      /(<link\s+[^>]*?rel=["']modulepreload["'][^>]*?)>/gi,
+      (match, pre) => {
+        if (/crossorigin/i.test(pre)) return match;
+        return `${pre} crossorigin="anonymous">`;
+      }
+    );
+
+    // ── Ensure <script type="module"> has crossorigin to match preloads ──
+    modifiedHtml = modifiedHtml.replace(
+      /(<script\s+type=["']module["'][^>]*?)>/gi,
+      (match, pre) => {
+        if (/crossorigin/i.test(pre)) return match;
+        return `${pre} crossorigin="anonymous">`;
+      }
+    );
 
     // ── Strip the old CSP <meta> fallback (if present) ──
     // The header‑level CSP is authoritative; the meta tag would just be redundant.

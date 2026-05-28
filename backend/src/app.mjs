@@ -278,7 +278,35 @@ export const createApp = () => {
 
   app.use(
     cors({
-      origin: env.nodeEnv === "production" ? [PRODUCTION_FRONTEND_ORIGIN] : allowCorsOrigin,
+      origin: env.nodeEnv === "production"
+        ? (origin, callback) => {
+            if (!origin) {
+              callback(null, true);
+              return;
+            }
+            const normalizedOrigin = normalizeCorsOrigin(origin);
+            // Allow explicitly configured origins
+            if ((env.corsOrigins || []).includes(normalizedOrigin)) {
+              callback(null, true);
+              return;
+            }
+            // Allow production frontend origin
+            if (normalizedOrigin === normalizeCorsOrigin(PRODUCTION_FRONTEND_ORIGIN)) {
+              callback(null, true);
+              return;
+            }
+            // Allow dynamic Vercel preview/deployment origins
+            if (isKnownVercelAppOrigin(normalizedOrigin)) {
+              callback(null, true);
+              return;
+            }
+            const error = new Error(`CORS blocked for origin ${normalizedOrigin}`);
+            error.status = 403;
+            error.code = "cors_blocked";
+            logWarn("CORS blocked for origin", { origin: normalizedOrigin, allowedOrigins: env.corsOrigins || [] });
+            callback(error);
+          }
+        : allowCorsOrigin,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Cookie", "Last-Event-ID", "X-Request-Id"],
