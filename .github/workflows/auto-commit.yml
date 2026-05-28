@@ -1,0 +1,88 @@
+name: Auto-Commit & Push (Codebuff/Freebuff Changes)
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_message:
+        description: "Custom commit message"
+        required: false
+        default: "Automated fixes from Codebuff"
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  auto-commit:
+    name: Auto-Commit Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Configure Git identity
+        run: |
+          git config --global user.name "Codebuff Bot"
+          git config --global user.email "bot@codebuff.ai"
+          git config --global core.autocrlf input
+          git config --global core.compression 9
+          git config --global http.postBuffer 524288000
+          git config --global http.lowSpeedLimit 0
+          git config --global http.lowSpeedTime 999999
+
+      - name: Set up Git LFS
+        run: |
+          git lfs install
+          git lfs pull
+
+      - name: Check for changes and commit
+        id: commit
+        run: |
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            MESSAGE="${{ github.event.inputs.commit_message || 'Automated fixes from Codebuff' }}"
+            git commit -m "${MESSAGE} [skip-ci]"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push with exponential backoff retry
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          MAX_RETRIES=5
+          RETRY_DELAY=5
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Push attempt $i of $MAX_RETRIES..."
+            if git push origin main 2>&1; then
+              echo "Push succeeded on attempt $i"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              BACKOFF=$((RETRY_DELAY * 2 ** (i - 1)))
+              echo "Push failed. Retrying in ${BACKOFF}s..."
+              sleep $BACKOFF
+            fi
+          done
+
+          echo "All push attempts failed."
+          exit 1
+
+      - name: Verify push status
+        if: always()
+        run: |
+          echo "=== Push Verification ==="
+          echo "Branch: main"
+          echo "Remote: origin"
+          git rev-parse HEAD
+          git log --oneline -3

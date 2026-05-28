@@ -48,3 +48,32 @@ Thumbs.db
 nul
 NUL
 Nul
+
+# Windows specific
+*.cab
+*.msu
+*.lnk
+*.tmp
+~*.*
+
+# Build artifacts
+*.tsbuildinfo
+dist/
+.next/
+.cache/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Generated files
+*.generated.*
+
+# OneDrive exclusion marker (prevents OneDrive from syncing .git)
+one_drive_do_not_sync.txt
