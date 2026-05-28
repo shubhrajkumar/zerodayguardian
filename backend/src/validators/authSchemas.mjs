@@ -35,9 +35,13 @@ export const resetPasswordSchema = z.object({
   password: strongPasswordSchema,
 });
 
-export const refreshSchema = z.object({}).strict();
+export const refreshSchema = z.object({
+  refreshToken: z.string().trim().min(1).optional(),
+}).strict();
 
-export const logoutSchema = z.object({}).strict();
+export const logoutSchema = z.object({
+  refreshToken: z.string().trim().min(1).optional(),
+}).strict();
 
 export const registerSchema = signupSchema;
 export const forgotPasswordSchema = sendOtpSchema;

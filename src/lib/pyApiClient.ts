@@ -1,21 +1,7 @@
-import { apiFetch } from "@/lib/apiClient";
+import pyapi from "@/lib/pyapi";
+import { AxiosError } from "axios";
+import { resolvePyApiUrl } from "@/lib/apiConfig";
 import { recordRuntimeDebugEvent } from "@/lib/runtimeDiagnostics";
-
-const trimTrailingSlash = (value: string) => String(value || "").replace(/\/+$/, "");
-
-const resolvePyApiBase = () => {
-  const explicitPyBase = trimTrailingSlash(String(import.meta.env.VITE_PY_API_URL || ""));
-  if (explicitPyBase) return explicitPyBase;
-
-  const apiBase = trimTrailingSlash(String(import.meta.env.VITE_API_BASE_URL || ""));
-  if (apiBase) return `${apiBase}/pyapi`;
-
-  if (!import.meta.env.DEV) return "/pyapi";
-
-  return "/pyapi";
-};
-
-const PY_API_BASE = resolvePyApiBase();
 
 export class PyApiError extends Error {
   code: string;
@@ -42,47 +28,32 @@ const unwrapPayload = <T,>(payload: unknown): T => {
   return payload as T;
 };
 
-const normalizeUrl = (path: string) => {
-  if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  if (!path.startsWith("/")) return `${PY_API_BASE}/${path}`;
-  return `${PY_API_BASE}${path}`;
-};
+export const resolvePublicPyApiUrl = (path: string) => resolvePyApiUrl(path);
 
-const buildPyApiError = async (response: Response) => {
-  let detail = "";
-  let code = "pyapi_error";
-  let requestId = response.headers.get("x-request-id") || "";
-  let retryable = response.status >= 500;
-  let userMessage = "";
-  try {
-    const payload = (await response.json()) as {
-      error?: string;
-      message?: string;
-      code?: string;
-      detail?: string;
-      request_id?: string;
-      retryable?: boolean;
-    };
-    detail = String(payload?.error || payload?.message || payload?.detail || payload?.code || "").trim();
-    code = String(payload?.code || code);
-    requestId = String(payload?.request_id || requestId || "");
-    retryable = typeof payload?.retryable === "boolean" ? payload.retryable : retryable;
-    userMessage = String(payload?.message || "").trim();
-  } catch {
-    detail = "";
-  }
-  const technicalMessage = detail ? `Python API error ${response.status}: ${detail}` : `Python API error ${response.status}`;
+const normalizeUrl = (path: string) => resolvePyApiUrl(path);
+
+const buildPyApiErrorFromAxios = (error: AxiosError) => {
+  const response = error.response;
+  const status = response?.status || 0;
+  const data = (response?.data || {}) as Record<string, unknown>;
+  const detail = String(data?.error || data?.message || data?.detail || data?.code || "").trim();
+  const code = String(data?.code || "pyapi_error");
+  const requestId = String(data?.request_id || response?.headers?.["x-request-id"] || "");
+  const retryable = typeof data?.retryable === "boolean" ? data.retryable : status >= 500;
+  const userMessage = String(data?.message || "").trim();
+
+  const technicalMessage = detail ? `Python API error ${status}: ${detail}` : `Python API error ${status}`;
   const friendlyMessage =
-    response.status >= 500
+    status >= 500
       ? "The training engine is having a temporary issue. Your progress is safe, and retrying in a moment should help."
-      : response.status === 404
+      : status === 404
         ? "That training resource is not available yet. We can usually recover by syncing your account and retrying."
-        : response.status === 401 || response.status === 403
+        : status === 401 || status === 403
           ? "Your session with the training service expired. Please sign in again."
           : userMessage || "We couldn't complete that training request right now.";
   return new PyApiError(technicalMessage, {
     code,
-    status: response.status,
+    status,
     requestId,
     retryable,
     userMessage: friendlyMessage,
@@ -99,21 +70,17 @@ export const getPyApiUserMessage = (error: unknown, fallback = "We couldn't reac
 
 export const pyGetJson = async <T,>(path: string): Promise<T> => {
   try {
-    const response = await apiFetch(normalizeUrl(path), {
-      method: "GET",
-    });
-    if (!response.ok) {
-      throw await buildPyApiError(response);
-    }
-    const payload = unwrapPayload<T>(await response.json());
+    const response = await pyapi.get(normalizeUrl(path));
+    const payload = unwrapPayload<T>(response.data);
     recordRuntimeDebugEvent({
       level: "info",
       source: "pyGetJson",
       message: `Python API GET ${path} succeeded`,
-      metadata: { path, requestId: response.headers.get("x-request-id") || "" },
+      metadata: { path, requestId: response.headers?.["x-request-id"] || "" },
     });
     return payload;
   } catch (error) {
+    if (error instanceof AxiosError) throw buildPyApiErrorFromAxios(error);
     if (error instanceof PyApiError) throw error;
     throw new PyApiError("Python API unreachable", {
       code: "pyapi_unreachable",
@@ -125,25 +92,17 @@ export const pyGetJson = async <T,>(path: string): Promise<T> => {
 
 export const pyPostJson = async <T,>(path: string, body: unknown): Promise<T> => {
   try {
-    const response = await apiFetch(normalizeUrl(path), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-      throw await buildPyApiError(response);
-    }
-    const payload = unwrapPayload<T>(await response.json());
+    const response = await pyapi.post(normalizeUrl(path), body);
+    const payload = unwrapPayload<T>(response.data);
     recordRuntimeDebugEvent({
       level: "info",
       source: "pyPostJson",
       message: `Python API POST ${path} succeeded`,
-      metadata: { path, requestId: response.headers.get("x-request-id") || "" },
+      metadata: { path, requestId: response.headers?.["x-request-id"] || "" },
     });
     return payload;
   } catch (error) {
+    if (error instanceof AxiosError) throw buildPyApiErrorFromAxios(error);
     if (error instanceof PyApiError) throw error;
     throw new PyApiError("Python API unreachable", {
       code: "pyapi_unreachable",
@@ -155,25 +114,17 @@ export const pyPostJson = async <T,>(path: string, body: unknown): Promise<T> =>
 
 export const pyPutJson = async <T,>(path: string, body: unknown): Promise<T> => {
   try {
-    const response = await apiFetch(normalizeUrl(path), {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-      throw await buildPyApiError(response);
-    }
-    const payload = unwrapPayload<T>(await response.json());
+    const response = await pyapi.put(normalizeUrl(path), body);
+    const payload = unwrapPayload<T>(response.data);
     recordRuntimeDebugEvent({
       level: "info",
       source: "pyPutJson",
       message: `Python API PUT ${path} succeeded`,
-      metadata: { path, requestId: response.headers.get("x-request-id") || "" },
+      metadata: { path, requestId: response.headers?.["x-request-id"] || "" },
     });
     return payload;
   } catch (error) {
+    if (error instanceof AxiosError) throw buildPyApiErrorFromAxios(error);
     if (error instanceof PyApiError) throw error;
     throw new PyApiError("Python API unreachable", {
       code: "pyapi_unreachable",

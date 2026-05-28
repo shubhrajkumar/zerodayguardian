@@ -8,8 +8,12 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_MESSAGING_SENDER_ID: string;
   readonly VITE_ENABLE_FIREBASE_AUTH?: string;
   readonly VITE_GOOGLE_CLIENT_ID?: string;
+  readonly VITE_SITE_URL?: string;
+  readonly VITE_API_URL?: string;
+  readonly VITE_APP_NAME?: string;
   readonly VITE_API_BASE_URL?: string;
   readonly VITE_API_PORT?: string;
+  readonly VITE_PYAPI_URL?: string;
   readonly VITE_PY_API_URL?: string;
   readonly VITE_PY_API_PORT?: string;
 }
@@ -17,3 +21,7 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare const __BACKEND_PUBLIC_URL__: string;
+declare const __PY_API_PUBLIC_URL__: string;
+declare const __SITE_URL__: string;

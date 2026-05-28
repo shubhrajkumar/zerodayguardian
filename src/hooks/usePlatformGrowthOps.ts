@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { ApiError, apiGetJson, apiPostJson } from "@/lib/apiClient";
+import api from "@/lib/api";
+import { AxiosError } from "axios";
 import { subscribeToPushManager } from "@/lib/pushNotifications";
 
 type CertificationMilestone = {
@@ -93,10 +94,10 @@ export const usePlatformGrowthOps = () => {
     enabled: authState === "authenticated" && isAuthenticated,
     queryFn: async () => {
       try {
-        const response = await apiGetJson<{ overview: PlatformOverview }>("/api/platform/growth/overview");
-        return response.overview;
+        const response = await api.get<{ overview: PlatformOverview }>("/api/platform/growth/overview");
+        return response.data.overview;
       } catch (error) {
-        if (error instanceof ApiError && [400, 401, 403, 404, 424, 500].includes(error.status)) {
+        if (error instanceof AxiosError && error.response?.status && [400, 401, 403, 404, 424, 500].includes(error.response.status)) {
           return {
             ...EMPTY_PLATFORM_OVERVIEW,
             user: {
@@ -111,7 +112,7 @@ export const usePlatformGrowthOps = () => {
     },
     staleTime: 20_000,
     retry: (failureCount, error) => {
-      if (error instanceof ApiError && error.status < 500) return false;
+      if (error instanceof AxiosError && error.response?.status && error.response.status < 500) return false;
       return failureCount < 1;
     },
   });
@@ -121,77 +122,77 @@ export const usePlatformGrowthOps = () => {
   const enablePushMutation = useMutation({
     mutationFn: async (publicKey: string) => {
       const subscription = await subscribeToPushManager(publicKey);
-      return apiPostJson("/api/platform/push/subscribe", subscription);
+      return (await api.post("/api/platform/push/subscribe", subscription)).data;
     },
     onSuccess: invalidate,
   });
 
   const sendTestPushMutation = useMutation({
-    mutationFn: () => apiPostJson("/api/platform/push/test", {}),
+    mutationFn: async () => (await api.post("/api/platform/push/test", {})).data,
   });
 
   const updateDigestMutation = useMutation({
-    mutationFn: (payload: { email: string; enabled: boolean }) => apiPostJson("/api/platform/digest/preferences", payload),
+    mutationFn: async (payload: { email: string; enabled: boolean }) => (await api.post("/api/platform/digest/preferences", payload)).data,
     onSuccess: invalidate,
   });
 
   const sendDigestMutation = useMutation({
-    mutationFn: () => apiPostJson("/api/platform/digest/send-now", {}),
+    mutationFn: async () => (await api.post("/api/platform/digest/send-now", {})).data,
     onSuccess: invalidate,
   });
 
   const useFreezeMutation = useMutation({
-    mutationFn: () => apiPostJson("/api/platform/streak-freeze/use", {}),
+    mutationFn: async () => (await api.post("/api/platform/streak-freeze/use", {})).data,
     onSuccess: invalidate,
   });
 
   const enrollMutation = useMutation({
-    mutationFn: (pathId: string) => apiPostJson(`/api/platform/certifications/${pathId}/enroll`, {}),
+    mutationFn: async (pathId: string) => (await api.post(`/api/platform/certifications/${pathId}/enroll`, {})).data,
     onSuccess: invalidate,
   });
 
   const milestoneMutation = useMutation({
-    mutationFn: (payload: { pathId: string; milestoneId: string; completed: boolean }) =>
-      apiPostJson(`/api/platform/certifications/${payload.pathId}/milestones/${payload.milestoneId}`, {
+    mutationFn: async (payload: { pathId: string; milestoneId: string; completed: boolean }) =>
+      (await api.post(`/api/platform/certifications/${payload.pathId}/milestones/${payload.milestoneId}`, {
         completed: payload.completed,
-      }),
+      })).data,
     onSuccess: invalidate,
   });
 
   const joinCtfMutation = useMutation({
-    mutationFn: () => apiPostJson("/api/platform/ctf/weekly/join", {}),
+    mutationFn: async () => (await api.post("/api/platform/ctf/weekly/join", {})).data,
     onSuccess: invalidate,
   });
 
   const submitFlagMutation = useMutation({
-    mutationFn: (payload: { challengeId: string; flag: string }) =>
-      apiPostJson<{ result: { correct: boolean; pointsAwarded: number } }>("/api/platform/ctf/weekly/submit", payload),
+    mutationFn: async (payload: { challengeId: string; flag: string }) =>
+      (await api.post<{ result: { correct: boolean; pointsAwarded: number } }>("/api/platform/ctf/weekly/submit", payload)).data,
     onSuccess: invalidate,
   });
 
   const connectGithubMutation = useMutation({
-    mutationFn: (payload: { owner: string; repo: string; defaultBranch: string }) => apiPostJson("/api/platform/github/connect", payload),
+    mutationFn: async (payload: { owner: string; repo: string; defaultBranch: string }) => (await api.post("/api/platform/github/connect", payload)).data,
     onSuccess: invalidate,
   });
 
   const reviewPullRequestMutation = useMutation({
-    mutationFn: (pullNumber: number) => apiPostJson<{ result: { summary: string; findings: string[]; riskScore: number; url: string } }>(
+    mutationFn: async (pullNumber: number) => (await api.post<{ result: { summary: string; findings: string[]; riskScore: number; url: string } }>(
       "/api/platform/github/review-pr",
       { pullNumber }
-    ),
+    )).data,
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: (planId: "premium" | "team") => apiPostJson<{ result: { url: string } }>("/api/platform/billing/checkout", { planId }),
+    mutationFn: async (planId: "premium" | "team") => (await api.post<{ result: { url: string } }>("/api/platform/billing/checkout", { planId })).data,
   });
 
   const syncCheckoutMutation = useMutation({
-    mutationFn: (sessionId: string) => apiPostJson("/api/platform/billing/sync", { sessionId }),
+    mutationFn: async (sessionId: string) => (await api.post("/api/platform/billing/sync", { sessionId })).data,
     onSuccess: invalidate,
   });
 
   const portalMutation = useMutation({
-    mutationFn: () => apiPostJson<{ result: { url: string } }>("/api/platform/billing/portal", {}),
+    mutationFn: async () => (await api.post<{ result: { url: string } }>("/api/platform/billing/portal", {})).data,
   });
 
   const activeCertification = useMemo(

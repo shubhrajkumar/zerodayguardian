@@ -1,6 +1,6 @@
 import { ToolConfiguration, ConfigImportExport, ConfigurationTemplate } from "./toolConfigManager";
 import { toast } from "@/hooks/use-toast";
-import { apiGetJson, apiPostJson, apiPutJson, apiDeleteJson } from "./apiClient";
+import api from "./api";
 
 export interface BackupMetadata {
   id: string;
@@ -69,7 +69,7 @@ export class ToolConfigBackup {
 
       // Save to backend if available
       try {
-        await apiPostJson('/api/tools/backups', {
+        await api.post('/api/tools/backups', {
           metadata,
           data: backupString
         });
@@ -103,7 +103,7 @@ export class ToolConfigBackup {
 
       // Try to get from backend first
       try {
-        backupData = await apiGetJson<ConfigImportExport>(`/api/tools/backups/${backupId}/data`);
+        backupData = (await api.get<ConfigImportExport>(`/api/tools/backups/${backupId}/data`)).data;
       } catch (error) {
         // Fallback to local storage
         const backups = this.getLocalBackups();
@@ -179,7 +179,7 @@ export class ToolConfigBackup {
   // Backup management
   static async getBackups(): Promise<BackupMetadata[]> {
     try {
-      return await apiGetJson<BackupMetadata[]>('/api/tools/backups');
+      return (await api.get<BackupMetadata[]>('/api/tools/backups')).data;
     } catch (error) {
       // Fallback to local storage
       return this.getLocalBackups().map(b => b.metadata);
@@ -188,7 +188,7 @@ export class ToolConfigBackup {
 
   static async deleteBackup(backupId: string): Promise<boolean> {
     try {
-      await apiDeleteJson(`/api/tools/backups/${backupId}`);
+      await api.delete(`/api/tools/backups/${backupId}`);
       toast({
         title: "Backup deleted",
         description: "Backup has been deleted successfully."
@@ -214,7 +214,7 @@ export class ToolConfigBackup {
 
   static async downloadBackup(backupId: string): Promise<void> {
     try {
-      const backupData = await apiGetJson<ConfigImportExport>(`/api/tools/backups/${backupId}/data`);
+      const backupData = (await api.get<ConfigImportExport>(`/api/tools/backups/${backupId}/data`)).data;
       const dataString = JSON.stringify(backupData, null, 2);
       this.downloadFile(dataString, `backup-${backupId}.json`);
     } catch (error) {
@@ -243,7 +243,7 @@ export class ToolConfigBackup {
     };
 
     try {
-      const createdSchedule = await apiPostJson<BackupSchedule>('/api/tools/backups/schedules', newSchedule);
+      const createdSchedule = (await api.post<BackupSchedule>('/api/tools/backups/schedules', newSchedule)).data;
       toast({
         title: "Schedule created",
         description: `${createdSchedule.name} has been scheduled successfully.`
@@ -265,7 +265,7 @@ export class ToolConfigBackup {
 
   static async updateSchedule(id: string, updates: Partial<BackupSchedule>): Promise<BackupSchedule | null> {
     try {
-      const updatedSchedule = await apiPutJson<BackupSchedule>(`/api/tools/backups/schedules/${id}`, updates);
+      const updatedSchedule = (await api.put<BackupSchedule>(`/api/tools/backups/schedules/${id}`, updates)).data;
       return updatedSchedule;
     } catch (error) {
       // Fallback to local storage
@@ -282,7 +282,7 @@ export class ToolConfigBackup {
 
   static async deleteSchedule(scheduleId: string): Promise<boolean> {
     try {
-      await apiDeleteJson(`/api/tools/backups/schedules/${scheduleId}`);
+      await api.delete(`/api/tools/backups/schedules/${scheduleId}`);
       return true;
     } catch (error) {
       // Fallback to local storage
@@ -299,7 +299,7 @@ export class ToolConfigBackup {
 
   static async getSchedules(): Promise<BackupSchedule[]> {
     try {
-      return await apiGetJson<BackupSchedule[]>('/api/tools/backups/schedules');
+      return (await api.get<BackupSchedule[]>('/api/tools/backups/schedules')).data;
     } catch (error) {
       return this.getLocalSchedules();
     }

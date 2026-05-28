@@ -1,7 +1,8 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { Activity, Newspaper, RefreshCw, ShieldAlert, Sparkles } from "lucide-react";
 import { debounce } from "@/utils/debounce";
-import { apiGetJson } from "@/lib/apiClient";
+import api from "@/lib/api";
+
 import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
 import BlogCard from "@/components/BlogCard";
@@ -45,11 +46,11 @@ const BlogPage = () => {
     setLoading(true);
     try {
       if (forceRefresh) {
-        await apiGetJson(`/api/intelligence/news?category=${categoryToApi(selectedCategory)}&limit=9&refresh=true`);
+await (await api.get(`/api/intelligence/news?category=${categoryToApi(selectedCategory)}&limit=9&refresh=true`)).data;
       }
-      const payload = await apiGetJson<{ posts: Post[]; updatedAt: number | null }>(
+      const payload = (await api.get<{ posts: Post[]; updatedAt: number | null }>(
         `/api/intelligence/blog/posts?category=${categoryToApi(selectedCategory)}&q=${encodeURIComponent(searchTerm)}&limit=18`
-      );
+      )).data;
       const nextPosts = (payload.posts || []).slice(0, 9);
 
       if (!nextPosts.length && !forceRefresh) {
@@ -70,7 +71,8 @@ const BlogPage = () => {
   }, [selectedCategory, searchTerm]);
 
   useEffect(() => {
-    const stream = new EventSource("/api/intelligence/news/stream", { withCredentials: true });
+    const apiBaseUrl = String(import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+    const stream = new EventSource(`${apiBaseUrl}/api/intelligence/news/stream`, { withCredentials: true });
     stream.addEventListener("news:update", () => {
       load().catch(() => undefined);
     });

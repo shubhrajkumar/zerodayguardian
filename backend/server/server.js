@@ -1,46 +1,119 @@
 import "dotenv/config";
-import { env } from "../src/config/env.mjs";
+import { env, REQUIRED_ENV_KEYS, getStartupEnvValidation } from "../src/config/env.mjs";
 import { createServerApp } from "./app.js";
 import { validateStartupConfig } from "./utils/startupValidation.js";
 import { logError, logInfo, logWarn } from "../src/utils/logger.mjs";
 import { startTelemetry, shutdownTelemetry } from "../src/observability/sdk.mjs";
 import { connectDb, closeDb } from "../src/config/db.mjs";
+import { connectMongoose, disconnectMongoose } from "../src/config/mongoose.mjs";
 import { connectRedis, closeRedis } from "../src/config/redis.mjs";
 import { validateLlmStartupConfig, verifyLlmConnection } from "../src/services/llmService.mjs";
 import { startNewsIngestionScheduler, stopNewsIngestionScheduler } from "../src/services/newsService.mjs";
+import { seedDefaults } from "../src/seed/seedDefaults.mjs";
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.NEUROBOT_PORT || env.port || 8787);
+let dbRetryTimer = null;
+
+const scheduleDbReconnect = () => {
+  if (dbRetryTimer || !env.mongoUri || !env.mongo) return;
+  dbRetryTimer = setInterval(async () => {
+    try {
+      await connectDb();
+      clearInterval(dbRetryTimer);
+      dbRetryTimer = null;
+      logInfo("Database reconnect succeeded");
+    } catch (error) {
+      logWarn("Database reconnect attempt failed", {
+        code: String(error?.code || ""),
+        name: String(error?.name || ""),
+        message: String(error?.message || "Database reconnect failed"),
+      });
+    }
+  }, 30_000);
+  dbRetryTimer.unref?.();
+};
 
 const bootstrap = async () => {
   await startTelemetry();
-  validateStartupConfig();
-  validateLlmStartupConfig();
+  const startupValidation = validateStartupConfig({ enforceInProduction: true });
+  try {
+    validateLlmStartupConfig();
+  } catch (error) {
+    logWarn("LLM startup configuration invalid; continuing without blocking auth/backend startup", {
+      error: String(error?.message || error),
+    });
+  }
 
-  await connectDb();
+  const app = createServerApp();
+  const server = app.listen(PORT, HOST);
+  // Render's load balancer idle timeout is ~60s; keep Node timeouts above it to avoid RST on reuse.
+  const isRender =
+    ["1", "true"].includes(String(process.env.RENDER || "").trim().toLowerCase()) ||
+    Boolean(String(process.env.RENDER_EXTERNAL_URL || "").trim());
+  server.requestTimeout = isRender ? 120_000 : 20_000;
+  server.headersTimeout = isRender ? 125_000 : 25_000;
+  server.keepAliveTimeout = isRender ? 65_000 : 8_000;
+
+  server.on("listening", () => {
+    logInfo("Backend listening", {
+      host: HOST,
+      port: PORT,
+      mode: "rebuild",
+      startupEnvOk: startupValidation.report.ok,
+      missingEnv: startupValidation.report.missingKeys,
+    });
+  });
+
+  if (env.mongoUri && env.mongo) {
+    try {
+      await connectDb();
+      // Connect Mongoose (for Mongoose-based models)
+      try {
+        await connectMongoose({ maxRetries: 1, exitOnFailure: false });
+      } catch (mongooseError) {
+        logWarn("Mongoose connection failed (non-blocking)", { error: String(mongooseError?.message || mongooseError) });
+      }
+      // Auto-seed default admin user if it doesn't exist.
+      // Safe to call every startup — skips existing users.
+      // Set SEED_SKIP=true env var to disable auto-seeding.
+      if (process.env.SEED_SKIP !== "true") {
+        await seedDefaults({ adminOnly: true }).catch((seedErr) => {
+          logWarn("Auto-seed failed (non-blocking)", { error: String(seedErr?.message || seedErr) });
+        });
+      }
+    } catch (error) {
+      logError("Database startup failed; continuing with auth database unavailable", error, {
+        code: String(error?.code || ""),
+        name: String(error?.name || ""),
+      });
+      scheduleDbReconnect();
+    }
+  } else {
+    logWarn("Database startup skipped because env validation is incomplete", {
+      missingKeys: startupValidation.report.missingKeys,
+      mongoConfigured: Boolean(env.mongoUri),
+      mongoValid: Boolean(env.mongo),
+    });
+  }
   if (env.redisUrl) {
     try {
       await connectRedis();
     } catch (error) {
-      logWarn("Redis unavailable at startup", { error: String(error?.message || error) });
+      logWarn("Redis unavailable at startup; continuing without cache", { error: String(error?.message || error) });
       if (env.strictDependencyStartup) throw error;
     }
   }
 
-  await verifyLlmConnection({ timeoutMs: Math.min(20_000, env.llmCriticalTimeoutMs) });
-
-  const app = createServerApp();
-  
-  const server = app.listen(PORT, HOST);
-  server.requestTimeout = 20_000;
-  server.headersTimeout = 25_000;
-  server.keepAliveTimeout = 8_000;
+  try {
+    await verifyLlmConnection({ timeoutMs: Math.min(20_000, env.llmCriticalTimeoutMs) });
+  } catch (error) {
+    logWarn("LLM provider verification failed at startup; continuing with backend startup", {
+      error: String(error?.message || error),
+    });
+  }
 
   startNewsIngestionScheduler({ intervalMs: env.newsRefreshIntervalMs });
-
-  server.on("listening", () => {
-    logInfo("Backend listening", { host: HOST, port: PORT, mode: "rebuild" });
-  });
 
   let shuttingDown = false;
   const shutdown = async (signal = "SIGTERM") => {
@@ -49,11 +122,11 @@ const bootstrap = async () => {
     logInfo("Shutting down backend", { signal });
     server.close(async () => {
       stopNewsIngestionScheduler();
-      await Promise.allSettled([closeDb(), closeRedis(), shutdownTelemetry()]);
+      await Promise.allSettled([closeDb(), disconnectMongoose(), closeRedis(), shutdownTelemetry()]);
       process.exit(0);
     });
     setTimeout(async () => {
-      await Promise.allSettled([closeDb(), closeRedis(), shutdownTelemetry()]);
+      await Promise.allSettled([closeDb(), disconnectMongoose(), closeRedis(), shutdownTelemetry()]);
       process.exit(1);
     }, 10_000).unref();
   };
@@ -71,7 +144,12 @@ const bootstrap = async () => {
 };
 
 bootstrap().catch(async (error) => {
-  logError("Failed to bootstrap rebuilt backend", error);
+  logError("Failed to bootstrap rebuilt backend", error, {
+    code: String(error?.code || ""),
+    issues: Array.isArray(error?.issues) ? error.issues : [],
+    requiredEnv: REQUIRED_ENV_KEYS,
+    startupEnv: getStartupEnvValidation(),
+  });
   await shutdownTelemetry();
   process.exit(1);
 });

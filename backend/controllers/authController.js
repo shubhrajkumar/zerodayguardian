@@ -3,6 +3,8 @@ import {
   authenticateGoogleUser,
   buildGoogleOauthRedirectUrl,
   clearAuthCookies,
+  getGoogleAuthConfigStatus,
+  getUserById,
   loginUser,
   refreshAuth,
   registerUser,
@@ -13,7 +15,7 @@ import {
 } from "../src/services/authService.mjs";
 import { env } from "../src/config/env.mjs";
 import { assertAuthAttemptAllowed, recordAuthFailure, recordAuthSuccess } from "../src/services/authThreatService.mjs";
-import { logError, logInfo } from "../src/utils/logger.mjs";
+import { logError, logInfo, redact } from "../src/utils/logger.mjs";
 
 const resolveBackendBaseUrl = (req) => {
   if (env.backendPublicUrl) return env.backendPublicUrl;
@@ -24,7 +26,7 @@ const resolveBackendBaseUrl = (req) => {
   } catch {
     // ignore host parsing errors
   }
-  return env.corsOrigin || env.appBaseUrl || `http://localhost:${env.port || 8787}`;
+  return env.appBaseUrl;
 };
 
 const resolveBackendAuthUrl = (req, path) => {
@@ -32,9 +34,16 @@ const resolveBackendAuthUrl = (req, path) => {
   try {
     return new URL(path, `${base}/`).toString();
   } catch {
-    const fallbackBase = (env.backendPublicUrl || env.corsOrigin || env.appBaseUrl || `http://localhost:${env.port || 8787}`).replace(/\/+$/, "");
+    const fallbackBase = (env.backendPublicUrl || env.appBaseUrl).replace(/\/+$/, "");
     return `${fallbackBase}${path.startsWith("/") ? path : `/${path}`}`;
   }
+};
+
+const resolvePublicAuthPath = (req, suffix = "") => {
+  const baseUrl = String(req.baseUrl || req.originalUrl || req.url || "");
+  const useApiPrefix = baseUrl.startsWith("/api/auth");
+  const normalizedSuffix = suffix.startsWith("/") ? suffix : `/${suffix}`;
+  return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
 };
 
 const resolveAppRedirect = (target, fallbackPath = "/") => {
@@ -56,6 +65,15 @@ const appendQueryParam = (target, key, value) => {
   }
 };
 
+const isLocalAuthUrl = (target = "") => {
+  try {
+    const hostname = new URL(String(target || "")).hostname.toLowerCase();
+    return ["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(hostname);
+  } catch {
+    return false;
+  }
+};
+
 const toPublicUser = (user) =>
   user
       ? {
@@ -69,12 +87,27 @@ const toPublicUser = (user) =>
       }
     : null;
 
+const toTokenBackedUser = (authUser) =>
+  authUser
+    ? {
+        id: String(authUser?.sub || ""),
+        name: String(authUser?.name || authUser?.preferred_username || "Operator"),
+        email: String(authUser?.email || ""),
+        role: String(authUser?.role || "user"),
+        authProvider: String(authUser?.authProvider || "local"),
+        emailVerified: Boolean(authUser?.emailVerified || authUser?.email_verified),
+        avatarUrl: String(authUser?.avatarUrl || ""),
+      }
+    : null;
+
 const sendAuthError = (req, res, error) => {
   const status = Number(error?.status || error?.statusCode || 500) || 500;
   res.status(status).json({
     status: "error",
     code: error.code || "INTERNAL_SERVER_ERROR",
     message: error.message || "An unexpected error occurred.",
+    ...(Array.isArray(error?.missingKeys) ? { missingKeys: error.missingKeys } : {}),
+    ...(error?.action ? { action: String(error.action) } : {}),
     ...(error?.retryAfterSec ? { retryAfterSec: Number(error.retryAfterSec) || 0 } : {}),
     requestId: req.requestId || "",
   });
@@ -117,14 +150,14 @@ const normalizeRefreshError = (error) => {
   return current;
 };
 
-export const signup = async (req, res, next) => {
+export const signup = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth signup request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
     const user = await registerUser(req.validatedBody);
-    const { accessToken } = await setAuthCookies(res, user);
+    const { accessToken, refreshToken } = await setAuthCookies(res, user);
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.status(201).json({ status: "ok", user: toPublicUser(user), accessToken });
+    res.status(201).json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: error?.code || "signup_failed" });
     logError("Auth signup failed", error, { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -132,18 +165,35 @@ export const signup = async (req, res, next) => {
   }
 };
 
-export const login = async (req, res, next) => {
+const mapAuthDependencyError = (error) => {
+  const message = String(error?.message || "").toLowerCase();
+  if (
+    error?.code === "db_unavailable" ||
+    message.includes("timed out") ||
+    message.includes("timeout") ||
+    message.includes("server selection")
+  ) {
+    const mapped = new Error("Authentication database is temporarily unavailable. Please retry in a few seconds.");
+    mapped.status = 503;
+    mapped.code = "db_unavailable_auth";
+    return mapped;
+  }
+  return error;
+};
+
+export const login = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth login request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
     const user = await loginUser(req.validatedBody);
-    const { accessToken } = await setAuthCookies(res, user, { rememberMe: req.validatedBody.rememberMe === true });
+    const { accessToken, refreshToken } = await setAuthCookies(res, user, { rememberMe: req.validatedBody.rememberMe === true });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.json({ status: "ok", user: toPublicUser(user), accessToken });
+    res.json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
-    await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: error?.code || "login_failed" });
-    logError("Auth login failed", error, { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
-    sendAuthError(req, res, error);
+    const normalized = mapAuthDependencyError(error);
+    await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: normalized?.code || "login_failed" });
+    logError("Auth login failed", normalized, { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
+    sendAuthError(req, res, normalized);
   }
 };
 
@@ -152,9 +202,9 @@ export const googleLogin = async (req, res) => {
     await assertAuthAttemptAllowed({ req, identifier: "google-oauth" });
     logInfo("Auth Google login request", { requestId: req.requestId || "" });
     const user = await authenticateGoogleUser({ idToken: req.validatedBody?.credential });
-    const { accessToken } = await setAuthCookies(res, user, { rememberMe: true });
+    const { accessToken, refreshToken } = await setAuthCookies(res, user, { rememberMe: true });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.json({ status: "ok", user: toPublicUser(user), accessToken });
+    res.json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: "google-oauth", reason: error?.code || "google_login_failed" });
     logError("Auth Google login failed", error, { requestId: req.requestId || "" });
@@ -174,7 +224,7 @@ export const startGoogleOauth = async (req, res) => {
   }
 };
 
-export const sendOtp = async (req, res, next) => {
+export const sendOtp = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth send OTP request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -188,14 +238,14 @@ export const sendOtp = async (req, res, next) => {
   }
 };
 
-export const resetUserPassword = async (req, res, next) => {
+export const resetUserPassword = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth reset password request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
     const user = await resetPassword(req.validatedBody);
-    const { accessToken } = await setAuthCookies(res, user);
+    const { accessToken, refreshToken } = await setAuthCookies(res, user);
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.json({ status: "ok", message: "Password reset successful", user: toPublicUser(user), accessToken });
+    res.json({ status: "ok", message: "Password reset successful", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: error?.code || "reset_password_failed" });
     logError("Auth reset password failed", error, { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
@@ -203,13 +253,14 @@ export const resetUserPassword = async (req, res, next) => {
   }
 };
 
-export const refreshSession = async (req, res, next) => {
+export const refreshSession = async (req, res) => {
   try {
-    logInfo("Auth refresh request", { requestId: req.requestId || "", hasRefreshCookie: Boolean(req.cookies?.neurobot_rt) });
-    const { user, rememberMe } = await refreshAuth(req.cookies?.neurobot_rt);
-    const { accessToken } = await setAuthCookies(res, user, { rememberMe });
+    const refreshToken = req.validatedBody?.refreshToken || req.cookies?.zdg_refresh || req.cookies?.neurobot_rt;
+    logInfo("Auth refresh request", { requestId: req.requestId || "", hasRefreshCookie: Boolean(refreshToken), hasRefreshBody: Boolean(req.validatedBody?.refreshToken) });
+    const { user, rememberMe } = await refreshAuth(refreshToken);
+    const { accessToken, refreshToken: newRefreshToken } = await setAuthCookies(res, user, { rememberMe });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
-    res.json({ status: "ok", user: toPublicUser(user), accessToken });
+    res.json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken: newRefreshToken });
   } catch (error) {
     const normalizedError = normalizeRefreshError(error);
     await safeRecordAuthFailure({ req, identifier: req.ip || "refresh", reason: normalizedError?.code || "refresh_failed" });
@@ -218,10 +269,10 @@ export const refreshSession = async (req, res, next) => {
   }
 };
 
-export const logout = async (req, res, next) => {
+export const logout = async (req, res) => {
   try {
     logInfo("Auth logout request", { requestId: req.requestId || "" });
-    await revokeRefreshSession(req.cookies?.neurobot_rt);
+    await revokeRefreshSession(req.cookies?.zdg_refresh || req.cookies?.neurobot_rt);
     clearAuthCookies(res);
     res.status(204).end();
   } catch (error) {
@@ -231,44 +282,69 @@ export const logout = async (req, res, next) => {
 };
 
 export const getAuthProviders = async (req, res) => {
-  try {
-    const startUrl = resolveBackendAuthUrl(req, "/auth/google");
-    const callbackUrl = resolveBackendAuthUrl(req, "/auth/google/callback");
-    res.json({
-      status: "ok",
-      google: {
-        enabled: Boolean(env.googleOauthClientId),
-        clientId: env.googleOauthClientId || "",
-        backendFlow: true,
-        startUrl,
-        callbackUrl,
-        redirectUri: env.googleRedirectUri || callbackUrl,
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
-    });
-  } catch (error) {
-    logError("Auth providers lookup failed", error, { requestId: req.requestId || "" });
-    res.status(200).json({
-      status: "ok",
-      google: {
-        enabled: false,
-        clientId: "",
-        backendFlow: true,
-        startUrl: "",
-        callbackUrl: "",
-        redirectUri: "",
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
+  const googleAuth = getGoogleAuthConfigStatus();
+  const startPath = resolvePublicAuthPath(req, "/google");
+  const callbackPath = resolvePublicAuthPath(req, "/google/callback");
+  const startUrl = resolveBackendAuthUrl(req, startPath);
+  const callbackUrl = resolveBackendAuthUrl(req, callbackPath);
+  const redirectUri = googleAuth.hasExplicitRedirectUri && !isLocalAuthUrl(googleAuth.redirectUri)
+    ? googleAuth.redirectUri
+    : callbackUrl;
+  const googleAction = googleAuth.enabled
+    ? ""
+    : googleAuth.invalidKeys?.length
+      ? "Fix invalid Google OAuth environment variables or remove them to keep Google sign-in disabled."
+      : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.";
+  if (!googleAuth.enabled) {
+    logInfo("Google auth provider disabled", {
+      requestId: req.requestId || "",
+      missingKeys: googleAuth.missingKeys,
+      invalidKeys: googleAuth.invalidKeys,
+      action: googleAction,
     });
   }
+  res.json({
+    status: "ok",
+    degraded: !googleAuth.enabled,
+    message: googleAuth.enabled ? "" : "Google sign-in is disabled on the backend.",
+    action: googleAction,
+    providers: googleAuth.enabled ? ["google"] : [],
+    google: {
+      enabled: googleAuth.enabled,
+      clientId: env.googleOauthClientId || "",
+      backendFlow: googleAuth.enabled,
+      popupFlow: googleAuth.enabled,
+      startUrl: googleAuth.enabled ? startUrl : "",
+      callbackUrl,
+      redirectUri,
+      frontendOrigin: env.appBaseUrl || "",
+      authorizedOrigins: env.googleAuthorizedOrigins || [],
+      missingKeys: googleAuth.missingKeys,
+      invalidKeys: googleAuth.invalidKeys,
+      action: googleAction,
+    },
+  });
 };
 
-export const getCsrf = async (req, res, next) => {
+export const getCsrf = async (req, res) => {
   try {
-    logInfo("Auth CSRF token requested", { requestId: req.requestId || "" });
-    res.json({ csrfToken: req.csrfToken || true });
+    res.setHeader("Cache-Control", "no-store");
+    const cookieToken = String(req.cookies?.neurobot_csrf || "").trim();
+    const requestTokenRaw =
+      typeof req.csrfToken === "string"
+        ? req.csrfToken
+        : typeof req.csrfToken === "function"
+          ? req.csrfToken()
+          : "";
+    const requestToken = String(requestTokenRaw || "").trim();
+    const token = requestToken.length > 8 ? requestToken : cookieToken;
+    logInfo("Auth CSRF token requested", {
+      requestId: req.requestId || "",
+      origin: String(req.headers.origin || ""),
+      hasCsrfCookie: Boolean(req.cookies?.neurobot_csrf),
+      csrfToken: redact(token),
+    });
+    res.json({ status: "ok", csrfToken: token });
   } catch (error) {
     logError("Auth CSRF response failed", error, { requestId: req.requestId || "" });
     res.status(500).json({
@@ -277,6 +353,62 @@ export const getCsrf = async (req, res, next) => {
       message: error.message || "An unexpected error occurred.",
       requestId: req.requestId || "",
     });
+  }
+};
+
+export const getAuthStatus = async (req, res) => {
+  try {
+    if (!req.user?.sub) {
+      res.json({
+        status: "ok",
+        authenticated: false,
+        user: null,
+        requestId: req.requestId || "",
+      });
+      return;
+    }
+
+    const dbUser = await getUserById(req.user.sub).catch(() => null);
+    res.json({
+      status: "ok",
+      authenticated: true,
+      user: toPublicUser(dbUser) || toTokenBackedUser(req.user),
+      requestId: req.requestId || "",
+    });
+  } catch (error) {
+    logError("Auth status lookup failed", error, { requestId: req.requestId || "", userId: req.user?.sub || "" });
+    res.status(500).json({
+      status: "error",
+      code: error.code || "INTERNAL_SERVER_ERROR",
+      message: error.message || "An unexpected error occurred.",
+      requestId: req.requestId || "",
+    });
+  }
+};
+
+export const verifyAuth = async (req, res) => {
+  try {
+    if (!req.user?.sub) {
+      res.status(401).json({
+        success: false,
+        error: "Unauthorized",
+        message: "Valid authentication required",
+        requestId: req.requestId || "",
+      });
+      return;
+    }
+
+    const dbUser = await getUserById(req.user.sub).catch(() => null);
+    res.json({
+      success: true,
+      status: "ok",
+      authenticated: true,
+      user: toPublicUser(dbUser) || toTokenBackedUser(req.user),
+      requestId: req.requestId || "",
+    });
+  } catch (error) {
+    logError("Auth verify failed", error, { requestId: req.requestId || "", userId: req.user?.sub || "" });
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 };
 

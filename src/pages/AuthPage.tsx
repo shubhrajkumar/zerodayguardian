@@ -1,515 +1,391 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Eye, EyeOff, Loader2, MailCheck, ShieldCheck } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { z } from "zod";
-import { useAuth } from "@/context/AuthContext";
-import { ApiError, apiGetJson, apiPostJson, setStoredAccessToken } from "@/lib/apiClient";
-import { applyReferralSignup, findReferrerByCode } from "@/lib/firestoreGrowth";
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+} from "firebase/auth";
+import { firebaseAuth } from "@/lib/firebase";
+import { AuthUser, useAuth } from "@/context/AuthContext";
+import api from "@/lib/api";
+import PasswordInput from "@/components/ui/PasswordInput";
 
-declare global {
-  interface Window {
-    google?: unknown;
-  }
-}
+type AuthMode = "login" | "register" | "reset";
 
-type BackendAuthPayload = {
-  accessToken?: string;
-  user?: { id: string; email: string; name?: string | null; authProvider?: string; emailVerified?: boolean; avatarUrl?: string };
+type BackendAuthResponse = {
+  user?: AuthUser;
+  accessToken: string;
+  refreshToken: string;
 };
 
-type ResetOtpResponse = {
-  sent?: boolean;
-  delivery?: "email";
-  destination?: string;
-  expiresInMinutes?: number;
-  message?: string;
+const getDisplayNameFromEmail = (value: string) => {
+  const name = value.split("@")[0]?.replace(/[._-]+/g, " ").trim();
+  return name && name.length >= 2 ? name : "Guardian";
 };
 
-type AuthProvidersResponse = {
-  google?: {
-    enabled?: boolean;
-    clientId?: string;
-    backendFlow?: boolean;
-    startUrl?: string;
-    callbackUrl?: string;
-    frontendOrigin?: string;
-    authorizedOrigins?: string[];
-    redirectUri?: string;
-  };
+const getPasswordValidationError = (value: string) => {
+  if (value.length < 10) return "Password must be at least 10 characters";
+  if (!/[a-z]/.test(value)) return "Password must include a lowercase letter";
+  if (!/[A-Z]/.test(value)) return "Password must include an uppercase letter";
+  if (!/\d/.test(value)) return "Password must include a number";
+  if (!/[^A-Za-z0-9]/.test(value)) return "Password must include a symbol";
+  return "";
 };
 
-const isApiError = (error: unknown): error is ApiError => error instanceof ApiError;
-const signupSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(10).regex(/[A-Z]/).regex(/[a-z]/).regex(/\d/).regex(/[^A-Za-z0-9]/),
-});
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
-const resetSchema = z.object({
-  email: z.string().email(),
-  otp: z.string().length(6),
-  password: z.string().min(10).regex(/[A-Z]/).regex(/[a-z]/).regex(/\d/).regex(/[^A-Za-z0-9]/),
-});
-
-const AuthPage = () => {
+export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, refreshAuth } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
-  const [name, setName] = useState("");
+  const { user, loading: authLoading, login } = useAuth();
+
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [authStatus, setAuthStatus] = useState("");
-  const [resetStatus, setResetStatus] = useState("");
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetOtp, setResetOtp] = useState("");
-  const [resetPassword, setResetPassword] = useState("");
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [googleClientId, setGoogleClientId] = useState("");
-  const [googleStartUrl, setGoogleStartUrl] = useState("");
-  const [googleStatus, setGoogleStatus] = useState("");
-  const [googleConfigResolved, setGoogleConfigResolved] = useState(false);
-  const resetOtpInputRef = useRef<HTMLInputElement | null>(null);
-  const requestedResetEmailRef = useRef("");
-  const canUseGoogleOauth = Boolean(googleConfigResolved && googleStartUrl && googleClientId);
-  const referralCode = String(searchParams.get("ref") || localStorage.getItem("zdg:referral_code") || "").trim().toUpperCase();
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Redirect if already logged in
   useEffect(() => {
-    const code = String(searchParams.get("ref") || "").trim().toUpperCase();
-    if (!code) return;
-    localStorage.setItem("zdg:referral_code", code);
+    if (user && !authLoading) {
+      const redirect = searchParams.get("redirect") || "/dashboard";
+      navigate(redirect, { replace: true });
+    }
+  }, [user, authLoading, navigate, searchParams]);
+
+  // Check for OTP redirect
+  useEffect(() => {
+    const modeParam = searchParams.get("mode");
+    if (modeParam === "resetPassword") setMode("reset");
   }, [searchParams]);
 
-  useEffect(() => {
-    if (isAuthenticated) navigate("/dashboard", { replace: true });
-  }, [isAuthenticated, navigate]);
-
-  useEffect(() => {
-    const envClientId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
-    let active = true;
-    apiGetJson<AuthProvidersResponse>("/api/auth/providers")
-      .then((payload) => {
-        if (!active) return;
-        const clientId = String(payload?.google?.clientId || envClientId || "").trim();
-        const startUrl = String(payload?.google?.startUrl || "").trim();
-        setGoogleStartUrl(startUrl);
-        setGoogleConfigResolved(true);
-        if (payload?.google?.enabled && clientId && startUrl) {
-          setGoogleClientId(clientId);
-          setGoogleStatus("");
-          return;
-        }
-        setGoogleClientId("");
-        setGoogleStartUrl("");
-        setGoogleStatus("Google sign-in is not configured on the backend yet.");
-      })
-      .catch((error) => {
-        if (!active) return;
-        setGoogleConfigResolved(true);
-        setGoogleClientId("");
-        setGoogleStartUrl("");
-        if (isApiError(error) && error.status === 404) {
-          setGoogleStatus("Google sign-in endpoint is not available yet. Restart the backend or set VITE_GOOGLE_CLIENT_ID in .env.");
-          return;
-        }
-        setGoogleStatus("Could not load Google sign-in configuration.");
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const startGoogleOauth = () => {
-    if (!canUseGoogleOauth) return;
-    const next = encodeURIComponent("/dashboard");
-    const separator = googleStartUrl.includes("?") ? "&" : "?";
-    window.location.assign(`${googleStartUrl}${separator}next=${next}`);
+  const showToast = (message: string, type: "success" | "error" | "info") => {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    const icon = type === "success" ? "âœ“" : type === "error" ? "âœ•" : "â„¹";
+    toast.innerHTML = `<span style="flex-shrink:0;font-weight:700;font-size:1.1rem">${icon}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add("removing");
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
   };
 
-  const signupPasswordStrength = useMemo(() => {
-    let score = 0;
-    if (password.length >= 10) score += 30;
-    if (/[A-Z]/.test(password)) score += 20;
-    if (/[a-z]/.test(password)) score += 20;
-    if (/\d/.test(password)) score += 15;
-    if (/[^A-Za-z0-9]/.test(password)) score += 15;
-    return Math.min(score, 100);
-  }, [password]);
-
-  const resetPasswordStrength = useMemo(() => {
-    let score = 0;
-    if (resetPassword.length >= 10) score += 30;
-    if (/[A-Z]/.test(resetPassword)) score += 20;
-    if (/[a-z]/.test(resetPassword)) score += 20;
-    if (/\d/.test(resetPassword)) score += 15;
-    if (/[^A-Za-z0-9]/.test(resetPassword)) score += 15;
-    return Math.min(score, 100);
-  }, [resetPassword]);
-
-  const getAuthErrorMessage = (error: unknown, currentMode: "login" | "signup") => {
-    if (!isApiError(error)) return "Authentication failed.";
-    if (error.status === 429) return error.message;
-    if (error.code === "google_auth_not_configured") {
-      return "Google sign-in is not configured on the backend.";
-    }
-    if (error.code === "google_token_required") {
-      return "Google did not return a valid credential.";
-    }
-    if (error.code === "google_identity_invalid") {
-      return "Google identity verification failed. Check the client ID and authorized origins.";
-    }
-    if (error.code === "google_email_not_verified") {
-      return "Your Google account email must be verified before sign-in is allowed.";
-    }
-    if (error.code === "db_unavailable_auth") {
-      return "Login is unavailable because MongoDB is not connected. Check the backend database connection first.";
-    }
-    if (currentMode === "login" && ["wrong_password", "user_not_found"].includes(error.code)) {
-      return "Email or password is incorrect.";
-    }
-    if (currentMode === "signup" && error.code === "user_exists") {
-      return "An account with this email already exists. Please sign in instead.";
-    }
-    return error.message || "Authentication failed.";
-  };
-
-  const getResetErrorMessage = (error: unknown, fallback: string) => {
-    if (!isApiError(error)) return fallback;
-    if (error.status === 429) return error.message;
-    if (error.code === "user_not_found") return "We couldn't find an account with that email address.";
-    if (error.code === "otp_not_requested") return "Request a reset OTP first, then enter it here.";
-    if (error.code === "otp_expired") return "That OTP has expired. Request a fresh one and try again.";
-    if (error.code === "invalid_otp") return "That OTP doesn't match. Double-check the code and try again.";
-    if (error.code === "mail_not_configured") return "Password reset email is temporarily unavailable. Please try again shortly.";
-    if (error.code === "mail_delivery_failed") return "We couldn't send the reset email right now. Please try again shortly.";
-    return error.message || fallback;
-  };
-
-  const submitAuth = async (event: FormEvent) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setAuthStatus("");
-
+  const handleGoogleLogin = async () => {
     try {
-      if (mode === "signup") {
-        signupSchema.parse({
-          name: name.trim(),
-          email: email.trim(),
+      setIsLoading(true);
+       setError(null);
+       const provider = new GoogleAuthProvider();
+       provider.setCustomParameters({ prompt: "select_account" });
+       const result = await signInWithPopup(firebaseAuth!, provider);
+       const idToken = await result.user.getIdToken();
+
+       const payload = await api.post<BackendAuthResponse>("/api/auth/google", {
+         idToken,
+       });
+
+       login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
+       showToast("Signed in with Google successfully", "success");
+       navigate("/dashboard", { replace: true });
+    } catch (err: any) {
+      const message = err?.code === "auth/popup-closed-by-user"
+        ? "Sign-in cancelled"
+        : err?.code === "auth/popup-blocked"
+          ? "Pop-up was blocked by your browser. Please allow pop-ups and try again."
+          : "Google sign-in failed. Please try again.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (!email.trim() || (mode !== "reset" && !password.trim())) {
+      setError("Please fill in all fields");
+      return;
+    }
+    if (mode === "register" && password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    const passwordValidationError = mode === "register" ? getPasswordValidationError(password) : "";
+    if (mode === "login" && password.length < 1) {
+      setError("Please fill in all fields");
+      return;
+    }
+    if (passwordValidationError) {
+      setError(passwordValidationError);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (mode === "register") {
+        const payload = await api.post<BackendAuthResponse>("/api/auth/signup", {
+          name: getDisplayNameFromEmail(email),
+          email,
           password,
         });
-        const payload = await apiPostJson<BackendAuthPayload>("/api/auth/signup", {
-          name: name.trim(),
-          email: email.trim(),
-          password,
-        });
-        if (payload.user?.id && referralCode) {
-          const referrerUserId = await findReferrerByCode(referralCode);
-          if (referrerUserId && referrerUserId !== payload.user.id) {
-            await applyReferralSignup(referrerUserId, payload.user.id);
-            localStorage.removeItem("zdg:referral_code");
-          }
+        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
+        try {
+          if (firebaseAuth!.currentUser) await sendEmailVerification(firebaseAuth!.currentUser);
+          setSuccess("Account created. Welcome to your dashboard.");
+          showToast("Account created successfully.", "success");
+        } catch {
+          setSuccess("Account created. Welcome to your dashboard.");
+          showToast("Account created successfully.", "success");
         }
-        if (payload.accessToken) {
-          setStoredAccessToken(payload.accessToken);
-          await refreshAuth();
-        }
-        setAuthStatus("Account created successfully. Redirecting to your dashboard...");
+        navigate("/dashboard", { replace: true });
+      } else if (mode === "reset") {
+        await sendPasswordResetEmail(firebaseAuth!, email);
+        setSuccess("Password reset email sent! Check your inbox.");
+        showToast("Reset email sent!", "success");
+        setTimeout(() => setMode("login"), 3000);
       } else {
-        loginSchema.parse({
-          email: email.trim(),
+        const payload = await api.post<BackendAuthResponse>("/api/auth/login", {
+          email,
           password,
+          rememberMe: true,
         });
-        const payload = await apiPostJson<BackendAuthPayload>("/api/auth/login", {
-          email: email.trim(),
-          password,
-          rememberMe,
-        });
-        if (payload.accessToken) {
-          setStoredAccessToken(payload.accessToken);
-          await refreshAuth();
-        }
-        setAuthStatus("Login successful. Redirecting to your dashboard...");
+        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
+        showToast("Welcome back!", "success");
+        navigate("/dashboard", { replace: true });
       }
-      window.setTimeout(() => navigate("/dashboard", { replace: true }), 250);
-    } catch (error) {
-      setAuthStatus(error instanceof z.ZodError ? "Please use a valid email and a stronger password." : getAuthErrorMessage(error, mode));
+    } catch (err: any) {
+      const map: Record<string, string> = {
+        "auth/user-not-found": "No account with this email",
+        "auth/wrong-password": "Incorrect password",
+        "auth/invalid-credential": "Invalid email or password",
+        "auth/email-already-in-use": "An account with this email already exists",
+        "auth/too-many-requests": "Too many attempts. Please try again later",
+        "auth/invalid-email": "Invalid email address",
+        "auth/operation-not-allowed": "Email/password sign-up is disabled in Firebase. Enable Email/Password in Firebase Console > Authentication > Sign-in method.",
+        "auth/weak-password": "Password is too weak. Use at least 10 characters with uppercase, lowercase, number, and symbol.",
+        "auth/api-key-not-valid": "Firebase API key is invalid. Check your VITE_FIREBASE_* settings.",
+        "auth/network-request-failed": "Network error while contacting Firebase. Please check your connection and try again.",
+      };
+      setError(map[err?.code] || err?.message || "Authentication failed");
     } finally {
-      setSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  const submitSendOtp = async (event: FormEvent) => {
-    event.preventDefault();
-    setSendingOtp(true);
-    setResetStatus("");
-
-    try {
-      const payload = await apiPostJson<ResetOtpResponse>("/api/auth/send-otp", {
-        email: resetEmail.trim(),
-      });
-
-      requestedResetEmailRef.current = resetEmail.trim().toLowerCase();
-      setOtpSent(true);
-      setResetOtp("");
-
-      if (payload.destination) {
-        const expiry = payload.expiresInMinutes ? ` It expires in ${payload.expiresInMinutes} minutes.` : "";
-        setResetStatus(`A 6-digit OTP was sent to ${payload.destination}. Check your inbox and spam folder, then enter it below.${expiry}`);
-      } else {
-        setResetStatus(payload.message || "Reset OTP sent successfully.");
-      }
-
-      window.setTimeout(() => resetOtpInputRef.current?.focus(), 50);
-    } catch (error) {
-      setOtpSent(false);
-      setResetStatus(getResetErrorMessage(error, "Unable to send reset OTP."));
-    } finally {
-      setSendingOtp(false);
-    }
+  const toggleMode = () => {
+    setMode(mode === "login" ? "register" : "login");
+    setError(null);
+    setSuccess(null);
   };
 
-  const submitResetPassword = async (event: FormEvent) => {
-    event.preventDefault();
-    setResettingPassword(true);
-    setResetStatus("");
+  // If Firebase auth is not configured, show a configuration error
+  if (!firebaseAuth) {
+    return (
+      <div className="auth-screen relative min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md text-center animate-fade-in-up">
+          <div className="glass-card p-8 cyber-glow">
+            <div className="text-red-400 text-4xl mb-4">⚠️</div>
+            <h2 className="text-xl font-bold mb-2" style={{ color: "var(--theme-text)" }}>Authentication Unavailable</h2>
+            <p className="text-sm mb-4" style={{ color: "var(--theme-text-muted)" }}>
+              Authentication service is not configured. Please contact your administrator.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-    try {
-      resetSchema.parse({
-        email: resetEmail.trim(),
-        otp: resetOtp.trim(),
-        password: resetPassword,
-      });
-      const payload = await apiPostJson<BackendAuthPayload>("/api/auth/reset-password", {
-        email: resetEmail.trim(),
-        otp: resetOtp.trim(),
-        password: resetPassword,
-      });
-      if (payload.accessToken) setStoredAccessToken(payload.accessToken);
-      setResetStatus("Password reset successful. Redirecting to your dashboard...");
-      window.setTimeout(() => navigate("/dashboard", { replace: true }), 250);
-    } catch (error) {
-      setResetStatus(error instanceof z.ZodError ? "Enter a valid email, 6-digit OTP, and a stronger password." : getResetErrorMessage(error, "Unable to reset password."));
-    } finally {
-      setResettingPassword(false);
-    }
-  };
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--theme-bg)" }}>
+        <div className="spinner-cyber spinner-lg" />
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <section className="glass-card rounded-lg p-6">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className={`home-clean-mini-cta-link ${mode === "login" ? "nav-pill-active" : ""}`}
-              onClick={() => setMode("login")}
-            >
-              Login
-            </button>
-            <button
-              type="button"
-              className={`home-clean-mini-cta-link ${mode === "signup" ? "nav-pill-active" : ""}`}
-              onClick={() => setMode("signup")}
-            >
-              Signup
-            </button>
-          </div>
-          {referralCode ? (
-            <div className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-500/8 px-4 py-3 text-sm text-emerald-100">
-              Referral detected: <span className="font-semibold">{referralCode}</span>. Creating your account through this link will unlock referral XP rewards.
+    <div className="auth-screen relative min-h-screen flex items-center justify-center p-4">
+      <div className="auth-grid-bg" aria-hidden="true" />
+
+      <div className="w-full max-w-md animate-fade-in-up">
+        {/* Brand Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00d4ff] to-[#7b2ff7] flex items-center justify-center text-[#0a0a0f] font-bold text-lg shadow-lg shadow-[#00d4ff]/20">
+              Z
             </div>
-          ) : null}
+            <span className="text-2xl font-bold" style={{ color: "var(--theme-text)" }}>
+              ZeroDay <span style={{ color: "var(--theme-accent-blue)" }}>Guardian</span>
+            </span>
+          </div>
+          <p className="text-sm" style={{ color: "var(--theme-text-muted)" }}>
+            {mode === "reset" ? "Reset your password" : "Master Cybersecurity with AI"}
+          </p>
+        </div>
 
-          <form className="mt-6 grid gap-3" onSubmit={submitAuth}>
-            {mode === "signup" ? (
-              <input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                className="h-11 rounded-md border border-primary/20 bg-background px-3 text-sm"
-                placeholder="Full name"
-                required
-              />
-            ) : null}
+        {/* Auth Card */}
+        <div className="auth-card p-6 md:p-12">
+          {/* Google Login Button */}
+          {mode !== "reset" && (
+            <>
+              <button
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-3 px-8 py-3.5 rounded-lg text-base font-semibold transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  backgroundColor: 'var(--color-bg-secondary)',
+                  color: 'var(--color-text-primary)',
+                  border: '1px solid var(--color-border)',
+                  boxShadow: '0 1px 3px var(--color-shadow)'
+                }}
+              >
+                {isLoading ? (
+                  <div className="spinner-cyber" />
+                ) : (
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                )}
+                <span>Continue with Google</span>
+              </button>
 
-            <input
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="h-11 rounded-md border border-primary/20 bg-background px-3 text-sm"
-              placeholder="Email"
-              type="email"
-              required
-            />
-
-            <input
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="h-11 rounded-md border border-primary/20 bg-background px-3 text-sm"
-              placeholder="Password"
-              type={showPassword ? "text" : "password"}
-              required
-            />
-
-            <button
-              type="button"
-              onClick={() => setShowPassword((current) => !current)}
-              className="inline-flex w-fit items-center gap-2 text-xs text-muted-foreground"
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showPassword ? "Hide password" : "Show password"}
-            </button>
-
-            {mode === "login" ? (
-              <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(event) => setRememberMe(event.target.checked)}
-                  className="h-4 w-4 rounded border border-primary/30 bg-background"
-                />
-                Keep me signed in
-              </label>
-            ) : (
-              <div className="space-y-1">
-                <div className="h-2 overflow-hidden rounded bg-cyan-500/15">
-                  <div className="h-full bg-[linear-gradient(90deg,#ef4444,#f59e0b,#22d3ee)]" style={{ width: `${signupPasswordStrength}%` }} />
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t" style={{ borderColor: "var(--theme-border)" }} />
                 </div>
-                <p className="text-[11px] text-muted-foreground">Use 10+ characters with uppercase, lowercase, number, and symbol.</p>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-3" style={{ backgroundColor: "var(--theme-card)", color: "var(--theme-text-dim)" }}>or continue with email</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Email Auth Form */}
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-1.5" style={{ color: "var(--theme-text-muted)" }}>
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="input-cyber"
+                autoComplete="email"
+                disabled={isLoading}
+              />
+            </div>
+
+            {mode !== "reset" && (
+              <PasswordInput
+                label="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete={mode === "register" ? "new-password" : "current-password"}
+                disabled={isLoading}
+                showStrength={mode === "register"}
+              />
+            )}
+
+            {mode === "register" && (
+              <PasswordInput
+                label="Confirm password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                name="confirmPassword"
+                id="confirmPassword"
+                autoComplete="new-password"
+                disabled={isLoading}
+              />
+            )}
+
+            {/* Error / Success Messages */}
+            {error && (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-fade-in">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm animate-fade-in">
+                {success}
               </div>
             )}
 
-            <button type="submit" className="h-11 rounded-md border border-primary/40 text-sm font-mono hover:bg-primary/10" disabled={submitting}>
-              {submitting ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Please wait...
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-cyber w-full py-3 text-base"
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <div className="spinner-cyber spinner-sm" />
+                  {mode === "login" ? "Signing in..." : mode === "register" ? "Creating account..." : "Sending..."}
                 </span>
-              ) : mode === "signup" ? (
-                "Create account"
               ) : (
-                "Login"
+                mode === "login" ? "Sign In" : mode === "register" ? "Create Account" : "Send Reset Email"
               )}
             </button>
           </form>
 
-          <div className="mt-4 space-y-3 border-t border-primary/10 pt-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Google Sign-In</p>
-            <div className="min-h-[44px]">
-              {canUseGoogleOauth ? (
-                <button
-                  type="button"
-                  onClick={startGoogleOauth}
-                  className="inline-flex h-11 w-full items-center justify-center rounded-md border border-primary/20 bg-background px-3 text-sm transition-colors hover:bg-muted"
-                >
-                  Continue with Google
+          {/* Footer Links */}
+          <div className="mt-6 space-y-2 text-center text-sm">
+            {mode === "login" && (
+              <button
+                onClick={() => { setMode("reset"); setError(null); setSuccess(null); }}
+                className="transition-colors"
+                style={{ color: "var(--theme-text-dim)" }}
+                onMouseEnter={(e) => e.currentTarget.style.color = "var(--theme-accent-blue)"}
+                onMouseLeave={(e) => e.currentTarget.style.color = "var(--theme-text-dim)"}
+              >
+                Forgot your password?
+              </button>
+            )}
+
+            <div style={{ color: "var(--theme-text-dim)" }}>
+              {mode === "reset" ? (
+                <button onClick={() => { setMode("login"); setError(null); setSuccess(null); }}
+                  className="transition-colors ml-1"
+                  style={{ color: "var(--theme-accent-blue)" }}>
+                  Back to sign in
                 </button>
-              ) : null}
-              {!canUseGoogleOauth && googleStatus ? (
-                <div className="rounded-xl border border-amber-300/20 bg-amber-500/8 px-4 py-3 text-sm leading-6 text-amber-100/90">
-                  {googleStatus}
-                </div>
-              ) : null}
+              ) : (
+                <>
+                  {mode === "login" ? "Don't have an account?" : "Already have an account?"}
+                  <button onClick={toggleMode}
+                    className="transition-colors ml-1"
+                    style={{ color: "var(--theme-accent-blue)" }}>
+                    {mode === "login" ? "Sign up" : "Sign in"}
+                  </button>
+                </>
+              )}
             </div>
-            {googleStatus ? <p className="text-sm text-muted-foreground">{googleStatus}</p> : null}
           </div>
+        </div>
 
-          {authStatus ? <p className="mt-4 text-sm text-muted-foreground">{authStatus}</p> : null}
-        </section>
-
-        <section className="glass-card rounded-lg p-6">
-          <div className="flex items-center gap-2">
-            <MailCheck className="h-5 w-5 text-cyan-200" />
-            <h2 className="font-mono text-lg">Reset Password</h2>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">Enter your email, request a 6-digit OTP, then choose a new password.</p>
-
-          <form className="mt-4 grid gap-3" onSubmit={submitSendOtp}>
-            <input
-              value={resetEmail}
-              onChange={(event) => {
-                const nextEmail = event.target.value;
-                const normalizedNextEmail = nextEmail.trim().toLowerCase();
-                setResetEmail(nextEmail);
-
-                if (otpSent && requestedResetEmailRef.current && normalizedNextEmail !== requestedResetEmailRef.current) {
-                  setOtpSent(false);
-                  setResetOtp("");
-                  setResetStatus("Email changed. Request a fresh OTP for this address to continue.");
-                }
-              }}
-              className="h-11 rounded-md border border-primary/20 bg-background px-3 text-sm"
-              placeholder="Account email"
-              type="email"
-              autoComplete="email"
-              required
-            />
-            <button
-              type="submit"
-              className="h-10 rounded-md border border-cyan-300/30 text-sm hover:bg-cyan-500/10"
-              disabled={sendingOtp || !resetEmail.trim()}
-            >
-              {sendingOtp ? "Sending reset OTP..." : otpSent ? "Resend OTP" : "Send reset OTP"}
-            </button>
-          </form>
-
-          {resetStatus ? <p className="mt-4 text-sm text-muted-foreground">{resetStatus}</p> : null}
-          {otpSent ? (
-            <p className="mt-2 text-xs text-cyan-200/80">
-              Use the same email address for the next step. If you request a new code, only the latest OTP will work.
-            </p>
-          ) : null}
-
-          <form className="mt-6 grid gap-3 border-t border-cyan-300/15 pt-4" onSubmit={submitResetPassword}>
-            <input
-              ref={resetOtpInputRef}
-              value={resetOtp}
-              onChange={(event) => setResetOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
-              className="h-11 rounded-md border border-primary/20 bg-background px-3 text-sm"
-              placeholder="6-digit OTP"
-              inputMode="numeric"
-              maxLength={6}
-              autoComplete="one-time-code"
-              required
-            />
-            <input
-              value={resetPassword}
-              onChange={(event) => setResetPassword(event.target.value)}
-              className="h-11 rounded-md border border-primary/20 bg-background px-3 text-sm"
-              placeholder="New password"
-              type="password"
-              autoComplete="new-password"
-              required
-            />
-            <div className="space-y-1">
-              <div className="h-2 overflow-hidden rounded bg-cyan-500/15">
-                <div className="h-full bg-[linear-gradient(90deg,#ef4444,#f59e0b,#22d3ee)]" style={{ width: `${resetPasswordStrength}%` }} />
-              </div>
-              <p className="text-[11px] text-muted-foreground">Your new password follows the same strength requirements.</p>
-            </div>
-            <button
-              type="submit"
-              className="h-10 rounded-md border border-cyan-300/30 text-sm hover:bg-cyan-500/10"
-              disabled={resettingPassword || !resetEmail.trim() || resetOtp.trim().length !== 6 || !resetPassword}
-            >
-              {resettingPassword ? "Resetting password..." : "Reset password"}
-            </button>
-          </form>
-
-          <p className="mt-5 inline-flex items-center gap-2 text-xs text-cyan-200/80">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Email/password authentication is handled by the ZeroDay Guardian backend session service.
+        {/* Footer */}
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>
+            Secure • Private • Encrypted
           </p>
-        </section>
+          <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>
+            © 2025 ZeroDay Guardian • Secure Login
+          </p>
+        </div>
       </div>
     </div>
   );
-};
+}
 
-export default AuthPage;

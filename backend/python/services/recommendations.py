@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -20,7 +20,7 @@ from models import (
 
 
 def _recent_cutoff(hours: int = 72) -> datetime:
-    return datetime.utcnow() - timedelta(hours=hours)
+    return datetime.now(timezone.utc) - timedelta(hours=hours)
 
 
 def record_user_event(db: Session, user_id: str | None, event_type: str, surface: str, target: str | None, metadata: dict[str, Any]):

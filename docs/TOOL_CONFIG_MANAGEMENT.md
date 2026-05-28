@@ -62,7 +62,7 @@ The Tool Configuration Management System is a comprehensive solution for managin
 
 ### Prerequisites
 
-- Node.js 18.x or higher
+- Node.js 24.x or higher
 - npm 8.x or higher
 - MongoDB 4.4 or higher
 - Redis (optional, for caching)
@@ -583,5 +583,5 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 For questions, support, or feature requests:
 - GitHub Issues: [Repository Issues](https://github.com/your-repo/issues)
-- Email: support@zerodayguardian.com
+- Email: ksubhraj28@gmail.com
 - Documentation: [Full Documentation](./README.md)

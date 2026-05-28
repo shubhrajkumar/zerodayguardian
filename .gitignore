@@ -27,9 +27,12 @@ __pycache__/
 .local/
 .lovable/
 .tools/
+.git-backup-*/
 
 # Logs
 *.log
+vite-err.txt
+vite-output.txt
 server-auth-test.err.log
 server-auth-test.out.log
 
@@ -39,3 +42,9 @@ server-auth-test.out.log
 # OS files
 .DS_Store
 Thumbs.db
+.vercel
+
+# Windows reserved device names
+nul
+NUL
+Nul

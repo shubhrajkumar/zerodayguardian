@@ -1,6 +1,6 @@
 import { ToolConfiguration } from "./toolConfigManager";
 import { toast } from "@/hooks/use-toast";
-import { apiGetJson, apiPostJson, apiDeleteJson } from "./apiClient";
+import api from "./api";
 
 export interface ConfigurationVersion {
   id: string;
@@ -81,7 +81,7 @@ export class ToolConfigVersioning {
     };
 
     try {
-      const createdVersion = await apiPostJson<ConfigurationVersion>('/api/tools/versions', versionData);
+      const createdVersion = (await api.post<ConfigurationVersion>('/api/tools/versions', versionData)).data;
       
       toast({
         title: "Version created",
@@ -114,7 +114,7 @@ export class ToolConfigVersioning {
   // Version retrieval
   static async getVersions(configId: string): Promise<ConfigurationVersion[]> {
     try {
-      return await apiGetJson<ConfigurationVersion[]>(`/api/tools/configs/${configId}/versions`);
+      return (await api.get<ConfigurationVersion[]>(`/api/tools/configs/${configId}/versions`)).data;
     } catch (error) {
       return this.getLocalVersions(configId);
     }
@@ -122,7 +122,7 @@ export class ToolConfigVersioning {
 
   static async getVersion(configId: string, versionId: string): Promise<ConfigurationVersion | null> {
     try {
-      return await apiGetJson<ConfigurationVersion>(`/api/tools/configs/${configId}/versions/${versionId}`);
+      return (await api.get<ConfigurationVersion>(`/api/tools/configs/${configId}/versions/${versionId}`)).data;
     } catch (error) {
       const versions = this.getLocalVersions(configId);
       return versions.find(v => v.id === versionId) || null;
@@ -136,9 +136,9 @@ export class ToolConfigVersioning {
     version2Id: string
   ): Promise<VersionComparison | null> {
     try {
-      return await apiGetJson<VersionComparison>(
+      return (await api.get<VersionComparison>(
         `/api/tools/configs/${configId}/versions/compare?version1=${version1Id}&version2=${version2Id}`
-      );
+      )).data;
     } catch (error) {
       const versions = this.getLocalVersions(configId);
       const version1 = versions.find(v => v.id === version1Id);
@@ -190,10 +190,10 @@ export class ToolConfigVersioning {
     options: RollbackOptions
   ): Promise<ToolConfiguration | null> {
     try {
-      const rollbackData = await apiPostJson<ToolConfiguration>(
+      const rollbackData = (await api.post<ToolConfiguration>(
         `/api/tools/configs/${configId}/versions/rollback`,
         options
-      );
+      )).data;
 
       toast({
         title: "Configuration rolled back",
@@ -241,7 +241,7 @@ export class ToolConfigVersioning {
   // Version history
   static async getVersionHistory(configId: string): Promise<VersionHistory | null> {
     try {
-      return await apiGetJson<VersionHistory>(`/api/tools/configs/${configId}/versions/history`);
+      return (await api.get<VersionHistory>(`/api/tools/configs/${configId}/versions/history`)).data;
     } catch (error) {
       const versions = this.getLocalVersions(configId);
       if (versions.length === 0) return null;
@@ -259,7 +259,7 @@ export class ToolConfigVersioning {
   // Version management
   static async deleteVersion(configId: string, versionId: string): Promise<boolean> {
     try {
-      await apiDeleteJson(`/api/tools/configs/${configId}/versions/${versionId}`);
+      await api.delete(`/api/tools/configs/${configId}/versions/${versionId}`);
       toast({
         title: "Version deleted",
         description: "Version has been deleted successfully."
@@ -285,7 +285,7 @@ export class ToolConfigVersioning {
 
   static async getBreakingChanges(configId: string): Promise<ConfigurationVersion[]> {
     try {
-      return await apiGetJson<ConfigurationVersion[]>(`/api/tools/configs/${configId}/versions/breaking`);
+      return (await api.get<ConfigurationVersion[]>(`/api/tools/configs/${configId}/versions/breaking`)).data;
     } catch (error) {
       const versions = this.getLocalVersions(configId);
       return versions.filter(v => v.metadata.isBreaking);

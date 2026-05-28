@@ -21,15 +21,23 @@ import neurobotRoutes from "../api/ai/neurobotRoutes.mjs";
 import authRoutes from "../api/auth/authRoutes.mjs";
 import missionRoutes from "../api/mission/missionRoutes.mjs";
 import intelligenceRoutes from "../api/tools/intelligenceRoutes.mjs";
+import adaptiveRoutes from "../routes/adaptiveRoutes.js";
 import notificationRoutes from "../api/notifications/notificationRoutes.mjs";
 import scanRoutes from "../api/scans/scanRoutes.mjs";
 import fileRoutes from "../api/files/fileRoutes.mjs";
 import osintRoutes from "../routes/osintRoutes.js";
 import dashboardRoutes from "../routes/dashboardRoutes.js";
 import userRoutes from "../routes/userRoutes.js";
+import labsRoutes from "../routes/labsRoutes.js";
+import recommendationsRoutes from "../routes/recommendationsRoutes.js";
+import missionControlRoutes from "../routes/missionControlRoutes.js";
+import missionsRoutes from "../routes/missionsRoutes.js";
+import coursesRoutes from "../routes/coursesRoutes.js";
+import learningRoutes from "../routes/learningRoutes.js";
 import productUserRoutes from "../api/users/productUserRoutes.mjs";
 import platformRoutes from "./routes/platformRoutes.mjs";
 import pyApiCompatRoutes from "./routes/pyApiCompatRoutes.mjs";
+import complianceRoutes from "../routes/complianceRoutes.js";
 import { createSessionId, decryptSessionToken, encryptSessionToken } from "./utils/security.mjs";
 import { chatAbuseDetection } from "./middleware/abuseDetection.mjs";
 import { allowProbeAccess } from "./middleware/probeAccess.mjs";
@@ -44,26 +52,58 @@ import { incMetric, renderPrometheusMetrics } from "./observability/telemetry.mj
 import { getAiRoutingSnapshot, runAiSelfDiagnosis, validateAiStartupConfig } from "./ai-engine/index.mjs";
 import { logWarn } from "./utils/logger.mjs";
 import { requireAuth } from "./middleware/auth.mjs";
+import { buildCookieOptions } from "./utils/cookiePolicy.mjs";
+import { getGoogleAuthConfigStatus } from "../services/security-service/authService.mjs";
 
 const COOKIE_NAME = "neurobot_ss";
 const ONE_WEEK = 60 * 60 * 24 * 7;
+const PRODUCTION_FRONTEND_ORIGIN = "https://zerodayguardian-delta.vercel.app";
 const SLOW_API_THRESHOLD_MS = 1500;
 const setProbeNoStore = (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   next();
+};
+const normalizeCorsOrigin = (value = "") => String(value || "").trim().replace(/\/+$/, "");
+const isLocalLikeOrigin = (value = "") => /^(https?:\/\/)(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|::1)(:\d+)?$/i.test(normalizeCorsOrigin(value));
+const isKnownVercelAppOrigin = (value = "") => {
+  try {
+    const { hostname, protocol } = new URL(normalizeCorsOrigin(value));
+    return (
+      protocol === "https:" &&
+      /^(zerodayguardian|zeroday-guardian)(-[a-z0-9-]+)?\.vercel\.app$/i.test(hostname)
+    );
+  } catch {
+    return false;
+  }
 };
 const allowCorsOrigin = (origin, callback) => {
   if (!origin) {
     callback(null, true);
     return;
   }
-  if ((env.corsOrigins || []).includes(origin)) {
+  const normalizedOrigin = normalizeCorsOrigin(origin);
+  // Always allow if explicitly configured
+  if ((env.corsOrigins || []).includes(normalizedOrigin)) {
     callback(null, true);
     return;
   }
-  const error = new Error(`CORS blocked for origin ${origin}`);
+  if (isKnownVercelAppOrigin(normalizedOrigin)) {
+    callback(null, true);
+    return;
+  }
+  // Block localhost in production only if not explicitly allowed
+  if (env.nodeEnv === "production" && isLocalLikeOrigin(normalizedOrigin)) {
+    const error = new Error(`CORS blocked for localhost origin ${normalizedOrigin}`);
+    error.status = 403;
+    error.code = "cors_blocked";
+    logWarn("CORS blocked for localhost origin", { origin: normalizedOrigin, allowedOrigins: env.corsOrigins || [] });
+    callback(error);
+    return;
+  }
+  const error = new Error(`CORS blocked for origin ${normalizedOrigin}`);
   error.status = 403;
   error.code = "cors_blocked";
+  logWarn("CORS blocked for origin", { origin: normalizedOrigin, allowedOrigins: env.corsOrigins || [] });
   callback(error);
 };
 
@@ -81,6 +121,57 @@ const buildBackendUrl = (req, path) => {
   } catch {
     return `${String(fallbackBase || "").replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
   }
+};
+const buildPublicAuthPath = (req, suffix = "") => {
+  const baseUrl = String(req.baseUrl || req.originalUrl || req.url || "");
+  const useApiPrefix = baseUrl.startsWith("/api/auth");
+  const normalizedSuffix = suffix.startsWith("/") ? suffix : `/${suffix}`;
+  return `${useApiPrefix ? "/api/auth" : "/auth"}${normalizedSuffix}`;
+};
+const isLocalAuthUrl = (target = "") => {
+  try {
+    const hostname = new URL(String(target || "")).hostname.toLowerCase();
+    return ["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(hostname);
+  } catch {
+    return false;
+  }
+};
+const buildAuthProvidersPayload = (req) => {
+  const googleAuth = getGoogleAuthConfigStatus();
+  const startPath = buildPublicAuthPath(req, "/google");
+  const callbackPath = buildPublicAuthPath(req, "/google/callback");
+  const startUrl = buildBackendUrl(req, startPath);
+  const callbackUrl = buildBackendUrl(req, callbackPath);
+  const redirectUri = googleAuth.hasExplicitRedirectUri && !isLocalAuthUrl(googleAuth.redirectUri)
+    ? googleAuth.redirectUri
+    : callbackUrl;
+  const googleAction = googleAuth.enabled
+    ? ""
+    : googleAuth.invalidKeys?.length
+      ? "Fix invalid Google OAuth environment variables or remove them to keep Google sign-in disabled."
+      : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.";
+
+  return {
+    status: "ok",
+    degraded: !googleAuth.enabled,
+    message: googleAuth.enabled ? "" : "Google sign-in is disabled on the backend.",
+    action: googleAction,
+    providers: googleAuth.enabled ? ["google"] : [],
+    google: {
+      enabled: googleAuth.enabled,
+      clientId: env.googleOauthClientId || "",
+      backendFlow: googleAuth.enabled,
+      popupFlow: googleAuth.enabled,
+      startUrl: googleAuth.enabled ? startUrl : "",
+      callbackUrl,
+      redirectUri,
+      frontendOrigin: env.appBaseUrl || "",
+      authorizedOrigins: env.googleAuthorizedOrigins || [],
+      missingKeys: googleAuth.missingKeys,
+      invalidKeys: googleAuth.invalidKeys,
+      action: googleAction,
+    },
+  };
 };
 const listRoutes = (app) => {
   const routes = [];
@@ -187,11 +278,13 @@ export const createApp = () => {
 
   app.use(
     cors({
-      origin: allowCorsOrigin,
+      origin: env.nodeEnv === "production" ? [PRODUCTION_FRONTEND_ORIGIN] : allowCorsOrigin,
       credentials: true,
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Last-Event-ID", "X-Request-Id"],
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Cookie", "Last-Event-ID", "X-Request-Id"],
+      exposedHeaders: ["Set-Cookie", "X-Request-Id"],
       maxAge: 600,
+      optionsSuccessStatus: 204,
     })
   );
   app.use(
@@ -268,31 +361,15 @@ export const createApp = () => {
     const sessionId = createSessionId();
     const secureToken = encryptSessionToken(sessionId);
     req.neurobotSessionId = sessionId;
-    res.cookie(COOKIE_NAME, secureToken, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: env.nodeEnv === "production",
+    res.cookie(COOKIE_NAME, secureToken, buildCookieOptions({
       maxAge: ONE_WEEK * 1000,
-    });
+    }));
     next();
   });
 
   app.use(optionalAuth);
-  app.get("/", (req, res) => {
-    res.json({
-      status: "ok",
-      service: "neurobot-backend",
-      message: "Backend online",
-      requestId: req.requestId,
-      ts: new Date().toISOString(),
-      endpoints: {
-        health: "/api/health",
-        ping: "/api/ping",
-        test: "/api/test",
-        readyz: "/api/readyz",
-        livez: "/api/livez",
-      },
-    });
+  app.get("/", (_req, res) => {
+    res.type("text/plain").send("Backend Running 🚀");
   });
   app.get("/health", (req, res) =>
     res.json({ status: "ok", service: "neurobot-backend", requestId: req.requestId, ts: new Date().toISOString() })
@@ -308,7 +385,30 @@ export const createApp = () => {
       ts: new Date().toISOString(),
     });
   });
-  app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+  app.get("/api/health", (req, res) =>
+    res.json({
+      status: "ok",
+      service: "zero-day-guardian-backend",
+      requestId: req.requestId,
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
+      environment: process.env.NODE_ENV,
+      version: "1.0.0",
+      nodeVersion: process.version,
+      auth: {
+        google: getGoogleAuthConfigStatus()?.enabled === true,
+        session: true,
+      },
+      cors: {
+        origin: req.headers.origin || "",
+        configured: env.corsOrigins || [],
+      },
+      memory: {
+        heapUsed: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
+        heapTotal: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
+      },
+    })
+  );
   app.get("/api/health/chatbot", async (req, res) => {
     const startedAt = Date.now();
     const websocket = isChatStreamAvailable(app);
@@ -401,38 +501,10 @@ export const createApp = () => {
     });
   });
   app.get("/api/auth/providers", (req, res) => {
-    const startUrl = buildBackendUrl(req, "/auth/google");
-    const callbackUrl = buildBackendUrl(req, "/auth/google/callback");
-    res.json({
-      status: "ok",
-      google: {
-        enabled: Boolean(env.googleOauthClientId),
-        clientId: env.googleOauthClientId || "",
-        backendFlow: true,
-        startUrl,
-        callbackUrl,
-        redirectUri: env.googleRedirectUri || callbackUrl,
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
-    });
+    res.json(buildAuthProvidersPayload(req));
   });
   app.get("/auth/providers", (req, res) => {
-    const startUrl = buildBackendUrl(req, "/auth/google");
-    const callbackUrl = buildBackendUrl(req, "/auth/google/callback");
-    res.json({
-      status: "ok",
-      google: {
-        enabled: Boolean(env.googleOauthClientId),
-        clientId: env.googleOauthClientId || "",
-        backendFlow: true,
-        startUrl,
-        callbackUrl,
-        redirectUri: env.googleRedirectUri || callbackUrl,
-        frontendOrigin: env.appBaseUrl || "",
-        authorizedOrigins: env.googleAuthorizedOrigins || [],
-      },
-    });
+    res.json(buildAuthProvidersPayload(req));
   });
   app.get("/api/ai/health", setProbeNoStore, async (req, res, next) => {
     try {
@@ -522,26 +594,46 @@ export const createApp = () => {
       const { http, payload } = await getReadiness();
       res.status(http).json(payload);
     } catch {
-      res.status(503).json({ status: "not_ready", db: "down", llm: "down", responseTime: 0 });
+      res.status(503).json({ status: "not_ready", db: "down", auth: "down", responseTime: 0 });
     }
     }
   );
-  app.use("/auth", apiReadRateLimit, requireCsrf, authRoutes);
-  app.use("/api/auth", apiReadRateLimit, requireCsrf, authRoutes);
+  app.use("/auth", apiReadRateLimit, authRoutes);
+  app.use("/api/auth", apiReadRateLimit, authRoutes);
   app.use("/mission", requireCsrf, requireAuth, mutationRateLimit, missionRoutes);
   app.use("/api/mission", requireCsrf, requireAuth, mutationRateLimit, missionRoutes);
   app.use("/user", requireCsrf, requireAuth, mutationRateLimit, productUserRoutes);
   app.use("/api/user", requireCsrf, requireAuth, mutationRateLimit, productUserRoutes);
   app.use("/api/users", requireCsrf, requireAuth, mutationRateLimit, userRoutes);
+  // Telemetry endpoint — excluded from CSRF to avoid 403 on analytics events
+  // Auth is optional (just analytics), no CSRF check
+  app.post("/api/intelligence/telemetry/event", (req, res) => {
+    // Accept silently — analytics only
+    res.json({ status: "ok", result: { xpGain: 0, profile: null, intent: "learning", complexity: 0 } });
+  });
+  // Catch-all for other telemetry sub-routes
+  app.use("/api/intelligence/telemetry", (req, res) => {
+    res.json({ status: "ok", result: { xpGain: 0, profile: null, intent: "learning", complexity: 0 } });
+  });
   app.use("/api/notifications", requireCsrf, requireAuth, intelligenceRateLimit, notificationRoutes);
   app.use("/api/scans", requireCsrf, requireAuth, intelligenceRateLimit, scanRoutes);
-  app.use("/api/osint", requireCsrf, osintRateLimit, osintRoutes);
+  app.use("/api/osint", requireCsrf, requireAuth, osintRateLimit, osintRoutes);
   app.use("/api/dashboard", requireCsrf, requireAuth, intelligenceRateLimit, dashboardRoutes);
   app.use("/api/platform", requireCsrf, requireAuth, apiReadRateLimit, platformRoutes);
+  // Labs routes — public endpoints (no auth required)
+  app.use("/api/labs", intelligenceRateLimit, labsRoutes);
+  app.use("/api/missions", requireCsrf, requireAuth, intelligenceRateLimit, missionsRoutes);
+  app.use("/api/courses", requireCsrf, requireAuth, intelligenceRateLimit, coursesRoutes);
+  app.use("/api/learning", requireCsrf, requireAuth, intelligenceRateLimit, learningRoutes);
+  app.use("/api/recommendations", requireCsrf, requireAuth, intelligenceRateLimit, recommendationsRoutes);
+  app.use("/api/adaptive", requireCsrf, requireAuth, intelligenceRateLimit, adaptiveRoutes);
+  app.use("/api/mission-control", requireCsrf, requireAuth, intelligenceRateLimit, missionControlRoutes);
+  // Compliance / GDPR routes
+  app.use("/api/compliance", requireAuth, complianceRoutes);
   app.use("/api/neurobot/chat", chatRateLimit, chatAbuseDetection);
-  app.use("/api/neurobot", requireCsrf, neurobotRateLimit, neurobotRoutes);
+  app.use("/api/neurobot", requireCsrf, requireAuth, neurobotRateLimit, neurobotRoutes);
   app.use("/api/files", requireCsrf, requireAuth, fileUploadRateLimit, fileRoutes);
-  app.use("/api/intelligence", requireCsrf, intelligenceRateLimit, intelligenceRoutes);
+  app.use("/api/intelligence", requireCsrf, requireAuth, intelligenceRateLimit, intelligenceRoutes);
   app.use("/pyapi", requireCsrf, osintRateLimit, pyApiCompatRoutes);
   app.use("/api", (req, res) => {
     res.status(404).json({

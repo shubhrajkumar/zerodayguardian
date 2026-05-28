@@ -50,6 +50,62 @@ export const getProfile = async (req, res, next) => {
   }
 };
 
+const upsertUser = async (uid, data) => {
+  try {
+    const { getDb } = await import("../src/config/db.mjs");
+    const db = getDb();
+    const timestamp = Date.now();
+    const existing = await db.collection("users").findOne({
+      $or: [{ _id: new (await import("mongodb")).ObjectId(uid) }, { uid }],
+    });
+    if (existing) {
+      const updates = { updatedAt: timestamp };
+      if (data.email) updates.email = data.email;
+      if (data.displayName) updates.displayName = data.displayName;
+      if (data.photoURL) updates.photoURL = data.photoURL;
+      await db.collection("users").updateOne({ _id: existing._id }, { $set: updates });
+      return { ...existing, ...updates, _id: existing._id };
+    }
+    const newUser = {
+      uid,
+      email: data.email || "",
+      displayName: data.displayName || "",
+      photoURL: data.photoURL || "",
+      xp: 0,
+      level: 1,
+      role: "user",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const result = await db.collection("users").insertOne(newUser);
+    return { ...newUser, _id: result.insertedId };
+  } catch {
+    return null;
+  }
+};
+
+export const syncUser = async (req, res) => {
+  try {
+    const user = await upsertUser(req.validatedBody.uid, req.validatedBody);
+    if (!user) {
+      res.status(503).json({ success: false, code: "db_unavailable", message: "Database temporarily unavailable" });
+      return;
+    }
+    res.json({
+      success: true,
+      user: {
+        id: user._id?.toString?.() || user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        xp: user.xp || 0,
+        level: user.level || 1,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, code: "sync_failed", message: error.message });
+  }
+};
+
 export const updateProfile = async (req, res, next) => {
   try {
     logInfo("User profile update requested", { requestId: req.requestId || "", userId: req.user?.sub || "" });

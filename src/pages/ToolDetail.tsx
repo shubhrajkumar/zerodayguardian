@@ -15,7 +15,7 @@ import {
   ShieldCheck,
   ShieldAlert,
 } from "lucide-react";
-import { apiFetch, apiGetJson, apiPostJson } from "@/lib/apiClient";
+import api from "@/lib/api";
 import { sanitize } from "@/utils/sanitize";
 import {
   getToolsCatalog,
@@ -193,10 +193,10 @@ const ResearchWorkspace = ({ tool }: { tool: ToolDefinition }) => {
   const run = useCallback(async (regenerate = false) => {
     setLoading(true);
     try {
-      const payload = await apiGetJson<{ recommendation: PromptRec }>(
+      const response = await api.get<{ recommendation: PromptRec }>(
         `/api/intelligence/prompts/recommendation?q=${encodeURIComponent(query)}&regenerate=${regenerate}`
       );
-      setResult(payload.recommendation || null);
+      setResult(response.data.recommendation || null);
     } finally {
       setLoading(false);
     }
@@ -277,8 +277,8 @@ const KnowledgeWorkspace = ({ tool }: { tool: ToolDefinition }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiGetJson<ResourceVault>("/api/intelligence/resources")
-      .then((payload) => setResources(payload.resources || []))
+    api.get<ResourceVault>("/api/intelligence/resources")
+      .then((response) => setResources(response.data.resources || []))
       .finally(() => setLoading(false));
   }, []);
 
@@ -328,22 +328,22 @@ const DorkWorkspace = ({ tool }: { tool: ToolDefinition }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    apiGetJson<{ templates: DorkTemplate[] }>("/api/intelligence/tools/dork/templates")
-      .then((payload) => setTemplates(payload.templates || []))
+    api.get<{ templates: DorkTemplate[] }>("/api/intelligence/tools/dork/templates")
+      .then((response) => setTemplates(response.data.templates || []))
       .catch(() => setTemplates([]));
   }, []);
 
   const run = async () => {
     setLoading(true);
     try {
-      const payload = await apiPostJson<{ result: { query: string; explanation: string; defensiveAdvice?: string } }>(
+      const response = await api.post<{ result: { query: string; explanation: string; defensiveAdvice?: string } }>(
         "/api/intelligence/tools/dork",
         {
           target: normalizeDomainInput(target),
           category,
         }
       );
-      setResult(payload.result);
+      setResult(response.data.result);
     } finally {
       setLoading(false);
     }
@@ -409,10 +409,10 @@ const DomainWorkspace = ({ tool }: { tool: ToolDefinition }) => {
   const runHeaders = async () => {
     setBusy("headers");
     try {
-      const payload = await apiPostJson<{ result: HeaderResult }>("/api/intelligence/tools/headers-url", {
+      const response = await api.post<{ result: HeaderResult }>("/api/intelligence/tools/headers-url", {
         url: normalizeUrlInput(target),
       });
-      setHeaderResult(payload.result);
+      setHeaderResult(response.data.result);
     } finally {
       setBusy("");
     }
@@ -501,37 +501,37 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
     setError("");
     setReportError("");
     try {
-      const payload = await apiPostJson<{ result: WebScanResult }>("/api/intelligence/tools/webscan", {
+      const response = await api.post<{ result: WebScanResult }>("/api/intelligence/tools/webscan", {
         url: target,
       });
-      setResult(payload.result);
+      setResult(response.data.result);
       setLastScanAt(new Date().toISOString());
       const next = {
-        id: `${Date.now()}-${payload.result.target.hostname}`,
+        id: `${Date.now()}-${response.data.result.target.hostname}`,
         timestamp: new Date().toISOString(),
-        target: payload.result.target.normalizedUrl,
+        target: response.data.result.target.normalizedUrl,
         grade: scoreFromChecks([
-          { ok: payload.result.httpsEnforced },
-          { ok: payload.result.ssl?.enabled && payload.result.ssl?.authorized },
-          { ok: !!payload.result.headers?.hsts },
-          { ok: !!payload.result.headers?.csp },
-          { ok: !!payload.result.headers?.xFrameOptions },
-          { ok: !!payload.result.headers?.xContentTypeOptions },
-          { ok: !!payload.result.headers?.referrerPolicy },
-          { ok: !!payload.result.headers?.permissionsPolicy },
+          { ok: response.data.result.httpsEnforced },
+          { ok: response.data.result.ssl?.enabled && response.data.result.ssl?.authorized },
+          { ok: !!response.data.result.headers?.hsts },
+          { ok: !!response.data.result.headers?.csp },
+          { ok: !!response.data.result.headers?.xFrameOptions },
+          { ok: !!response.data.result.headers?.xContentTypeOptions },
+          { ok: !!response.data.result.headers?.referrerPolicy },
+          { ok: !!response.data.result.headers?.permissionsPolicy },
         ]).grade,
         score: scoreFromChecks([
-          { ok: payload.result.httpsEnforced },
-          { ok: payload.result.ssl?.enabled && payload.result.ssl?.authorized },
-          { ok: !!payload.result.headers?.hsts },
-          { ok: !!payload.result.headers?.csp },
-          { ok: !!payload.result.headers?.xFrameOptions },
-          { ok: !!payload.result.headers?.xContentTypeOptions },
-          { ok: !!payload.result.headers?.referrerPolicy },
-          { ok: !!payload.result.headers?.permissionsPolicy },
+          { ok: response.data.result.httpsEnforced },
+          { ok: response.data.result.ssl?.enabled && response.data.result.ssl?.authorized },
+          { ok: !!response.data.result.headers?.hsts },
+          { ok: !!response.data.result.headers?.csp },
+          { ok: !!response.data.result.headers?.xFrameOptions },
+          { ok: !!response.data.result.headers?.xContentTypeOptions },
+          { ok: !!response.data.result.headers?.referrerPolicy },
+          { ok: !!response.data.result.headers?.permissionsPolicy },
         ]).score,
-        httpsEnforced: payload.result.httpsEnforced,
-        sslStatus: payload.result.sslStatus,
+        httpsEnforced: response.data.result.httpsEnforced,
+        sslStatus: response.data.result.sslStatus,
       } as WebScanHistoryItem;
       setHistory((prev) => {
         const updated = [next, ...prev].slice(0, 10);
@@ -653,29 +653,15 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
     setReportBusy(true);
     setReportError("");
     try {
-      const response = await apiFetch("/api/intelligence/tools/webscan/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const response = await api.post("/api/intelligence/tools/webscan/report", {
           url: result.target.normalizedUrl,
           report: {
             template: reportTemplate,
             brandName: reportBrandName,
             brandTagline: reportTagline,
           },
-        }),
-      });
-      if (!response.ok) {
-        let message = `Report failed (${response.status})`;
-        try {
-          const payload = await response.json();
-          message = payload?.error || payload?.message || message;
-        } catch {
-          // ignore parse
-        }
-        throw new Error(message);
-      }
-      const blob = await response.blob();
+        }, { responseType: "blob" });
+      const blob = new Blob([response.data]);
       const objectUrl = window.URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = objectUrl;

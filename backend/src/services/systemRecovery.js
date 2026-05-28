@@ -67,8 +67,8 @@ export const buildFriendlyRecoveryMessage = async (error, fallbackText = "") => 
       .join("\n");
   }
   const hint = outage
-    ? "Temporary provider issue\n- Live providers are still recovering, so Zorvix is using safer fallback behavior."
-    : "Temporary provider issue\n- Live providers are busy right now, so Zorvix paused the reply instead of returning unstable output.";
+    ? "Live model is syncing\n- Live providers are still recovering, so Zorvix is using stable fallback guidance."
+    : "Live model is syncing\n- Live providers are busy right now, so Zorvix paused the reply instead of returning unstable output.";
   const retry = failure.retryable === false ? "- A backend configuration fix is required." : "- Retry in a moment.";
   return [hint, retry].filter(Boolean).join("\n") || fallbackText;
 };

@@ -1,20 +1,11 @@
-import {
-  Timestamp,
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  runTransaction,
-  serverTimestamp,
-  setDoc,
-  where,
-} from "firebase/firestore";
+// ── Firestore-backed Growth Features (lazy-loaded Firebase) ──
+// All static imports from firebase/firestore have been replaced with dynamic
+// import() calls inside each function. This keeps the 452KB Firebase SDK out
+// of the main bundle and defers loading until a Firestore feature is used.
+
+// No static imports from firebase/* — all Firebase imports are dynamic
 import { z } from "zod";
-import { firebaseAuth, firestoreDb, isFirebaseConfigured } from "@/lib/firebase";
+import { firebaseAuth, firestoreDb, isFirebaseConfigured, initFirebase } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
 
 const referralSchema = z.object({
@@ -105,10 +96,12 @@ const logGrowthFallback = (message: string, error: unknown) => {
   }
 };
 
-const requireDb = () => {
+const requireDb = async () => {
   if (firestoreGrowthBlocked) {
     throw new Error("Firestore-backed growth features are temporarily disabled for this session.");
   }
+  // Ensure Firebase is initialized before proceeding
+  await initFirebase();
   if (!isFirebaseConfigured || !firestoreDb) {
     throw new Error("Firebase is not configured. Firestore-backed growth features are unavailable.");
   }
@@ -135,7 +128,10 @@ const slugifyHandle = (value: string) =>
 const referralCodeFor = (userId: string) => `ZDG-${userId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toUpperCase()}`;
 
 const toMillis = (value: unknown) => {
-  if (value instanceof Timestamp) return value.toMillis();
+  // Timestamp type imported as type-only; runtime instanceof works with dynamic import
+  if (value && typeof value === "object" && "toMillis" in value) {
+    return (value as { toMillis: () => number }).toMillis();
+  }
   if (value instanceof Date) return value.getTime();
   const parsed = new Date(String(value || "")).getTime();
   return Number.isFinite(parsed) ? parsed : Date.now();
@@ -143,7 +139,8 @@ const toMillis = (value: unknown) => {
 
 export const ensureReferralRecord = async (userId: string): Promise<ReferralRecord> => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { doc, getDoc, setDoc, serverTimestamp } = await import("firebase/firestore");
     const ref = doc(db, "referrals", userId);
     const snapshot = await getDoc(ref);
     if (snapshot.exists()) {
@@ -176,7 +173,8 @@ export const ensureReferralRecord = async (userId: string): Promise<ReferralReco
 
 export const applyReferralSignup = async (referrerUserId: string, referredUserId: string) => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { runTransaction, doc, serverTimestamp } = await import("firebase/firestore");
     const referrerRef = doc(db, "referrals", referrerUserId);
     const referredRef = doc(db, "referrals", referredUserId);
     const referrerProfileRef = doc(db, "public_profiles", referrerUserId);
@@ -269,7 +267,8 @@ export const applyReferralSignup = async (referrerUserId: string, referredUserId
 
 export const incrementReferralInvite = async (userId: string) => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { runTransaction, doc, serverTimestamp } = await import("firebase/firestore");
     const ref = doc(db, "referrals", userId);
     await runTransaction(db, async (transaction) => {
       const snapshot = await transaction.get(ref);
@@ -304,7 +303,8 @@ export const incrementReferralInvite = async (userId: string) => {
 
 export const findReferrerByCode = async (code: string) => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { collection, query, where, limit, getDocs } = await import("firebase/firestore");
     const q = query(collection(db, "referrals"), where("code", "==", code.trim().toUpperCase()), limit(1));
     const rows = await getDocs(q);
     return rows.docs[0]?.id || null;
@@ -317,7 +317,8 @@ export const findReferrerByCode = async (code: string) => {
 
 export const getMonthlyReferralLeaderboard = async () => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { collection, query, where, orderBy, limit, getDocs } = await import("firebase/firestore");
     const q = query(collection(db, "public_profiles"), where("visibility", "==", "public"), orderBy("monthlyReferralPoints", "desc"), limit(10));
     const rows = await getDocs(q);
     return rows.docs.map((item, index) => ({
@@ -333,7 +334,8 @@ export const getMonthlyReferralLeaderboard = async () => {
 
 export const ensureNotificationPreferences = async (userId: string, email?: string | null) => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { doc, getDoc, setDoc, serverTimestamp } = await import("firebase/firestore");
     const ref = doc(db, "notifications", userId);
     const snapshot = await getDoc(ref);
     if (snapshot.exists()) {
@@ -359,7 +361,8 @@ export const ensureNotificationPreferences = async (userId: string, email?: stri
 
 export const listNotifications = async (userId: string): Promise<NotificationItem[]> => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { collection, query, orderBy, limit, getDocs } = await import("firebase/firestore");
     await ensureNotificationPreferences(userId);
     const q = query(collection(db, "notifications", userId, "items"), orderBy("createdAt", "desc"), limit(50));
     const rows = await getDocs(q);
@@ -376,7 +379,8 @@ export const pushNotification = async (
   payload: Omit<NotificationItem, "id" | "createdAt" | "read"> & { read?: boolean }
 ) => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { addDoc, collection, doc, runTransaction, serverTimestamp } = await import("firebase/firestore");
     const prefRef = doc(db, "notifications", userId);
     await ensureNotificationPreferences(userId);
     const itemRef = collection(db, "notifications", userId, "items");
@@ -408,7 +412,8 @@ export const pushNotification = async (
 
 export const markNotificationRead = async (userId: string, notificationId: string) => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { runTransaction, doc, serverTimestamp } = await import("firebase/firestore");
     const prefRef = doc(db, "notifications", userId);
     const itemRef = doc(db, "notifications", userId, "items", notificationId);
     await runTransaction(db, async (transaction) => {
@@ -446,7 +451,8 @@ export const syncPublicProfile = async (payload: {
   monthlyReferralPoints?: number;
 }) => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { doc, setDoc, serverTimestamp } = await import("firebase/firestore");
     const handle = slugifyHandle(payload.name || payload.email.split("@")[0] || payload.userId);
     const profile: Omit<PublicProfile, "userId"> = {
       handle,
@@ -483,7 +489,8 @@ export const syncPublicProfile = async (payload: {
 
 export const getPublicProfile = async (userIdOrHandle: string): Promise<PublicProfile | null> => {
   try {
-    const db = requireDb();
+    const db = await requireDb();
+    const { doc, getDoc, collection, query, where, limit, getDocs } = await import("firebase/firestore");
     const directRef = doc(db, "public_profiles", userIdOrHandle);
     const directSnap = await getDoc(directRef);
     if (directSnap.exists()) {
@@ -507,8 +514,10 @@ export const logFrontendErrorToFirestore = async (payload: {
   stack?: string;
   metadata?: Record<string, unknown>;
 }) => {
+  await initFirebase();
   if (!isFirebaseConfigured || !firestoreDb) return;
   try {
+    const { addDoc, collection, serverTimestamp } = await import("firebase/firestore");
     await addDoc(collection(firestoreDb, "frontend_errors"), {
       userId: payload.userId || null,
       source: payload.source,

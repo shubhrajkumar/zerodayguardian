@@ -133,6 +133,11 @@ class OsintIntelResponse(BaseModel):
     analysis_mode: str = "verified_multi_signal"
     minimal_ai_eligible: bool = False
     cache_hit: bool = False
+    advice: List[str] = []
+    actionable_insights: List[str] = []
+    source_summary: List[str] = []
+    executive_summary: str = ""
+    confidence: float = 0.0
 
 
 class UserEventCreate(BaseModel):
@@ -777,6 +782,74 @@ class MissionActionRequest(BaseModel):
     ]
     target: Optional[str] = Field(default=None, max_length=255)
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class DayLabStateSyncItem(BaseModel):
+    day_number: int = Field(..., ge=1, le=60)
+    current_task_index: int = 0
+    unlocked: bool = False
+    completed: bool = False
+    score: int = 0
+    xp_earned: int = 0
+    attempts: int = 0
+    completed_task_ids: list[str] = []
+    terminal_log: list[str] = []
+    last_feedback: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class DailyProgressSyncItem(BaseModel):
+    day: str = Field(..., pattern=r"^\d{4}-\d{2}-\d{2}$")
+    missions_completed: int = 0
+    xp_earned: int = 0
+    streak_day: int = 0
+    updated_at: Optional[str] = None
+
+
+class UserEventSyncItem(BaseModel):
+    event_type: str = Field(..., min_length=2, max_length=64)
+    surface: str = Field(..., min_length=2, max_length=64)
+    target: Optional[str] = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    created_at: Optional[str] = None
+
+
+class ThreatEventSyncItem(BaseModel):
+    input_metrics: dict[str, Any] = Field(default_factory=dict)
+    risk_level: str = "low"
+    reasons: list[str] = []
+    created_at: Optional[str] = None
+
+
+class SyncPayload(BaseModel):
+    auth_sub: str = Field(..., min_length=1)
+    records: list
+
+
+class SyncDayLabStatesPayload(BaseModel):
+    auth_sub: str = Field(..., min_length=1)
+    records: list[DayLabStateSyncItem]
+
+
+class SyncDailyProgressPayload(BaseModel):
+    auth_sub: str = Field(..., min_length=1)
+    records: list[DailyProgressSyncItem]
+
+
+class SyncUserEventsPayload(BaseModel):
+    auth_sub: str = Field(..., min_length=1)
+    records: list[UserEventSyncItem]
+
+
+class SyncThreatEventsPayload(BaseModel):
+    auth_sub: str = Field(..., min_length=1)
+    records: list[ThreatEventSyncItem]
+
+
+class SyncResponse(BaseModel):
+    synced: int
+    failed: int
+    errors: list[str] = []
 
 
 class MissionControlPreferencesUpdate(BaseModel):

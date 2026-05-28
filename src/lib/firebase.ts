@@ -1,16 +1,20 @@
-import { FirebaseApp, FirebaseOptions, getApp, getApps, initializeApp } from "firebase/app";
-import { Auth, getAuth } from "firebase/auth";
-import { Firestore, doc, getDoc, getFirestore, initializeFirestore } from "firebase/firestore";
-
-// Fill these Vite env vars in your local .env file:
-// VITE_FIREBASE_API_KEY=
-// VITE_FIREBASE_AUTH_DOMAIN=
-// VITE_FIREBASE_PROJECT_ID=
-// VITE_FIREBASE_APP_ID=
-// VITE_FIREBASE_MESSAGING_SENDER_ID=
+// ── Lazy-loaded Firebase Module ──
+// All static imports from firebase/* have been replaced with dynamic imports.
+// This enables Vite to split the 452KB Firebase SDK into a deferred chunk
+// that is only loaded when a Firebase-dependent feature is first accessed.
 //
-// This keeps Firebase config out of source code and makes it easy to swap
-// between environments.
+// Usage:
+//   Call initFirebase() early in main.tsx (fire-and-forget).
+//   The sync exports (firebaseApp, firebaseAuth, firestoreDb) start as null
+//   and are populated after init completes. Consumers that need Firebase
+//   should call initFirebase() first or handle null gracefully.
+
+import type { FirebaseApp, FirebaseOptions } from "firebase/app";
+import type { Auth } from "firebase/auth";
+import type { Firestore } from "firebase/firestore";
+
+// ── Configuration (synchronous — no Firebase SDK imports) ──
+
 const firebaseConfig: FirebaseOptions = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -24,6 +28,10 @@ const missingConfigKeys = Object.entries(firebaseConfig)
   .map(([key]) => key);
 
 export const isFirebaseConfigured = missingConfigKeys.length === 0;
+export const firebaseConfigIssue =
+  isFirebaseConfigured
+    ? ""
+    : `Missing Firebase config: ${missingConfigKeys.join(", ")}`;
 export const isFirebaseDiagnosticsEnabled = String(import.meta.env.VITE_ENABLE_FIREBASE_DIAGNOSTICS || "")
   .trim()
   .toLowerCase() === "true";
@@ -34,32 +42,63 @@ const shouldForceLongPolling = String(import.meta.env.VITE_FIRESTORE_FORCE_LONG_
   .trim()
   .toLowerCase() === "true";
 
+// ── Lazy-initialized sync exports (live bindings via export let) ──
+// These start as null and are populated after initFirebase() resolves.
+// Use initFirebase() before accessing these.
+
+export let firebaseApp: FirebaseApp | null = null;
+export let firebaseAuth: Auth | null = null;
+export let firestoreDb: Firestore | null = null;
+
+// ── Internal state ──
+
+let _initPromise: Promise<void> | null = null;
+
 const createFirebaseConfigError = () =>
   new Error(
-    `[Firebase] Missing config value(s): ${missingConfigKeys.join(", ")}. ` +
-      "Set the matching VITE_FIREBASE_* variables in your .env file and restart Vite."
+    `[Firebase] ${firebaseConfigIssue || "Firebase configuration is incomplete."} ` +
+      "Set the matching VITE_FIREBASE_* variables for this deployment and rebuild the frontend."
   );
 
-export const firebaseApp: FirebaseApp | null = isFirebaseConfigured
-  ? getApps().length
-    ? getApp()
-    : initializeApp(firebaseConfig)
-  : null;
+// ── Initializer ──
 
-const createFirestoreDb = (app: FirebaseApp): Firestore => {
-  if (!shouldForceLongPolling) return getFirestore(app);
-
-  try {
-    return initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-    });
-  } catch {
-    return getFirestore(app);
+export async function initFirebase(): Promise<void> {
+  if (_initPromise) return _initPromise;
+  if (!isFirebaseConfigured) {
+    _initPromise = Promise.resolve();
+    return _initPromise;
   }
-};
 
-export const firebaseAuth: Auth | null = firebaseApp && isFirebaseAuthEnabled ? getAuth(firebaseApp) : null;
-export const firestoreDb: Firestore | null = firebaseApp ? createFirestoreDb(firebaseApp) : null;
+  _initPromise = (async () => {
+    // Dynamic imports — these create a separate vendor chunk in the build
+    const { initializeApp, getApps, getApp } = await import("firebase/app");
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    firebaseApp = app;
+
+    if (isFirebaseAuthEnabled) {
+      const { getAuth } = await import("firebase/auth");
+      firebaseAuth = getAuth(app);
+    }
+
+    if (!shouldForceLongPolling) {
+      const { getFirestore } = await import("firebase/firestore");
+      firestoreDb = getFirestore(app);
+    } else {
+      const { getFirestore, initializeFirestore } = await import("firebase/firestore");
+      try {
+        firestoreDb = initializeFirestore(app, {
+          experimentalForceLongPolling: true,
+        });
+      } catch {
+        firestoreDb = getFirestore(app);
+      }
+    }
+  })();
+
+  return _initPromise;
+}
+
+// ── Public API types ──
 
 export type FirestoreConnectionTestResult = {
   ok: boolean;
@@ -73,13 +112,11 @@ let firestoreConnectionTestPromise: Promise<FirestoreConnectionTestResult> | nul
 const runFirestoreConnectionTestOnce = async (): Promise<FirestoreConnectionTestResult> => {
   try {
     if (!isFirebaseDiagnosticsEnabled) {
-      return {
-        ok: false,
-        reason: "diagnostics_disabled",
-      };
+      return { ok: false, reason: "diagnostics_disabled" };
     }
 
     console.log("[Firebase] Starting initialization check...");
+    await initFirebase();
 
     if (!isFirebaseConfigured || !firebaseApp || !firestoreDb) {
       throw createFirebaseConfigError();
@@ -88,6 +125,7 @@ const runFirestoreConnectionTestOnce = async (): Promise<FirestoreConnectionTest
     console.log("[Firebase] App initialized successfully.");
     console.log("[Firestore] Instance created successfully.");
 
+    const { doc, getDoc } = await import("firebase/firestore");
     const testRef = doc(firestoreDb, "connection_tests", "react_main_test");
     console.log("[Firestore] Reading probe document from connection_tests/react_main_test ...");
     const snapshot = await getDoc(testRef);
@@ -102,11 +140,7 @@ const runFirestoreConnectionTestOnce = async (): Promise<FirestoreConnectionTest
       console.log("[Firestore] Document data:", data);
     }
 
-    return {
-      ok: true,
-      documentPath: testRef.path,
-      data,
-    };
+    return { ok: true, documentPath: testRef.path, data };
   } catch (error: unknown) {
     console.error("[Firebase] Connection test failed.");
 
@@ -122,7 +156,6 @@ const runFirestoreConnectionTestOnce = async (): Promise<FirestoreConnectionTest
       if (firebaseLikeError.code === "permission-denied") {
         console.error("[Firestore] Permission denied. Check your Firestore security rules.");
       }
-
       if (firebaseLikeError.code === "invalid-api-key") {
         console.error("[Firebase] Invalid API key. Verify your VITE_FIREBASE_API_KEY value.");
       }
@@ -130,10 +163,7 @@ const runFirestoreConnectionTestOnce = async (): Promise<FirestoreConnectionTest
       console.error(error);
     }
 
-    return {
-      ok: false,
-      reason: firebaseLikeError?.code || "unknown_error",
-    };
+    return { ok: false, reason: firebaseLikeError?.code || "unknown_error" };
   }
 };
 

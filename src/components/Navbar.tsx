@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
 import NotificationBell from "@/components/NotificationBell";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const primaryNav = [
   { label: "Learn", to: "/learn" },
@@ -52,16 +53,16 @@ const Navbar = () => {
   return (
     <>
       <div
-        className="fixed left-0 top-0 z-[60] h-[2px] bg-[linear-gradient(90deg,var(--green),var(--blue))] transition-all duration-150"
+        className="fixed left-0 top-0 z-[60] h-[2px] bg-[linear-gradient(90deg,#00ff88,#0066ff)] transition-all duration-150"
         style={{ width: `${scrollProgress}%` }}
       />
 
-      <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 bg-[rgba(10,10,15,0.92)] backdrop-blur-2xl">
+      <nav className="fixed left-0 right-0 top-0 z-50 border-b backdrop-blur-2xl" style={{ borderColor: "var(--theme-border)", backgroundColor: "color-mix(in srgb, var(--theme-bg) 92%, transparent)" }}>
         <div className="mobile-page-frame flex min-h-16 items-center justify-between gap-3 py-2">
           <Link to="/" className="min-w-0 shrink-0">
-            <span className="block truncate text-sm font-extrabold uppercase tracking-[0.18em] text-[var(--text)] sm:text-[0.95rem]">
+            <span className="block truncate text-sm font-extrabold uppercase tracking-[0.18em] sm:text-[0.95rem]" style={{ color: "var(--theme-text)" }}>
               ZeroDay
-              <span className="ml-2 terminal-font text-[0.78em] text-[#00ff88]">Guardian</span>
+              <span className="ml-2 terminal-font text-[0.78em]" style={{ color: "var(--theme-accent-green)" }}>Guardian</span>
             </span>
           </Link>
 
@@ -72,11 +73,15 @@ const Navbar = () => {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`inline-flex min-h-[40px] items-center rounded-xl px-4 py-2 text-sm font-medium transition ${
-                    active
-                      ? "border border-[#00ff88]/16 bg-[#00ff88]/8 text-white shadow-[0_0_18px_rgba(0,255,136,0.08)]"
-                      : "text-slate-300 hover:bg-white/[0.03] hover:text-white"
-                  }`}
+                  className="inline-flex min-h-[40px] items-center rounded-xl px-4 py-2 text-sm font-medium transition hover:bg-[var(--theme-overlay)]"
+                  style={{
+                    color: active ? "var(--theme-text)" : "var(--theme-text-muted)",
+                    backgroundColor: active ? "color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
+                    borderColor: active ? "color-mix(in srgb, var(--theme-accent-green) 16%, transparent)" : undefined,
+                    borderWidth: active ? "1px" : undefined,
+                    borderStyle: active ? "solid" : undefined,
+                    boxShadow: active ? "0 0 18px color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
+                  }}
                   aria-current={active ? "page" : undefined}
                 >
                   {item.label}
@@ -88,11 +93,15 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className={`inline-flex min-h-[40px] items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
-                    isToolsActive
-                      ? "border border-[#00ff88]/16 bg-[#00ff88]/8 text-white shadow-[0_0_18px_rgba(0,255,136,0.08)]"
-                      : "text-slate-300 hover:bg-white/[0.03] hover:text-white"
-                  }`}
+                  className="inline-flex min-h-[40px] items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition hover:bg-[var(--theme-overlay)]"
+                  style={{
+                    color: isToolsActive ? "var(--theme-text)" : "var(--theme-text-muted)",
+                    backgroundColor: isToolsActive ? "color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
+                    borderColor: isToolsActive ? "color-mix(in srgb, var(--theme-accent-green) 16%, transparent)" : undefined,
+                    borderWidth: isToolsActive ? "1px" : undefined,
+                    borderStyle: isToolsActive ? "solid" : undefined,
+                    boxShadow: isToolsActive ? "0 0 18px color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
+                  }}
                 >
                   Tools
                   <ChevronDown className="h-4 w-4" />
@@ -100,7 +109,7 @@ const Navbar = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="center"
-                className="w-48 rounded-xl border-white/8 bg-[rgba(26,26,46,0.98)] text-[var(--text)] backdrop-blur-xl"
+                className="w-48 rounded-xl backdrop-blur-xl" style={{ border: "1px solid var(--theme-border)", backgroundColor: "var(--theme-surface)", color: "var(--theme-text)" }}
               >
                 {toolsNav.map((item) => (
                   <DropdownMenuItem key={item.to} asChild className="cursor-pointer rounded-lg">
@@ -112,11 +121,12 @@ const Navbar = () => {
           </div>
 
           <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle />
             {isAuthenticated ? <NotificationBell /> : null}
             {isAuthenticated && user ? (
               <Link
                 to={`/u/${user.id}`}
-                className="inline-flex min-h-[40px] items-center rounded-xl px-3 py-2 text-sm text-slate-300 transition hover:bg-white/[0.03] hover:text-white"
+                className="inline-flex min-h-[40px] items-center rounded-xl px-3 py-2 text-sm transition hover:bg-[var(--theme-overlay)]" style={{ color: "var(--theme-text-muted)" }}
               >
                 Profile
               </Link>
@@ -126,6 +136,7 @@ const Navbar = () => {
                 type="button"
                 onClick={handleLogout}
                 className="ghost-btn min-h-[40px] px-3 py-2 text-sm"
+              style={{ color: "var(--theme-text-muted)" }}
               >
                 Logout
               </button>
@@ -133,6 +144,7 @@ const Navbar = () => {
               <Link
                 to="/auth"
                 className="ghost-btn min-h-[40px] px-3 py-2 text-sm"
+                style={{ color: "var(--theme-text-muted)" }}
               >
                 Login
               </Link>
@@ -142,22 +154,25 @@ const Navbar = () => {
               to={startFreeRoute}
               className="cyber-btn cta-focus-ring min-h-[42px] px-5 py-2 text-sm font-semibold"
             >
-              Start Free
+              Deploy Access
             </Link>
           </div>
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" className="h-12 w-12 shrink-0 rounded-xl border border-white/6 bg-white/[0.02] text-[var(--text)]">
+              <Button variant="ghost" size="icon" className="h-12 w-12 shrink-0 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] text-[var(--theme-text)]">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
 
-            <SheetContent side="right" className="w-[92vw] max-w-[22rem] border-white/8 bg-[rgba(10,10,15,0.98)] px-4 py-4 backdrop-blur-2xl sm:w-[24rem]">
-              <SheetTitle className="text-base font-bold text-[var(--text)]">ZeroDay Guardian</SheetTitle>
+            <SheetContent side="right" className="w-[92vw] max-w-[22rem] border-[var(--theme-border)] bg-[var(--theme-surface)] px-4 py-4 backdrop-blur-2xl sm:w-[24rem]">
+              <div className="flex items-center justify-between mb-2">
+                <SheetTitle className="text-base font-bold" style={{ color: "var(--theme-text)" }}>ZeroDay Guardian</SheetTitle>
+                <ThemeToggle />
+              </div>
 
-              <div className="mt-6 flex flex-col gap-3">
+              <div className="mt-4 flex flex-col gap-3">
                 {primaryNav.map((item) => (
                   <Link
                     key={item.to}
@@ -165,17 +180,22 @@ const Navbar = () => {
                     onClick={() => setOpen(false)}
                     className={`flex min-h-12 w-full items-center rounded-xl px-4 py-3 text-sm font-medium transition ${
                       location.pathname === item.to
-                        ? "border border-[#00ff88]/16 bg-[#00ff88]/8 text-white"
-                        : "text-slate-300 hover:bg-white/[0.04] hover:text-white"
+                        ? "border"
+                        : ""
                     }`}
+                    style={{
+                      color: location.pathname === item.to ? "var(--theme-text)" : "var(--theme-text-muted)",
+                      backgroundColor: location.pathname === item.to ? "color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
+                      borderColor: location.pathname === item.to ? "color-mix(in srgb, var(--theme-accent-green) 16%, transparent)" : undefined,
+                    }}
                     aria-current={location.pathname === item.to ? "page" : undefined}
                   >
                     {item.label}
                   </Link>
                 ))}
 
-                <div className="cyber-card rounded-xl p-3">
-                  <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-slate-500">Tools</p>
+                <div className="rounded-xl p-3" style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)" }}>
+                  <p className="terminal-font text-[11px] uppercase tracking-[0.2em]" style={{ color: "var(--theme-text-dim)" }}>Tools</p>
                   <div className="mt-3 flex flex-col gap-2">
                     {toolsNav.map((item) => (
                       <Link
@@ -184,9 +204,13 @@ const Navbar = () => {
                         onClick={() => setOpen(false)}
                         className={`flex min-h-12 w-full items-center rounded-xl px-3 py-3 text-sm font-medium transition ${
                           location.pathname === item.to
-                            ? "bg-[#00ff88]/8 text-white"
-                            : "text-slate-300 hover:bg-white/[0.04] hover:text-white"
+                            ? ""
+                            : ""
                         }`}
+                        style={{
+                          color: location.pathname === item.to ? "var(--theme-text)" : "var(--theme-text-muted)",
+                          backgroundColor: location.pathname === item.to ? "color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
+                        }}
                       >
                         {item.label}
                       </Link>
@@ -199,7 +223,8 @@ const Navbar = () => {
                     <Link
                       to={`/u/${user.id}`}
                       onClick={() => setOpen(false)}
-                      className="flex min-h-12 w-full items-center rounded-xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/[0.04] hover:text-white"
+                      className="flex min-h-12 w-full items-center rounded-xl px-4 py-3 text-sm font-medium transition hover:bg-[var(--theme-overlay)]"
+                      style={{ color: "var(--theme-text-muted)" }}
                     >
                       Public Profile
                     </Link>
@@ -209,6 +234,7 @@ const Navbar = () => {
                       type="button"
                       onClick={handleLogout}
                       className="ghost-btn min-h-12 w-full justify-start px-4 py-3 text-left text-sm"
+                      style={{ color: "var(--theme-text-muted)" }}
                     >
                       Logout
                     </button>
@@ -217,6 +243,7 @@ const Navbar = () => {
                       to="/auth"
                       onClick={() => setOpen(false)}
                       className="ghost-btn min-h-12 w-full justify-start px-4 py-3 text-sm"
+                      style={{ color: "var(--theme-text-muted)" }}
                     >
                       Login
                     </Link>
@@ -227,7 +254,7 @@ const Navbar = () => {
                     onClick={() => setOpen(false)}
                     className="cyber-btn cta-focus-ring inline-flex min-h-12 w-full justify-center px-4 py-3 text-sm font-semibold"
                   >
-                    Start Free
+                    Deploy Access
                   </Link>
                 </div>
               </div>

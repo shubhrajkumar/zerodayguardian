@@ -14,6 +14,7 @@ import { requestLlm } from "../services/llmService.mjs";
 import { scanDomainOsint, scanEmailOsint, scanIpOsint } from "../services/osintService.mjs";
 import { TtlCache } from "../utils/ttlCache.mjs";
 import { logInfo } from "../utils/logger.mjs";
+import { syncAllForUser, syncThreatEvents } from "../services/pySyncService.mjs";
 
 const router = Router();
 const PYTHON_API_BASE_URL = String(process.env.PY_API_INTERNAL_URL || `http://127.0.0.1:${process.env.PY_API_PORT || "8000"}`).replace(/\/+$/, "");
@@ -1979,6 +1980,9 @@ router.post("/threat/detect", validateBody(threatRequestSchema), async (req, res
       risk_score: threat.risk_score,
       cache_hit: Boolean(threat.cache_hit),
     });
+
+    // Fire-and-forget sync of threat_events to Python DB
+    syncThreatEvents(ownerUserId).catch(() => {});
   } catch (error) {
     next(error);
   }
@@ -2396,6 +2400,10 @@ router.post("/labs/day/:dayNumber/submit", validateParams(dayLabParamsSchema), v
     );
 
     const updated = await collection.findOne({ userId, dayNumber });
+
+    // Fire-and-forget sync to Python DB
+    syncAllForUser(userId).catch(() => {});
+
     respondOk(res, {
       accepted: result.accepted,
       task_id: task.id,

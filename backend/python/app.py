@@ -4,7 +4,7 @@ import os
 import time
 import uuid
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +15,7 @@ from sqlalchemy import text
 from db import Base, SessionLocal, engine
 from models import (
     AuthSession,
+    DailyProgress,
     DayLabState,
     GrowthDebugEvent,
     GrowthInsightShare,
@@ -29,6 +30,7 @@ from models import (
     ScanReport,
     ThreatEvent,
     User,
+    UserEvent,
     UserLessonProgress,
     UserModuleProgress,
     UserPathEnrollment,
@@ -46,6 +48,11 @@ from schemas import (
     ScanHistoryResponse,
     ScanReportResponse,
     ScanRequest,
+    SyncDayLabStatesPayload,
+    SyncDailyProgressPayload,
+    SyncResponse,
+    SyncThreatEventsPayload,
+    SyncUserEventsPayload,
     ThreatDetectRequest,
     ThreatDetectResponse,
     UserCreate,
@@ -96,6 +103,7 @@ def load_env() -> None:
 
 
 load_env()
+IS_VERCEL = os.getenv("VERCEL", "").strip().lower() in {"1", "true"}
 
 
 def get_db():
@@ -161,8 +169,11 @@ intel_rate_limiter = InMemoryRateLimiter(
 osint_settings = MonitorSettings()
 osint_logger = logging.getLogger("osint_monitor")
 if not any(isinstance(handler, logging.FileHandler) and getattr(handler, "baseFilename", "") == str(osint_settings.log_file) for handler in osint_logger.handlers):
-    osint_settings.log_file.parent.mkdir(parents=True, exist_ok=True)
-    handler = logging.FileHandler(osint_settings.log_file, encoding="utf-8")
+    try:
+        osint_settings.log_file.parent.mkdir(parents=True, exist_ok=True)
+        handler = logging.FileHandler(osint_settings.log_file, encoding="utf-8")
+    except OSError:
+        handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"))
     osint_logger.setLevel(logging.INFO)
     osint_logger.addHandler(handler)
@@ -170,9 +181,10 @@ osint_monitor = OsintMonitorService(osint_settings)
 
 
 def _resolve_cors_origins() -> tuple[list[str], str | None]:
-    raw = [origin.strip() for origin in os.getenv("PY_CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080").split(",")]
+    default_value = "" if os.getenv("NODE_ENV", "production") == "production" else "http://localhost:8080,http://127.0.0.1:8080"
+    raw = [origin.strip() for origin in os.getenv("PY_CORS_ORIGINS", default_value).split(",")]
     origins = [origin for origin in raw if origin and origin != "*"]
-    if not origins:
+    if not origins and default_value:
         return ["http://localhost:8080", "http://127.0.0.1:8080"], None
     if any(origin == "*" for origin in raw):
         return origins, ".*"
@@ -276,7 +288,10 @@ def startup():
     )
     for warning in validate_monitor_settings(osint_settings):
         print(f"[OSINT Monitor Warning] {warning}")
-    osint_monitor.start()
+    if IS_VERCEL:
+        api_logger.info("Skipping OSINT monitor background worker on Vercel serverless runtime")
+    else:
+        osint_monitor.start()
 
 
 @app.on_event("shutdown")
@@ -290,7 +305,7 @@ def health():
         "ok": True,
         "service": "zeroday-guardian-pyapi",
         "port": int(os.getenv("PY_API_PORT", "8000")),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -300,7 +315,7 @@ def root_health():
         "ok": True,
         "service": "zeroday-guardian-pyapi",
         "port": int(os.getenv("PY_API_PORT", "8000")),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -641,9 +656,9 @@ def update_lesson_progress(payload: LessonProgressUpdate, db: Session = Depends(
         progress.score = payload.score
     if payload.attempts is not None:
         progress.attempts = payload.attempts
-    progress.last_activity_at = datetime.utcnow()
+    progress.last_activity_at = datetime.now(timezone.utc)
     if payload.status == "completed":
-        progress.completed_at = datetime.utcnow()
+        progress.completed_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(progress)
 
@@ -665,9 +680,9 @@ def update_lesson_progress(payload: LessonProgressUpdate, db: Session = Depends(
         db.add(module_progress)
     module_progress.progress_pct = progress_pct
     module_progress.status = "completed" if progress_pct >= 100 else "in_progress"
-    module_progress.last_activity_at = datetime.utcnow()
+    module_progress.last_activity_at = datetime.now(timezone.utc)
     if module_progress.status == "completed":
-        module_progress.completed_at = datetime.utcnow()
+        module_progress.completed_at = datetime.now(timezone.utc)
     db.commit()
 
     return LessonProgressResponse(
@@ -753,7 +768,7 @@ def update_skill_score(payload: SkillScoreUpdate, db: Session = Depends(get_db),
         db.add(score)
     score.score = float(payload.score)
     score.confidence = float(payload.confidence)
-    score.last_assessed_at = datetime.utcnow()
+    score.last_assessed_at = datetime.now(timezone.utc)
     db.commit()
     return SkillScoreResponse(
         skill_key=node.key,
@@ -797,7 +812,7 @@ def recommendations(db: Session = Depends(get_db), user: dict = Depends(enforce_
     recs, signals = build_recommendations(db, resolved_user_id)
     payload = RecommendationResponse(
         user_id=resolved_user_id,
-        generated_at=datetime.utcnow().isoformat(),
+        generated_at=datetime.now(timezone.utc).isoformat(),
         recommendations=recs,
         signals=signals,
     )
@@ -813,10 +828,158 @@ def recommendations_stream(db: Session = Depends(get_db), user: dict = Depends(e
         recs, signals = build_recommendations(db, resolved_user_id)
         payload = {
             "user_id": resolved_user_id,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "recommendations": recs,
             "signals": signals,
         }
         yield f"event: recommendations\nid: {int(time.time())}\ndata: {json.dumps(payload)}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+# ── DB Sync Endpoints (called by Node.js pySyncService) ──────────────
+
+
+def _find_or_create_user_by_sub(db: Session, auth_sub: str) -> str | None:
+    """Look up or auto-create a user by their auth `sub` claim (external_id)."""
+    user = db.query(User).filter(User.external_id == auth_sub).first()
+    if user:
+        return user.id
+    # If not found by external_id, this user does not exist in Python DB yet.
+    # Return None so the sync call can report it as failed.
+    return None
+
+
+@app.post("/pyapi/sync/day_lab_states", response_model=SyncResponse)
+def sync_day_lab_states(payload: SyncDayLabStatesPayload, db: Session = Depends(get_db)):
+    """Bulk upsert day_lab_states from Node.js MongoDB."""
+    user_id = _find_or_create_user_by_sub(db, payload.auth_sub)
+    if not user_id:
+        return SyncResponse(synced=0, failed=len(payload.records), errors=["User not found"])
+    synced = 0
+    errors: list[str] = []
+    for record in payload.records:
+        try:
+            existing = db.query(DayLabState).filter(
+                DayLabState.user_id == user_id,
+                DayLabState.day_number == record.day_number,
+            ).first()
+            if existing:
+                existing.current_task_index = record.current_task_index
+                existing.unlocked = int(record.unlocked)
+                existing.completed = int(record.completed)
+                existing.score = record.score
+                existing.xp_earned = record.xp_earned
+                existing.attempts = record.attempts
+                existing.completed_task_ids = ",".join(record.completed_task_ids)
+                existing.terminal_log = "\n".join(record.terminal_log)
+                existing.last_feedback = record.last_feedback
+                existing.updated_at = datetime.now(timezone.utc)
+            else:
+                state = DayLabState(
+                    user_id=user_id,
+                    day_number=record.day_number,
+                    current_task_index=record.current_task_index,
+                    unlocked=int(record.unlocked),
+                    completed=int(record.completed),
+                    score=record.score,
+                    xp_earned=record.xp_earned,
+                    attempts=record.attempts,
+                    completed_task_ids=",".join(record.completed_task_ids),
+                    terminal_log="\n".join(record.terminal_log),
+                    last_feedback=record.last_feedback,
+                    updated_at=datetime.now(timezone.utc),
+                )
+                db.add(state)
+            synced += 1
+        except Exception as exc:
+            errors.append(f"day_lab_state({record.day_number}): {exc}")
+    db.commit()
+    return SyncResponse(synced=synced, failed=len(payload.records) - synced, errors=errors)
+
+
+@app.post("/pyapi/sync/daily_progress", response_model=SyncResponse)
+def sync_daily_progress(payload: SyncDailyProgressPayload, db: Session = Depends(get_db)):
+    """Bulk upsert daily_progress from Node.js MongoDB."""
+    user_id = _find_or_create_user_by_sub(db, payload.auth_sub)
+    if not user_id:
+        return SyncResponse(synced=0, failed=len(payload.records), errors=["User not found"])
+    synced = 0
+    errors: list[str] = []
+    for record in payload.records:
+        try:
+            existing = db.query(DailyProgress).filter(
+                DailyProgress.user_id == user_id,
+                DailyProgress.day == record.day,
+            ).first()
+            if existing:
+                existing.missions_completed = record.missions_completed
+                existing.xp_earned = record.xp_earned
+                existing.streak_day = record.streak_day
+                existing.updated_at = datetime.now(timezone.utc)
+            else:
+                dp = DailyProgress(
+                    user_id=user_id,
+                    day=record.day,
+                    missions_completed=record.missions_completed,
+                    xp_earned=record.xp_earned,
+                    streak_day=record.streak_day,
+                    updated_at=datetime.now(timezone.utc),
+                )
+                db.add(dp)
+            synced += 1
+        except Exception as exc:
+            errors.append(f"daily_progress({record.day}): {exc}")
+    db.commit()
+    return SyncResponse(synced=synced, failed=len(payload.records) - synced, errors=errors)
+
+
+@app.post("/pyapi/sync/user_events", response_model=SyncResponse)
+def sync_user_events(payload: SyncUserEventsPayload, db: Session = Depends(get_db)):
+    """Bulk insert user_events from Node.js MongoDB."""
+    user_id = _find_or_create_user_by_sub(db, payload.auth_sub)
+    if not user_id:
+        return SyncResponse(synced=0, failed=len(payload.records), errors=["User not found"])
+    synced = 0
+    errors: list[str] = []
+    for record in payload.records:
+        try:
+            event = UserEvent(
+                user_id=user_id,
+                event_type=record.event_type,
+                surface=record.surface,
+                target=record.target,
+                event_metadata=record.metadata,
+                created_at=datetime.fromisoformat(record.created_at) if record.created_at else datetime.now(timezone.utc),
+            )
+            db.add(event)
+            synced += 1
+        except Exception as exc:
+            errors.append(f"user_event({record.event_type}): {exc}")
+    db.commit()
+    return SyncResponse(synced=synced, failed=len(payload.records) - synced, errors=errors)
+
+
+@app.post("/pyapi/sync/threat_events", response_model=SyncResponse)
+def sync_threat_events(payload: SyncThreatEventsPayload, db: Session = Depends(get_db)):
+    """Bulk insert threat_events from Node.js MongoDB."""
+    user_id = _find_or_create_user_by_sub(db, payload.auth_sub)
+    if not user_id:
+        return SyncResponse(synced=0, failed=len(payload.records), errors=["User not found"])
+    synced = 0
+    errors: list[str] = []
+    for record in payload.records:
+        try:
+            event = ThreatEvent(
+                user_id=user_id,
+                input_metrics=record.input_metrics,
+                risk_level=record.risk_level,
+                reasons=record.reasons,
+                created_at=datetime.fromisoformat(record.created_at) if record.created_at else datetime.now(timezone.utc),
+            )
+            db.add(event)
+            synced += 1
+        except Exception as exc:
+            errors.append(f"threat_event({record.risk_level}): {exc}")
+    db.commit()
+    return SyncResponse(synced=synced, failed=len(payload.records) - synced, errors=errors)

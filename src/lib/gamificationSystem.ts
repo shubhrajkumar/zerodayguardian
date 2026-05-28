@@ -578,7 +578,7 @@ const writeLocalState = (userId: string, state: PersistedGamificationState) => {
 };
 
 const syncStateToCurrentWindow = (incoming: PersistedGamificationState, handle?: string): PersistedGamificationState => {
-  let state = { ...incoming };
+  const state = { ...incoming };
   const today = localDayKey();
   const week = localWeekKey();
 

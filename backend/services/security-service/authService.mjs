@@ -7,91 +7,29 @@ import { OAuth2Client } from "google-auth-library";
 import { getDb, getDbPoolStatus } from "../../src/config/db.mjs";
 import { env } from "../../src/config/env.mjs";
 import { logInfo, logWarn } from "../../src/utils/logger.mjs";
+import { buildCookieOptions } from "../../src/utils/cookiePolicy.mjs";
 import { createBlindIndex, decryptSensitive, encryptSensitive, sanitizeText } from "../../src/utils/security.mjs";
+import { getAuthFallbackCollection } from "./authFallbackStore.mjs";
 
 const USERS = "users";
-
-// In-memory store for when database is unavailable
-const inMemoryUsers = new Map();
-let inMemoryUserIdCounter = 1;
-
-// Clear in-memory store on startup to ensure clean state
-// Users should register fresh through the API
-logInfo("In-memory user store initialized (empty)", { count: inMemoryUsers.size });
 let googleOauthClient = null;
 let googleOauthWebClient = null;
 
-const isDbAvailable = () => {
-  const pool = getDbPoolStatus();
-  return pool.initialized && pool.connected;
-};
-
 const getCollection = (name) => {
-  if (isDbAvailable()) {
-    return getDb().collection(name);
+  const pool = getDbPoolStatus();
+  if (!pool.initialized || !pool.connected) {
+    logWarn("Using auth fallback store because MongoDB is unavailable", { collection: name });
+    return getAuthFallbackCollection(name);
   }
-  // Return in-memory store interface
-  return {
-    findOne: async (query) => {
-      if (query.$or && Array.isArray(query.$or)) {
-        for (const clause of query.$or) {
-          const found = await getCollection(name).findOne(clause);
-          if (found) return found;
-        }
-      }
-      if (query.googleId) {
-        for (const user of inMemoryUsers.values()) {
-          if (user.googleId === query.googleId) return user;
-        }
-      }
-      if (query.email || query.emailHash) {
-        for (const user of inMemoryUsers.values()) {
-          if (query.email && user.email === query.email) return user;
-          if (query.emailHash && user.emailHash === query.emailHash) return user;
-        }
-      }
-      if (query._id) {
-        const id = query._id.toString ? query._id.toString() : query._id;
-        return inMemoryUsers.get(id) || null;
-      }
-      return null;
-    },
-    insertOne: async (doc) => {
-      const id = `mem_${inMemoryUserIdCounter++}`;
-      const user = { ...doc, _id: id };
-      inMemoryUsers.set(id, user);
-      return { insertedId: id };
-    },
-    updateOne: async (query, update) => {
-      let user = null;
-      if (query.email || query.emailHash) {
-        for (const u of inMemoryUsers.values()) {
-          if ((query.email && u.email === query.email) || (query.emailHash && u.emailHash === query.emailHash)) {
-            user = u;
-            break;
-          }
-        }
-      }
-      if (query._id) {
-        const id = query._id.toString ? query._id.toString() : query._id;
-        user = inMemoryUsers.get(id);
-      }
-      if (user && update.$set) {
-        Object.assign(user, update.$set);
-      }
-      if (user && update.$unset) {
-        for (const key of Object.keys(update.$unset)) {
-          delete user[key];
-        }
-      }
-      return { modifiedCount: user ? 1 : 0 };
-    },
-  };
+  return getDb().collection(name);
 };
 const ACCESS_COOKIE = "neurobot_at";
 const REFRESH_COOKIE = "neurobot_rt";
-const ACCESS_TTL = "15m";
-const REFRESH_TTL = "7d";
+const ZDG_ACCESS_COOKIE = "zdg_token";
+const ZDG_REFRESH_COOKIE = "zdg_refresh";
+const AUTH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+const ACCESS_TTL = "7d";
+const REFRESH_TTL = "30d";
 const REFRESH_TTL_LONG = "30d";
 const BCRYPT_ROUNDS = 12;
 const RESET_OTP_TTL_MS = 10 * 60 * 1000;
@@ -122,21 +60,64 @@ const normalizeUrl = (value = "") => {
     return "";
   }
 };
-const isGoogleAuthConfigured = () => Boolean(env.googleOauthClientId);
+const GOOGLE_AUTH_REQUIRED_KEYS = ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"];
+const buildDefaultGoogleRedirectUri = () => {
+  const base = String(env.backendPublicUrl || "").trim() || `http://127.0.0.1:${env.port || 8787}`;
+  return `${base.replace(/\/+$/, "")}/auth/google/callback`;
+};
+const isValidHttpUrl = (value = "") => {
+  try {
+    const parsed = new URL(String(value || "").trim());
+    return ["http:", "https:"].includes(parsed.protocol) && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+};
+export const getGoogleAuthConfigStatus = () => {
+  const missingKeys = GOOGLE_AUTH_REQUIRED_KEYS.filter((key) => {
+    if (key.includes("CLIENT_ID")) return !String(env.googleOauthClientId || "").trim();
+    if (key.includes("CLIENT_SECRET")) return !String(env.googleOauthClientSecret || "").trim();
+    return false;
+  });
+  const resolvedRedirectUri = String(env.googleRedirectUri || "").trim() || buildDefaultGoogleRedirectUri();
+  const invalidKeys = [];
+  if (String(env.googleRedirectUri || "").trim() && !isValidHttpUrl(env.googleRedirectUri)) {
+    invalidKeys.push("GOOGLE_REDIRECT_URI");
+  }
+  return {
+    enabled: missingKeys.length === 0 && invalidKeys.length === 0,
+    missingKeys,
+    invalidKeys,
+    redirectUri: resolvedRedirectUri,
+    hasExplicitRedirectUri: Boolean(String(env.googleRedirectUri || "").trim()),
+  };
+};
+const isGoogleAuthConfigured = () => getGoogleAuthConfigStatus().enabled;
+const createGoogleConfigError = (message = "Google sign-in is disabled because GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not configured.") => {
+  const status = getGoogleAuthConfigStatus();
+  const error = createError(message, 503, "google_auth_not_configured");
+  error.missingKeys = status.missingKeys;
+  error.invalidKeys = status.invalidKeys;
+  error.action = status.invalidKeys.length
+    ? "Fix GOOGLE_REDIRECT_URI or remove it to disable Google sign-in safely."
+    : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment to enable Google sign-in.";
+  return error;
+};
 const getGoogleOauthClient = () => {
   if (!isGoogleAuthConfigured()) {
-    throw createError("Google sign-in is not configured", 503, "google_auth_not_configured");
+    throw createGoogleConfigError();
   }
   if (!googleOauthClient) googleOauthClient = new OAuth2Client(env.googleOauthClientId);
   return googleOauthClient;
 };
 
 const getGoogleOauthWebClient = () => {
-  if (!isGoogleAuthConfigured() || !env.googleOauthClientSecret || !env.googleRedirectUri) {
-    throw createError("Google OAuth redirect flow is not configured", 503, "google_oauth_redirect_not_configured");
+  const googleAuth = getGoogleAuthConfigStatus();
+  if (!googleAuth.enabled) {
+    throw createGoogleConfigError("Google OAuth redirect flow is disabled because GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not configured.");
   }
   if (!googleOauthWebClient) {
-    googleOauthWebClient = new OAuth2Client(env.googleOauthClientId, env.googleOauthClientSecret, env.googleRedirectUri);
+    googleOauthWebClient = new OAuth2Client(env.googleOauthClientId, env.googleOauthClientSecret, googleAuth.redirectUri);
   }
   return googleOauthWebClient;
 };
@@ -249,9 +230,11 @@ const getMailTransporter = async () => {
   return transporterPromise;
 };
 
+const AUTH_DB_MAX_TIME_MS = 8_000;
+
 const findUserByEmailRecord = async (users, email) => {
   const safeEmail = normalizeEmail(email);
-  const user = await users.findOne(emailLookupQuery(safeEmail));
+  const user = await users.findOne(emailLookupQuery(safeEmail), { maxTimeMS: AUTH_DB_MAX_TIME_MS });
   return hydrateUser(user);
 };
 
@@ -302,12 +285,8 @@ const signRefreshToken = (user, rememberMe = false, jti = createRefreshJti()) =>
   return { token, jti };
 };
 
-const cookieOptions = () => ({
-  httpOnly: true,
-  sameSite: env.nodeEnv === "production" ? "strict" : "lax",
-  secure: env.nodeEnv === "production",
-  path: "/",
-});
+/** Cookie options for auth tokens — inherits Secure + HttpOnly from buildCookieOptions. */
+const cookieOptions = () => buildCookieOptions();
 
 const persistRefreshSession = async (user, refreshToken, { rememberMe = false, jti = "", expiresAt = 0 } = {}) => {
   const users = getCollection(USERS);
@@ -326,7 +305,8 @@ const persistRefreshSession = async (user, refreshToken, { rememberMe = false, j
         refreshSession: refreshState,
         updatedAt: timestamp,
       },
-    }
+    },
+    { maxTimeMS: AUTH_DB_MAX_TIME_MS }
   );
   return refreshState;
 };
@@ -366,11 +346,19 @@ export const setAuthCookies = async (res, user, options = {}) => {
 
   res.cookie(ACCESS_COOKIE, accessToken, {
     ...cookieOptions(),
-    maxAge: 15 * 60 * 1000,
+    maxAge: AUTH_COOKIE_MAX_AGE,
+  });
+  res.cookie(ZDG_ACCESS_COOKIE, accessToken, {
+    ...cookieOptions(),
+    maxAge: AUTH_COOKIE_MAX_AGE,
   });
   res.cookie(REFRESH_COOKIE, refreshToken, {
     ...cookieOptions(),
-    maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000,
+    maxAge: AUTH_COOKIE_MAX_AGE,
+  });
+  res.cookie(ZDG_REFRESH_COOKIE, refreshToken, {
+    ...cookieOptions(),
+    maxAge: AUTH_COOKIE_MAX_AGE,
   });
 
   return { accessToken, refreshToken };
@@ -379,6 +367,8 @@ export const setAuthCookies = async (res, user, options = {}) => {
 export const clearAuthCookies = (res) => {
   res.clearCookie(ACCESS_COOKIE, cookieOptions());
   res.clearCookie(REFRESH_COOKIE, cookieOptions());
+  res.clearCookie(ZDG_ACCESS_COOKIE, cookieOptions());
+  res.clearCookie(ZDG_REFRESH_COOKIE, cookieOptions());
 };
 
 const sanitizeUser = (user) => {
@@ -537,13 +527,6 @@ export const loginUser = async ({ email, password }) => {
   });
 
   if (!user) {
-    if (!isDbAvailable()) {
-      throw createError(
-        "Database unavailable. Existing accounts cannot be loaded right now. Check your MongoDB connection and try again.",
-        503,
-        "db_unavailable_auth"
-      );
-    }
     throw createError("User not found", 404, "user_not_found");
   }
 
@@ -647,6 +630,20 @@ export const sendResetOtp = async ({ email }) => {
   );
 
   if (!mailConfigured()) {
+    if (env.authOtpPreviewEnabled) {
+      logWarn("Password reset OTP email skipped; preview mode is enabled", {
+        email: safeEmail,
+        delivery: "preview",
+      });
+      return {
+        sent: true,
+        delivery: "preview",
+        destination: maskEmail(safeEmail),
+        expiresInMinutes: resetOtpExpiresInMinutes,
+        otpPreview: otp,
+        message: "Password reset OTP generated in preview mode.",
+      };
+    }
     throw createError("Password reset email is not configured", 503, "mail_not_configured");
   }
 

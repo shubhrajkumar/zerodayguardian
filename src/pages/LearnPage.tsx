@@ -12,7 +12,7 @@ import {
   TerminalSquare,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { apiGetJson } from "@/lib/apiClient";
+import api from "@/lib/api";
 import { pyGetJson } from "@/lib/pyApiClient";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
@@ -168,7 +168,7 @@ const LearnPage = () => {
 
     const load = async () => {
       const [dashboardResult, adaptiveResult, coursesResult, pathsResult, missionsResult] = await Promise.allSettled([
-        apiGetJson<DashboardLite>("/api/intelligence/dashboard"),
+        api.get<DashboardLite>("/api/intelligence/dashboard").then(r => r.data),
         pyGetJson<AdaptiveRecommendationPayload>("/adaptive/recommendations"),
         pyGetJson<CoursesResponse>("/courses"),
         pyGetJson<LearningPathItem[]>("/learning/paths"),

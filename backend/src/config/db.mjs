@@ -1,7 +1,6 @@
 import { MongoClient } from "mongodb";
-import net from "node:net";
-import { env } from "./env.mjs";
-import { logError, logInfo, logWarn } from "../utils/logger.mjs";
+import { env, getStartupEnvValidation } from "./env.mjs";
+import { logInfo, logWarn } from "../utils/logger.mjs";
 
 let client;
 let db;
@@ -15,25 +14,6 @@ const createDbUnavailableError = (message = "Database not initialized. Call conn
   return error;
 };
 
-const checkTcpPort = (host, port, timeoutMs = 1200) =>
-  new Promise((resolve) => {
-    const socket = new net.Socket();
-    let settled = false;
-
-    const finish = (ok) => {
-      if (settled) return;
-      settled = true;
-      socket.destroy();
-      resolve(ok);
-    };
-
-    socket.setTimeout(timeoutMs);
-    socket.once("connect", () => finish(true));
-    socket.once("timeout", () => finish(false));
-    socket.once("error", () => finish(false));
-    socket.connect(port, host);
-  });
-
 export const getDbPoolStatus = () => ({
   initialized: !!db,
   connected: !!client,
@@ -42,91 +22,159 @@ export const getDbPoolStatus = () => ({
   source: db ? "mongodb" : "none",
 });
 
+const deriveIndexName = (keys = {}) =>
+  Object.entries(keys)
+    .map(([field, direction]) => `${field}_${direction}`)
+    .join("_");
+
+const ensureIndex = async (collection, keys, options = {}) => {
+  try {
+    await collection.createIndex(keys, options);
+  } catch (error) {
+    const conflict = Number(error?.code || 0);
+    if (![85, 86].includes(conflict)) throw error;
+    const name = String(options.name || deriveIndexName(keys)).trim();
+    if (!name) throw error;
+    await collection.dropIndex(name).catch(() => {});
+    await collection.createIndex(keys, options);
+  }
+};
+
+const firstSet = (...keys) => {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (value != null && String(value).trim()) return String(value).trim();
+  }
+  return "";
+};
+
+const buildMongoUriFromParts = () => {
+  const host = firstSet("MONGODB_HOST", "MONGO_HOST", "DB_HOST");
+  const username = firstSet("MONGODB_USER", "MONGO_USER", "DB_USER");
+  const password = firstSet("MONGODB_PASSWORD", "MONGO_PASSWORD", "DB_PASSWORD");
+  if (!host || !username || !password) return "";
+
+  const protocol = firstSet("MONGODB_PROTOCOL", "MONGO_PROTOCOL") || (host.includes("mongodb.net") ? "mongodb+srv" : "mongodb");
+  const database = firstSet("MONGODB_DB_NAME", "MONGO_DB_NAME", "DB_NAME") || "zeroday_guardian";
+  const query = firstSet("MONGODB_OPTIONS", "MONGO_OPTIONS") || "retryWrites=true&w=majority";
+  const credentials = `${encodeURIComponent(username)}:${encodeURIComponent(password)}`;
+  const normalizedHost = host.replace(/^mongodb(?:\+srv)?:\/\//i, "").replace(/\/+$/, "");
+  return `${protocol}://${credentials}@${normalizedHost}/${encodeURIComponent(database)}${query ? `?${query.replace(/^\?/, "")}` : ""}`;
+};
+
+const mongoUriCandidates = () => {
+  const rawCandidates = [
+    process.env.MONGODB_URI,
+    process.env.DATABASE_URL,
+    process.env.MONGODB_URL,
+    process.env.MONGO_URI,
+    process.env.MONGO_URL,
+    process.env.DB_URI,
+    buildMongoUriFromParts(),
+    env.mongoUri,
+  ]
+    .map((value) => String(value || "").trim().replace(/^['"]|['"]$/g, ""))
+    .filter(Boolean);
+  const candidates = [];
+  for (const uri of rawCandidates) {
+    candidates.push(uri, ...mongoAuthVariants(uri));
+  }
+  return [...new Set(candidates)];
+};
+
+const mongoAuthVariants = (uri) => {
+  const variants = [];
+  try {
+    const parsed = new URL(uri);
+    if (!["mongodb:", "mongodb+srv:"].includes(parsed.protocol)) return variants;
+    if (!parsed.searchParams.has("authSource")) {
+      const withAdminAuth = new URL(uri);
+      withAdminAuth.searchParams.set("authSource", "admin");
+      variants.push(withAdminAuth.toString());
+    }
+    for (const mechanism of ["SCRAM-SHA-256", "SCRAM-SHA-1"]) {
+      const withMechanism = new URL(uri);
+      if (!withMechanism.searchParams.has("authSource")) withMechanism.searchParams.set("authSource", "admin");
+      withMechanism.searchParams.set("authMechanism", mechanism);
+      variants.push(withMechanism.toString());
+    }
+  } catch {
+    // Keep the original URI only if URL parsing fails.
+  }
+  return variants;
+};
+
 export const connectDb = async () => {
   if (db) return db;
-  
-  // Check if we should skip database connection in development
-  const skipDb = process.env.SKIP_DB_CONNECTION === "true";
-  if (skipDb) {
-    logInfo("Skipping database connection (SKIP_DB_CONNECTION=true)");
-    return null;
-  }
-  
-  if (!env.mongo.isSrv) {
-    const reachable = await checkTcpPort(env.mongo.host, env.mongo.port, 1200);
-    if (!reachable) {
-      const error = new Error(`DB host unreachable ${env.mongo.host}:${env.mongo.port}`);
-      logError("Database TCP precheck failed", error, {
-        dbHost: env.mongo.host,
-        dbPort: env.mongo.port,
-        dbUri: env.mongo.masked,
-      });
-      if (env.strictDependencyStartup) throw error;
-      logWarn("Database unavailable, continuing with in-memory storage");
-      return null;
-    }
-  }
 
-  if (env.mongo.requiresTlsHint) {
-    logWarn("DATABASE_URL likely requires TLS for remote host; add tls=true/ssl=true if your provider mandates it.", {
-      dbHost: env.mongo.host,
-      dbUri: env.mongo.masked,
+  const candidates = mongoUriCandidates();
+  if (!candidates.length) {
+    const report = getStartupEnvValidation();
+    const error = new Error("Database connection skipped: MONGODB_URI is missing");
+    error.code = "missing_env_var";
+    error.issues = report.issues.filter((issue) => issue.key === "MONGODB_URI");
+    logWarn("Database connection skipped because MONGODB_URI is not configured", {
+      environment: env.nodeEnv,
+      issues: error.issues,
     });
+    throw error;
   }
 
   const startedAt = Date.now();
-  let connected = false;
-  let lastError = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    client = new MongoClient(env.mongoUri, {
-      maxPoolSize: 30,
-      minPoolSize: 5,
-      maxIdleTimeMS: 30000,
-      serverSelectionTimeoutMS: 3000,
-      connectTimeoutMS: 3000,
-      socketTimeoutMS: 8000,
-    });
+  const isRender =
+    ["1", "true"].includes(String(process.env.RENDER || "").trim().toLowerCase()) ||
+    Boolean(String(process.env.RENDER_EXTERNAL_URL || "").trim());
+  const poolOptions = isRender
+    ? {
+        maxPoolSize: 10,
+        minPoolSize: 0,
+        maxIdleTimeMS: 20_000,
+        serverSelectionTimeoutMS: 8_000,
+        connectTimeoutMS: 8_000,
+        socketTimeoutMS: 20_000,
+      }
+    : {
+        maxPoolSize: 30,
+        minPoolSize: 5,
+        maxIdleTimeMS: 30_000,
+        serverSelectionTimeoutMS: 10_000,
+        connectTimeoutMS: 10_000,
+        socketTimeoutMS: 10_000,
+      };
+
+  let lastError;
+  for (const mongoUri of candidates) {
+    const candidateClient = new MongoClient(mongoUri, poolOptions);
+
     try {
-      await client.connect();
-      await client.db("admin").command({ ping: 1 });
-      connected = true;
+      await candidateClient.connect();
+      await candidateClient.db("admin").command({ ping: 1 });
+      client = candidateClient;
+      db = client.db();
       break;
     } catch (error) {
       lastError = error;
-      logWarn(`Database connection attempt ${attempt + 1} failed`, { error: error.message });
-      try {
-        await client.close();
-      } catch {
-        // ignore close failure
-      }
-      client = null;
-      if (attempt < 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+      await candidateClient.close().catch(() => {});
+      logWarn("MongoDB connection candidate failed", {
+        code: String(error?.code || ""),
+        name: String(error?.name || ""),
+        message: String(error?.message || "MongoDB connection failed"),
+      });
     }
   }
-  if (!connected) {
-    logError("Database connection failed, using in-memory storage", lastError, {
-      dbHost: env.mongo.host,
-      dbPort: env.mongo.port,
-      dbName: env.mongo.dbName,
-      dbUri: env.mongo.masked,
-    });
-    // Don't throw error, just return null to use in-memory storage
-    client = null;
-    db = null;
-    return null;
+
+  if (!db) {
+    throw lastError || createDbUnavailableError("Database connection failed for all configured MongoDB URIs.");
   }
-  db = client.db(process.env.MONGODB_DB_NAME || "neurobot");
 
   if (!indexesEnsured) {
-    await db.collection("conversations").createIndex({ sessionId: 1 }, { unique: true });
-    await db.collection("conversations").createIndex({ userId: 1, updatedAt: -1 });
-    await db.collection("users").createIndex({ email: 1 }, { unique: true });
-    await db.collection("users").createIndex({ role: 1 });
-    await db.collection("users").createIndex(
+    await ensureIndex(db.collection("conversations"), { sessionId: 1 }, { unique: true });
+    await ensureIndex(db.collection("conversations"), { userId: 1, updatedAt: -1 });
+    await ensureIndex(db.collection("users"), { email: 1 }, { unique: true });
+    await ensureIndex(db.collection("users"), { role: 1 });
+    await ensureIndex(db.collection("users"),
       { emailHash: 1 },
-      { unique: true, sparse: true, partialFilterExpression: { emailHash: { $type: "string" } } }
+      { unique: true, partialFilterExpression: { emailHash: { $type: "string" } } }
     );
     await db.collection("users").updateMany({ googleId: "" }, { $set: { googleId: null } });
     try {
@@ -134,7 +182,7 @@ export const connectDb = async () => {
     } catch {
       // ignore if the legacy index is absent
     }
-    await db.collection("users").createIndex(
+    await ensureIndex(db.collection("users"),
       { googleId: 1 },
       {
         unique: true,
@@ -142,40 +190,37 @@ export const connectDb = async () => {
         name: "googleId_1",
       }
     );
-    await db.collection("users").createIndex({ resetOtpExpire: 1 }, { sparse: true });
-    await db.collection("stream_checkpoints").createIndex({ streamId: 1 }, { unique: true });
-    await db.collection("stream_checkpoints").createIndex({ sessionId: 1, updatedAt: -1 });
-    await db.collection("stream_checkpoints").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-    await db.collection("osint_queries").createIndex({ userId: 1, createdAt: -1 });
-    await db.collection("scans").createIndex({ userId: 1, createdAt: -1 });
-    await db.collection("user_notifications").createIndex({ userId: 1, createdAt: -1 });
-    await db.collection("user_notifications").createIndex({ userId: 1, read: 1 });
-    await db.collection("adaptive_events").createIndex({ userId: 1, createdAt: -1 });
-    await db.collection("adaptive_events").createIndex({ surface: 1, type: 1, createdAt: -1 });
-    await db.collection("security_events").createIndex({ kind: 1, createdAt: -1 });
-    await db.collection("security_events").createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 14 });
-    await db.collection("security_events").createIndex({ identifierHash: 1, createdAt: -1 });
-    await db.collection("growth_push_subscriptions").createIndex({ userId: 1, endpoint: 1 }, { unique: true });
-    await db.collection("growth_push_subscriptions").createIndex({ createdAt: -1 });
-    await db.collection("growth_digest_preferences").createIndex({ userId: 1 }, { unique: true });
-    await db.collection("growth_digest_preferences").createIndex({ enabled: 1, updatedAt: -1 });
-    await db.collection("growth_streak_freezes").createIndex({ userId: 1 }, { unique: true });
-    await db.collection("growth_user_certifications").createIndex({ userId: 1, pathId: 1 }, { unique: true });
-    await db.collection("growth_ctf_events").createIndex({ weekKey: 1 }, { unique: true });
-    await db.collection("growth_ctf_events").createIndex({ startsAt: -1, endsAt: -1 });
-    await db.collection("growth_ctf_submissions").createIndex({ userId: 1, eventId: 1 });
-    await db.collection("growth_ctf_submissions").createIndex({ eventId: 1, correct: 1, createdAt: -1 });
-    await db.collection("growth_github_integrations").createIndex({ userId: 1 }, { unique: true });
-    await db.collection("growth_billing_subscriptions").createIndex({ userId: 1 }, { unique: true });
-    await db.collection("growth_billing_subscriptions").createIndex({ status: 1, updatedAt: -1 });
+    await ensureIndex(db.collection("users"), { resetOtpExpire: 1 }, { sparse: true });
+    await ensureIndex(db.collection("stream_checkpoints"), { streamId: 1 }, { unique: true });
+    await ensureIndex(db.collection("stream_checkpoints"), { sessionId: 1, updatedAt: -1 });
+    await ensureIndex(db.collection("stream_checkpoints"), { expiresAt: 1 }, { expireAfterSeconds: 0 });
+    await ensureIndex(db.collection("osint_queries"), { userId: 1, createdAt: -1 });
+    await ensureIndex(db.collection("scans"), { userId: 1, createdAt: -1 });
+    await ensureIndex(db.collection("user_notifications"), { userId: 1, createdAt: -1 });
+    await ensureIndex(db.collection("user_notifications"), { userId: 1, read: 1 });
+    await ensureIndex(db.collection("adaptive_events"), { userId: 1, createdAt: -1 });
+    await ensureIndex(db.collection("adaptive_events"), { surface: 1, type: 1, createdAt: -1 });
+    await ensureIndex(db.collection("security_events"), { kind: 1, createdAt: -1 });
+    await ensureIndex(db.collection("security_events"), { createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 14 });
+    await ensureIndex(db.collection("security_events"), { identifierHash: 1, createdAt: -1 });
+    await ensureIndex(db.collection("growth_push_subscriptions"), { userId: 1, endpoint: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_push_subscriptions"), { createdAt: -1 });
+    await ensureIndex(db.collection("growth_digest_preferences"), { userId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_digest_preferences"), { enabled: 1, updatedAt: -1 });
+    await ensureIndex(db.collection("growth_streak_freezes"), { userId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_user_certifications"), { userId: 1, pathId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_ctf_events"), { weekKey: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_ctf_events"), { startsAt: -1, endsAt: -1 });
+    await ensureIndex(db.collection("growth_ctf_submissions"), { userId: 1, eventId: 1 });
+    await ensureIndex(db.collection("growth_ctf_submissions"), { eventId: 1, correct: 1, createdAt: -1 });
+    await ensureIndex(db.collection("growth_github_integrations"), { userId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_billing_subscriptions"), { userId: 1 }, { unique: true });
+    await ensureIndex(db.collection("growth_billing_subscriptions"), { status: 1, updatedAt: -1 });
     indexesEnsured = true;
   }
 
   logInfo("Database connected successfully", {
-    dbHost: env.mongo.host,
-    dbPort: env.mongo.port,
-    dbName: env.mongo.dbName,
-    dbUri: env.mongo.masked,
+    dbName: db.databaseName,
     latencyMs: Date.now() - startedAt,
     pool: getDbPoolStatus(),
   });

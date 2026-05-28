@@ -92,7 +92,7 @@ const ToolsPage = () => {
       if (!query) return true;
       return toolSearchIndex(tool).includes(query);
     });
-  }, [activeFilter, searchTerm, unlockedGates.advanced_labs, unlockedGates.intel_tools]);
+  }, [activeFilter, searchTerm, toolsCatalog, unlockedGates.advanced_labs, unlockedGates.intel_tools]);
 
   const groupedTools = useMemo(() => {
     const next: Record<string, typeof filteredTools> = {};
@@ -120,7 +120,7 @@ const ToolsPage = () => {
         .map((id) => toolsCatalog.find((tool) => tool.id === id))
         .filter((tool): tool is ToolDefinition => Boolean(tool))
         .slice(0, 4),
-    [recentToolIds]
+    [recentToolIds, toolsCatalog]
   );
   const smartSuggestions = useMemo(() => {
     const suggestions = [

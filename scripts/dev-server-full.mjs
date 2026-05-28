@@ -7,7 +7,7 @@ const sharedEnv = {
   NEUROBOT_PORT: process.env.NEUROBOT_PORT || "8787",
   ALLOW_PORT_FALLBACK: "false",
 };
-const server = spawnCommand("node", ["server.js"], { env: sharedEnv });
+const server = spawnCommand("node", ["backend/server.js"], { env: sharedEnv });
 
 const shutdown = () => {
   if (mongo && !mongo.killed) mongo.kill();

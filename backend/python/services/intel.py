@@ -72,6 +72,13 @@ class OsintIntelService:
         report["ai_used"] = False
         report["analysis_mode"] = "verified_multi_signal"
         report["minimal_ai_eligible"] = ai_candidate
+
+        # Enrich response with standardized fields matching Node.js pyApiCompatRoutes enrichment
+        report["advice"] = self._build_advice(report)
+        report["actionable_insights"] = self._build_actionable_insights(report)
+        report["source_summary"] = self._build_source_summary(report)
+        report["executive_summary"] = self._build_executive_summary(report)
+        report["confidence"] = self._build_confidence(report)
         return report
 
     @staticmethod
@@ -643,3 +650,126 @@ class OsintIntelService:
         if safe_score >= 35:
             return "medium", safe_score
         return "low", safe_score
+
+    @staticmethod
+    def _build_advice(payload: dict[str, Any]) -> list[str]:
+        target_type = str(payload.get("target_type", "domain")).lower()
+        risk_level = str(payload.get("risk_level", "low")).lower()
+        verified_signals = [str(s) for s in payload.get("verified_signals", [])]
+        advice: list[str] = []
+
+        if target_type == "email":
+            if "mx" not in verified_signals:
+                advice.append("Publish and verify working MX records for the mail domain.")
+            if "domain_syntax" not in verified_signals:
+                advice.append("Confirm the mailbox uses a valid registered domain.")
+        elif target_type == "ip":
+            if "reverse_dns" not in verified_signals:
+                advice.append("Verify PTR records if this IP should resolve publicly.")
+            if "ip_validation" not in verified_signals:
+                advice.append("Retest with a valid public IPv4 or IPv6 address.")
+        else:
+            if "ns" not in verified_signals:
+                advice.append("Check authoritative NS delegation and zone health.")
+            if "a" not in verified_signals:
+                advice.append("Publish or verify live A records for the domain.")
+            if "registrar" not in verified_signals:
+                advice.append("Confirm registrar and RDAP records are publicly available.")
+
+        if not advice:
+            if risk_level == "high":
+                advice.append("Escalate for remediation and retest after changes.")
+            else:
+                advice.append("Continue monitoring verified public records.")
+        return advice[:3]
+
+    @staticmethod
+    def _build_actionable_insights(payload: dict[str, Any]) -> list[str]:
+        advice = OsintIntelService._build_advice(payload)
+        verified = bool(payload.get("verified"))
+        if verified:
+            advice.append("Record the verified indicators and recheck after infrastructure changes.")
+        else:
+            advice.append("Do not escalate until at least one stronger verified signal is confirmed.")
+        return advice[:4]
+
+    @staticmethod
+    def _build_source_summary(payload: dict[str, Any]) -> list[str]:
+        target_type = str(payload.get("target_type", "domain")).lower()
+        verified_signals = [str(s) for s in payload.get("verified_signals", [])]
+        signal_count = len(verified_signals)
+        plural = "" if signal_count == 1 else "s"
+
+        if target_type == "email":
+            source_label = "mail-domain validation"
+            details = [
+                f"{source_label} used {signal_count} verified signal{plural}.",
+                "Verified sources: syntax checks + live DNS/MX.",
+            ]
+        elif target_type == "ip":
+            source_label = "network identity validation"
+            details = [
+                f"{source_label} used {signal_count} verified signal{plural}.",
+                "Verified sources: IP validation + reverse DNS.",
+            ]
+        else:
+            source_label = "domain registration + DNS"
+            details = [
+                f"{source_label} used {signal_count} verified signal{plural}.",
+                "Verified sources: live DNS + RDAP/WHOIS fallback.",
+            ]
+
+        signal_map = {
+            "email": ["email format", "DNS", "MX", "NS"],
+            "domain": ["DNS", "A", "MX", "NS", "RDAP/WHOIS"],
+            "ip": ["IP validation", "reverse DNS"],
+        }
+        families = signal_map.get(target_type, signal_map["domain"])
+        details.append(f"Signal families checked: {', '.join(families)}.")
+        return details[:3]
+
+    @staticmethod
+    def _build_executive_summary(payload: dict[str, Any]) -> str:
+        target = str(payload.get("normalized_query") or payload.get("query") or "target").strip()
+        target_type = str(payload.get("target_type", "domain")).upper()
+        level = str(payload.get("risk_level", "low")).upper()
+        score = int(payload.get("risk_score", 0))
+        verified = bool(payload.get("verified"))
+
+        if not verified:
+            return f"{target_type} {target} has no fully verified intelligence result. {NO_VERIFIED_DATA}"
+        if level == "HIGH":
+            return f"{target_type} {target} shows high-risk verified issues with score {score}."
+        if level == "MEDIUM":
+            return f"{target_type} {target} has mixed verified signals and needs review."
+        return f"{target_type} {target} resolved with low-risk verified posture."
+
+    @staticmethod
+    def _build_confidence(payload: dict[str, Any]) -> float:
+        checked = [s for s in payload.get("checked_signals", []) if s]
+        verified = [s for s in payload.get("verified_signals", []) if s]
+        checked_count = len(checked)
+        verified_count = len(verified)
+        risk_level = str(payload.get("risk_level", "low")).lower()
+
+        if checked_count == 0:
+            return 0.0
+        ratio = verified_count / checked_count
+        if ratio >= 0.8:
+            score = 0.94
+        elif ratio >= 0.6:
+            score = 0.84
+        elif ratio >= 0.4:
+            score = 0.72
+        elif ratio >= 0.2:
+            score = 0.58
+        else:
+            score = 0.38
+
+        if bool(payload.get("verified")):
+            adjusted = score
+        elif risk_level == "high":
+            adjusted = max(0.42, score - 0.12)
+        else:
+            adjusted = max(0.24, score - 0.18)
+        return round(adjusted, 2)

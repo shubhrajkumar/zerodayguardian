@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -407,7 +407,7 @@ def upsert_skill_score(db: Session, user_id: str, focus: str, score_delta: int):
         db.add(row)
     row.score = min(100.0, float(row.score or 0.0) + max(2.0, score_delta / 10))
     row.confidence = min(0.98, float(row.confidence or 0.4) + 0.04)
-    row.last_assessed_at = datetime.utcnow()
+    row.last_assessed_at = datetime.now(timezone.utc)
 
 
 def update_daily_learning_state(db: Session, user_id: str, xp_delta: int):
@@ -667,7 +667,7 @@ def submit_day_lab(day_number: int, payload: DayLabSubmitRequest, request: Reque
     row.last_feedback = result["feedback"]
     row.completed = 1 if len(completed_ids) >= len(module["tasks"]) else 0
     row.unlocked = 1
-    row.updated_at = datetime.utcnow()
+    row.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(row)
 
@@ -727,7 +727,7 @@ def sandbox_labs(request: Request, db: Session = Depends(get_db), user: dict = D
     if not user_id:
         raise HTTPException(status_code=404, detail="User not found")
     labs = list_sandbox_labs(db, user_id)
-    return SandboxLabsResponse(labs=labs, generated_at=datetime.utcnow().isoformat())
+    return SandboxLabsResponse(labs=labs, generated_at=datetime.now(timezone.utc).isoformat())
 
 
 @router.post("/sandbox/run", response_model=SandboxRunResponse)

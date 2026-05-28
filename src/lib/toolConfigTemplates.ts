@@ -1,5 +1,5 @@
 import { ToolConfiguration, ConfigurationTemplate } from "./toolConfigManager";
-import { apiGetJson, apiPostJson, apiPutJson, apiDeleteJson } from "./apiClient";
+import api from "./api";
 import { toast } from "@/hooks/use-toast";
 
 export interface TemplateCategory {
@@ -94,7 +94,7 @@ export class ToolConfigTemplates {
   static async getTemplates(toolId?: number): Promise<ConfigurationTemplate[]> {
     try {
       // Try to get from backend first
-      const backendTemplates = await apiGetJson<ConfigurationTemplate[]>(`/api/tools/templates${toolId ? `?toolId=${toolId}` : ''}`);
+      const backendTemplates = (await api.get<ConfigurationTemplate[]>(`/api/tools/templates${toolId ? `?toolId=${toolId}` : ''}`)).data;
       return backendTemplates;
     } catch (error) {
       // Fallback to local storage
@@ -112,7 +112,7 @@ export class ToolConfigTemplates {
 
   static async createTemplate(template: Omit<ConfigurationTemplate, 'id'>): Promise<ConfigurationTemplate> {
     try {
-      const createdTemplate = await apiPostJson<ConfigurationTemplate>('/api/tools/templates', template);
+      const createdTemplate = (await api.post<ConfigurationTemplate>('/api/tools/templates', template)).data;
       toast({
         title: "Template created",
         description: `${template.name} has been created successfully.`
@@ -138,7 +138,7 @@ export class ToolConfigTemplates {
 
   static async updateTemplate(id: string, updates: Partial<ConfigurationTemplate>): Promise<ConfigurationTemplate | null> {
     try {
-      const updatedTemplate = await apiPutJson<ConfigurationTemplate>(`/api/tools/templates/${id}`, updates);
+      const updatedTemplate = (await api.put<ConfigurationTemplate>(`/api/tools/templates/${id}`, updates)).data;
       toast({
         title: "Template updated",
         description: "Template has been updated successfully."
@@ -164,7 +164,7 @@ export class ToolConfigTemplates {
 
   static async deleteTemplate(id: string): Promise<boolean> {
     try {
-      await apiDeleteJson(`/api/tools/templates/${id}`);
+      await api.delete(`/api/tools/templates/${id}`);
       toast({
         title: "Template deleted",
         description: "Template has been deleted successfully."
@@ -219,7 +219,7 @@ export class ToolConfigTemplates {
   // Template sharing and collaboration
   static async shareTemplate(id: string, shareData: { isPublic: boolean; teamId?: string }): Promise<boolean> {
     try {
-      await apiPutJson(`/api/tools/templates/${id}/share`, shareData);
+      await api.put(`/api/tools/templates/${id}/share`, shareData);
       toast({
         title: "Template shared",
         description: "Template sharing settings updated successfully."
@@ -237,7 +237,7 @@ export class ToolConfigTemplates {
 
   static async getTemplateStats(templateId: string): Promise<TemplateUsageStats | null> {
     try {
-      return await apiGetJson<TemplateUsageStats>(`/api/tools/templates/${templateId}/stats`);
+      return (await api.get<TemplateUsageStats>(`/api/tools/templates/${templateId}/stats`)).data;
     } catch (error) {
       return null;
     }
@@ -251,7 +251,7 @@ export class ToolConfigTemplates {
         params.append('preferences', userPreferences.join(','));
       }
       
-      return await apiGetJson<ConfigurationTemplate[]>(`/api/tools/templates/recommended?${params}`);
+      return (await api.get<ConfigurationTemplate[]>(`/api/tools/templates/recommended?${params}`)).data;
     } catch (error) {
       // Fallback to local recommendations
       const templates = this.getLocalTemplates().filter(t => t.toolId === toolId);
@@ -359,7 +359,7 @@ export class ToolConfigTemplates {
       if (toolId) params.append('toolId', toolId.toString());
       if (category) params.append('category', category);
 
-      return await apiGetJson<ConfigurationTemplate[]>(`/api/tools/templates/search?${params}`);
+      return (await api.get<ConfigurationTemplate[]>(`/api/tools/templates/search?${params}`)).data;
     } catch (error) {
       // Fallback to local search
       const templates = this.getLocalTemplates();
@@ -388,7 +388,7 @@ export class ToolConfigTemplates {
   // Template usage tracking
   static async trackTemplateUsage(templateId: string, configId: string): Promise<void> {
     try {
-      await apiPostJson(`/api/tools/templates/${templateId}/usage`, {
+      await api.post(`/api/tools/templates/${templateId}/usage`, {
         configId,
         timestamp: new Date().toISOString()
       });

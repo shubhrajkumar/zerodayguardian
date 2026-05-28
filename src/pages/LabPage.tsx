@@ -1,7 +1,7 @@
 import { FormEvent, startTransition, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Bot, Fingerprint, Flag, Globe, PlayCircle, Radar, Search, Shield } from "lucide-react";
-import { apiGetJson, apiPostJson } from "@/lib/apiClient";
+import api from "@/lib/api";
 import { getPyApiUserMessage, pyGetJson, pyPostJson } from "@/lib/pyApiClient";
 import PlatformHero from "@/components/platform/PlatformHero";
 import LabExecutionModal from "@/components/LabExecutionModal";
@@ -304,7 +304,8 @@ const LabPage = () => {
       }
 
       try {
-        const dashboard = await apiGetJson<DashboardLite>("/api/intelligence/dashboard");
+        const dashboardRes = await api.get<DashboardLite>("/api/intelligence/dashboard");
+        const dashboard = dashboardRes.data;
         if (mounted) {
           setCompletedLabs(dashboard.intelligence.completedLabs || 0);
           setTotalLabsTouched(dashboard.intelligence.totalLabsTouched || 0);
@@ -317,15 +318,15 @@ const LabPage = () => {
       }
 
       try {
-        const progressionPayload = await apiGetJson<{ progression: ProgressionProfile }>("/api/intelligence/progression/me");
-        if (mounted) setProgression(progressionPayload.progression || null);
+        const progressionRes = await api.get<{ progression: ProgressionProfile }>("/api/intelligence/progression/me");
+        if (mounted) setProgression(progressionRes.data.progression || null);
       } catch {
         if (mounted) setProgression(null);
       }
 
       try {
-        const board = await apiGetJson<{ leaderboard: LeaderboardRow[] }>("/api/intelligence/progression/leaderboard?period=weekly&limit=5");
-        if (mounted) setLeaderboard(board.leaderboard || []);
+        const boardRes = await api.get<{ leaderboard: LeaderboardRow[] }>("/api/intelligence/progression/leaderboard?period=weekly&limit=5");
+        if (mounted) setLeaderboard(boardRes.data.leaderboard || []);
       } catch {
         if (mounted) setLeaderboard([]);
       }
@@ -443,7 +444,7 @@ const LabPage = () => {
       }
       const completed = Boolean(result.state?.completed || result.code === "completed");
       setMissionPulse({ tone: completed ? "success" : result.ok ? "info" : "warning", title: completed ? "Mission complete" : result.ok ? "Mission updated" : "Command blocked", detail: completed ? `${activeLab.title} validated successfully. Reward flow updated and next progression unlocked.` : result.explanation || result.output || "The mission state has been updated." });
-      await apiPostJson("/api/intelligence/labs/progress", { labId: activeLab.id, status: completed ? "completed" : "active" }).catch(() => undefined);
+      await api.post("/api/intelligence/labs/progress", { labId: activeLab.id, status: completed ? "completed" : "active" }).catch(() => undefined);
       if (completed) await recordAction("sandbox_mission_complete", { target: activeLab.id, metadata: { mode: missionMode } }).catch(() => undefined);
       await refreshProgress().catch(() => undefined);
       await refreshMissionData().catch(() => undefined);
@@ -508,7 +509,7 @@ const LabPage = () => {
 
           <aside className="rounded-[28px] border border-white/8 bg-[#090d14] p-5 xl:sticky xl:top-24 xl:self-start">
             <div className="flex items-center justify-between gap-2"><div><p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Leaderboard</p><h2 className="mt-2 text-xl font-semibold text-white">Top 5 This Week</h2></div><span className="rounded-full border border-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-slate-300">Weekly</span></div>
-            <div className="mt-5 space-y-3">{leaderboard.length ? leaderboard.map((row) => <div key={`${row.alias}-${row.position}`} className="rounded-2xl border border-white/8 bg-black/20 p-3"><div className="flex items-center justify-between gap-3"><div><p className="font-semibold text-white">{row.position}. {row.alias}</p><p className="mt-1 text-xs text-slate-400">{row.rank} | Level {row.level}</p></div><span className="rounded-full border border-blue-400/16 px-2.5 py-1 text-[11px] text-blue-100">{row.points} pts</span></div></div>) : <p className="text-sm text-slate-400">No leaderboard data yet.</p>}</div>
+            <div className="mt-5 space-y-3">{leaderboard.length ? leaderboard.map((row) => <div key={`${row.alias}-${row.position}`} className="rounded-2xl border border-white/8 bg-black/20 p-3"><div className="flex items-center justify-between gap-3"><div><p className="font-semibold text-white">{row.position}. {row.alias}</p><p className="mt-1 text-xs text-slate-400">{row.rank} | Level {row.level}</p></div><span className="rounded-full border border-blue-400/16 px-2.5 py-1 text-[11px] text-blue-100">{row.points} pts</span></div></div>) : <div className="rounded-2xl border border-white/8 bg-black/20 p-6 text-center"><div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-400/18 bg-amber-400/8"><span className="text-2xl">🏆</span></div><p className="font-semibold text-white">Be the first on the leaderboard!</p><p className="mt-2 text-sm text-slate-400">Complete labs to earn XP and rank up</p><button type="button" className="mt-4 inline-flex items-center gap-2 rounded-full border border-blue-400/16 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-100 transition hover:bg-blue-500/16" onClick={() => { const firstLab = labs[0]; if (firstLab) { loadSelectedLab(firstLab); setLabModalOpen(true); } }}>Start a Lab</button></div>}</div>
           </aside>
         </section>
         {labLoadError ? <div className="rounded-2xl border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{labLoadError}</div> : null}

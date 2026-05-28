@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { apiGetJson } from "@/lib/apiClient";
+import api from "@/lib/api";
 
 const OsintSharePage = () => {
   const { shareId } = useParams();
@@ -9,8 +9,8 @@ const OsintSharePage = () => {
 
   useEffect(() => {
     if (!shareId) return;
-    apiGetJson(`/api/osint/share/${shareId}`)
-      .then((res) => setPayload(res))
+    api.get(`/api/osint/share/${shareId}`)
+      .then((res) => setPayload(res.data))
       .catch((err) => setError(err?.message || "Unable to load shared case."));
   }, [shareId]);
 
