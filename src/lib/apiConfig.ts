@@ -1,6 +1,6 @@
 const trimTrailingSlash = (value: string) => String(value || "").replace(/\/+$/, "");
 const isAbsoluteHttpUrl = (value: string) => /^https?:\/\//i.test(String(value || "").trim());
-export const DEFAULT_RENDER_BACKEND_URL = "";
+export const DEFAULT_RENDER_BACKEND_URL = "https://zerodayguardian-backend.onrender.com";
 
 const readProcessEnv = (key: string) => {
   if (typeof process === "undefined" || !process?.env) return "";

@@ -127,3 +127,5 @@
 6. **[DONE] `.env` production config** — `VITE_API_BASE_URL`, `VITE_SITE_URL`, `VITE_SENTRY_DSN` configured
 7. **[DONE] Backend CORS** — Production origin `https://zerodayguardian-delta.vercel.app` allowed
 8. **[DONE] Trace propagation** — Updated for Vercel + Render deployments
+9. **[DONE] DEFAULT_RENDER_BACKEND_URL** — Set to `https://zerodayguardian-backend.onrender.com` in `apiConfig.ts` as final fallback
+10. **[DONE] Build verification** — Production build passes (2910 modules, 29.44s) with zero errors
