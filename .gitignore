@@ -77,3 +77,35 @@ coverage/
 
 # OneDrive exclusion marker (prevents OneDrive from syncing .git)
 one_drive_do_not_sync.txt
+
+# Installers and binaries (safety net)
+*.msi
+*.cab
+*.msu
+*.exe
+*.dmg
+*.pkg
+
+# Temporary & backup files
+*.bak
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+
+# IDE and editor
+.idea/
+*.sublime-*
+
+# Build artifacts (additional)
+*.tsbuildinfo
+.next/
+.cache/
+.nyc_output/
+
+# Generated files
+*.generated.*
+
+# OneDrive exclusion marker
+one_drive_do_not_sync.txt

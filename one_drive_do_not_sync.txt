@@ -1,0 +1,6 @@
+# OneDrive Exclusion Marker
+This file marks this repository as unsuitable for OneDrive syncing.
+OneDrive causes file-locking issues, .git corruption, and slows down git operations.
+
+** DO NOT STORE THIS REPO IN ONEDRIVE **
+Created: Fri, May 29, 2026 12:42:44 AM

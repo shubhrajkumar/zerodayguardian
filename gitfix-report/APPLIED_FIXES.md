@@ -1,58 +1,65 @@
-# GitFix Report — Applied Fixes
+# Applied Fixes — Git Push Error Resolution
 
-## Repository: ZeroDay Guardian
-## Date: 2026-05-29
-
----
-
-## Fix 1: Repository Relocated Out of OneDrive
-
-- **Action:** Moved repo from `C:\Users\ksubh\OneDrive\Desktop\AI web\zeroday-guardian-main` → `C:\projects\zeroday-guardian-main`
-- **Rationale:** Eliminates OneDrive file-locking and sync interference during Git operations
-- **Recommendation:** Configure OneDrive to exclude the `C:\projects` folder from syncing
-
-## Fix 2: Git History Rewritten (git-filter-repo)
-
-- **Files removed from all commits:**
-  - `.tools/MongoDB_8.2.5_Machine_X64_wix_en-US.msi` (794 MB)
-  - `ZeroDay-Guardian-source-20260306-072914.zip` (460 MB)
-  - `ZeroDay-Guardian-source-20260306-072858.zip` (3.3 MB)
-- **Commits rewritten:** 102
-- **Estimated size reduction:** ~1.2 GB removed from Git history
-- **Tool used:** `git-filter-repo` (Python-based, modern replacement for `git filter-branch`)
-
-## Fix 3: Git Configuration Optimized
+## 1. Git Configuration Optimization
 
 | Setting | Value | Purpose |
 |---------|-------|---------|
-| `http.postBuffer` | 524288000 (500 MB) | Prevent TCP buffer overflow on large pushes |
-| `http.lowSpeedLimit` | 0 | Disable low-speed timeout limits |
-| `http.lowSpeedTime` | 999999 | Prevent premature timeout on slow connections |
-| `core.compression` | 9 | Maximum compression for smaller push payloads |
+| `http.postBuffer` | 524288000 (500 MB) | Increases Git's HTTP buffer for large pushes |
+| `http.lowSpeedLimit` | 0 | Disables low-speed timeout limits |
+| `http.lowSpeedTime` | 999999 | Extends timeout window to ~11.5 days |
+| `http.version` | HTTP/1.1 | Avoids HTTP/2 compatibility issues |
+| `core.compression` | 9 | Maximum compression for pack files |
 | `core.preloadindex` | true | Faster index operations on large repos |
-| `push.default` | current | Auto-map current branch to upstream |
+| `core.deltaBaseCacheLimit` | 2g | Larger cache for delta calculations |
+| `push.autoSetupRemote` | true | Auto-configures upstream tracking |
+| `pack.windowMemory` | 1g | Memory limit for pack window |
+| `pack.packSizeLimit` | 1g | Splits large packs into manageable files |
+| `pack.threads` | 0 | Auto-detect CPU threads for packing |
 
-## Fix 4: Git LFS Configured
+## 2. Git LFS (Large File Storage) Configuration
 
-- **Installed Git LFS** for large file handling
-- **Tracked patterns:** Images, fonts, media, binaries, archives, documents, datasets, lockfiles
-- **Created `.gitattributes`** with all LFS patterns and `* text=auto` for consistent line endings
+- **Initialized Git LFS** in the repository
+- **Configured LFS tracking** for all heavy file types:
+  - Images: `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.svg`, `.webp`
+  - Fonts: `.woff`, `.woff2`, `.ttf`, `.eot`, `.otf`
+  - Media: `.mp4`, `.mov`, `.avi`, `.wav`, `.mp3`
+  - Archives: `.zip`, `.tar.gz`, `.7z`, `.rar`
+  - Installers: `.exe`, `.msi`, `.dll`, `.bin`, `.iso`
+  - Documents: `.pdf`, `.pptx`, `.xlsx`, `.docx`
+  - Datasets: `.csv`, `.h5`, `.hdf5`, `.pkl`
+  - Lockfiles: `package-lock.json`, `bun.lockb`
 
-## Fix 5: .gitignore Enhanced
+## 3. .gitignore Enhancements
 
-Added patterns for Windows system files, build artifacts, IDE files, generated files, and OneDrive exclusion marker.
+Added protection for:
+- Installers and binaries (`*.msi`, `*.exe`, `*.dmg`, `*.pkg`, etc.)
+- Temporary files (`*.bak`, `*.swp`, `*.tmp`, `*~`)
+- Build artifacts (`*.tsbuildinfo`, `.next/`, `.cache/`)
+- IDE files (`.idea/`, `*.sublime-*`)
+- Generated files (`*.generated.*`)
+- OneDrive marker file
 
-## Fix 6: Remote URL Verified
+## 4. .gitattributes
 
-- **URL:** `https://github.com/shubhrajkumar/ZeroDay_Guardian.git`
-- **Protocol:** HTTPS
-- **Verified:** Remote is configured for both fetch and push
+Created/updated `.gitattributes` with:
+- **Git LFS rules** for all binary file types
+- **text=auto** for proper line-ending normalization
+- **Language-specific diff attributes** for TypeScript, JavaScript, CSS, etc.
+- **Shell script eol=lf** for cross-platform compatibility
 
-## Fix 7: GitHub Actions Auto-Commit Workflow
+## 5. GitHub Actions Auto-Push Workflow
 
-Created `.github/workflows/auto-commit.yml`:
-- **Trigger:** Manual (`workflow_dispatch`) and on push to `main`
-- **Auto-commits** all changes with configurable message
-- **Exponential backoff retry** — 5 attempts with 2× increasing delay
-- **Git LFS pull** before operations
-- **Push verification** step to confirm success
+The existing `.github/workflows/auto-commit.yml` was reviewed and confirmed to already have:
+- ✅ Workflow dispatch (manual trigger with custom message)
+- ✅ Push trigger (auto-run on every push to main)
+- ✅ Git LFS initialization and pull
+- ✅ Exponential backoff retry (5 attempts with increasing delays)
+- ✅ Push verification step
+- ✅ Configurable commit messages
+
+## 6. OneDrive Migration
+
+- Created `one_drive_do_not_sync.txt` marker file
+- Fresh clone created at **`C:\Users\ksubh\zeroday-guardian-clean`** (outside OneDrive)
+- All fixes applied to the clean clone
+- The old OneDrive repo should be abandoned

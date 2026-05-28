@@ -1,78 +1,98 @@
-# GitFix Report — Recommendations for Future Stability
+# Recommendations — Long-Term Stability
 
-## Repository: ZeroDay Guardian
-## Date: 2026-05-29
+## 1. Move Repository OUT of OneDrive (IMMEDIATE — CRITICAL)
 
----
+OneDrive interferes with Git operations by locking files, causing `.git` corruption, and introducing sync race conditions.
 
-## 1. Prevent Large Files in History
+**Action:** Abandon the old OneDrive repo and use the new clone at:
+```
+C:\Users\ksubh\zeroday-guardian-clean
+```
 
-- **Pre-commit hook:** Install a pre-commit hook that rejects files > 50 MB
-- **GitHub file size limits:** Enforce via `.github/settings.yml` or branch protection rules
-- **Review large files regularly:** Run `git rev-list --objects --all | git cat-file --batch-check='%(objecttype) %(objectsize) %(rest)' | sort -k2 -n -r | head -20` monthly
+To move to a different location:
+```bash
+# If you need it elsewhere, just copy the directory (not the OneDrive version)
+copy C:\Users\ksubh\zeroday-guardian-clean D:\Projects\zeroday-guardian
+```
 
-## 2. OneDrive Sync Management
+## 2. Never Commit Large Binaries to Git
 
-- **Exclude `C:\projects` from OneDrive** to prevent future interference
-- If you must keep the repo on OneDrive, **exclude `.git` from sync** using OneDrive's selective sync settings
-- Consider using **`git worktree`** for backup copies instead of OneDrive
+**Maximum file size:** GitHub warns at 50 MB, hard-rejects at 100 MB.
+- Always use **Git LFS** for any file > 5 MB
+- Never commit installers (`.msi`, `.exe`, `.dmg`)
+- Never commit database dumps, VM images, or ML model files
 
-## 3. Git LFS Maintenance
+**Git LFS Web UI**: https://github.com/shubhrajkumar/ZeroDay_Guardian/settings/billing
 
-- **Regularly run** `git lfs prune` to remove old LFS objects from local cache
-- **Monitor LFS bandwidth** on GitHub (free tier: 1 GB/month storage, 1 GB/month bandwidth)
-- **Consider paid LFS plan** if storing large assets frequently
+## 3. Git Hygiene Best Practices
 
-## 4. CI/CD Best Practices
+### Before every commit:
+```bash
+# Check what you're about to commit
+git add --dry-run .
 
-- **Use the auto-commit workflow** for automated Codebuff/Freebuff changes
-- The workflow uses **exponential backoff** (5 retries with doubling delay)
-- For critical pushes, use **GitHub Deploy Keys** or **Personal Access Tokens (classic)** with appropriate scopes
+# Check for large files in staging
+git diff --cached --stat
 
-## 5. Network Reliability
+# Check for files exceeding 10 MB
+find . -not -path './.git/*' -size +10M -exec ls -lh {} \;
+```
 
-- **Use SSH instead of HTTPS** for more stable pushes:
-  ```bash
-  git remote set-url origin git@github.com:shubhrajkumar/ZeroDay_Guardian.git
-  ```
-- **Configure SSH keepalive** in `~/.ssh/config`:
-  ```
-  Host github.com
-    ServerAliveInterval 60
-    ServerAliveCountMax 5
-    IPQoS=throughput
-  ```
-- **Avoid pushing during peak OneDrive sync times**
+### Regular maintenance:
+```bash
+# Weekly repack to optimize storage
+git gc --aggressive
 
-## 6. Monitoring & Alerts
+# Prune stale references
+git remote prune origin
 
-- Set up **GitHub Actions notifications** for workflow failures
-- Review **`git push` output** for warnings about file sizes or LFS limits
+# Check repository health
+git fsck
+```
 
-## 7. For Codebuff Integration
+## 4. Use the Auto-Commit Workflow
 
-- Always work from `C:\projects\zeroday-guardian-main` (not OneDrive path)
-- Changes will be automatically detected and can be pushed via the auto-commit workflow
-- Run `npm run typecheck && npm test` before pushing to avoid CI failures
+The existing `.github/workflows/auto-commit.yml` already provides:
+- **Manual trigger** with custom commit message
+- **Automated push** on every commit
+- **Exponential backoff retry** (5 attempts)
+- **Git LFS support**
 
----
+To use: Go to GitHub → Actions → Auto-Commit & Push → Run workflow
 
-## Recovery Plan (if push fails again)
+## 5. Monitor Push Health
 
 ```bash
-# 1. Check Git status and remote
-git status
+# Quick health check script
+echo "=== Git Health Check ==="
+git fsck --no-dangling 2>&1
+git count-objects -vH | grep -E "size-pack|count"
+echo "Remote status:"
 git remote -v
-
-# 2. Verify large objects
-git rev-list --objects --all | git cat-file --batch-check='%(objecttype) %(objectsize) %(rest)' | sort -k2 -n -r | head -10
-
-# 3. Increase buffer further
-git config http.postBuffer 1048576000  # 1 GB
-
-# 4. Use SSH instead
-git remote set-url origin git@github.com:shubhrajkumar/ZeroDay_Guardian.git
-
-# 5. Push in stages
-git push --force origin main
+git push --dry-run origin main
 ```
+
+If push still fails, check:
+1. Network firewall/proxy settings
+2. GitHub authentication token validity
+3. GitHub service status (https://www.githubstatus.com/)
+
+## 6. OneDrive Alternative
+
+If you must keep the repo on the Desktop, use the **non-OneDrive Desktop**:
+```
+C:\Users\ksubh\Desktop\   (NOT inside OneDrive)
+```
+
+Or better: create a dedicated dev folder:
+```
+C:\Projects\
+D:\Dev\
+```
+
+## 7. GitHub Large File Policy Reminder
+
+- **Soft limit:** Files > 50 MB trigger a warning
+- **Hard limit:** Files > 100 MB are rejected
+- **Repository size limit:** GitHub recommends < 5 GiB total
+- **LFS bandwidth:** 1 GiB free per month on free tier
