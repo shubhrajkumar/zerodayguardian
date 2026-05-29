@@ -1,111 +1,61 @@
-﻿# Dependencies
-node_modules/
-.venv/
-venv/
-
-# Build output
-/dist/
-coverage/
-
-# Local environment and secrets
-.env
-.env.local
-.env.*.local
-
-# Local app state
-local.db
-local.db-journal
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.pytest_cache/
-.mypy_cache/
-
-# Editor and local tooling
-.vscode/
-.local/
-.lovable/
-.tools/
-.git-backup-*/
-
-# Logs
-*.log
+# Root-level temp files and logs
+tmp-*.err.log
+tmp-*.out.log
 vite-err.txt
 vite-output.txt
-server-auth-test.err.log
-server-auth-test.out.log
 
-# Archives and backups
-*.zip
-
-# OS files
-.DS_Store
-Thumbs.db
-.vercel
-
-# Windows reserved device names
+# OS/System files
 nul
 NUL
 Nul
 
-# Windows specific
-*.cab
-*.msu
-*.lnk
-*.tmp
-~*.*
+# Databases at root level
+local.db
+local.db-journal
 
-# Build artifacts
-*.tsbuildinfo
-dist/
-.next/
-.cache/
+# Environment files (root level)
+.env
+.env.local
+.env.production
+.env.*.local
 
-# Test coverage
-coverage/
-.nyc_output/
+# OneDrive sync
+one_drive_do_not_sync.txt
 
 # IDE
 .idea/
 *.swp
 *.swo
 *~
+*.sublime-workspace
 
-# Generated files
-*.generated.*
-
-# OneDrive exclusion marker (prevents OneDrive from syncing .git)
-one_drive_do_not_sync.txt
-
-# Installers and binaries (safety net)
+# Archives
+*.zip
 *.msi
-*.cab
-*.msu
 *.exe
 *.dmg
 *.pkg
 
-# Temporary & backup files
-*.bak
-*.swp
-*.swo
-*~
-*.tmp
-*.temp
+# Build/Dependency output
+dist/
+node_modules/
 
-# IDE and editor
-.idea/
-*.sublime-*
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyz
 
-# Build artifacts (additional)
-*.tsbuildinfo
-.next/
-.cache/
-.nyc_output/
+# Backend local state
+backend/python/*.log
+backend/.local/
+backend/src/.local/
+backend/python/uvicorn*.log
+backend/python/osint-monitor.log
 
-# Generated files
-*.generated.*
-
-# OneDrive exclusion marker
-one_drive_do_not_sync.txt
+# Git backup and local state
+.git-backup-*/
+.local/
+.lovable/
+.tools/

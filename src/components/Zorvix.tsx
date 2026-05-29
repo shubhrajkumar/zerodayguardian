@@ -544,13 +544,13 @@ const renderInlineText = (value: string) =>
 
 const getAssistantToneClass = (raw: string) => {
   const text = String(raw || "").trim();
-  if (!text) return "text-[15px] leading-7 text-[#e2e8f0]";
-  if (text.length < 90) return "text-[15.5px] font-medium leading-7 tracking-[0.01em] text-[#e2e8f0]";
+  if (!text) return "text-[15px] leading-7 text-[var(--theme-text)]";
+  if (text.length < 90) return "text-[15.5px] font-medium leading-7 tracking-[0.01em] text-[var(--theme-text)]";
   if (/^(next action|risk|validation|summary|verdict|debrief)\b/i.test(text)) {
-    return "text-[15px] font-medium leading-7 text-[#f8fafc]";
+    return "text-[15px] font-medium leading-7 text-[var(--theme-text)]";
   }
-  if (text.includes("```")) return "text-[14px] leading-7 text-[#e2e8f0]";
-  return "text-[15px] leading-7 text-[#e2e8f0]";
+  if (text.includes("```")) return "text-[14px] leading-7 text-[var(--theme-text)]";
+  return "text-[15px] leading-7 text-[var(--theme-text)]";
 };
 
 const renderMarkdownLite = (raw: string): ReactNode => {
@@ -653,15 +653,15 @@ const renderMarkdownLite = (raw: string): ReactNode => {
 };
 
 const TypingBubble = () => (
-  <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-[#0b0f17] px-4 py-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] fadeInUp">
+  <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-[var(--theme-surface)] px-4 py-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] fadeInUp">
     {[0, 1, 2].map((dot) => (
       <span
         key={dot}
-        className="h-2 w-2 animate-bounce rounded-full bg-[#2f81ff]"
+        className="h-2 w-2 animate-bounce rounded-full bg-[var(--theme-accent-blue)]"
         style={{ animationDelay: `${dot * 0.12}s`, animationDuration: "0.9s" }}
       />
     ))}
-    <span className="text-xs font-medium text-slate-400">{ZORVIX_NAME} soch raha hai...</span>
+    <span className="text-xs font-medium text-[var(--theme-text-dim)]">{ZORVIX_NAME} soch raha hai...</span>
   </div>
 );
 
@@ -1556,7 +1556,7 @@ const Zorvix = () => {
             setIsOpen(true);
             if (!messages.length) void loadSession();
           }}
-          className="zorvix-button zorvix-launcher group inline-flex items-center gap-3 rounded-full px-3 py-3 text-left text-slate-100 backdrop-blur transition sm:px-4"
+          className="zorvix-button zorvix-launcher group inline-flex items-center gap-3 rounded-full px-3 py-3 text-left text-[var(--theme-text)] backdrop-blur transition sm:px-4"
           style={{ display: "inline-flex", opacity: 1, visibility: "visible", pointerEvents: "auto" }}
           aria-label={`Open ${ZORVIX_NAME}`}
         >
@@ -1565,26 +1565,26 @@ const Zorvix = () => {
           </span>
           <span className="hidden min-w-0 sm:block">
             <strong className="block text-sm font-semibold tracking-tight text-white">ZORVIX AI</strong>
-            <span className="block text-xs text-slate-400">{nextMissionHook.title || "ZeroDay Guardian control panel"}</span>
+            <span className="block text-xs text-[var(--theme-text-dim)]">{nextMissionHook.title || "ZeroDay Guardian control panel"}</span>
           </span>
         </button>
       </div>
 
       {isOpen ? (
         <div
-          className="zorvix-overlay fixed inset-0 bg-[#05070c]/90 backdrop-blur-md"
+          className="zorvix-overlay fixed inset-0 bg-[var(--theme-bg)]/90 backdrop-blur-md"
           style={{ zIndex: 1450, opacity: 1, visibility: "visible", pointerEvents: "auto", display: "block" }}
         >
           <section className="zorvix-shell-root mx-auto flex h-[100dvh] w-full max-w-[1240px] flex-col p-2 sm:p-4">
-            <div className="zorvix-surface relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-[#202638] text-[#e2e8f0] sm:rounded-[30px]">
+            <div className="zorvix-surface relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-[var(--theme-border)] text-[var(--theme-text)] sm:rounded-[30px]">
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.14),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(14,165,233,0.06),transparent_24%),linear-gradient(180deg,transparent,rgba(4,10,18,0.18)_40%,rgba(2,5,10,0.28))]"
               />
 
-              <header className="relative z-10 flex items-center justify-between gap-3 border-b border-[#1f2634] bg-[#0a0a0f]/96 px-3 py-2.5 sm:px-4 sm:py-3">
+              <header className="relative z-10 flex items-center justify-between gap-3 border-b border-[var(--theme-border)] bg-[var(--theme-bg)]/96 px-3 py-2.5 sm:px-4 sm:py-3">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="zorvix-header-mark flex h-10 w-10 items-center justify-center rounded-full border border-[#233043] bg-[#0d1117] text-[#e2e8f0]">
+                  <span className="zorvix-header-mark flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] text-[var(--theme-text)]">
                     <Bot className="h-4 w-4" />
                   </span>
                   <div className="flex min-w-0 items-center gap-2">
@@ -1594,7 +1594,7 @@ const Zorvix = () => {
                       }`}
                     />
                     {activeTopic ? (
-                      <span className="max-w-[42vw] truncate rounded-full border border-[#233043] bg-[#0d1117] px-2.5 py-1 text-[11px] font-medium text-[#94a3b8] sm:max-w-[240px]">
+                      <span className="max-w-[42vw] truncate rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--theme-text-muted)] sm:max-w-[240px]">
                         {activeTopic.title}
                       </span>
                     ) : null}
@@ -1607,7 +1607,7 @@ const Zorvix = () => {
                     if (isStreaming) abortStream("Generation stopped and workspace closed.");
                     setIsOpen(false);
                   }}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#233043] bg-[#0d1117] text-[#94a3b8] transition hover:border-[#2d3b52] hover:text-white"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] text-[var(--theme-text-muted)] transition hover:border-[var(--theme-accent-blue)]/30 hover:text-[var(--theme-text)]"
                   aria-label="Close ZORVIX"
                 >
                   <X className="h-4 w-4" />
@@ -1618,7 +1618,7 @@ const Zorvix = () => {
                 <div className="flex min-h-0 flex-1 flex-col">
                   {showSessionBanner ? (
                     <div
-                      className={`zorvix-session-banner border-b border-[#202638] bg-[#0d1117] px-3 py-2 backdrop-blur sm:px-6 ${
+                      className={`zorvix-session-banner border-b border-[var(--theme-border)] bg-[var(--theme-surface)] px-3 py-2 backdrop-blur sm:px-6 ${
                         isSessionBannerHiding ? "is-hiding" : ""
                       }`}
                       role="status"
@@ -1629,7 +1629,7 @@ const Zorvix = () => {
                             !online ? "bg-slate-400" : backendHealth?.status && backendHealth.status !== "ok" ? "bg-amber-500" : "bg-emerald-500"
                           }`}
                         />
-                        <p className="min-w-0 truncate text-sm font-medium tracking-[0.01em] text-slate-200">{sessionBannerLabel}</p>
+                        <p className="min-w-0 truncate text-sm font-medium tracking-[0.01em] text-[var(--theme-text)]">{sessionBannerLabel}</p>
                       </div>
                     </div>
                   ) : null}
@@ -1637,7 +1637,7 @@ const Zorvix = () => {
                   <div ref={scrollRef} className="zorvix-chat-scroll min-h-0 flex-1 overflow-y-auto px-2.5 py-3 sm:px-4 sm:py-4">
                     {isLoadingSession && !visibleMessages.length ? (
                       <div className="mx-auto flex min-h-full w-full max-w-[880px] items-center justify-center py-10">
-                          <div className="zorvix-soft-panel inline-flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium text-[#e2e8f0]">
+                          <div className="zorvix-soft-panel inline-flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium text-[var(--theme-text)]">
                           <Loader2 className="h-4 w-4 animate-spin text-cyan-300" />
                           ZORVIX session loading
                         </div>
@@ -1645,8 +1645,8 @@ const Zorvix = () => {
                     ) : !visibleMessages.length ? (
                       <div className="mx-auto flex min-h-full w-full max-w-[760px] flex-col justify-center gap-4 py-4 sm:gap-5">
                         <div className="space-y-2 px-1">
-                          <h3 className="text-xl font-semibold tracking-tight text-[#e2e8f0] sm:text-2xl">Ask ZORVIX</h3>
-                          <p className="max-w-[46ch] text-sm leading-6 text-[#94a3b8]">
+                          <h3 className="text-xl font-semibold tracking-tight text-[var(--theme-text)] sm:text-2xl">Ask ZORVIX</h3>
+                          <p className="max-w-[46ch] text-sm leading-6 text-[var(--theme-text-muted)]">
                             Clear guidance, next actions, and focused cyber answers without noise.
                           </p>
                         </div>
@@ -1656,7 +1656,7 @@ const Zorvix = () => {
                               key={suggestion}
                               type="button"
                               onClick={() => void runAssistant(suggestion)}
-                              className="rounded-2xl border border-[#233043] bg-[#0d1117] px-4 py-3 text-left text-sm font-medium text-[#e2e8f0] transition hover:border-[#2c3b51] hover:bg-[#111722]"
+                              className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] px-4 py-3 text-left text-sm font-medium text-[var(--theme-text)] transition hover:border-[var(--theme-accent-blue)]/30 hover:bg-[var(--theme-overlay-hover)]"
                             >
                               {suggestion}
                             </button>
@@ -1675,10 +1675,10 @@ const Zorvix = () => {
                               className={`flex w-full ${isAssistant ? "justify-start" : "justify-end"}`}
                             >
                               <div
-                                className={`min-w-0 max-w-[92%] rounded-[22px] px-4 py-3 text-[15px] leading-7 text-[#e2e8f0] sm:max-w-[78%] sm:px-5 ${
+                                className={`min-w-0 max-w-[92%] rounded-[22px] px-4 py-3 text-[15px] leading-7 text-[var(--theme-text)] sm:max-w-[78%] sm:px-5 ${
                                   isAssistant
-                                    ? "border-l-[3px] border-[#00ff88] bg-[#0d1117]"
-                                    : "bg-[#1a1a2e]"
+                                    ? "border-l-[3px] border-[#00ff88] bg-[var(--theme-surface)]"
+                                    : "bg-[var(--theme-card)]"
                                 }`}
                               >
                                 {isPendingAssistant ? (
@@ -1697,7 +1697,7 @@ const Zorvix = () => {
                     )}
                   </div>
 
-                  <div className="zorvix-composer-bar border-t border-[#1f2634] bg-[#0a0a0f]/98 px-2.5 py-2.5 backdrop-blur sm:px-4 sm:py-3">
+                  <div className="zorvix-composer-bar border-t border-[var(--theme-border)] bg-[var(--theme-bg)]/98 px-2.5 py-2.5 backdrop-blur sm:px-4 sm:py-3">
                     <div className="mx-auto flex w-full max-w-[840px] flex-col gap-2">
                       {lastFailure?.error ? (
                         <div className="zorvix-warning-panel flex flex-wrap items-center justify-between gap-3 rounded-[18px] px-3 py-2.5 text-xs text-amber-100 sm:text-sm">
@@ -1719,30 +1719,30 @@ const Zorvix = () => {
                         </div>
                       ) : null}
                       {previewText || previewError ? (
-                        <div className="zorvix-soft-card rounded-[18px] px-3 py-2.5 text-xs text-[#e2e8f0] sm:text-sm">
+                        <div className="zorvix-soft-card rounded-[18px] px-3 py-2.5 text-xs text-[var(--theme-text)] sm:text-sm">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="font-semibold text-[#e2e8f0]">Preview answer</p>
+                            <p className="font-semibold text-[var(--theme-text)]">Preview answer</p>
                             <button
                               type="button"
                               onClick={() => {
                                 setPreviewText("");
                                 setPreviewError("");
                               }}
-                               className="zorvix-neutral-btn rounded-full px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:text-white"
+                               className="zorvix-neutral-btn rounded-full px-2 py-1 text-[11px] font-medium text-[var(--theme-text-muted)] transition hover:text-[var(--theme-text)]"
                             >
                               Clear
                             </button>
                           </div>
                           {previewError ? <p className="mt-2 text-rose-300">{previewError}</p> : null}
                           {previewText ? (
-                            <div className="mt-2 space-y-2 text-[#e2e8f0]">
+                            <div className="mt-2 space-y-2 text-[var(--theme-text)]">
                               {renderMarkdownLite(previewText)}
                             </div>
                           ) : null}
                         </div>
                       ) : null}
                       {isUtilityMenuOpen ? (
-                        <div className="zorvix-utility-menu rounded-[18px] border border-[#233043] bg-[#0d1117] p-2">
+                        <div className="zorvix-utility-menu rounded-[18px] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-2">
                           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             <button
                               type="button"
@@ -1750,7 +1750,7 @@ const Zorvix = () => {
                                 setIsUtilityMenuOpen(false);
                                 void handleNewChat();
                               }}
-                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[#131a26] px-3 text-sm font-medium text-[#e2e8f0] transition hover:bg-[#182132]"
+                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[var(--theme-surface)] px-3 text-sm font-medium text-[var(--theme-text)] transition hover:bg-[var(--theme-overlay-hover)]"
                             >
                               <RefreshCcw className="h-4 w-4" />
                               New
@@ -1763,7 +1763,7 @@ const Zorvix = () => {
                                 void runPreview();
                               }}
                               disabled={(!input.trim() && !attachment) || isStreaming || isLoadingSession || isPreparingAttachment || previewLoading}
-                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[#131a26] px-3 text-sm font-medium text-[#e2e8f0] transition hover:bg-[#182132] disabled:cursor-not-allowed disabled:opacity-50"
+                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[var(--theme-surface)] px-3 text-sm font-medium text-[var(--theme-text)] transition hover:bg-[var(--theme-overlay-hover)] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {previewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                               Preview
@@ -1774,7 +1774,7 @@ const Zorvix = () => {
                                 setIsUtilityMenuOpen(false);
                                 setIsSuggestionOpen((current) => !current);
                               }}
-                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[#131a26] px-3 text-sm font-medium text-[#e2e8f0] transition hover:bg-[#182132]"
+                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[var(--theme-surface)] px-3 text-sm font-medium text-[var(--theme-text)] transition hover:bg-[var(--theme-overlay-hover)]"
                             >
                               <Sparkles className="h-4 w-4" />
                               Prompts
@@ -1785,7 +1785,7 @@ const Zorvix = () => {
                                 setIsUtilityMenuOpen(false);
                                 void applyAssistantMode(assistantMode === "cyber" ? "normal" : "cyber");
                               }}
-                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[#131a26] px-3 text-sm font-medium text-[#e2e8f0] transition hover:bg-[#182132]"
+                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[var(--theme-surface)] px-3 text-sm font-medium text-[var(--theme-text)] transition hover:bg-[var(--theme-overlay-hover)]"
                             >
                               <Bot className="h-4 w-4" />
                               {assistantMode === "cyber" ? "Guide" : "Expert"}
@@ -1796,7 +1796,7 @@ const Zorvix = () => {
                                 setIsUtilityMenuOpen(false);
                                 void refreshMemorySummary();
                               }}
-                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[#131a26] px-3 text-sm font-medium text-[#e2e8f0] transition hover:bg-[#182132]"
+                              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[var(--theme-surface)] px-3 text-sm font-medium text-[var(--theme-text)] transition hover:bg-[var(--theme-overlay-hover)]"
                             >
                               {memoryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
                               Memory
@@ -1808,7 +1808,7 @@ const Zorvix = () => {
                                   setIsUtilityMenuOpen(false);
                                   abortStream("Generation stopped.");
                                 }}
-                                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[#2a1616] px-3 text-sm font-medium text-amber-100 transition hover:bg-[#351d1d]"
+                                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-red-950/40 px-3 text-sm font-medium text-amber-100 transition hover:bg-red-900/50"
                               >
                                 <Square className="h-4 w-4 fill-current" />
                                 Stop
@@ -1826,7 +1826,7 @@ const Zorvix = () => {
                                     setIsSuggestionOpen(false);
                                     void runAssistant(suggestion);
                                   }}
-                                  className="rounded-2xl border border-[#233043] bg-[#111722] px-3 py-2.5 text-left text-sm font-medium text-[#e2e8f0] transition hover:border-[#2c3b51]"
+                                  className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-2.5 text-left text-sm font-medium text-[var(--theme-text)] transition hover:border-[var(--theme-accent-blue)]/30"
                                 >
                                   {suggestion}
                                 </button>
@@ -1837,17 +1837,17 @@ const Zorvix = () => {
                       ) : null}
                       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
                         <div className="zorvix-composer-row-shell flex items-end gap-2">
-                          <div className="zorvix-input-shell min-w-0 flex-1 rounded-[24px] border border-[#233043] bg-[#1a1a2e] px-3 py-2">
+                          <div className="zorvix-input-shell min-w-0 flex-1 rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-card)] px-3 py-2">
                             {activeTopic ? (
                               <div className="mb-2 flex flex-wrap items-center gap-2">
-                                <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#233043] bg-[#0d1117] px-3 py-1 text-[11px] font-medium text-[#94a3b8]">
+                                <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] px-3 py-1 text-[11px] font-medium text-[var(--theme-text-muted)]">
                                   <span className="truncate">{activeTopic.title}</span>
                                 </span>
                               </div>
                             ) : null}
 
                             {attachment ? (
-                              <div className="zorvix-soft-card mb-2.5 rounded-[18px] border border-[#233043] bg-[#0d1117] p-2.5">
+                              <div className="zorvix-soft-card mb-2.5 rounded-[18px] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-2.5">
                                 <div className="flex items-start gap-3">
                                   {attachmentPreview?.kind === "image" && attachmentPreview.previewUrl ? (
                                     <img
@@ -1856,25 +1856,25 @@ const Zorvix = () => {
                                       className="h-14 w-14 shrink-0 rounded-2xl object-cover shadow-sm"
                                     />
                                   ) : (
-                                     <span className="zorvix-file-mark flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-slate-300 shadow-sm">
+                                     <span className="zorvix-file-mark flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-[var(--theme-text-muted)] shadow-sm">
                                       {attachmentPreview?.kind === "file" ? <Paperclip className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                                     </span>
                                   )}
                                   <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <span className="truncate text-sm font-medium text-[#e2e8f0]">{attachment.filename}</span>
-                                       <span className="zorvix-chip-neutral rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                      <span className="truncate text-sm font-medium text-[var(--theme-text)]">{attachment.filename}</span>
+                                       <span className="zorvix-chip-neutral rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--theme-text-dim)]">
                                         {attachmentPreview?.extension || attachmentPreview?.kind || "file"}
                                       </span>
                                     </div>
-                                    <p className="mt-1 text-xs leading-5 text-slate-400">
+                                    <p className="mt-1 text-xs leading-5 text-[var(--theme-text-dim)]">
                                       {attachmentPreview?.snippet || `${formatBytes(attachment.size)} ready for backend processing.`}
                                     </p>
                                   </div>
                                   <button
                                     type="button"
                                     onClick={() => resetAttachment("Attachment removed.")}
-                                     className="zorvix-neutral-btn inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:text-white"
+                                     className="zorvix-neutral-btn inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--theme-text-dim)] transition hover:text-[var(--theme-text)]"
                                     aria-label="Remove attachment"
                                   >
                                     <X className="h-3.5 w-3.5" />
@@ -1894,7 +1894,7 @@ const Zorvix = () => {
                               onFocus={() => hideFreshSessionBanner()}
                               onKeyDown={handleComposerKeyDown}
                               placeholder="Ask a question, share a problem, or request the next step."
-                              className="zorvix-composer-textarea min-h-[44px] w-full resize-none border-0 bg-transparent px-0.5 py-1 text-[15px] leading-6 text-[#e2e8f0] outline-none placeholder:text-[#6c7891] sm:min-h-[48px]"
+                              className="zorvix-composer-textarea min-h-[44px] w-full resize-none border-0 bg-transparent px-0.5 py-1 text-[15px] leading-6 text-[var(--theme-text)] outline-none placeholder:text-[var(--theme-text-dim)] sm:min-h-[48px]"
                               aria-label={`Message ${ZORVIX_NAME}`}
                             />
                           </div>
@@ -1906,7 +1906,7 @@ const Zorvix = () => {
                               fileInputRef.current?.click();
                             }}
                             disabled={isPreparingAttachment}
-                            className="zorvix-composer-icon-btn inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#233043] bg-[#1a1a2e] text-[#e2e8f0] transition hover:border-[#2c3b51] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="zorvix-composer-icon-btn inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-card)] text-[var(--theme-text)] transition hover:border-[var(--theme-accent-blue)]/30 disabled:cursor-not-allowed disabled:opacity-60"
                             aria-label="Attach file"
                             title="Attach file"
                           >
@@ -1916,7 +1916,7 @@ const Zorvix = () => {
                           <button
                             type="submit"
                             disabled={(!input.trim() && !attachment) || isStreaming || isLoadingSession || isPreparingAttachment}
-                            className="zorvix-composer-send-btn inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#00ff88] text-[#04110a] transition hover:shadow-[0_0_0_1px_rgba(0,255,136,0.18),0_14px_32px_rgba(0,255,136,0.18)] disabled:cursor-not-allowed disabled:opacity-50"
+                            className="zorvix-composer-send-btn inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--theme-accent-green)] text-[var(--theme-bg)] transition hover:shadow-[0_0_0_1px_rgba(0,255,136,0.18),0_14px_32px_rgba(0,255,136,0.18)] disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                           </button>
@@ -1927,14 +1927,14 @@ const Zorvix = () => {
                               hideFreshSessionBanner();
                               setIsUtilityMenuOpen((current) => !current);
                             }}
-                            className="zorvix-composer-icon-btn inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#233043] bg-[#1a1a2e] text-[#e2e8f0] transition hover:border-[#2c3b51]"
+                            className="zorvix-composer-icon-btn inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-card)] text-[var(--theme-text)] transition hover:border-[var(--theme-accent-blue)]/30"
                             title="Open actions"
                           >
                             <Menu className="h-4 w-4" />
                           </button>
                         </div>
 
-                        <div className="zorvix-composer-status flex items-center justify-end px-1 text-[11px] text-[#6f7b93]">
+                        <div className="zorvix-composer-status flex items-center justify-end px-1 text-[11px] text-[var(--theme-text-dim)]">
                           <span className="max-w-full truncate">
                             {statusTone}
                             {statusHint ? ` • ${statusHint}` : ""}

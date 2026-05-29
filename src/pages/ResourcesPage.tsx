@@ -59,6 +59,7 @@ const ResourcesPage = () => {
   const [missions, setMissions] = useState<MissionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
+  const [apiError, setApiError] = useState(false);
 
   const resourceLibrary = useMemo<LiveResourceEntry[]>(() => {
     const courseEntries = courses.map((course, index) => ({
@@ -120,6 +121,7 @@ const ResourcesPage = () => {
 
     const load = async () => {
       setLoading(true);
+      setApiError(false);
       const [coursesResult, pathsResult, missionsResult] = await Promise.allSettled([
         pyGetJson<CoursesResponse>("/courses"),
         pyGetJson<LearningPathItem[]>("/learning/paths"),
@@ -128,9 +130,29 @@ const ResourcesPage = () => {
 
       if (!active) return;
 
-      setCourses(coursesResult.status === "fulfilled" && Array.isArray(coursesResult.value.courses) ? coursesResult.value.courses : []);
-      setPaths(pathsResult.status === "fulfilled" && Array.isArray(pathsResult.value) ? pathsResult.value : []);
-      setMissions(missionsResult.status === "fulfilled" && Array.isArray(missionsResult.value) ? missionsResult.value : []);
+      let coursesVal: CourseItem[] = [];
+      let pathsVal: LearningPathItem[] = [];
+      let missionsVal: MissionItem[] = [];
+      let allFailed = true;
+
+      if (coursesResult.status === "fulfilled" && Array.isArray(coursesResult.value.courses)) {
+        coursesVal = coursesResult.value.courses;
+        allFailed = false;
+      }
+      if (pathsResult.status === "fulfilled" && Array.isArray(pathsResult.value)) {
+        pathsVal = pathsResult.value;
+        allFailed = false;
+      }
+      if (missionsResult.status === "fulfilled" && Array.isArray(missionsResult.value)) {
+        missionsVal = missionsResult.value;
+        allFailed = false;
+      }
+
+      setCourses(coursesVal);
+      setPaths(pathsVal);
+      setMissions(missionsVal);
+      // If all three API calls failed, it's a server error — not empty data
+      setApiError(allFailed);
       setLoading(false);
       setReady(true);
     };
@@ -140,6 +162,7 @@ const ResourcesPage = () => {
       setCourses([]);
       setPaths([]);
       setMissions([]);
+      setApiError(true);
       setLoading(false);
       setReady(true);
     });
@@ -203,6 +226,20 @@ const ResourcesPage = () => {
                     Open sign in
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
+                </div>
+              ) : apiError ? (
+                <div className="rounded-2xl border border-amber-300/15 bg-[#090d14] p-5 text-center">
+                  <p className="text-sm font-semibold text-white">Content unavailable</p>
+                  <p className="mt-2 text-sm text-slate-300/82">
+                    Please try again in a moment
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-blue-400/16 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-100 transition hover:bg-blue-500/16"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : Object.entries(groupedResources).length ? (
                 Object.entries(groupedResources).map(([category, items]) => (

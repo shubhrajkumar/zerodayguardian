@@ -290,13 +290,16 @@ export class ApiError extends Error {
   }
 }
 
-const toNetworkApiError = (error: unknown, url: string, method: string) =>
-  new ApiError(
+const toNetworkApiError = (error: unknown, url: string, method: string) => {
+  // Trigger server wake-up banner for network errors (likely cold start)
+  triggerServerWakeUp();
+  return new ApiError(
     "Backend connection was interrupted. Retrying usually fixes this on cold start.",
     503,
     "network_error",
     { url, method, cause: String((error as Error)?.message || error) }
   );
+};
 
 const emitAssistantSignal = (detail: {
   kind: "api_failure";
@@ -307,6 +310,17 @@ const emitAssistantSignal = (detail: {
 }) => {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent("assistant:signal", { detail }));
+};
+
+let serverWakeUpShown = false;
+
+const triggerServerWakeUp = () => {
+  if (serverWakeUpShown) return;
+  serverWakeUpShown = true;
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("server-waking-up"));
+  // Reset the flag after 60 seconds so it can fire again if needed
+  setTimeout(() => { serverWakeUpShown = false; }, 60_000);
 };
 
 const triggerAuthRedirect = () => {
@@ -409,6 +423,11 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   const maxAttempts =
     method === "GET" ? 2 : isAuthRoute ? 3 : requestUrl.includes("/pyapi/mission-control") ? 2 : 1;
   const maxNetworkAttempts = isAuthRoute ? 3 : method === "GET" ? 2 : 1;
+  
+  // Reset server wake-up flag on each new request
+  if (!isAuthRoute) {
+    serverWakeUpShown = false;
+  }
   
   logDebug(`[API] ${method} ${requestUrl} - Starting request`);
 

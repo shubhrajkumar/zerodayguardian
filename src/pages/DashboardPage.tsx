@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useUserProgress } from "@/context/UserProgressContext";
 import AnimatedCyberBackground from "@/components/AnimatedCyberBackground";
-import LiveClock from "@/components/ui/LiveClock";
+import LiveClock, { formatRelativeTime } from "@/components/ui/LiveClock";
 import SentryTestPanel from "@/components/SentryTestPanel";
 
 type SidebarItem = {
@@ -204,14 +204,14 @@ export default function DashboardPage() {
 
           <SentryTestPanel />
 
-          {/* Recent Activity Placeholder */}
+          {/* Recent Activity */}
           <div className="glass-card p-5 animate-fade-in-up">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--theme-text)" }}>Recent Activity</h2>
             <div className="space-y-3">
               {[
-                { icon: "🛡️", text: "Threat scan completed", time: "2 min ago", color: "green" },
-                { icon: "📊", text: "Weekly report generated", time: "1 hour ago", color: "blue" },
-                { icon: "⚡", text: "Lab exercise completed", time: "3 hours ago", color: "purple" },
+                { icon: "🛡️", text: "Threat scan completed", date: new Date(Date.now() - 2 * 60 * 1000), color: "green" },
+                { icon: "📊", text: "Weekly report generated", date: new Date(Date.now() - 1 * 60 * 60 * 1000), color: "blue" },
+                { icon: "⚡", text: "Lab exercise completed", date: new Date(Date.now() - 3 * 60 * 60 * 1000), color: "purple" },
               ].map((activity, i) => (
                 <div key={i} className="flex items-center gap-3 p-3 rounded-lg transition-colors" style={{ backgroundColor: "var(--theme-overlay)" }}
     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--theme-overlay-hover)"}
@@ -219,7 +219,7 @@ export default function DashboardPage() {
                   <span className="text-lg">{activity.icon}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm" style={{ color: "var(--theme-text)" }}>{activity.text}</p>
-                    <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>{activity.time}</p>
+                    <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>{formatRelativeTime(activity.date)}</p>
                   </div>
                   <span className={`w-1.5 h-1.5 rounded-full ${activity.color === "green" ? "bg-[#00ff88]" : activity.color === "blue" ? "bg-[#00d4ff]" : "bg-[#7b2ff7]"}`} />
                 </div>

@@ -462,6 +462,11 @@ body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+@keyframes server-wake-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* ===== LIGHT MODE OVERRIDES ===== */
 [data-theme="light"] .btn-cyber {
   background: var(--color-btn-primary-bg) !important;

@@ -17,7 +17,7 @@ export default function AnimatedCyberBackground({ reduced = false }: AnimatedCyb
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
       {/* Gradient base */}
-      <div className="absolute inset-0 bg-[#0a0a0f]" />
+      <div className="absolute inset-0 bg-[var(--theme-bg)]" />
 
       {/* Grid pattern */}
       <div
