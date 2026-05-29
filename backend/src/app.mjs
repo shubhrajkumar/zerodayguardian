@@ -626,6 +626,7 @@ export const createApp = () => {
     }
     }
   );
+  // Auth routes are already mounted at both /auth and /api/auth — verify/refresh work natively
   app.use("/auth", apiReadRateLimit, authRoutes);
   app.use("/api/auth", apiReadRateLimit, authRoutes);
   app.use("/mission", requireCsrf, requireAuth, mutationRateLimit, missionRoutes);
@@ -633,10 +634,10 @@ export const createApp = () => {
   app.use("/user", requireCsrf, requireAuth, mutationRateLimit, productUserRoutes);
   app.use("/api/user", requireCsrf, requireAuth, mutationRateLimit, productUserRoutes);
   app.use("/api/users", requireCsrf, requireAuth, mutationRateLimit, userRoutes);
-  // Telemetry endpoint — excluded from CSRF to avoid 403 on analytics events
-  // Auth is optional (just analytics), no CSRF check
+  // Telemetry endpoint — excluded from CSRF + auth to avoid 403 on analytics events
+  // Debounced: batched silently, analytics only
   app.post("/api/intelligence/telemetry/event", (req, res) => {
-    // Accept silently — analytics only
+    // Accept silently — analytics only, no auth/CSRF needed
     res.json({ status: "ok", result: { xpGain: 0, profile: null, intent: "learning", complexity: 0 } });
   });
   // Catch-all for other telemetry sub-routes
@@ -649,13 +650,16 @@ export const createApp = () => {
   app.use("/api/dashboard", requireCsrf, requireAuth, intelligenceRateLimit, dashboardRoutes);
   app.use("/api/platform", requireCsrf, requireAuth, apiReadRateLimit, platformRoutes);
   // Labs routes — public endpoints (no auth required)
-  app.use("/api/labs", intelligenceRateLimit, labsRoutes);
+  app.use("/labs", labsRoutes);
+  app.use("/api/labs", labsRoutes);
   app.use("/api/missions", requireCsrf, requireAuth, intelligenceRateLimit, missionsRoutes);
   app.use("/api/courses", requireCsrf, requireAuth, intelligenceRateLimit, coursesRoutes);
   app.use("/api/learning", requireCsrf, requireAuth, intelligenceRateLimit, learningRoutes);
-  app.use("/api/recommendations", requireCsrf, requireAuth, intelligenceRateLimit, recommendationsRoutes);
+  app.use("/recommendations", requireAuth, apiReadRateLimit, recommendationsRoutes);
+  app.use("/api/recommendations", requireAuth, apiReadRateLimit, recommendationsRoutes);
   app.use("/api/adaptive", requireCsrf, requireAuth, intelligenceRateLimit, adaptiveRoutes);
-  app.use("/api/mission-control", requireCsrf, requireAuth, intelligenceRateLimit, missionControlRoutes);
+  app.use("/mission-control", requireAuth, apiReadRateLimit, missionControlRoutes);
+  app.use("/api/mission-control", requireAuth, apiReadRateLimit, missionControlRoutes);
   // Compliance / GDPR routes
   app.use("/api/compliance", requireAuth, complianceRoutes);
   app.use("/api/neurobot/chat", chatRateLimit, chatAbuseDetection);

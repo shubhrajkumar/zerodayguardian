@@ -30,7 +30,7 @@ router.post("/",
   async (req, res) => {
     try {
       const { uid, email, displayName, photoURL } = req.body;
-      const userId = req.user?.id || req.user?._id;
+      const userId = req.user?.id || req.user?._id || req.user?.sub;
 
       const user = await User.findByIdAndUpdate(
         userId,
@@ -41,10 +41,24 @@ router.post("/",
           lastSeen: new Date(),
           updatedAt: new Date()
         },
-        { new: true, upsert: true }
+        { new: true, upsert: true, setDefaultsOnInsert: true }
       ).select('-password -refreshToken');
 
-      return res.json({ success: true, user });
+      const responseUser = user ? {
+        id: String(user._id || user.id),
+        email: user.email,
+        displayName: user.displayName,
+        xp: user.xp || 0,
+        level: user.level || 1,
+      } : {
+        id: uid || userId,
+        email: email || "",
+        displayName: displayName || "",
+        xp: 0,
+        level: 1,
+      };
+
+      return res.json({ success: true, user: responseUser });
     } catch (err) {
       return res.status(500).json({
         success: false,

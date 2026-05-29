@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { User as FirebaseUser } from "firebase/auth";
 import {
   clearAuthState,
@@ -68,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState("");
+  const initAuthRef = useRef(false);
 
   const syncAuthState = useCallback((nextUser: AuthUser | null) => {
     setUser(nextUser);
@@ -106,13 +107,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refreshAuth = useCallback(async (_force?: boolean): Promise<boolean> => {
-    // 1. Try Firebase currentUser (fast path) — lazy-init Firebase first
-    await initFirebase();
-    if (firebaseAuth?.currentUser) {
-      return syncAuthState(toFirebaseAuthUser(firebaseAuth.currentUser));
+    // 1. Try token verify first (silent — no toast, no redirect)
+    const storedToken = localStorage.getItem("zdg_token");
+    if (storedToken && storedToken.length > 10) {
+      try {
+        const response = await api.get<{ authenticated?: boolean; user?: AuthUser; success?: boolean }>("/api/auth/verify", {
+          timeout: 8000,
+        });
+        if ((response.data.authenticated || response.data.success) && response.data.user) {
+          return syncAuthState(response.data.user);
+        }
+      } catch {
+        // token verify failed, try refresh silently
+      }
     }
 
-    // 2. Try bootstrapAuthSession from apiClient (handles token verify + refresh)
+    // 2. Try silent refresh
+    const storedRefreshToken = localStorage.getItem("zdg_refresh");
+    if (storedRefreshToken) {
+      try {
+        const response = await api.post<{ accessToken?: string; user?: AuthUser; status?: string }>(
+          "/api/auth/refresh",
+          { refreshToken: storedRefreshToken },
+          { timeout: 10000 }
+        );
+        if (response.data.accessToken) {
+          localStorage.setItem("zdg_token", response.data.accessToken);
+        }
+        if (response.data.user) {
+          return syncAuthState(response.data.user);
+        }
+        // If no user but got token, try getting user profile
+        if (response.data.accessToken) {
+          try {
+            const userRes = await api.get<{ user?: AuthUser }>("/api/auth/me");
+            if (userRes.data.user) {
+              return syncAuthState(userRes.data.user);
+            }
+          } catch {
+            // user fetch failed
+          }
+        }
+      } catch {
+        // refresh failed — only clear if BOTH verify AND refresh fail
+      }
+    }
+
+    // 3. Try bootstrapAuthSession from apiClient
     try {
       const result = await bootstrapAuthSession();
       if (result.ok) {
@@ -120,52 +161,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (cachedUser) return syncAuthState(cachedUser);
       }
     } catch {
-      // bootstrap failed, try direct token check
+      // bootstrap failed
     }
 
-    // 3. Direct token check
-    const storedToken = localStorage.getItem("zdg_token");
-    const storedRefreshToken = localStorage.getItem("zdg_refresh");
-
-    if (storedToken && storedToken.length > 10) {
-      try {
-        const response = await api.get<{ authenticated?: boolean; user?: AuthUser }>("/api/auth/verify", {
-          timeout: 8000,
-        });
-        if (response.data.authenticated && response.data.user) {
-          return syncAuthState(response.data.user);
-        }
-      } catch {
-        // token verify failed, try refresh
-      }
+    // 4. Try Firebase currentUser (fast path)
+    await initFirebase();
+    if (firebaseAuth?.currentUser) {
+      return syncAuthState(toFirebaseAuthUser(firebaseAuth.currentUser));
     }
 
-    // 4. Try refresh token
-    if (storedRefreshToken) {
-      try {
-        const response = await api.post<{ accessToken: string; refreshToken: string; user: AuthUser }>(
-          "/api/auth/refresh",
-          { refreshToken: storedRefreshToken },
-          { timeout: 8000 }
-        );
-        if (response.data.accessToken) {
-          localStorage.setItem("zdg_token", response.data.accessToken);
-        }
-        if (response.data.refreshToken) {
-          localStorage.setItem("zdg_refresh", response.data.refreshToken);
-        }
-        if (response.data.user) {
-          return syncAuthState(response.data.user);
-        }
-      } catch {
-        // refresh failed
-      }
-    }
-
-    // 5. Restore from cached auth state as last resort (allows offline viewing)
+    // 5. Restore from cached auth state as last resort
     const cachedUser = restoreCachedUser();
     if (cachedUser) return syncAuthState(cachedUser);
 
+    // 6. Clear only if ALL methods fail
+    localStorage.removeItem("zdg_token");
+    localStorage.removeItem("zdg_refresh");
     return syncAuthState(null);
   }, [syncAuthState]);
 
@@ -179,7 +190,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (cancelled) return;
 
       if (!firebaseAuth) {
-        refreshAuth().catch(() => syncAuthState(null));
+        // Try silent auth refresh first — no loading gate
+        if (!initAuthRef.current) {
+          initAuthRef.current = true;
+          refreshAuth().catch(() => { /* silent fail */ });
+        }
         return;
       }
 
@@ -188,10 +203,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       unsub = onAuthStateChanged(firebaseAuth, (fbUser) => {
         if (fbUser) {
+          initAuthRef.current = true;
           syncAuthState(toFirebaseAuthUser(fbUser as FirebaseUser));
           return;
         }
-        refreshAuth().catch(() => syncAuthState(null));
+        // Silent refresh: only run if we haven't already done initial auth check
+        if (!initAuthRef.current) {
+          initAuthRef.current = true;
+          refreshAuth().catch(() => { /* silent fail */ });
+        }
       });
     })();
 

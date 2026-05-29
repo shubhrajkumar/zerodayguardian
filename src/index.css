@@ -490,3 +490,190 @@ body {
   color: var(--color-tag-text) !important;
   border: 1px solid var(--color-tag-border) !important;
 }
+
+/* ── Navigation items always visible in light mode ── */
+[data-theme="light"] .nav-item,
+[data-theme="light"] [class*="navItem"],
+[data-theme="light"] [class*="nav_link"],
+[data-theme="light"] [class*="nav-link"] {
+  color: var(--color-nav-item) !important;
+}
+[data-theme="light"] .nav-item.active,
+[data-theme="light"] [class*="navItem"].active,
+[data-theme="light"] [class*="nav_link"].active,
+[data-theme="light"] [class*="nav-link"].active,
+[data-theme="light"] .nav-item[data-active],
+[data-theme="light"] [class*="navItem"][data-active] {
+  color: var(--color-nav-active) !important;
+}
+
+/* ── Cards always readable in light mode ── */
+[data-theme="light"] .card,
+[data-theme="light"] [class*="card"],
+[data-theme="light"] .glass-card,
+[data-theme="light"] .glass,
+[data-theme="light"] .glass-hover {
+  background: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Modal backgrounds always visible ── */
+[data-theme="light"] [class*="modal"],
+[data-theme="light"] [class*="dialog"],
+[data-theme="light"] [role="dialog"] {
+  background: var(--color-modal-bg) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Text in cards, modals, and surfaces always readable ── */
+[data-theme="light"] .card,
+[data-theme="light"] [class*="card"]:not([class*="cyber"]):not([class*="gradient"]),
+[data-theme="light"] .glass-card,
+[data-theme="light"] .glass,
+[data-theme="light"] .glass-hover p,
+[data-theme="light"] .glass-hover span,
+[data-theme="light"] .cyber-gradient p,
+[data-theme="light"] .cyber-gradient span {
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Table text inside cards ── */
+[data-theme="light"] .card td, [data-theme="light"] .card th,
+[data-theme="light"] [class*="card"] td, [data-theme="light"] [class*="card"] th {
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Links in light mode ── */
+[data-theme="light"] a:not([class*="btn"]):not([class*="button"]):not([class*="tag"]):not([class*="badge"]):not([class*="category"]) {
+  color: var(--color-accent) !important;
+}
+
+/* ── Labels, spans, p, li in card/surface context ── */
+[data-theme="light"] .card p, [data-theme="light"] .card span, [data-theme="light"] .card li,
+[data-theme="light"] [class*="surface"] p, [data-theme="light"] [class*="surface"] span,
+[data-theme="light"] [class*="panel"] p, [data-theme="light"] [class*="panel"] span {
+  color: var(--color-text-primary);
+}
+[data-theme="light"] .text-muted,
+[data-theme="light"] [class*="text-muted"]:not([class*="cyber"]):not([class*="gradient"]),
+[data-theme="light"] .text-secondary {
+  color: var(--color-text-secondary) !important;
+}
+[data-theme="light"] .text-\[\#\] {
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Leaderboard empty state ── */
+[data-theme="light"] [class*="leaderboard"] {
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Dropdown menus ── */
+[data-theme="light"] [class*="dropdown"],
+[data-theme="light"] [class*="menu"],
+[data-theme="light"] [class*="popover"] {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+/* ── Sidebar panel ── */
+[data-theme="light"] .sidebar-panel,
+[data-theme="light"] [class*="sidebar"] {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Footer ── */
+[data-theme="light"] footer,
+[data-theme="light"] [class*="footer"] {
+  color: var(--color-text-secondary) !important;
+}
+
+/* ── Alert / notification banners ── */
+[data-theme="light"] [class*="alert"],
+[data-theme="light"] [class*="notification"],
+[data-theme="light"] [class*="banner"] {
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Error boundaries ── */
+[data-theme="light"] [class*="error-boundary"],
+[data-theme="light"] [class*="errorBoundary"] {
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Mobile bottom nav ── */
+[data-theme="light"] [class*="bottomNav"],
+[data-theme="light"] [class*="bottom-nav"],
+[data-theme="light"] [class*="mobileNav"],
+[data-theme="light"] [class*="mobile-nav"],
+[data-theme="light"] nav[class*="bottom"] {
+  background: var(--color-bg-secondary) !important;
+  border-top: 1px solid var(--color-border) !important;
+}
+[data-theme="light"] [class*="bottomNav"] *,
+[data-theme="light"] [class*="bottom-nav"] * {
+  color: var(--color-nav-item) !important;
+}
+[data-theme="light"] [class*="bottomNav"] .active,
+[data-theme="light"] [class*="bottom-nav"] .active,
+[data-theme="light"] [class*="mobileNav"] .active {
+  color: var(--color-nav-active) !important;
+}
+
+/* ── Header / Logo ── */
+[data-theme="light"] header,
+[data-theme="light"] [class*="header"],
+[data-theme="light"] [class*="topbar"],
+[data-theme="light"] [class*="top-bar"] {
+  background: var(--color-bg-secondary) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+}
+[data-theme="light"] [class*="logo"],
+[data-theme="light"] [class*="brand"] {
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Hamburger menu ── */
+[data-theme="light"] [class*="hamburger"],
+[data-theme="light"] [class*="menu-toggle"],
+[data-theme="light"] button[aria-label*="menu"],
+[data-theme="light"] button[aria-label*="Menu"] {
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Toast notifications ── */
+[data-theme="light"] .toast {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+/* ── ACCENT colors in light mode ── */
+[data-theme="light"] [class*="accent"],
+[data-theme="light"] [class*="highlight"],
+[data-theme="light"] [class*="cyber"] {
+  color: var(--color-accent);
+}
+
+[data-theme="light"] .cyber-gradient-text,
+[data-theme="light"] [class*="gradient-text"] {
+  background: linear-gradient(135deg, var(--color-accent), #0044aa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Skeleton / loading states ── */
+[data-theme="light"] [class*="skeleton"] {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ── Tooltips ── */
+[data-theme="light"] [class*="tooltip"] {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+}

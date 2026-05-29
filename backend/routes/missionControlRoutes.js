@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../src/middleware/auth.mjs";
+import { requireCsrf } from "../src/middleware/csrf.mjs";
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.get("/",
 
 // POST /mission-control/actions — Log a mission control action
 router.post("/actions",
+  requireCsrf,
   requireAuth,
   async (req, res) => {
     try {
