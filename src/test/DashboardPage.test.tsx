@@ -232,7 +232,7 @@ describe("DashboardPage", () => {
 
   it("renders activity timestamps", () => {
     renderDashboardPage();
-    expect(screen.getByText("2 min ago")).toBeTruthy();
+    expect(screen.getByText("2 minutes ago")).toBeTruthy();
     expect(screen.getByText("1 hour ago")).toBeTruthy();
     expect(screen.getByText("3 hours ago")).toBeTruthy();
   });
