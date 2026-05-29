@@ -14,7 +14,6 @@
 
     <!-- Critical: Preload key resources for faster LCP -->
     <link rel="preload" href="/og-image.png" as="image" type="image/png" fetchpriority="high" />
-    <link rel="preload" href="/src/main.tsx" as="script" />
     <!-- Preload critical CSS variables (inlined via index.css) -->
     <style>
       :root{--theme-bg:#0a0a0f;--theme-accent-blue:#00d4ff;--theme-accent-green:#00ff88;--theme-text:#e2e8f0}
@@ -119,8 +118,7 @@
     <!-- This meta-tag fallback provides defense-in-depth if the Vercel serverless function fails to inject the header. -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://*.firebaseio.com https://*.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss:; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';" />
 
-    <!-- Performance: Add modulepreload for the entry point -->
-    <link rel="modulepreload" href="/src/main.tsx" />
+    <!-- Vite injects modulepreload for entry points automatically during build -->
   </head>
   <body>
     <noscript>

@@ -309,7 +309,7 @@ export const createApp = () => {
         : allowCorsOrigin,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Cookie", "Last-Event-ID", "X-Request-Id"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Cookie", "Last-Event-ID", "X-Request-Id", "baggage", "sentry-trace"],
       exposedHeaders: ["Set-Cookie", "X-Request-Id"],
       maxAge: 600,
       optionsSuccessStatus: 204,
