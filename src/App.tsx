@@ -270,8 +270,7 @@ const ColdStartWatcher = () => {
   const retryRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    const handleColdStart = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { retryCount?: number };
+    const handleColdStart = () => {
       setColdStart(true);
       setRetryCountdown(3);
       // Store retry function that will reload the original request
