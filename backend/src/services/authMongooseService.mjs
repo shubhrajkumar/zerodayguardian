@@ -16,7 +16,7 @@ export const signJwt = (user) => {
   return jwt.sign(
     { sub: user._id.toString(), email: user.email, name: user.name, role: user.role || "user" },
     env.jwtSecret,
-    { expiresIn: "15m" }
+    { expiresIn: "7d" }
   );
 };
 

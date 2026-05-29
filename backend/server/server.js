@@ -115,6 +115,25 @@ const bootstrap = async () => {
 
   startNewsIngestionScheduler({ intervalMs: env.newsRefreshIntervalMs });
 
+  // Keep-alive ping every 14 minutes to prevent Render free tier from sleeping
+  const BACKEND_URL = env.backendPublicUrl || process.env.BACKEND_PUBLIC_URL || '';
+  if (env.nodeEnv === 'production' && BACKEND_URL) {
+    const keepAliveInterval = setInterval(async () => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        await fetch(`${BACKEND_URL.replace(/\/+$/, '')}/api/health`, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        logInfo('Keep-alive ping sent to self');
+      } catch (err) {
+        logWarn('Keep-alive ping failed', { error: String(err?.message || err) });
+      }
+    }, 14 * 60 * 1000); // 14 minutes
+    if (keepAliveInterval.unref) keepAliveInterval.unref();
+  }
+
   let shuttingDown = false;
   const shutdown = async (signal = "SIGTERM") => {
     if (shuttingDown) return;

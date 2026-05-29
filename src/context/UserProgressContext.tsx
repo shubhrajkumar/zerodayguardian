@@ -129,18 +129,32 @@ const TELEMETRY_MAX_BATCH = 10;
 let telemetryBatch: Array<{ type: string; query?: string; tool?: string; durationMs?: number; depth?: number; success?: boolean; metadata?: Record<string, unknown> }> = [];
 let telemetryTimer: ReturnType<typeof setTimeout> | null = null;
 
+let telemetry403Received = false;
+
 const flushTelemetryBatch = async () => {
   if (telemetryBatch.length === 0) return;
+  // If we received a 403, stop sending telemetry entirely
+  if (telemetry403Received) {
+    telemetryBatch = [];
+    return;
+  }
   const batch = telemetryBatch.splice(0, TELEMETRY_MAX_BATCH);
   telemetryBatch = telemetryBatch.slice(TELEMETRY_MAX_BATCH);
   try {
     const token = localStorage.getItem('zdg_token');
     if (!token) return;
-    await fetch(`${import.meta.env.VITE_API_URL}/api/intelligence/telemetry/event`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/intelligence/telemetry/event`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ batch, events: batch.length, timestamp: Date.now() }),
     });
+    if (response.status === 403) {
+      telemetry403Received = true;
+      telemetryBatch = [];
+      if (typeof window !== 'undefined') {
+        console.warn('[Telemetry] 403 received — stopping telemetry events');
+      }
+    }
   } catch {
     // Telemetry is best-effort
   }

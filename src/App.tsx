@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ComponentType, lazy, LazyExoticComponent, ReactNode, Suspense, useEffect, useRef } from "react";
+import { ComponentType, lazy, LazyExoticComponent, ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { BrowserRouter, matchPath, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as HotToaster } from "react-hot-toast";
 import { Toaster as SonnerToaster } from "sonner";
@@ -9,6 +9,7 @@ import FirebaseStatusBadge from "./components/FirebaseStatusBadge";
 import Layout from "./components/Layout";
 import RequireAuth from "./components/RequireAuth";
 import CookieConsent from "./components/CookieConsent";
+import WakeUpLoader from "./components/ui/WakeUpLoader";
 
 const RewardExperience = lazy(() => import("./components/platform/RewardExperience"));
 import { clearAnonymousClientState } from "./lib/apiClient";
@@ -263,6 +264,49 @@ const GlobalScrollReveal = () => {
   return null;
 };
 
+const ColdStartWatcher = () => {
+  const [coldStart, setColdStart] = useState(false);
+  const [retryCountdown, setRetryCountdown] = useState(0);
+  const retryRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    const handleColdStart = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { retryCount?: number };
+      setColdStart(true);
+      setRetryCountdown(3);
+      // Store retry function that will reload the original request
+      retryRef.current = () => {
+        // The retry in the axios interceptor handles the actual retry
+        // This countdown is for the UI feedback only
+      };
+    };
+
+    const handleApiSuccess = () => {
+      setColdStart(false);
+    };
+
+    window.addEventListener('api:coldstart', handleColdStart);
+    window.addEventListener('api:success', handleApiSuccess);
+    return () => {
+      window.removeEventListener('api:coldstart', handleColdStart);
+      window.removeEventListener('api:success', handleApiSuccess);
+    };
+  }, []);
+
+  return (
+    <WakeUpLoader
+      visible={coldStart}
+      message="Server is waking up, retrying..."
+      subMessage="This may take 30 seconds on first load"
+      retryCountdown={retryCountdown}
+      onRetry={() => {
+        retryRef.current?.();
+        setColdStart(false);
+      }}
+    />
+  );
+};
+
 const GamificationTracker = () => {
   const location = useLocation();
   const { trackAction } = useUserProgress();
@@ -371,6 +415,7 @@ const AppShell = () => {
               <FirebaseStatusBadge />
               <RewardExperience />
               <CookieConsent />
+              <ColdStartWatcher />
               <Layout>
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
@@ -391,9 +436,9 @@ const AppShell = () => {
                 toastOptions={{
                   duration: 4200,
                   style: {
-                    background: "#12121a",
-                    color: "#e2e8f0",
-                    border: "1px solid #2d2d44",
+                    background: "var(--theme-card)",
+                    color: "var(--theme-text)",
+                    border: "1px solid var(--theme-border)",
                   },
                 }}
               />
@@ -403,9 +448,9 @@ const AppShell = () => {
                 closeButton
                 toastOptions={{
                   style: {
-                    background: "#12121a",
-                    color: "#e2e8f0",
-                    border: "1px solid #2d2d44",
+                    background: "var(--theme-card)",
+                    color: "var(--theme-text)",
+                    border: "1px solid var(--theme-border)",
                   },
                 }}
               />

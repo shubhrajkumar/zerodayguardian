@@ -6,6 +6,17 @@
 :root,
 [data-theme="dark"],
 .dark {
+  --bg: #0a0a0f;
+  --bg-card: rgba(255,255,255,0.04);
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border: rgba(0,212,255,0.15);
+  --accent: #00d4ff;
+  --btn-bg: #00d4ff;
+  --btn-text: #0a0a0f;
+  --tag-bg: rgba(0,212,255,0.1);
+  --tag-text: #00d4ff;
+  --input-bg: rgba(255,255,255,0.06);
   --color-bg-primary: #0a0a0f;
   --color-bg-secondary: #0f0f1a;
   --color-bg-card: rgba(255,255,255,0.04);
@@ -47,6 +58,17 @@
 /* ===== LIGHT MODE ===== */
 [data-theme="light"],
 .light {
+  --bg: #f8fafc;
+  --bg-card: rgba(0,0,0,0.03);
+  --text: #0f172a;
+  --text-muted: #475569;
+  --border: rgba(0,100,200,0.15);
+  --accent: #0066cc;
+  --btn-bg: #0066cc;
+  --btn-text: #ffffff;
+  --tag-bg: rgba(0,100,200,0.08);
+  --tag-text: #0066cc;
+  --input-bg: rgba(0,0,0,0.05);
   --color-bg-primary: #f8fafc;
   --color-bg-secondary: #ffffff;
   --color-bg-card: rgba(0,0,0,0.03);

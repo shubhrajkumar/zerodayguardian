@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { API_BASE_URL } from '@/lib/apiConfig';
+import toast from 'react-hot-toast';
 
 const resolvedBaseUrl = import.meta.env.VITE_API_URL || API_BASE_URL || '';
 
 const api = axios.create({
   baseURL: resolvedBaseUrl,
   withCredentials: true,
-  timeout: 15000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   }
@@ -53,8 +54,13 @@ let isRefreshing = false;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let failedQueue: Array<{ resolve: (value: any) => void; reject: (reason?: unknown) => void }> = [];
 
+// Retry on timeout or 503 (max 2 times) — handles Render cold starts
 api.interceptors.response.use(
   (response) => {
+    // Fire success event to dismiss WakeUpLoader
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('api:success'));
+    }
     // Clean up dedup lock on success
     const extConfig = response.config as typeof response.config & ExtendedRequestConfig;
     if (response.config.method?.toLowerCase() === 'get' && !extConfig._retry) {
@@ -77,6 +83,26 @@ api.interceptors.response.use(
     }
     
     const originalRequest = error.config as typeof error.config & ExtendedRequestConfig;
+    
+    // Retry on timeout (ECONNABORTED) or 503 — Render cold start handling
+    if (
+      (error.code === 'ECONNABORTED' || error.response?.status === 503) &&
+      !originalRequest._retryCount
+    ) {
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      if (originalRequest._retryCount <= 2) {
+        // Fire custom event for WakeUpLoader
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('api:coldstart', {
+            detail: { retryCount: originalRequest._retryCount }
+          }));
+        }
+        toast.error('Server is waking up, retrying...', { duration: 3000, id: 'coldstart-retry' });
+        const retryDelay = 3000 * originalRequest._retryCount;
+        await new Promise(r => setTimeout(r, retryDelay));
+        return api(originalRequest);
+      }
+    }
     
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
