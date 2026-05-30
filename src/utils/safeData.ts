@@ -8,10 +8,12 @@
 /**
  * Safely coerce a value to an array. Returns `[]` for null/undefined/non-array values.
  */
-export const safeArray = <T>(data: unknown): T[] => {
+export function safeArray<T>(data: T[]): T[];
+export function safeArray<T>(data: unknown): T[];
+export function safeArray<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data as T[];
   return [];
-};
+}
 
 /**
  * Safe `.map()` that won't crash if `data` is undefined/null.
