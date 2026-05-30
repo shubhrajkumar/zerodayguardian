@@ -253,10 +253,24 @@ export const resetUserPassword = async (req, res) => {
   }
 };
 
+const parseBearerToken = (authorization = "") => {
+  const raw = String(authorization || "");
+  const match = raw.match(/^\s*Bearer\s+(.+)\s*$/i);
+  if (!match) return null;
+  const token = String(match[1] || "").trim();
+  return token || null;
+};
+
 export const refreshSession = async (req, res) => {
   try {
-    const refreshToken = req.validatedBody?.refreshToken || req.cookies?.zdg_refresh || req.cookies?.neurobot_rt;
-    logInfo("Auth refresh request", { requestId: req.requestId || "", hasRefreshCookie: Boolean(refreshToken), hasRefreshBody: Boolean(req.validatedBody?.refreshToken) });
+    const tokenFromHeader = parseBearerToken(req.headers.authorization);
+    const refreshToken = req.validatedBody?.refreshToken || req.cookies?.zdg_refresh || req.cookies?.neurobot_rt || tokenFromHeader;
+    logInfo("Auth refresh request", {
+      requestId: req.requestId || "",
+      hasRefreshCookie: Boolean(req.cookies?.zdg_refresh || req.cookies?.neurobot_rt),
+      hasRefreshBody: Boolean(req.validatedBody?.refreshToken),
+      hasRefreshHeader: Boolean(tokenFromHeader),
+    });
     const { user, rememberMe } = await refreshAuth(refreshToken);
     const { accessToken, refreshToken: newRefreshToken } = await setAuthCookies(res, user, { rememberMe });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
@@ -271,8 +285,17 @@ export const refreshSession = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    logInfo("Auth logout request", { requestId: req.requestId || "" });
-    await revokeRefreshSession(req.cookies?.zdg_refresh || req.cookies?.neurobot_rt);
+    const tokenFromHeader = parseBearerToken(req.headers.authorization);
+    const refreshToken = req.validatedBody?.refreshToken || req.cookies?.zdg_refresh || req.cookies?.neurobot_rt || tokenFromHeader;
+    logInfo("Auth logout request", {
+      requestId: req.requestId || "",
+      hasRefreshCookie: Boolean(req.cookies?.zdg_refresh || req.cookies?.neurobot_rt),
+      hasRefreshBody: Boolean(req.validatedBody?.refreshToken),
+      hasRefreshHeader: Boolean(tokenFromHeader),
+    });
+    if (refreshToken) {
+      await revokeRefreshSession(refreshToken);
+    }
     clearAuthCookies(res);
     res.status(204).end();
   } catch (error) {

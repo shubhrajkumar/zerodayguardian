@@ -35,6 +35,8 @@ const BUILD_PY_API_PUBLIC_URL = normalizeBaseUrl(
 );
 
 export const API_BASE_URL = (() => {
+  // In dev mode (but not in vitest), use relative URLs so the Vite proxy handles `/api/*` requests.
+  if (import.meta.env.DEV && !process.env.VITEST) return "";
   const runtimeProcessBase = normalizeBaseUrl(
     readProcessEnv("VITE_API_URL") || readProcessEnv("VITE_API_BASE_URL") || readProcessEnv("BACKEND_PUBLIC_URL")
   );
@@ -52,6 +54,8 @@ export const API_BASE_URL = (() => {
 export const API_BASE = API_BASE_URL;
 
 export const PY_API_BASE_URL = (() => {
+  // In dev mode (but not in vitest), use relative URL so the Vite proxy handles `/pyapi/*` requests.
+  if (import.meta.env.DEV && !process.env.VITEST) return "/pyapi";
   const runtimeProcessPyBase = normalizeBaseUrl(readProcessEnv("PY_API_PUBLIC_URL") || readProcessEnv("VITE_PYAPI_URL"));
   if (runtimeProcessPyBase) return runtimeProcessPyBase;
   const explicitPyBase = normalizeBaseUrl(String(import.meta.env.VITE_PYAPI_URL || import.meta.env.VITE_PY_API_URL || ""));

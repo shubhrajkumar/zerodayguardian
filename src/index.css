@@ -45,14 +45,31 @@
   --color-modal-bg: #0f0f1a;
   --color-shadow: rgba(0,0,0,0.5);
   --zdg-bg: #0a0a0f;
+  --zdg-bg2: #0f0f1a;
+  --zdg-card: rgba(255,255,255,0.04);
+  --zdg-input: rgba(255,255,255,0.06);
   --zdg-primary: #00d4ff;
   --zdg-secondary: #00ff88;
   --zdg-surface: rgba(255,255,255,0.05);
   --zdg-border: rgba(0,212,255,0.2);
   --zdg-text: #e2e8f0;
   --zdg-muted: #64748b;
+  --zdg-accent: #00d4ff;
+  --zdg-green: #00ff88;
+  --zdg-btn-bg: #00d4ff;
+  --zdg-btn-text: #0a0a0f;
+  --zdg-tag-bg: rgba(0,212,255,0.1);
+  --zdg-tag-text: #00d4ff;
+  --zdg-tag-border: rgba(0,212,255,0.3);
+  --zdg-nav: #0a0a0f;
+  --zdg-nav-text: #94a3b8;
+  --zdg-nav-active: #00d4ff;
   --zdg-error: #ff4757;
   --zdg-success: #00ff88;
+  --zdg-shadow: rgba(0,0,0,0.5);
+  --zdg-stat-bg: rgba(255,255,255,0.05);
+  --zdg-stat-text: #e2e8f0;
+  --zdg-stat-label: #94a3b8;
 }
 
 /* ===== LIGHT MODE ===== */
@@ -96,6 +113,29 @@
   --color-nav-active: #0066cc;
   --color-modal-bg: #ffffff;
   --color-shadow: rgba(0,0,0,0.1);
+  --zdg-bg: #f0f4f8;
+  --zdg-bg2: #ffffff;
+  --zdg-card: rgba(0,0,0,0.04);
+  --zdg-input: rgba(0,0,0,0.06);
+  --zdg-text: #0f172a;
+  --zdg-muted: #475569;
+  --zdg-border: rgba(0,85,200,0.2);
+  --zdg-accent: #0055cc;
+  --zdg-green: #00875a;
+  --zdg-btn-bg: #0055cc;
+  --zdg-btn-text: #ffffff;
+  --zdg-tag-bg: rgba(0,85,204,0.1);
+  --zdg-tag-text: #0044bb;
+  --zdg-tag-border: rgba(0,85,204,0.3);
+  --zdg-nav: #ffffff;
+  --zdg-nav-text: #334155;
+  --zdg-nav-active: #0055cc;
+  --zdg-error: #dc2626;
+  --zdg-success: #16a34a;
+  --zdg-shadow: rgba(0,0,0,0.1);
+  --zdg-stat-bg: rgba(0,0,0,0.05);
+  --zdg-stat-text: #0f172a;
+  --zdg-stat-label: #64748b;
 }
 
 /* ── Legacy Theme Variables ── */
@@ -703,4 +743,85 @@ body {
   background: var(--color-bg-secondary) !important;
   color: var(--color-text-primary) !important;
   border: 1px solid var(--color-border) !important;
+}
+
+/* ── Light mode: fix hardcoded white/black/slate text colors ── */
+[data-theme="light"] [class*="text-white"] {
+  color: var(--color-text-primary) !important;
+}
+[data-theme="light"] [class*="text-slate"] {
+  color: var(--color-text-secondary) !important;
+}
+[data-theme="light"] [class*="text-cyan-5"] {
+  color: var(--color-text-primary) !important;
+}
+[data-theme="light"] [class*="text-cyan-1"] {
+  color: var(--color-text-primary) !important;
+}
+[data-theme="light"] [class*="text-sky"] {
+  color: var(--color-accent) !important;
+}
+[data-theme="light"] [class*="text-amber"] {
+  color: var(--color-warning) !important;
+}
+
+/* ── Light mode: fix invisible card borders ── */
+[data-theme="light"] [class*="border-white"] {
+  border-color: var(--color-border) !important;
+}
+[data-theme="light"] [class*="border-cyan"] {
+  border-color: var(--color-border) !important;
+}
+[data-theme="light"] [class*="border-sky"] {
+  border-color: var(--color-border) !important;
+}
+
+/* ── Light mode: fix invisible card/black/slate backgrounds ── */
+[data-theme="light"] [class*="bg-white"] {
+  background: var(--color-bg-card) !important;
+}
+[data-theme="light"] [class*="bg-black"] {
+  background: var(--color-bg-card) !important;
+}
+[data-theme="light"] [class*="bg-slate"] {
+  background: var(--color-bg-card) !important;
+}
+[data-theme="light"] [class*="bg-cyan"] {
+  background: var(--color-bg-card) !important;
+}
+[data-theme="light"] [class*="bg-gray-8"] {
+  background: var(--color-bg-card) !important;
+}
+[data-theme="light"] [class*="bg-gray-9"] {
+  background: var(--color-bg-card) !important;
+}
+
+/* ── Light mode: fix hardcoded gray/neutral text colors ── */
+[data-theme="light"] [class*="text-gray"] {
+  color: var(--color-text-primary) !important;
+}
+[data-theme="light"] [class*="text-neutral"] {
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Light mode: fix LandingIntro dark gradient section ── */
+[data-theme="light"] section[class*="rounded-2xl"] {
+  background: var(--color-bg-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+[data-theme="light"] section[class*="rounded-2xl"] * {
+  color: var(--color-text-primary) !important;
+}
+[data-theme="light"] section[class*="rounded-2xl"] .brand-gradient-text-animated {
+  background: linear-gradient(135deg, var(--color-accent), #0044aa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Light mode: fix orbit signal containers ── */
+[data-theme="light"] [class*="pointer-events-none"][class*="rounded-full"] {
+  background: var(--color-bg-card) !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
 }

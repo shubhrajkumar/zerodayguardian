@@ -3,6 +3,7 @@ import { PyApiError, getPyApiUserMessage, pyGetJson, pyPostJson } from "@/lib/py
 import { useAuth } from "@/context/AuthContext";
 import { getStoredAccessToken } from "@/lib/apiClient";
 import { toast } from "@/hooks/use-toast";
+import { safeArray } from "@/utils/safeData";
 
 export type MissionActionType =
   | "program_day_complete"
@@ -551,7 +552,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
   }, [isAuthenticated, user]);
 
   const value = useMemo<MissionSystemContextValue>(() => ({
-    tasks: missionData.tasks.map((task) => ({
+    tasks: safeArray<MissionControlPayload['tasks'][0]>(missionData.tasks).map((task) => ({
       id: task.id,
       title: task.title,
       detail: task.detail,
@@ -567,7 +568,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
     totalCompleted: missionData.total_completed,
     totalPoints: missionData.total_points,
     momentum: missionData.momentum,
-    recentRewards: missionData.recent_rewards.map((reward) => ({
+    recentRewards: safeArray<MissionControlPayload['recent_rewards'][0]>(missionData.recent_rewards).map((reward) => ({
       id: reward.id,
       label: reward.label,
       detail: reward.detail,
@@ -589,7 +590,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       route: missionData.next_mission_hook.route,
     },
     activeReward,
-    rails: missionData.rails.map((rail) => ({
+    rails: safeArray<MissionControlPayload['rails'][0]>(missionData.rails).map((rail) => ({
       id: rail.id,
       level: rail.level,
       title: rail.title,
@@ -599,7 +600,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       progressLabel: rail.progress_label,
       route: rail.route,
     })),
-    quickActions: missionData.quick_actions.map((action) => ({
+    quickActions: safeArray<MissionControlPayload['quick_actions'][0]>(missionData.quick_actions).map((action) => ({
       id: action.id,
       title: action.title,
       detail: action.detail,
@@ -622,7 +623,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       nextReward: missionData.referral.next_reward,
       conversionRate: missionData.referral.conversion_rate,
     },
-    shareableInsights: missionData.shareable_insights.map((item) => ({
+    shareableInsights: safeArray<MissionControlPayload['shareable_insights'][0]>(missionData.shareable_insights).map((item) => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -634,7 +635,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       trend: item.trend,
       proofPoints: item.proof_points,
     })),
-    smartNotifications: missionData.smart_notifications.map((item) => ({
+    smartNotifications: safeArray<MissionControlPayload['smart_notifications'][0]>(missionData.smart_notifications).map((item) => ({
       id: item.id,
       channel: item.channel,
       title: item.title,
@@ -661,7 +662,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       validationState: missionData.debug.validation_state,
       errorCapture: missionData.debug.error_capture,
       warnings: missionData.debug.warnings,
-      recentEvents: missionData.debug.recent_events.map((item) => ({
+      recentEvents: safeArray<MissionControlPayload['debug']['recent_events'][0]>(missionData.debug.recent_events).map((item) => ({
         id: item.id,
         stage: item.stage,
         level: item.level,

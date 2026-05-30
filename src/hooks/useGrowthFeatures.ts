@@ -95,7 +95,7 @@ export const useGrowthProfileSync = () => {
       xp: progress.points,
       streak: progress.streak,
       level: Math.max(progress.level, Math.floor(progress.points / 1000) + 1),
-      badges: progress.badges.filter((badge) => badge.earned).map((badge) => badge.label),
+      badges: (progress.badges || []).filter((badge) => badge.earned).map((badge) => badge.label),
       completedLabs: progress.completedLabs,
     }).catch((error) => {
       if (isRecoverableGrowthError(error)) return;

@@ -2,12 +2,12 @@ import axios from 'axios';
 import { API_BASE_URL } from '@/lib/apiConfig';
 import toast from 'react-hot-toast';
 
-const resolvedBaseUrl = import.meta.env.VITE_API_URL || API_BASE_URL || '';
+const resolvedBaseUrl = API_BASE_URL || '';
 
 const api = axios.create({
   baseURL: resolvedBaseUrl,
   withCredentials: true,
-  timeout: 30000,
+  timeout: 35000,
   headers: {
     'Content-Type': 'application/json',
   }
@@ -114,15 +114,19 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
       
-      const refreshToken = localStorage.getItem('zdg_refresh');
-      
-      if (refreshToken) {
+      const storedRefresh = localStorage.getItem('zdg_refresh');
+
+      if (storedRefresh) {
         try {
           const refreshUrl = resolvedBaseUrl ? `${resolvedBaseUrl}/api/auth/refresh` : '/api/auth/refresh';
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          // Send refresh token as Authorization Bearer header as fallback
+          // when cookies are unavailable (third-party context, cross-origin, etc.)
+          headers.Authorization = `Bearer ${storedRefresh}`;
           const response = await axios.post(
             refreshUrl,
-            { refreshToken },
-            { withCredentials: true }
+            { refreshToken: storedRefresh },
+            { withCredentials: true, headers }
           );
           
           const newToken = response.data.accessToken;

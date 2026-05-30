@@ -196,17 +196,29 @@ const HomePage = () => {
             transition={{ duration: 0.6, delay: 0.38 }}
             className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-3"
           >
-            <div className="skeleton-block h-[72px] border border-white/6 bg-white/[0.02] p-4">
-              <div className="h-3 w-20 rounded bg-white/10" />
-              <div className="mt-3 h-4 w-24 rounded bg-white/10" />
+            <div className="group rounded-xl border border-white/8 bg-white/[0.03] p-5 transition-all duration-300 hover:border-[#00d4ff]/40 hover:shadow-[0_0_20px_rgba(0,212,255,0.12)]" style={{borderColor: 'var(--zdg-border)', backgroundColor: 'var(--zdg-card)'}}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🔬</span>
+                <span className="rounded-md border border-[#00d4ff]/30 bg-[#00d4ff]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{borderColor: 'var(--zdg-tag-border)', backgroundColor: 'var(--zdg-tag-bg)', color: 'var(--zdg-tag-text)'}}>Coming Soon</span>
+              </div>
+              <h3 className="mt-3 text-sm font-semibold" style={{color: 'var(--zdg-text)'}}>Interactive Labs</h3>
+              <p className="mt-1.5 text-xs leading-5" style={{color: 'var(--zdg-muted)'}}>Hands-on cybersecurity challenges in a safe sandbox environment</p>
             </div>
-            <div className="skeleton-block h-[72px] border border-white/6 bg-white/[0.02] p-4">
-              <div className="h-3 w-16 rounded bg-white/10" />
-              <div className="mt-3 h-4 w-28 rounded bg-white/10" />
+            <div className="group rounded-xl border border-white/8 bg-white/[0.03] p-5 transition-all duration-300 hover:border-[#00ff88]/40 hover:shadow-[0_0_20px_rgba(0,255,136,0.12)]" style={{borderColor: 'var(--zdg-border)', backgroundColor: 'var(--zdg-card)'}}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎯</span>
+                <span className="rounded-md border border-[#00ff88]/30 bg-[#00ff88]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{borderColor: 'var(--zdg-tag-border)', backgroundColor: 'var(--zdg-tag-bg)', color: 'var(--zdg-tag-text)'}}>Active</span>
+              </div>
+              <h3 className="mt-3 text-sm font-semibold" style={{color: 'var(--zdg-text)'}}>Daily Missions</h3>
+              <p className="mt-1.5 text-xs leading-5" style={{color: 'var(--zdg-muted)'}}>Earn XP and build streaks with daily cybersecurity challenges</p>
             </div>
-            <div className="skeleton-block h-[72px] border border-white/6 bg-white/[0.02] p-4">
-              <div className="h-3 w-24 rounded bg-white/10" />
-              <div className="mt-3 h-4 w-20 rounded bg-white/10" />
+            <div className="group rounded-xl border border-white/8 bg-white/[0.03] p-5 transition-all duration-300 hover:border-[#a855f7]/40 hover:shadow-[0_0_20px_rgba(168,85,247,0.12)]" style={{borderColor: 'var(--zdg-border)', backgroundColor: 'var(--zdg-card)'}}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🤖</span>
+                <span className="rounded-md border border-[#a855f7]/30 bg-[#a855f7]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{borderColor: 'var(--zdg-tag-border)', backgroundColor: 'var(--zdg-tag-bg)', color: 'var(--zdg-tag-text)'}}>Online</span>
+              </div>
+              <h3 className="mt-3 text-sm font-semibold" style={{color: 'var(--zdg-text)'}}>Zorvix AI</h3>
+              <p className="mt-1.5 text-xs leading-5" style={{color: 'var(--zdg-muted)'}}>Your personal AI mentor for cyber defense guidance</p>
             </div>
           </motion.div>
         </div>

@@ -1,7 +1,8 @@
 import axios, { AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { API_BASE_URL, PY_API_BASE_URL } from '@/lib/apiConfig';
 
 const pyapi = axios.create({
-  baseURL: import.meta.env.VITE_PYAPI_URL || import.meta.env.VITE_PY_API_URL || import.meta.env.VITE_API_URL,
+  baseURL: PY_API_BASE_URL,
   withCredentials: true,
   timeout: 15000,
   headers: {
@@ -42,7 +43,7 @@ pyapi.interceptors.response.use(
       if (refreshToken) {
         try {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL}/api/auth/refresh`,
+            `${API_BASE_URL || ''}/api/auth/refresh`,
             { refreshToken },
             { withCredentials: true }
           );

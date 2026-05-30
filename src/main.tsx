@@ -5,6 +5,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { initFirebase } from "./lib/firebase";
 import { applyThemeToDocument, getStoredTheme } from "./lib/theme";
 import { installGlobalDiagnostics } from "./lib/runtimeDiagnostics";
@@ -24,6 +25,8 @@ if (typeof window !== "undefined") {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>
 );

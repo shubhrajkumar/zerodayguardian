@@ -336,13 +336,20 @@ const triggerAuthRedirect = () => {
 
 const runRefreshRequest = async (url: string) => {
   const csrf = getCsrfToken();
+  const storedRefresh = getStoredRefreshToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(csrf ? { "X-CSRF-Token": csrf } : {}),
+  };
+  // Pass stored refresh token as Authorization Bearer header as fallback
+  // when cookies are unavailable (third-party context, cross-origin, etc.)
+  if (storedRefresh) {
+    headers.Authorization = `Bearer ${storedRefresh}`;
+  }
   return fetch(url, {
     method: "POST",
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(csrf ? { "X-CSRF-Token": csrf } : {}),
-    },
+    headers,
     body: "{}",
   });
 };

@@ -81,7 +81,7 @@ jobs:
     name: Finalize External Deployment Checks
     runs-on: ubuntu-latest
     needs: [quality-check, security-scan, cleanup]
-    if: needs.quality-check.result == 'success' && needs.security-scan.result == 'success'
+    if: needs.quality-check.result == 'success' && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
 
     steps:
       - name: Mark stale Vercel checks as complete

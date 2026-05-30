@@ -1,5 +1,6 @@
 import { FormEvent, useEffect } from "react";
 import { X } from "lucide-react";
+import { safeArray } from "@/utils/safeData";
 
 interface LabModel {
   id: string;
@@ -203,7 +204,7 @@ const LabExecutionModal = ({
                   <strong>Next action:</strong> {safeNextAction}
                 </div>
                 <div className="mb-4 flex flex-wrap gap-2">
-                  {(missionState?.available_actions?.length ? missionState.available_actions : activeLab.allowedCommands.filter((cmd) => cmd !== "help" && cmd !== "status").slice(0, 4)).map((action) => (
+                  {(missionState?.available_actions?.length ? missionState.available_actions : safeArray(activeLab.allowedCommands).filter((cmd) => cmd !== "help" && cmd !== "status").slice(0, 4)).map((action) => (
                     <button
                       key={action}
                       type="button"
@@ -227,7 +228,7 @@ const LabExecutionModal = ({
                   </button>
                 </form>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {activeLab.allowedCommands.map((allowed) => (
+                  {safeArray(activeLab.allowedCommands).map((allowed) => (
                     <button
                       key={allowed}
                       type="button"
@@ -246,7 +247,7 @@ const LabExecutionModal = ({
                   <span className="rounded-full border border-cyan-300/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-100">Step {stepLabel}</span>
                 </div>
                 <ul className="mt-2 space-y-2 text-xs text-cyan-100/85">
-                  {(activeLab.objectives?.length ? activeLab.objectives : activeLab.steps).slice(0, 4).map((step, index) => (
+                  {(activeLab.objectives?.length ? activeLab.objectives : safeArray(activeLab.steps)).slice(0, 4).map((step, index) => (
                     <li key={step} className="flex items-start gap-2">
                       <span className={`mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px] shadow-[0_0_10px_rgba(34,211,238,0.35)] ${
                         (missionState?.cleared_objectives || []).includes(step)
@@ -334,7 +335,7 @@ const LabExecutionModal = ({
                   </span>
                 </div>
                 <div className="max-h-[42vh] overflow-y-auto rounded-md border border-cyan-300/25 bg-black/80 p-3 font-mono text-xs text-cyan-50/95 shadow-[inset_0_0_20px_rgba(34,211,238,0.12)]">
-                  {consoleLines.map((line, idx) => (
+                  {safeArray(consoleLines).map((line, idx) => (
                     <pre key={`${line}-${idx}`} className="whitespace-pre-wrap">{line}</pre>
                   ))}
                   <div className="mt-2 flex items-center gap-2 text-[11px] text-cyan-200/80">
