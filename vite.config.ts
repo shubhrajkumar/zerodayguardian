@@ -81,6 +81,7 @@ export default defineConfig(() => {
     },
     build: {
       target: "es2020",
+      modulePreload: false,
       sourcemap: process.env.SENTRY_AUTH_TOKEN ? "hidden" : false,
       reportCompressedSize: false,
       chunkSizeWarningLimit: 1000,
