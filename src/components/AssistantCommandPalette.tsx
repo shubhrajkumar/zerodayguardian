@@ -17,8 +17,8 @@ const AssistantCommandPalette = () => {
   const { mindset } = useLearningMode();
   const [open, setOpen] = useState(false);
 
-  const weakest = progress.skillGraph.weakest[0];
-  const strongest = progress.skillGraph.strongest[0];
+  const weakest = progress.skillGraph.weakest?.[0];
+  const strongest = progress.skillGraph.strongest?.[0];
   const diagnostics = getRecentClientDiagnostics().filter((item) => item.path === location.pathname);
   const frictionSignal = useMemo(
     () => ({
@@ -36,7 +36,7 @@ const AssistantCommandPalette = () => {
         mindset,
         weakest,
         strongest,
-        recommendedPath: progress.skillGraph.recommendedPath,
+        recommendedPath: Array.isArray(progress.skillGraph.recommendedPath) ? progress.skillGraph.recommendedPath : [],
         frictionSignal,
         inactive: false,
         hintAffinity: {},

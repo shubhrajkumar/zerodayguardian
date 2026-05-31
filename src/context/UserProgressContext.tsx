@@ -3,6 +3,7 @@ import { getStoredAccessToken } from "@/lib/apiClient";
 import api from "@/lib/api";
 import { AxiosError } from "axios";
 import { useAuth } from "@/context/AuthContext";
+import { safeArray } from "@/utils/safeData";
 
 type DashboardPayload = {
   intelligence: {
@@ -95,6 +96,25 @@ type UserProgressContextValue = {
     success?: boolean;
     metadata?: Record<string, unknown>;
   }) => Promise<void>;
+};
+
+const normalizeSkillGraph = (
+  rawSkillGraph: unknown,
+  fallback: UserProgress["skillGraph"]
+): UserProgress["skillGraph"] => {
+  if (!rawSkillGraph || typeof rawSkillGraph !== "object") {
+    return fallback;
+  }
+
+  const candidate = rawSkillGraph as Record<string, unknown>;
+  return {
+    nodes: Array.isArray(candidate.nodes) ? (candidate.nodes as UserProgress["skillGraph"]["nodes"]) : fallback.nodes,
+    strongest: Array.isArray(candidate.strongest) ? (candidate.strongest as UserProgress["skillGraph"]["strongest"]) : fallback.strongest,
+    weakest: Array.isArray(candidate.weakest) ? (candidate.weakest as UserProgress["skillGraph"]["weakest"]) : fallback.weakest,
+    recommendedPath: Array.isArray(candidate.recommendedPath)
+      ? (candidate.recommendedPath as UserProgress["skillGraph"]["recommendedPath"])
+      : fallback.recommendedPath,
+  };
 };
 
 const defaultProgress: UserProgress = {
@@ -205,7 +225,7 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
         todayActions: Number(dash?.intelligence?.gamification?.todayActions || prev.todayActions),
         xpToNextRank: Number(dash?.intelligence?.gamification?.xpToNextRank || prev.xpToNextRank),
         nextRank: String(dash?.intelligence?.gamification?.nextRank || prev.nextRank),
-        skillGraph: dash?.intelligence?.skillGraph || prev.skillGraph,
+        skillGraph: normalizeSkillGraph(dash?.intelligence?.skillGraph, prev.skillGraph),
       }));
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status && [401, 403].includes(error.response.status)) {

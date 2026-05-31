@@ -30,6 +30,7 @@ import api from "@/lib/api";
 import { NeuroMessage, NeuroTopicContext } from "@/lib/neurobotEngine";
 import { useAuth } from "@/context/AuthContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
+import { safeArray } from "@/utils/safeData";
 
 const ZORVIX_NAME = "ZORVIX";
 const MAX_ATTACHMENT_BYTES = 2_000_000;
@@ -165,9 +166,10 @@ const normalizeTopicPayload = (topic: Partial<NeuroTopicEvent> | null | undefine
   if (!topic || typeof topic !== "object") return null;
   const rawTitle = String(topic.title || "").trim();
   const rawQuery = String(topic.query || "").trim();
-  const tags = Array.isArray(topic.tags)
-    ? topic.tags.map((tag) => String(tag || "").trim()).filter(Boolean).slice(0, 20)
-    : [];
+  const tags = safeArray(topic.tags)
+    .map((tag) => String(tag || "").trim())
+    .filter(Boolean)
+    .slice(0, 20);
   if (!rawTitle && !rawQuery) return null;
   const title = rawTitle || rawQuery.slice(0, 180) || "ZORVIX Topic";
   const idBase = String(topic.id || title || rawQuery || "zorvix-topic")

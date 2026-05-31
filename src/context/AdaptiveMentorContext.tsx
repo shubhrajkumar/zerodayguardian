@@ -38,9 +38,9 @@ export const AdaptiveMentorProvider = ({ children }: { children: ReactNode }) =>
   const { momentum, streak, tasks, challenge } = useMissionSystem();
 
   const value = useMemo<AdaptiveMentorState>(() => {
-    const weakest = progress.skillGraph.weakest[0];
-    const strongest = progress.skillGraph.strongest[0];
-    const recommendedPath = progress.skillGraph.recommendedPath[0];
+    const weakest = progress.skillGraph.weakest?.[0];
+    const strongest = progress.skillGraph.strongest?.[0];
+    const recommendedPath = progress.skillGraph.recommendedPath?.[0];
     const difficulty = getDifficulty(progress.level, streak, momentum);
     const confidence = Math.min(96, 42 + progress.todayActions * 8 + progress.completedLabs * 3 + streak * 2);
 

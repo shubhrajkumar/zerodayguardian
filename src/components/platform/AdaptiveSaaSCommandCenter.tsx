@@ -40,8 +40,8 @@ const AdaptiveSaaSCommandCenter = () => {
     [mindset, quickActions]
   );
 
-  const strongest = progress.skillGraph.strongest[0]?.label || "Operator strengths still forming";
-  const weakest = progress.skillGraph.weakest[0]?.label || "No weak zone identified yet";
+  const strongest = progress.skillGraph.strongest?.[0]?.label || "Operator strengths still forming";
+  const weakest = progress.skillGraph.weakest?.[0]?.label || "No weak zone identified yet";
 
   return (
     <section data-reveal className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">

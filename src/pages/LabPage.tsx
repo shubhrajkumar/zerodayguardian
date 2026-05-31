@@ -10,6 +10,7 @@ import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUserProgress } from "@/context/UserProgressContext";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { safeArray } from "@/utils/safeData";
 
 interface LabModel {
   id: string;
@@ -365,7 +366,8 @@ const LabPage = () => {
     const cleared = missionObjectives[activeLab.id] || [];
     const sourceObjectives = activeLab.objectives?.length ? activeLab.objectives : activeLab.steps;
     const currentObjective = sourceObjectives.find((item) => !cleared.includes(item)) || sourceObjectives[0] || activeLab.objective;
-    const nextAction = activeLab.allowedCommands.find((cmd) => !["help", "status"].includes(cmd)) || activeLab.allowedCommands[0] || "help";
+    const allowedCommands = safeArray(activeLab.allowedCommands);
+    const nextAction = allowedCommands.find((cmd) => !["help", "status"].includes(cmd)) || allowedCommands[0] || "help";
     return {
       step_index: Math.min(cleared.length + 1, Math.max(1, sourceObjectives.length || 1)),
       total_steps: Math.max(1, sourceObjectives.length || 1),
@@ -373,7 +375,7 @@ const LabPage = () => {
       next_action: nextAction,
       expected_outcome: `Clear "${currentObjective}" to advance the mission.`,
       cleared_objectives: cleared,
-      available_actions: activeLab.allowedCommands.filter((cmd) => !["help", "status"].includes(cmd)).slice(0, 4),
+      available_actions: allowedCommands.filter((cmd) => !["help", "status"].includes(cmd)).slice(0, 4),
     };
   }, [activeLab, missionObjectives]);
 
@@ -526,7 +528,10 @@ const LabPage = () => {
                 <div className="mt-5 flex flex-wrap gap-2"><button type="button" className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-400/16" onClick={() => { setCommand((missionState || fallbackMissionState)?.next_action || "help"); setLabModalOpen(true); }}><PlayCircle className="h-4 w-4" />Open active step</button><button type="button" className="inline-flex items-center gap-2 rounded-full border border-blue-400/16 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-100 transition hover:bg-blue-500/16" onClick={triggerMentorPrompt}><Bot className="h-4 w-4" />Ask ZORVIX</button></div>
               </article>
 
-              <article className="rounded-[28px] border border-white/8 bg-[#090d14] p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Attack / Defense Simulation</p><h3 className="mt-2 text-xl font-semibold text-white">Scenario breakdown</h3></div><span className={`rounded-full border px-3 py-1 text-[11px] ${missionRiskTone}`}>{missionFeedback?.riskLevel || "LOW"}</span></div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-2xl border border-white/8 bg-black/20 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Narrative</p><p className="mt-2 text-sm leading-6 text-slate-300">{activeLab.attackNarrative || activeLab.description}</p></div><div className="rounded-2xl border border-white/8 bg-black/20 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Operator feedback</p><p className="mt-2 text-sm leading-6 text-slate-300">{missionFeedback?.operatorAction || "ZORVIX feedback appears here after command execution."}</p>{(missionFeedback?.realtimeSignals?.length ? missionFeedback.realtimeSignals : activeLab.realtimeSignals || []).slice(0, 4).length ? <div className="mt-3 flex flex-wrap gap-2">{(missionFeedback?.realtimeSignals?.length ? missionFeedback.realtimeSignals : activeLab.realtimeSignals || []).slice(0, 4).map((signal) => <span key={signal} className="rounded-full border border-blue-400/14 px-2.5 py-1 text-[11px] text-blue-100">{signal.replace(/-/g, " ")}</span>)}</div> : null}</div></div></article>
+              <article className="rounded-[28px] border border-white/8 bg-[#090d14] p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Attack / Defense Simulation</p><h3 className="mt-2 text-xl font-semibold text-white">Scenario breakdown</h3></div><span className={`rounded-full border px-3 py-1 text-[11px] ${missionRiskTone}`}>{missionFeedback?.riskLevel || "LOW"}</span></div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-2xl border border-white/8 bg-black/20 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Narrative</p><p className="mt-2 text-sm leading-6 text-slate-300">{activeLab.attackNarrative || activeLab.description}</p></div><div className="rounded-2xl border border-white/8 bg-black/20 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Operator feedback</p><p className="mt-2 text-sm leading-6 text-slate-300">{missionFeedback?.operatorAction || "ZORVIX feedback appears here after command execution."}</p>{(() => {
+              const signals = safeArray(missionFeedback?.realtimeSignals?.length ? missionFeedback.realtimeSignals : activeLab.realtimeSignals || []).slice(0, 4);
+              return signals.length ? <div className="mt-3 flex flex-wrap gap-2">{signals.map((signal) => <span key={signal} className="rounded-full border border-blue-400/14 px-2.5 py-1 text-[11px] text-blue-100">{signal.replace(/-/g, " ")}</span>)}</div> : null;
+            })()}</div></div></article>
             </div>
 
             <div className="space-y-4">
