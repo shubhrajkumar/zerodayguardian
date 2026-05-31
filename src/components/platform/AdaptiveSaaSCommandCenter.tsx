@@ -92,13 +92,13 @@ const AdaptiveSaaSCommandCenter = () => {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Next-Mission Intelligence</p>
-              <p className="mt-2 text-lg font-semibold text-white">{nextMissionHook.title}</p>
+              <p className="mt-2 text-lg font-semibold text-white">{nextMissionHook?.title ?? "Mission intel loading"}</p>
             </div>
             <span className="rounded-full border border-cyan-300/18 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100/75">
-              {nextMissionHook.ctaLabel}
+              {nextMissionHook?.ctaLabel ?? "Deploy"}
             </span>
           </div>
-          <p className="mt-3 text-sm text-slate-300/80">{nextMissionHook.detail}</p>
+          <p className="mt-3 text-sm text-slate-300/80">{nextMissionHook?.detail ?? "Next mission details will appear here."}</p>
           <p className="mt-2 text-sm text-cyan-100/78">{curiosityTrigger}</p>
         </div>
       </article>

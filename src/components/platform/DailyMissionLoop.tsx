@@ -27,11 +27,13 @@ const DailyMissionLoop = ({
   onDismissReward,
   onRefresh,
 }: DailyMissionLoopProps) => {
-  const dailyCompleted = useMemo(() => snapshot.dailyMissions.filter((item) => item.completed).length, [snapshot.dailyMissions]);
-  const weeklyCompleted = useMemo(() => snapshot.weeklyMissions.filter((item) => item.completed).length, [snapshot.weeklyMissions]);
-  const dailyProgress = progressPct(dailyCompleted, snapshot.dailyMissions.length);
-  const weeklyProgress = progressPct(weeklyCompleted, snapshot.weeklyMissions.length);
-  const weekCleared = snapshot.weeklyMissions.length > 0 && weeklyCompleted === snapshot.weeklyMissions.length;
+  const dailyMissions = snapshot?.dailyMissions ?? [];
+  const weeklyMissions = snapshot?.weeklyMissions ?? [];
+  const dailyCompleted = useMemo(() => dailyMissions.filter((item) => item.completed).length, [dailyMissions]);
+  const weeklyCompleted = useMemo(() => weeklyMissions.filter((item) => item.completed).length, [weeklyMissions]);
+  const dailyProgress = progressPct(dailyCompleted, dailyMissions.length);
+  const weeklyProgress = progressPct(weeklyCompleted, weeklyMissions.length);
+  const weekCleared = weeklyMissions.length > 0 && weeklyCompleted === weeklyMissions.length;
 
   useEffect(() => {
     if (!latestReward) return;
@@ -79,10 +81,9 @@ const DailyMissionLoop = ({
           ) : null}
 
           <div className="mt-5 grid gap-3 md:grid-cols-3">
-            {[
-              { label: "Daily XP Bank", value: `${snapshot.totalXp} XP`, detail: `Level ${snapshot.level} | ${snapshot.xpToNextLevel} XP to next breach`, icon: Sparkles },
-              { label: "Streak Heat", value: `${snapshot.streakDays} days`, detail: `${snapshot.completedDays} daily loops cleared`, icon: Flame },
-              { label: "Uplink", value: snapshot.serviceStatus === "ready" ? "Stable" : "Degraded", detail: snapshot.serviceMessage, icon: Radar },
+            {[              {label: "Daily XP Bank", value: `${snapshot?.totalXp ?? 0} XP`, detail: `Level ${snapshot?.level ?? 1} | ${snapshot?.xpToNextLevel ?? 100} XP to next breach`, icon: Sparkles },
+              { label: "Streak Heat", value: `${snapshot?.streakDays ?? 0} days`, detail: `${snapshot?.completedDays ?? 0} daily loops cleared`, icon: Flame },
+              { label: "Uplink", value: snapshot?.serviceStatus === "ready" ? "Stable" : "Degraded", detail: snapshot?.serviceMessage ?? "", icon: Radar },
             ].map((item) => (
               <div key={item.label} className="gamification-panel rounded-[24px] p-4">
                 <item.icon className="h-5 w-5 text-emerald-300" />
@@ -113,7 +114,7 @@ const DailyMissionLoop = ({
                 />
               </div>
               <div className="mt-4 grid gap-3">
-                {snapshot.dailyMissions.map((mission) => (
+                {dailyMissions.map((mission) => (
                   <motion.div
                     key={mission.id}
                     layout
@@ -185,7 +186,7 @@ const DailyMissionLoop = ({
                 </motion.div>
               ) : null}
               <div className="mt-4 grid gap-3">
-                {snapshot.weeklyMissions.map((mission) => (
+                {weeklyMissions.map((mission) => (
                   <div key={mission.id} className="rounded-[22px] border border-white/8 bg-black/18 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -266,8 +267,8 @@ const DailyMissionLoop = ({
           <div className="mt-4 rounded-[24px] border border-white/8 bg-black/18 p-4">
             <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/70">Badge Cabinet</p>
             <div className="mt-4 grid gap-3">
-              {snapshot.badges.length ? (
-                snapshot.badges.slice(0, 6).map((badge) => (
+              {(snapshot?.badges ?? []).length ? (
+                (snapshot?.badges ?? []).slice(0, 6).map((badge) => (
                   <motion.div
                     key={badge.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -297,8 +298,8 @@ const DailyMissionLoop = ({
           <div className="mt-4 rounded-[24px] border border-white/8 bg-black/18 p-4">
             <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/70">Recent Intel</p>
             <div className="mt-4 grid gap-3">
-              {snapshot.recentRewards.length ? (
-                snapshot.recentRewards.slice(0, 5).map((reward) => (
+              {(snapshot?.recentRewards ?? []).length ? (
+                (snapshot?.recentRewards ?? []).slice(0, 5).map((reward) => (
                   <div key={reward.id} className="rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-3">
                     <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#e2e8f0]">
                       <CheckCircle2 className="h-4 w-4 text-emerald-300" />

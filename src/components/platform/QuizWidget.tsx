@@ -15,8 +15,8 @@ const animation = { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const };
 
 const QuizWidget = ({ snapshot, loading, error, onAnswer }: QuizWidgetProps) => {
   const correctCount = useMemo(
-    () => Object.values(snapshot.quizAnswers).filter((answer) => answer.correct).length,
-    [snapshot.quizAnswers]
+    () => Object.values(snapshot?.quizAnswers ?? {}).filter((answer) => answer.correct).length,
+    [snapshot?.quizAnswers]
   );
 
   useEffect(() => {
@@ -44,7 +44,7 @@ const QuizWidget = ({ snapshot, loading, error, onAnswer }: QuizWidgetProps) => 
             </p>
           </div>
           <div className="rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-50">
-            {correctCount}/{snapshot.quizQuestions.length || 5} correct
+            {correctCount}/{(snapshot?.quizQuestions ?? []).length || 5} correct
           </div>
         </div>
 
@@ -55,8 +55,8 @@ const QuizWidget = ({ snapshot, loading, error, onAnswer }: QuizWidgetProps) => 
         ) : null}
 
         <div className="mt-5 grid gap-4">
-          {snapshot.quizQuestions.map((question, index) => {
-            const answer = snapshot.quizAnswers[question.id];
+          {(snapshot?.quizQuestions ?? []).map((question, index) => {
+            const answer = snapshot?.quizAnswers?.[question.id];
             return (
               <motion.article
                 key={question.id}
@@ -74,7 +74,7 @@ const QuizWidget = ({ snapshot, loading, error, onAnswer }: QuizWidgetProps) => 
                     <h3 className="mt-2 text-lg font-semibold text-[#e2e8f0]">{question.prompt}</h3>
 
                     <div className="mt-4 grid gap-2">
-                      {question.options.map((option) => {
+                      {(question?.options ?? []).map((option) => {
                         const selected = answer?.selectedOptionId === option.id;
                         const correct = question.correctOptionId === option.id;
                         return (

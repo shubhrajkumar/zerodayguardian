@@ -1,0 +1,3172 @@
+[
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 93,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 112,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 177,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 205,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\global_index.d.ts",
+    "line": 6214,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\global_index.d.ts",
+    "line": 6233,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\global_index.d.ts",
+    "line": 6298,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\global_index.d.ts",
+    "line": 6326,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\global_index.d.ts",
+    "line": 8103,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\global_index.d.ts",
+    "line": 8122,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\global_index.d.ts",
+    "line": 8187,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\global_index.d.ts",
+    "line": 8215,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 92,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 111,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 176,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 204,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 93,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 112,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 177,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 205,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 92,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 111,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 176,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 204,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\packages\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 93,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\packages\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 112,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\packages\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 177,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\packages\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 205,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\packages\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 92,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\packages\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 111,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\packages\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 176,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\lite\\packages\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 204,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\packages\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 93,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\packages\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 112,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\packages\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 177,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\packages\\firestore\\src\\api\\snapshot.d.ts",
+    "line": 205,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\packages\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 92,
+    "code": " *         return `${this.title} by ${this.author}`;"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\packages\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 111,
+    "code": " *             ttl: post.title,"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\packages\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 176,
+    "code": " *         assertEqual(post1.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\dist\\packages\\firestore\\src\\lite-api\\snapshot.d.ts",
+    "line": 204,
+    "code": " *         assertEqual(post2.title, 'My Life');"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\call-credentials.ts",
+    "line": 155,
+    "code": "      this.creds.map(cred => cred.generateMetadata(options))"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 167,
+    "code": "      events: this.events.map(event => {"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 474,
+    "code": "    .map(section => parseIPv6Section(section));"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 489,
+    "code": "        ipAddress.split('.').map(segment => Number.parseInt(segment))"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 572,
+    "code": "    channel_ref: resolvedInfo.children.channels.map(ref =>"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 575,
+    "code": "    subchannel_ref: resolvedInfo.children.subchannels.map(ref =>"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 633,
+    "code": "    listen_socket: resolvedInfo.listenerChildren.sockets.map(ref =>"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 705,
+    "code": "    socket_ref: resolvedInfo.children.sockets.map(ref =>"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\client-interceptors.ts",
+    "line": 542,
+    "code": "        interceptorArgs.callInterceptorProviders.map(provider =>"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\client-interceptors.ts",
+    "line": 552,
+    "code": "        interceptorArgs.clientInterceptorProviders.map(provider =>"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\filter-stack.ts",
+    "line": 97,
+    "code": "      this.factories.map(factory => factory.createFilter())"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\load-balancer-outlier-detection.ts",
+    "line": 201,
+    "code": "      child_policy: this.childPolicy.map(policy => policy.toJsonObject()),"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\load-balancer-outlier-detection.ts",
+    "line": 313,
+    "code": "      obj.child_policy.map(validateLoadBalancingConfig)"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\load-balancer-pick-first.ts",
+    "line": 410,
+    "code": "    const newChildrenList = addressList.map(address => ({"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\load-balancer-round-robin.ts",
+    "line": 206,
+    "code": "        addressList.map(address => subchannelAddressToString(address))"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\load-balancer-round-robin.ts",
+    "line": 208,
+    "code": "    this.subchannels = addressList.map(address =>"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\metadata.ts",
+    "line": 178,
+    "code": "      const clonedValue: MetadataValue[] = value.map(v => {"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\metadata.ts",
+    "line": 227,
+    "code": "      result[key] = values.map(bufToString);"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\resolver-dns.ts",
+    "line": 64,
+    "code": "      arrays.map(array => array.length)"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\resolver-dns.ts",
+    "line": 227,
+    "code": "          this.latestLookupResult = mergeArrays(ip6Addresses, ip4Addresses).map("
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\resolver-dns.ts",
+    "line": 233,
+    "code": "              .map(addr => addr.host + ':' + addr.port)"
+  },
+  {
+    "file": "node_modules\\@firebase\\firestore\\node_modules\\@grpc\\grpc-js\\src\\server.ts",
+    "line": 464,
+    "code": "        addressList.map(address => {"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\call-credentials.ts",
+    "line": 156,
+    "code": "      this.creds.map(cred => cred.generateMetadata(options))"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 187,
+    "code": "      events: this.events.map(event => {"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 458,
+    "code": "    .map(section => parseIPv6Section(section));"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\channelz.ts",
+    "line": 475,
+    "code": "      ipAddress.split('.').map(segment => Number.parseInt(segment))"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\client-interceptors.ts",
+    "line": 550,
+    "code": "        interceptorArgs.callInterceptorProviders.map(provider =>"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\client-interceptors.ts",
+    "line": 560,
+    "code": "        interceptorArgs.clientInterceptorProviders.map(provider =>"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\filter-stack.ts",
+    "line": 97,
+    "code": "      this.factories.map(factory => factory.createFilter())"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\load-balancer-pick-first.ts",
+    "line": 475,
+    "code": "    trace('connectToAddressList([' + addressList.map(address => subchannelAddressToString(address)) + '])');"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\load-balancer-pick-first.ts",
+    "line": 476,
+    "code": "    const newChildrenList = addressList.map(address => ({"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\load-balancer-pick-first.ts",
+    "line": 538,
+    "code": "      ...endpointList.map(endpoint => endpoint.addresses)"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\load-balancer-pick-first.ts",
+    "line": 540,
+    "code": "    trace('updateAddressList([' + rawAddressList.map(address => subchannelAddressToString(address)) + '])');"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\load-balancer-round-robin.ts",
+    "line": 159,
+    "code": "          readyChildren.map(child => ({"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\load-balancer-round-robin.ts",
+    "line": 246,
+    "code": "    trace('Connect to endpoint list ' + endpointList.map(endpointToString));"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\load-balancer-round-robin.ts",
+    "line": 248,
+    "code": "    this.children = endpointList.map("
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\load-balancer-weighted-round-robin.ts",
+    "line": 314,
+    "code": "      trace('Created picker with weights: ' + weightedPickers.map(entry => entry.endpointName + ':' + entry.weight).join(','));"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\load-balancer-weighted-round-robin.ts",
+    "line": 394,
+    "code": "    trace('Connect to endpoint list ' + maybeEndpointList.value.map(endpointToString));"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\metadata.ts",
+    "line": 179,
+    "code": "      const clonedValue: MetadataValue[] = value.map(v => {"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\metadata.ts",
+    "line": 231,
+    "code": "      result[key] = values.map(bufToString);"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\resolver-dns.ts",
+    "line": 199,
+    "code": "          this.latestLookupResult = statusOrFromValue(addressList.map(address => ({"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\resolver-dns.ts",
+    "line": 204,
+    "code": "            addressList.map(addr => addr.host + ':' + addr.port).join(',') +"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\resolver-dns.ts",
+    "line": 337,
+    "code": "        .map(addr => ({"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\resolver-dns.ts",
+    "line": 348,
+    "code": "    return addressList.map(addr => ({ host: addr.address, port: +this.port! }));"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\resolver-ip.ts",
+    "line": 87,
+    "code": "    this.endpoints = addresses.map(address => ({ addresses: [address] }));"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\resolver-ip.ts",
+    "line": 88,
+    "code": "    trace('Parsed ' + target.scheme + ' address list ' + addresses.map(subchannelAddressToString));"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\server.ts",
+    "line": 726,
+    "code": "          .map(address =>"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\server.ts",
+    "line": 732,
+    "code": "          restAddresses.map(address =>"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\server.ts",
+    "line": 742,
+    "code": "            .map(result => result.error!),"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\server.ts",
+    "line": 747,
+    "code": "        addressList.map(address =>"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\server.ts",
+    "line": 756,
+    "code": "          .map(result => result.error!),"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\server.ts",
+    "line": 801,
+    "code": "          ...endpointList.value.map(endpoint => endpoint.addresses)"
+  },
+  {
+    "file": "node_modules\\@grpc\\grpc-js\\src\\subchannel-address.ts",
+    "line": 114,
+    "code": "    '[' + endpoint.addresses.map(subchannelAddressToString).join(', ') + ']'"
+  },
+  {
+    "file": "node_modules\\@hookform\\resolvers\\io-ts\\src\\errorsToRecord.ts",
+    "line": 41,
+    "code": "    ReadonlyArray.map(({ key }) => key),"
+  },
+  {
+    "file": "node_modules\\@hookform\\resolvers\\io-ts\\src\\errorsToRecord.ts",
+    "line": 42,
+    "code": "    ReadonlyArray.map((key) =>"
+  },
+  {
+    "file": "node_modules\\@hookform\\resolvers\\io-ts\\src\\errorsToRecord.ts",
+    "line": 62,
+    "code": "        Option.map("
+  },
+  {
+    "file": "node_modules\\@hookform\\resolvers\\io-ts\\src\\errorsToRecord.ts",
+    "line": 79,
+    "code": "    Option.map((contextEntry) => contextEntry.type.name),"
+  },
+  {
+    "file": "node_modules\\@hookform\\resolvers\\io-ts\\src\\errorsToRecord.ts",
+    "line": 99,
+    "code": "    ReadonlyArray.map((error) => ({"
+  },
+  {
+    "file": "node_modules\\@hookform\\resolvers\\io-ts\\src\\errorsToRecord.ts",
+    "line": 123,
+    "code": "    ReadonlyRecord.map((errorWithPath) => {"
+  },
+  {
+    "file": "node_modules\\@hookform\\resolvers\\io-ts\\src\\errorsToRecord.ts",
+    "line": 138,
+    "code": "    return pipe(validationErrors, ReadonlyArray.map(formatError), concat);"
+  },
+  {
+    "file": "node_modules\\@jridgewell\\gen-mapping\\src\\gen-mapping.ts",
+    "line": 306,
+    "code": "  cast(gen)._sourcesContent = map.sourcesContent || map.sources.map(() => null);"
+  },
+  {
+    "file": "node_modules\\@jridgewell\\gen-mapping\\src\\gen-mapping.ts",
+    "line": 541,
+    "code": "    scope.vars = variables.map((v) => put(names, v));"
+  },
+  {
+    "file": "node_modules\\@jridgewell\\remapping\\src\\build-source-map-tree.ts",
+    "line": 28,
+    "code": "  const maps = asArray(input).map((m) => new TraceMap(m, ''));"
+  },
+  {
+    "file": "node_modules\\@jridgewell\\remapping\\src\\build-source-map-tree.ts",
+    "line": 56,
+    "code": "  const children = resolvedSources.map((sourceFile: string | null, i: number): Sources => {"
+  },
+  {
+    "file": "node_modules\\@jridgewell\\trace-mapping\\src\\by-source.ts",
+    "line": 14,
+    "code": "  const sources: Source[] = memos.map(() => []);"
+  },
+  {
+    "file": "node_modules\\@jridgewell\\trace-mapping\\src\\trace-mapping.ts",
+    "line": 122,
+    "code": "    this.resolvedSources = sources.map(resolve);"
+  },
+  {
+    "file": "node_modules\\@jridgewell\\trace-mapping\\src\\trace-mapping.ts",
+    "line": 487,
+    "code": "  const bySourceMemos = (cast(map)._bySourceMemos ||= sources.map(memoizedState));"
+  },
+  {
+    "file": "node_modules\\@opentelemetry\\semantic-conventions\\build\\src\\experimental_attributes.d.ts",
+    "line": 12413,
+    "code": "export declare const ATTR_PROCESS_TITLE: \"process.title\";"
+  },
+  {
+    "file": "node_modules\\@opentelemetry\\semantic-conventions\\build\\src\\experimental_attributes.d.ts",
+    "line": 14530,
+    "code": "export declare const ATTR_VCS_CHANGE_TITLE: \"vcs.change.title\";"
+  },
+  {
+    "file": "node_modules\\@opentelemetry\\semantic-conventions\\build\\src\\experimental_attributes.d.ts",
+    "line": 14785,
+    "code": " * Deprecated, use `vcs.change.title` instead."
+  },
+  {
+    "file": "node_modules\\@opentelemetry\\semantic-conventions\\build\\src\\experimental_attributes.d.ts",
+    "line": 14793,
+    "code": " * @deprecated Replaced by `vcs.change.title`."
+  },
+  {
+    "file": "node_modules\\@opentelemetry\\semantic-conventions\\build\\src\\experimental_attributes.d.ts",
+    "line": 14795,
+    "code": "export declare const ATTR_VCS_REPOSITORY_CHANGE_TITLE: \"vcs.repository.change.title\";"
+  },
+  {
+    "file": "node_modules\\@radix-ui\\react-alert-dialog\\src\\alert-dialog.tsx",
+    "line": 170,
+    "code": "    const { __scopeAlertDialog, ...titleProps } = props;"
+  },
+  {
+    "file": "node_modules\\@radix-ui\\react-alert-dialog\\src\\alert-dialog.tsx",
+    "line": 172,
+    "code": "    return <DialogPrimitive.Title {...dialogScope} {...titleProps} ref={forwardedRef} />;"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\mutationCache.ts",
+    "line": 236,
+    "code": "        pausedMutations.map((mutation) => mutation.continue().catch(noop)),"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queriesObserver.ts",
+    "line": 96,
+    "code": "      const queryHashes = queries.map("
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queriesObserver.ts",
+    "line": 116,
+    "code": "      const newObservers = newObserverMatches.map((match) => match.observer)"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queriesObserver.ts",
+    "line": 117,
+    "code": "      const newResult = newObservers.map((observer) =>"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queriesObserver.ts",
+    "line": 165,
+    "code": "    return this.#observers.map((observer) => observer.getCurrentQuery())"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queriesObserver.ts",
+    "line": 181,
+    "code": "    const result = matches.map((match) =>"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queriesObserver.ts",
+    "line": 184,
+    "code": "    const queryHashes = matches.map("
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queriesObserver.ts",
+    "line": 203,
+    "code": "    return matches.map((match, index) => {"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queryClient.ts",
+    "line": 169,
+    "code": "    return this.#queryCache.findAll(filters).map(({ queryKey, state }) => {"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queryClient.ts",
+    "line": 224,
+    "code": "        .map(({ queryKey }) => ["
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queryClient.ts",
+    "line": 286,
+    "code": "        .map((query) => query.cancel(defaultedCancelOptions)),"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\queryClient.ts",
+    "line": 326,
+    "code": "        .map((query) => {"
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\types.ts",
+    "line": 775,
+    "code": "   *       {data.map(todo => ("
+  },
+  {
+    "file": "node_modules\\@tanstack\\query-core\\src\\types.ts",
+    "line": 776,
+    "code": "   *         <li key={todo.id}>{todo.title}</li>"
+  },
+  {
+    "file": "node_modules\\@tanstack\\react-query\\src\\useMutationState.ts",
+    "line": 36,
+    "code": "    .map("
+  },
+  {
+    "file": "node_modules\\@tanstack\\react-query\\src\\useQueries.ts",
+    "line": 229,
+    "code": "      queries.map((opts) => {"
+  },
+  {
+    "file": "node_modules\\@tanstack\\react-query\\src\\useSuspenseQueries.ts",
+    "line": 193,
+    "code": "      queries: options.queries.map((query: any) => {"
+  },
+  {
+    "file": "node_modules\\bson\\src\\extended_json.ts",
+    "line": 184,
+    "code": "  return array.map((v: unknown, index: number) => {"
+  },
+  {
+    "file": "node_modules\\bson\\src\\extended_json.ts",
+    "line": 217,
+    "code": "      const props = options.seenObjects.map(entry => entry.propertyName);"
+  },
+  {
+    "file": "node_modules\\bson\\src\\extended_json.ts",
+    "line": 220,
+    "code": "        .map(prop => `${prop} -> `)"
+  },
+  {
+    "file": "node_modules\\bson\\src\\extended_json.ts",
+    "line": 227,
+    "code": "          .map(prop => `${prop} -> `)"
+  },
+  {
+    "file": "node_modules\\bson\\src\\parser\\deserializer.ts",
+    "line": 171,
+    "code": "    const utf8ValidationValues = Object.keys(utf8ValidatedKeys).map(function (key) {"
+  },
+  {
+    "file": "node_modules\\entities\\src\\generated\\decode-data-html.ts",
+    "line": 7,
+    "code": "        .map((c) => c.charCodeAt(0)),"
+  },
+  {
+    "file": "node_modules\\entities\\src\\generated\\decode-data-xml.ts",
+    "line": 7,
+    "code": "        .map((c) => c.charCodeAt(0)),"
+  },
+  {
+    "file": "node_modules\\entities\\src\\index.spec.ts",
+    "line": 10,
+    "code": "        .map((name) => new URL(`../maps/${name}.json`, import.meta.url))"
+  },
+  {
+    "file": "node_modules\\entities\\src\\index.spec.ts",
+    "line": 11,
+    "code": "        .map((url) => JSON.parse(readFileSync(url, \"utf8\")))"
+  },
+  {
+    "file": "node_modules\\entities\\src\\index.spec.ts",
+    "line": 12,
+    "code": "        .map((document, index) => [index, document]);"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\client-side-encryption\\client_encryption.ts",
+    "line": 203,
+    "code": "      keyAltNames = options.keyAltNames.map((keyAltName, i) => {"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\client-side-encryption\\client_encryption.ts",
+    "line": 319,
+    "code": "    const replacements = dataKeys.map("
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\client-side-encryption\\client_encryption.ts",
+    "line": 590,
+    "code": "      const createDataKeyPromises = encryptedFields.fields.map(async field =>"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\client-side-encryption\\client_encryption.ts",
+    "line": 605,
+    "code": "      encryptedFields.fields = createDataKeyResolutions.map((resolution, index) =>"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\cmap\\connection.ts",
+    "line": 894,
+    "code": "      ? cmd.indexes.map((index: { key: Map<string, number> }) => index.key)"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\collection.ts",
+    "line": 325,
+    "code": "        docs.map(doc => ({ insertOne: { document: doc } })),"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\collection.ts",
+    "line": 753,
+    "code": "        .map(({ name }) => name)"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\collection.ts",
+    "line": 921,
+    "code": "      indexes.map(({ name, key }) => [name, Object.entries(key)])"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 100,
+    "code": "  const hostAddresses = addresses.map(r => HostAddress.fromString(`${r.name}:${r.port ?? 27017}`));"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 220,
+    "code": "    super(entries.map(([k, v]) => [k.toLowerCase(), v]));"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 260,
+    "code": "  mongoOptions.hosts = isSRV ? [] : hosts.map(HostAddress.fromString);"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 353,
+    "code": "      .map(getBoolean.bind(null, 'tls/ssl'));"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 1302,
+    "code": "    .map(([k, d]) => [k, d.default])"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\cursor\\abstract_cursor.ts",
+    "line": 745,
+    "code": "   * cursor.map(() => null);"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\cursor\\abstract_cursor.ts",
+    "line": 755,
+    "code": "   * cursor.map(() => '');"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\cursor\\abstract_cursor.ts",
+    "line": 769,
+    "code": "   * const mappedCursor: FindCursor<number> = cursor.map(doc => Object.keys(doc).length);"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\cursor\\aggregation_cursor.ts",
+    "line": 69,
+    "code": "    return super.map(transform) as AggregationCursor<T>;"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\cursor\\find_cursor.ts",
+    "line": 68,
+    "code": "    return super.map(transform) as FindCursor<T>;"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\db.ts",
+    "line": 441,
+    "code": "      .map(({ name }) => new Collection(this, name, this.s.options));"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\error.ts",
+    "line": 168,
+    "code": "        : e.errors.map(({ message }) => message).join(', ');"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\operations\\indexes.ts",
+    "line": 213,
+    "code": "    validProvidedOptions.map(([name, value]) => (name === 'version' ? ['v', value] : [name, value]))"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\operations\\indexes.ts",
+    "line": 263,
+    "code": "    this.indexes = indexes.map((userIndex: IndexDescription): ResolvedIndexDescription => {"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\operations\\indexes.ts",
+    "line": 322,
+    "code": "    const indexNames = this.indexes.map(index => index.name || '');"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\operations\\search_indexes\\create.ts",
+    "line": 50,
+    "code": "    return super.handleOk(response).indexesCreated.map((val: { name: string }) => val.name);"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\sdam\\srv_polling.ts",
+    "line": 19,
+    "code": "    return new Set(this.srvRecords.map(r => HostAddress.fromSrvRecord(r).toString()));"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\sdam\\topology.ts",
+    "line": 435,
+    "code": "      serverDescriptions.map(serverDescription => ["
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\sort.ts",
+    "line": 89,
+    "code": "  const sortEntries: SortPairForCmd[] = t.map(([k, v]) => [`${k}`, prepareDirection(v)]);"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\sort.ts",
+    "line": 95,
+    "code": "  const sortEntries: SortPairForCmd[] = t.map(key => [`${key}`, 1]);"
+  },
+  {
+    "file": "node_modules\\mongodb\\src\\sort.ts",
+    "line": 101,
+    "code": "  const sortEntries: SortPairForCmd[] = Object.entries(t).map(([k, v]) => ["
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\client-side-encryption\\client_encryption.ts",
+    "line": 203,
+    "code": "      keyAltNames = options.keyAltNames.map((keyAltName, i) => {"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\client-side-encryption\\client_encryption.ts",
+    "line": 319,
+    "code": "    const replacements = dataKeys.map("
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\client-side-encryption\\client_encryption.ts",
+    "line": 590,
+    "code": "      const createDataKeyPromises = encryptedFields.fields.map(async field =>"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\client-side-encryption\\client_encryption.ts",
+    "line": 605,
+    "code": "      encryptedFields.fields = createDataKeyResolutions.map((resolution, index) =>"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\cmap\\connection.ts",
+    "line": 892,
+    "code": "      ? cmd.indexes.map((index: { key: Map<string, number> }) => index.key)"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\collection.ts",
+    "line": 325,
+    "code": "        docs.map(doc => ({ insertOne: { document: doc } })),"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\collection.ts",
+    "line": 753,
+    "code": "        .map(({ name }) => name)"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\collection.ts",
+    "line": 921,
+    "code": "      indexes.map(({ name, key }) => [name, Object.entries(key)])"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 100,
+    "code": "  const hostAddresses = addresses.map(r => HostAddress.fromString(`${r.name}:${r.port ?? 27017}`));"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 220,
+    "code": "    super(entries.map(([k, v]) => [k.toLowerCase(), v]));"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 260,
+    "code": "  mongoOptions.hosts = isSRV ? [] : hosts.map(HostAddress.fromString);"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 353,
+    "code": "      .map(getBoolean.bind(null, 'tls/ssl'));"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\connection_string.ts",
+    "line": 1302,
+    "code": "    .map(([k, d]) => [k, d.default])"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\cursor\\abstract_cursor.ts",
+    "line": 742,
+    "code": "   * cursor.map(() => null);"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\cursor\\abstract_cursor.ts",
+    "line": 752,
+    "code": "   * cursor.map(() => '');"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\cursor\\abstract_cursor.ts",
+    "line": 766,
+    "code": "   * const mappedCursor: FindCursor<number> = cursor.map(doc => Object.keys(doc).length);"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\cursor\\aggregation_cursor.ts",
+    "line": 69,
+    "code": "    return super.map(transform) as AggregationCursor<T>;"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\cursor\\find_cursor.ts",
+    "line": 68,
+    "code": "    return super.map(transform) as FindCursor<T>;"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\db.ts",
+    "line": 441,
+    "code": "      .map(({ name }) => new Collection(this, name, this.s.options));"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\error.ts",
+    "line": 168,
+    "code": "        : e.errors.map(({ message }) => message).join(', ');"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\operations\\indexes.ts",
+    "line": 213,
+    "code": "    validProvidedOptions.map(([name, value]) => (name === 'version' ? ['v', value] : [name, value]))"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\operations\\indexes.ts",
+    "line": 263,
+    "code": "    this.indexes = indexes.map((userIndex: IndexDescription): ResolvedIndexDescription => {"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\operations\\indexes.ts",
+    "line": 322,
+    "code": "    const indexNames = this.indexes.map(index => index.name || '');"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\operations\\search_indexes\\create.ts",
+    "line": 50,
+    "code": "    return super.handleOk(response).indexesCreated.map((val: { name: string }) => val.name);"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\sdam\\srv_polling.ts",
+    "line": 19,
+    "code": "    return new Set(this.srvRecords.map(r => HostAddress.fromSrvRecord(r).toString()));"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\sdam\\topology.ts",
+    "line": 435,
+    "code": "      serverDescriptions.map(serverDescription => ["
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\sort.ts",
+    "line": 89,
+    "code": "  const sortEntries: SortPairForCmd[] = t.map(([k, v]) => [`${k}`, prepareDirection(v)]);"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\sort.ts",
+    "line": 95,
+    "code": "  const sortEntries: SortPairForCmd[] = t.map(key => [`${key}`, 1]);"
+  },
+  {
+    "file": "node_modules\\mongoose\\node_modules\\mongodb\\src\\sort.ts",
+    "line": 101,
+    "code": "  const sortEntries: SortPairForCmd[] = Object.entries(t).map(([k, v]) => ["
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\HeadRow\\HeadRow.tsx",
+    "line": 27,
+    "code": "      {weekdays.map((weekday, i) => ("
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\MonthsDropdown\\MonthsDropdown.tsx",
+    "line": 67,
+    "code": "      {dropdownMonths.map((m) => ("
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Root\\Root.tsx",
+    "line": 78,
+    "code": "      title={initialProps.title}"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Root\\Root.tsx",
+    "line": 83,
+    "code": "        {navigation.displayMonths.map((month, i) => ("
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Row\\Row.tsx",
+    "line": 38,
+    "code": "      {props.dates.map((date) => ("
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\Table.tsx",
+    "line": 53,
+    "code": "        {weeks.map((week) => ("
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 13,
+    "code": "        const weekNumbers = weeks.map((week) => week.weekNumber);"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 19,
+    "code": "        const lastWeekDates = lastWeek.dates.map((date) => date.getDate());"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 30,
+    "code": "        const weekNumbers = weeks.map((week) => week.weekNumber);"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 36,
+    "code": "        const lastWeekDates = lastWeek.dates.map((date) => date.getDate());"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 41,
+    "code": "        expect(weeks[4].dates.map((date) => date.getDate())).toEqual(["
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 55,
+    "code": "      const weekNumbers = weeks.map((week) => week.weekNumber);"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 59,
+    "code": "      expect(weeks[0].dates.map((date) => date.getDate())).toEqual(["
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 64,
+    "code": "      const weekNumbers = weeks.map((week) => week.weekNumber);"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 72,
+    "code": "      const weekNumbers = weeks.map((week) => week.weekNumber);"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 84,
+    "code": "      const weekNumbers = weeks.map((week) => week.weekNumber);"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\Table\\utils\\getMonthWeeks.test.ts",
+    "line": 96,
+    "code": "      const weekNumbers = weeks.map((week) => week.weekNumber);"
+  },
+  {
+    "file": "node_modules\\react-day-picker\\src\\components\\YearsDropdown\\YearsDropdown.tsx",
+    "line": 68,
+    "code": "      {years.map((year) => ("
+  },
+  {
+    "file": "node_modules\\react-hot-toast\\src\\components\\toaster.tsx",
+    "line": 114,
+    "code": "      {toasts.map((t) => {"
+  },
+  {
+    "file": "node_modules\\react-hot-toast\\src\\core\\store.ts",
+    "line": 75,
+    "code": "        toasts: state.toasts.map((t) =>"
+  },
+  {
+    "file": "node_modules\\react-hot-toast\\src\\core\\store.ts",
+    "line": 94,
+    "code": "        toasts: state.toasts.map((t) =>"
+  },
+  {
+    "file": "node_modules\\react-hot-toast\\src\\core\\store.ts",
+    "line": 128,
+    "code": "        toasts: state.toasts.map((t) => ({"
+  },
+  {
+    "file": "node_modules\\react-hot-toast\\src\\core\\store.ts",
+    "line": 208,
+    "code": "  const mergedToasts = state.toasts.map((t) => ({"
+  },
+  {
+    "file": "node_modules\\react-hot-toast\\src\\core\\use-toaster.ts",
+    "line": 42,
+    "code": "    const timeouts = toasts.map((t) => {"
+  },
+  {
+    "file": "node_modules\\sift\\src\\operations.ts",
+    "line": 118,
+    "code": "    this._ops = this.params.map((op) =>"
+  },
+  {
+    "file": "node_modules\\sift\\src\\operations.ts",
+    "line": 160,
+    "code": "    this._testers = params.map((value) => {"
+  },
+  {
+    "file": "node_modules\\sift\\src\\operations.ts",
+    "line": 238,
+    "code": "      params.map((query) => createQueryOperation(query, owneryQuery, options)),"
+  },
+  {
+    "file": "node_modules\\sift\\src\\operations.ts",
+    "line": 261,
+    "code": "      params.map((query) => createQueryOperation(query, owneryQuery, options)),"
+  },
+  {
+    "file": "node_modules\\sift\\src\\utils.ts",
+    "line": 16,
+    "code": "    return value.map(comparable);"
+  },
+  {
+    "file": "node_modules\\tailwind-merge\\src\\lib\\class-group-utils.ts",
+    "line": 197,
+    "code": "    return classGroupEntries.map(([classGroupId, classGroup]) => {"
+  },
+  {
+    "file": "node_modules\\tailwind-merge\\src\\lib\\class-group-utils.ts",
+    "line": 198,
+    "code": "        const prefixedClassGroup = classGroup.map((classDefinition) => {"
+  },
+  {
+    "file": "node_modules\\tailwind-merge\\src\\lib\\class-group-utils.ts",
+    "line": 205,
+    "code": "                    Object.entries(classDefinition).map(([key, value]) => [prefix + key, value]),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\helpers\\util.ts",
+    "line": 34,
+    "code": "    return objectKeys(obj).map(function (e) {"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\helpers\\util.ts",
+    "line": 70,
+    "code": "    return array.map((val) => (typeof val === \"string\" ? `'${val}'` : val)).join(separator);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\tests\\map.test.ts",
+    "line": 8,
+    "code": "const stringMap = z.map(z.string(), z.string());"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\tests\\map.test.ts",
+    "line": 90,
+    "code": "  const map = z.map("
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\tests\\readonly.test.ts",
+    "line": 28,
+    "code": "  z.map(z.string(), z.date()).readonly(),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\tests\\readonly.test.ts",
+    "line": 150,
+    "code": "        .map(z.string(), z.date())"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\tests\\readonly.test.ts",
+    "line": 175,
+    "code": "        .map(z.string(), z.date())"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\tests\\string.test.ts",
+    "line": 413,
+    "code": "  const results = invalidStrings.map((s) => cuid2.safeParse(s));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\types.ts",
+    "line": 2300,
+    "code": "        ([...ctx.data] as any[]).map((item, i) => {"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\types.ts",
+    "line": 2308,
+    "code": "    const result = ([...ctx.data] as any[]).map((item, i) => {"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\types.ts",
+    "line": 2444,
+    "code": "    return ZodTuple.create(schema.items.map((item: any) => deepPartialify(item)));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\types.ts",
+    "line": 2967,
+    "code": "      const unionErrors = results.map((result) => new ZodError(result.ctx.common.issues));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\types.ts",
+    "line": 2978,
+    "code": "        options.map(async (option) => {"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\types.ts",
+    "line": 3031,
+    "code": "      const unionErrors = issues.map((issues) => new ZodError(issues));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\types.ts",
+    "line": 3434,
+    "code": "      .map((item, itemIndex) => {"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v3\\ZodError.ts",
+    "line": 227,
+    "code": "          issue.unionErrors.map(processError);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\schemas.ts",
+    "line": 135,
+    "code": "          ...checks.map((ch) =>"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\schemas.ts",
+    "line": 1493,
+    "code": "  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\assignability.test.ts",
+    "line": 86,
+    "code": "  z.map(z.string(), z.number()) satisfies z.core.$ZodMap;"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\assignability.test.ts",
+    "line": 87,
+    "code": "  z.map(z.string(), z.number()) satisfies z.ZodMap;"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\assignability.test.ts",
+    "line": 177,
+    "code": "  z.map(z.string(), z.number()) satisfies z.ZodType;"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\index.test.ts",
+    "line": 308,
+    "code": "  const a = z.map(z.string(), z.number());"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\index.test.ts",
+    "line": 330,
+    "code": "  const a = z.map(z.bigint(), z.number());"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\index.test.ts",
+    "line": 338,
+    "code": "  const a = z.map(z.string().check(z.refine(async () => true)), z.number().check(z.refine(async () => true)));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\index.test.ts",
+    "line": 811,
+    "code": "  z.map(z.string(), z.number()).def.type satisfies \"map\";"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\map.test.ts",
+    "line": 4,
+    "code": "const stringMap = z.map(z.string(), z.string());"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\map.test.ts",
+    "line": 28,
+    "code": "  const asyncMap = z.map("
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\map.test.ts",
+    "line": 129,
+    "code": "  const map = z.map("
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\map.test.ts",
+    "line": 166,
+    "code": "  const map = z.map("
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\readonly.test.ts",
+    "line": 23,
+    "code": "  const readonlyMap = z.map(z.string(), z.date()).readonly();"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\readonly.test.ts",
+    "line": 127,
+    "code": "        .map(z.string(), z.date())"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\readonly.test.ts",
+    "line": 153,
+    "code": "        .map(z.string(), z.date())"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\recursive-types.test.ts",
+    "line": 314,
+    "code": "      return z.map(z.string(), A);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\string.test.ts",
+    "line": 540,
+    "code": "  const results = invalidStrings.map((s) => cuid2.safeParse(s));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\template-literal.test.ts",
+    "line": 215,
+    "code": "    z.templateLiteral([z.map(z.string(), z.string())])"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\classic\\tests\\to-json-schema.test.ts",
+    "line": 236,
+    "code": "    expect(() => z.toJSONSchema(z.map(z.string(), z.number()))).toThrow(\"Map cannot be represented in JSON Schema\");"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\api.ts",
+    "line": 1216,
+    "code": "  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\api.ts",
+    "line": 1518,
+    "code": "    truthyArray = truthyArray.map((v) => (typeof v === \"string\" ? v.toLowerCase() : v));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\api.ts",
+    "line": 1519,
+    "code": "    falsyArray = falsyArray.map((v) => (typeof v === \"string\" ? v.toLowerCase() : v));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\doc.ts",
+    "line": 29,
+    "code": "    const minIndent = Math.min(...lines.map((x) => x.length - x.trimStart().length));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\doc.ts",
+    "line": 30,
+    "code": "    const dedented = lines.map((x) => x.slice(minIndent)).map((x) => \" \".repeat(this.indent * 2) + x);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\doc.ts",
+    "line": 40,
+    "code": "    const lines = [...content.map((x) => `  ${x}`)];"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\errors.ts",
+    "line": 267,
+    "code": "        issue.errors.map((issues) => processError({ issues }));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\errors.ts",
+    "line": 319,
+    "code": "        issue.errors.map((issues) => processError({ issues }, issue.path));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\parse.ts",
+    "line": 23,
+    "code": "    const e = new (_params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\parse.ts",
+    "line": 44,
+    "code": "    const e = new (params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\parse.ts",
+    "line": 69,
+    "code": "        error: new (_Err ?? errors.$ZodError)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\parse.ts",
+    "line": 89,
+    "code": "        error: new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 1747,
+    "code": "              ${id}.issues.map((iss) => ({"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 1764,
+    "code": "          if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 1932,
+    "code": "    errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 1958,
+    "code": "      const patterns = def.options.map((o) => o._zod.pattern);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 1959,
+    "code": "      return new RegExp(`^(${patterns.map((p) => util.cleanRegex(p!.source)).join(\"|\")})$`);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 2505,
+    "code": "            issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 2622,
+    "code": "        issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 2636,
+    "code": "        issues: valueResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 2746,
+    "code": "      .map((o) => (typeof o === \"string\" ? util.escapeRegex(o) : o.toString()))"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 2798,
+    "code": "        .map((o) => (typeof o === \"string\" ? util.escapeRegex(o) : o ? o.toString() : String(o)))"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 3347,
+    "code": "              issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\schemas.ts",
+    "line": 3363,
+    "code": "          issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\to-json-schema.ts",
+    "line": 165,
+    "code": "                  ...regexes.map((regex) => ({"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\to-json-schema.ts",
+    "line": 311,
+    "code": "            json.anyOf = def.options.map((x, i) =>"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\to-json-schema.ts",
+    "line": 341,
+    "code": "            const prefixItems = def.items.map((x, i) =>"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\to-json-schema.ts",
+    "line": 462,
+    "code": "                json.anyOf = mime.map((m) => {"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\util.ts",
+    "line": 205,
+    "code": "    .map(([_, v]) => v);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\util.ts",
+    "line": 210,
+    "code": "  return array.map((val) => stringifyPrimitive(val)).join(separator);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\util.ts",
+    "line": 293,
+    "code": "  const promises = keys.map((key) => (promisesObj as any)[key]);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\util.ts",
+    "line": 694,
+    "code": "  return issues.map((iss) => {"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\core\\util.ts",
+    "line": 769,
+    "code": "    .map((el) => el[1]);"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\mini\\schemas.ts",
+    "line": 57,
+    "code": "            ...checks.map((ch) =>"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\mini\\schemas.ts",
+    "line": 1093,
+    "code": "  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\mini\\tests\\assignability.test.ts",
+    "line": 64,
+    "code": "  z.map(z.string(), z.number()) satisfies z.core.$ZodMap;"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\mini\\tests\\index.test.ts",
+    "line": 302,
+    "code": "  const a = z.map(z.string(), z.number());"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\mini\\tests\\index.test.ts",
+    "line": 324,
+    "code": "  const a = z.map(z.bigint(), z.number());"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\mini\\tests\\index.test.ts",
+    "line": 332,
+    "code": "  const a = z.map(z.string().check(z.refine(async () => true)), z.number().check(z.refine(async () => true)));"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\mini\\tests\\index.test.ts",
+    "line": 852,
+    "code": "  z.map(z.string(), z.number()).def.type satisfies \"map\";"
+  },
+  {
+    "file": "node_modules\\zod\\src\\v4\\mini\\tests\\recursive-types.test.ts",
+    "line": 236,
+    "code": "      return z.map(z.string(), G);"
+  },
+  {
+    "file": "src\\App.tsx",
+    "line": 237,
+    "code": "      <title>{seo.title}</title>"
+  },
+  {
+    "file": "src\\App.tsx",
+    "line": 241,
+    "code": "      <meta property=\"og:title\" content={seo.title} />"
+  },
+  {
+    "file": "src\\App.tsx",
+    "line": 249,
+    "code": "      <meta name=\"twitter:title\" content={seo.title} />"
+  },
+  {
+    "file": "src\\App.tsx",
+    "line": 253,
+    "code": "      {jsonLd.map((entry, index) => ("
+  },
+  {
+    "file": "src\\App.tsx",
+    "line": 423,
+    "code": "                    {appRoutes.map((route) => ("
+  },
+  {
+    "file": "src\\components\\AssistantCommandPalette.tsx",
+    "line": 82,
+    "code": "          {assistantHints.map((hint) => ("
+  },
+  {
+    "file": "src\\components\\AssistantCommandPalette.tsx",
+    "line": 103,
+    "code": "              <span>{hint.title}</span>"
+  },
+  {
+    "file": "src\\components\\AssistantCommandPalette.tsx",
+    "line": 110,
+    "code": "          {navigationItems.map((item) => {"
+  },
+  {
+    "file": "src\\components\\BlogCard.tsx",
+    "line": 41,
+    "code": "            {sanitize(post.title)}"
+  },
+  {
+    "file": "src\\components\\BlogCard.tsx",
+    "line": 45,
+    "code": "            {sanitize(post.title)}"
+  },
+  {
+    "file": "src\\components\\CookieConsent.tsx",
+    "line": 166,
+    "code": "              ]).map(({ key, label, description }) => ("
+  },
+  {
+    "file": "src\\components\\CourseCard.tsx",
+    "line": 19,
+    "code": "      <h3 className=\"font-mono text-lg font-semibold mb-2\">{sanitize(course.title)}</h3>"
+  },
+  {
+    "file": "src\\components\\Footer.tsx",
+    "line": 65,
+    "code": "            {footerColumns.map((column) => ("
+  },
+  {
+    "file": "src\\components\\Footer.tsx",
+    "line": 66,
+    "code": "              <div key={column.title}>"
+  },
+  {
+    "file": "src\\components\\Footer.tsx",
+    "line": 67,
+    "code": "                <h4 className=\"terminal-font text-xs font-semibold uppercase tracking-[0.24em]\" style={{ color: \"var(--theme-text-dim)\" }}>{column.title}</h4>"
+  },
+  {
+    "file": "src\\components\\Footer.tsx",
+    "line": 69,
+    "code": "                  {column.links.map((link) => ("
+  },
+  {
+    "file": "src\\components\\InteractiveScene.tsx",
+    "line": 112,
+    "code": "          {particles.map((particle, i) => ("
+  },
+  {
+    "file": "src\\components\\LabExecutionModal.tsx",
+    "line": 141,
+    "code": "                  <h2 className=\"mt-2 font-mono text-2xl font-semibold text-cyan-50 drop-shadow-[0_0_12px_rgba(34,211,238,0.45)]\">{activeLab.title}</h2>"
+  },
+  {
+    "file": "src\\components\\LabExecutionModal.tsx",
+    "line": 301,
+    "code": "                    {responseMistakes.map((item) => ("
+  },
+  {
+    "file": "src\\components\\LabExecutionModal.tsx",
+    "line": 309,
+    "code": "                    {responseApproach.map((item) => ("
+  },
+  {
+    "file": "src\\components\\LabExecutionModal.tsx",
+    "line": 316,
+    "code": "                    <strong>Branch Outcome:</strong> {missionFeedback.branchOutcome.title}"
+  },
+  {
+    "file": "src\\components\\LabExecutionModal.tsx",
+    "line": 322,
+    "code": "                  {responseSignals.slice(0, 5).map((signal) => ("
+  },
+  {
+    "file": "src\\components\\LandingIntro.tsx",
+    "line": 29,
+    "code": "  const plainSpeech = useMemo(() => speechParts.map((part) => part.text).join(\"\"), []);"
+  },
+  {
+    "file": "src\\components\\LandingIntro.tsx",
+    "line": 93,
+    "code": "    return speechParts.map((part, idx) => {"
+  },
+  {
+    "file": "src\\components\\Navbar.tsx",
+    "line": 70,
+    "code": "            {primaryNav.map((item) => {"
+  },
+  {
+    "file": "src\\components\\Navbar.tsx",
+    "line": 114,
+    "code": "                {toolsNav.map((item) => ("
+  },
+  {
+    "file": "src\\components\\Navbar.tsx",
+    "line": 176,
+    "code": "                {primaryNav.map((item) => ("
+  },
+  {
+    "file": "src\\components\\Navbar.tsx",
+    "line": 200,
+    "code": "                    {toolsNav.map((item) => ("
+  },
+  {
+    "file": "src\\components\\NotificationBell.tsx",
+    "line": 28,
+    "code": "        <p className=\"text-sm font-semibold text-white\">{item.title}</p>"
+  },
+  {
+    "file": "src\\components\\OllamaChat.tsx",
+    "line": 156,
+    "code": "    return parts.map((part, i) => {"
+  },
+  {
+    "file": "src\\components\\OllamaChat.tsx",
+    "line": 203,
+    "code": "    return boldParts.map((part, i) => {"
+  },
+  {
+    "file": "src\\components\\OllamaChat.tsx",
+    "line": 209,
+    "code": "      return codeParts.map((cp, j) => {"
+  },
+  {
+    "file": "src\\components\\platform\\AdaptiveSaaSCommandCenter.tsx",
+    "line": 19,
+    "code": "      quickActions.map((action) => ({"
+  },
+  {
+    "file": "src\\components\\platform\\AdaptiveSaaSCommandCenter.tsx",
+    "line": 95,
+    "code": "              <p className=\"mt-2 text-lg font-semibold text-white\">{nextMissionHook.title}</p>"
+  },
+  {
+    "file": "src\\components\\platform\\AdaptiveSaaSCommandCenter.tsx",
+    "line": 109,
+    "code": "          {actionCards.map((action) => {"
+  },
+  {
+    "file": "src\\components\\platform\\AdaptiveSaaSCommandCenter.tsx",
+    "line": 131,
+    "code": "                      {action.title}"
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 86,
+    "code": "            ].map((item) => ("
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 116,
+    "code": "                {snapshot.dailyMissions.map((mission) => ("
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 127,
+    "code": "                          {mission.title}"
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 188,
+    "code": "                {snapshot.weeklyMissions.map((mission) => ("
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 194,
+    "code": "                          {mission.title}"
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 237,
+    "code": "                  <p className=\"mt-2 text-lg font-semibold text-[#e2e8f0]\">{latestReward.title}</p>"
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 270,
+    "code": "                snapshot.badges.slice(0, 6).map((badge) => ("
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 286,
+    "code": "                      <p className=\"text-sm font-semibold text-[#e2e8f0]\">{badge.title}</p>"
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 301,
+    "code": "                snapshot.recentRewards.slice(0, 5).map((reward) => ("
+  },
+  {
+    "file": "src\\components\\platform\\DailyMissionLoop.tsx",
+    "line": 305,
+    "code": "                      {reward.title}"
+  },
+  {
+    "file": "src\\components\\platform\\MentorDock.tsx",
+    "line": 57,
+    "code": "                <p className=\"mentor-dock__focus-title\">{mentor.primaryFocus.title}</p>"
+  },
+  {
+    "file": "src\\components\\platform\\MentorDock.tsx",
+    "line": 67,
+    "code": "                <p className=\"mentor-dock__focus-title\">{mentor.secondaryFocus.title}</p>"
+  },
+  {
+    "file": "src\\components\\platform\\MissionRail.tsx",
+    "line": 11,
+    "code": "      {rails.map((track) => ("
+  },
+  {
+    "file": "src\\components\\platform\\MissionRail.tsx",
+    "line": 19,
+    "code": "          <h3 className=\"mt-3 text-xl font-bold text-white\">{track.title}</h3>"
+  },
+  {
+    "file": "src\\components\\platform\\PlatformHero.tsx",
+    "line": 30,
+    "code": "            {pills.map((pill) => ("
+  },
+  {
+    "file": "src\\components\\platform\\QuizWidget.tsx",
+    "line": 58,
+    "code": "          {snapshot.quizQuestions.map((question, index) => {"
+  },
+  {
+    "file": "src\\components\\platform\\QuizWidget.tsx",
+    "line": 77,
+    "code": "                      {question.options.map((option) => {"
+  },
+  {
+    "file": "src\\components\\platform\\RewardExperience.tsx",
+    "line": 74,
+    "code": "                <h3 className=\"mt-2 text-xl font-semibold text-white\">{activeReward.title}</h3>"
+  },
+  {
+    "file": "src\\components\\platform\\RewardExperience.tsx",
+    "line": 111,
+    "code": "                {badges.slice(0, 3).map((badge) => {"
+  },
+  {
+    "file": "src\\components\\platform\\RewardExperience.tsx",
+    "line": 116,
+    "code": "                      <span>{badge.title}</span>"
+  },
+  {
+    "file": "src\\components\\platform\\RewardExperience.tsx",
+    "line": 128,
+    "code": "                achievement={activeReward.title}"
+  },
+  {
+    "file": "src\\components\\SentryTestPanel.tsx",
+    "line": 303,
+    "code": "          {results.map((r, i) => ("
+  },
+  {
+    "file": "src\\components\\ToolCard.tsx",
+    "line": 65,
+    "code": "        {(tool.capabilities || []).slice(0, 2).map((capability) => ("
+  },
+  {
+    "file": "src\\components\\ToolConfigModal.tsx",
+    "line": 111,
+    "code": "      const tags = formState.tags.split(\",\").map(tag => tag.trim()).filter(tag => tag);"
+  },
+  {
+    "file": "src\\components\\ToolConfigModal.tsx",
+    "line": 305,
+    "code": "                    {filteredConfigs.map((config) => ("
+  },
+  {
+    "file": "src\\components\\ToolConfigModal.tsx",
+    "line": 319,
+    "code": "                                  {config.tags.slice(0, 3).map(tag => ("
+  },
+  {
+    "file": "src\\components\\ui\\chart.tsx",
+    "line": 72,
+    "code": "          .map("
+  },
+  {
+    "file": "src\\components\\ui\\chart.tsx",
+    "line": 76,
+    "code": "  .map(([key, itemConfig]) => {"
+  },
+  {
+    "file": "src\\components\\ui\\chart.tsx",
+    "line": 163,
+    "code": "          {payload.map((item, index) => {"
+  },
+  {
+    "file": "src\\components\\ui\\chart.tsx",
+    "line": 249,
+    "code": "      {payload.map((item) => {"
+  },
+  {
+    "file": "src\\components\\ui\\toaster.tsx",
+    "line": 9,
+    "code": "      {toasts.map(function ({ id, title, description, action, ...props }) {"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 167,
+    "code": "  const rawTitle = String(topic.title || \"\").trim();"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 170,
+    "code": "    .map((tag) => String(tag || \"\").trim())"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 277,
+    "code": "    .map((message) => ({"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 305,
+    "code": "  ].map((item) => item.trim()).filter(Boolean);"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 525,
+    "code": "  return error.retryHint || error.detail || error.title;"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 536,
+    "code": "  value.split(/(`[^`]+`)/g).map((part, index) => {"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 613,
+    "code": "            {items.map((item, itemIndex) => ("
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 734,
+    "code": "          ? `Guide me through ${nextMissionHook.title} with next action, risk, and validation.`"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 883,
+    "code": "          current.map((message) => (message.id === assistantId ? { ...message, content } : message))"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 904,
+    "code": "        current.map((message) =>"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 1388,
+    "code": "      setStatusHint(topic?.mentorMode ? `Mentor mode ready: ${topic.title}` : `Topic ready: ${topic.title}`);"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 1572,
+    "code": "            <span className=\"block text-xs text-[var(--theme-text-dim)]\">{nextMissionHook.title || \"ZeroDay Guardian control panel\"}</span>"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 1602,
+    "code": "                        {activeTopic.title}"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 1658,
+    "code": "                          {(missionStarterSuggestions.length ? missionStarterSuggestions : DEFAULT_SUGGESTIONS).slice(0, 4).map((suggestion) => ("
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 1672,
+    "code": "                        {visibleMessages.map((message) => {"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 1709,
+    "code": "                            <p className=\"font-semibold\">{lastFailure.error.title}</p>"
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 1824,
+    "code": "                              {deferredSuggestions.slice(0, 4).map((suggestion) => ("
+  },
+  {
+    "file": "src\\components\\Zorvix.tsx",
+    "line": 1848,
+    "code": "                                  <span className=\"truncate\">{activeTopic.title}</span>"
+  },
+  {
+    "file": "src\\context\\AdaptiveMentorContext.tsx",
+    "line": 66,
+    "code": "        ? `Run a short ${mindset} mission that strengthens ${primaryFocus.title.replace(\"Close gap: \", \"\")}.`"
+  },
+  {
+    "file": "src\\context\\AdaptiveMentorContext.tsx",
+    "line": 72,
+    "code": "      (primaryFocus ? primaryFocus.title.replace(\"Close gap: \", \"\") : strongest?.label || \"Mission momentum\");"
+  },
+  {
+    "file": "src\\context\\MissionSystemApiContext.tsx",
+    "line": 500,
+    "code": "        detail: `+${task.reward} XP awarded for ${task.title.toLowerCase()}.`,"
+  },
+  {
+    "file": "src\\hooks\\use-toast.ts",
+    "line": 82,
+    "code": "        toasts: state.toasts.map((t) => (t.id === action.toast.id ? { ...t, ...action.toast } : t)),"
+  },
+  {
+    "file": "src\\hooks\\use-toast.ts",
+    "line": 100,
+    "code": "        toasts: state.toasts.map((t) =>"
+  },
+  {
+    "file": "src\\hooks\\useGrowthFeatures.ts",
+    "line": 98,
+    "code": "      badges: (progress.badges || []).filter((badge) => badge.earned).map((badge) => badge.label),"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 371,
+    "code": "            skill: topic.title,"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 635,
+    "code": "          gaps.push(`Complete ${path.title} (${Math.round(100 - pathProgress.progress)}% remaining)`);"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 647,
+    "code": "          gaps.push(`Improve understanding of ${topic.title} (Score: ${topicProgress.score}%)`);"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 803,
+    "code": "        areas.push(`${content.title} (Score: ${progress.score}%)`);"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 814,
+    "code": "      .map(content => content.id);"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 825,
+    "code": "      .map(content => contentProgress[content.id]?.score)"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 860,
+    "code": "      .map(c => c.score)"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 875,
+    "code": "    return progress.skills.map(skill => ({"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 903,
+    "code": "    return weeklyPlan.map(day => ({"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 913,
+    "code": "    return goals.map((goal, index) => ({"
+  },
+  {
+    "file": "src\\lib\\aiLearningEngine.ts",
+    "line": 938,
+    "code": "            skill: topic.title,"
+  },
+  {
+    "file": "src\\lib\\assistantHints.ts",
+    "line": 210,
+    "code": "    .map((hint) => {"
+  },
+  {
+    "file": "src\\lib\\autoBugFixer.ts",
+    "line": 185,
+    "code": "          description: `The fix \"${fix.title}\" has been applied and verified.`,"
+  },
+  {
+    "file": "src\\lib\\cyberSandbox.ts",
+    "line": 240,
+    "code": "      lab.title,"
+  },
+  {
+    "file": "src\\lib\\cyberSandbox.ts",
+    "line": 246,
+    "code": "    this.logOutput(session.id, 'info', `Lab requested: ${lab.title}`);"
+  },
+  {
+    "file": "src\\lib\\firebase.ts",
+    "line": 28,
+    "code": "  .map(([key]) => key);"
+  },
+  {
+    "file": "src\\lib\\firestoreGrowth.ts",
+    "line": 324,
+    "code": "    return rows.docs.map((item, index) => ({"
+  },
+  {
+    "file": "src\\lib\\firestoreGrowth.ts",
+    "line": 369,
+    "code": "    return rows.docs.map((item) => notificationItemSchema.parse({ id: item.id, ...item.data() }));"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 363,
+    "code": "  seededOrder(DAILY_MISSION_BLUEPRINTS, dayKey).map((item, index) => ({"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 372,
+    "code": "  seededOrder(WEEKLY_MISSION_BLUEPRINTS, weekKey).map((item, index) => ({"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 409,
+    "code": "    ? item.options.map((option) => ({"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 420,
+    "code": "    Object.entries(value as Record<string, unknown>).map(([key, answer]) => {"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 469,
+    "code": "    dailyMissions: Array.isArray(data?.dailyMissions) ? data.dailyMissions.map((item: Partial<GamifiedMission>) => normalizeMission(item, \"daily\")) : buildDailyMissions(fallback.dailyKey),"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 470,
+    "code": "    weeklyMissions: Array.isArray(data?.weeklyMissions) ? data.weeklyMissions.map((item: Partial<GamifiedMission>) => normalizeMission(item, \"weekly\")) : buildWeeklyMissions(fallback.weeklyKey),"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 471,
+    "code": "    quizQuestions: Array.isArray(data?.quizQuestions) ? data.quizQuestions.map((item: Partial<DailyQuizQuestion>) => normalizeQuizQuestion(item)) : buildDailyQuiz(fallback.dailyKey),"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 473,
+    "code": "    badges: Array.isArray(data?.badges) ? data.badges.map((item: Partial<GamificationBadge>) => normalizeBadge(item)) : [],"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 474,
+    "code": "    recentRewards: Array.isArray(data?.recentRewards) ? data.recentRewards.map((item: Partial<GamificationReward>) => normalizeReward(item)).slice(0, 12) : [],"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 516,
+    "code": "  const reward = buildReward(badge.title, badge.detail, 0, \"badge\");"
+  },
+  {
+    "file": "src\\lib\\gamificationSystem.ts",
+    "line": 624,
+    "code": "      `${mission.title} cleared. ${mission.xp} XP banked.`,"
+  },
+  {
+    "file": "src\\lib\\neurobotEngine.ts",
+    "line": 100,
+    "code": "  const corpus = `${resource.title} ${resource.summary} ${resource.tags.join(\" \")}`.toLowerCase();"
+  },
+  {
+    "file": "src\\lib\\neurobotEngine.ts",
+    "line": 127,
+    "code": "    .map((resource) => ({ resource, score: scoreResource(resource, query, tags) }))"
+  },
+  {
+    "file": "src\\lib\\neurobotEngine.ts",
+    "line": 130,
+    "code": "    .map((item) => item.resource);"
+  },
+  {
+    "file": "src\\lib\\neurobotEngine.ts",
+    "line": 170,
+    "code": "        `Deep dive: ${activeTopic.title}`,"
+  },
+  {
+    "file": "src\\lib\\neurobotEngine.ts",
+    "line": 171,
+    "code": "        `Roadmap for ${activeTopic.title}`,"
+  },
+  {
+    "file": "src\\lib\\toolConfigBackup.ts",
+    "line": 185,
+    "code": "      return this.getLocalBackups().map(b => b.metadata);"
+  },
+  {
+    "file": "src\\lib\\toolConfigBackup.ts",
+    "line": 370,
+    "code": "    const config1Names = new Set(backup1.configurations.map(c => c.name));"
+  },
+  {
+    "file": "src\\lib\\toolConfigBackup.ts",
+    "line": 371,
+    "code": "    const config2Names = new Set(backup2.configurations.map(c => c.name));"
+  },
+  {
+    "file": "src\\lib\\toolConfigBackup.ts",
+    "line": 372,
+    "code": "    const template1Names = new Set(backup1.templates.map(t => t.name));"
+  },
+  {
+    "file": "src\\lib\\toolConfigBackup.ts",
+    "line": 373,
+    "code": "    const template2Names = new Set(backup2.templates.map(t => t.name));"
+  },
+  {
+    "file": "src\\lib\\toolConfigBackup.ts",
+    "line": 501,
+    "code": "    const [hours, minutes] = time.split(':').map(Number);"
+  },
+  {
+    "file": "src\\lib\\toolConfigManager.ts",
+    "line": 77,
+    "code": "      return configs.map(config => this.validateAndMigrateConfig(config));"
+  },
+  {
+    "file": "src\\lib\\toolConfigManager.ts",
+    "line": 318,
+    "code": "      const existingConfigs = new Set(configs.map(c => `${c.toolId}-${c.name}`));"
+  },
+  {
+    "file": "src\\lib\\toolConfigManager.ts",
+    "line": 357,
+    "code": "    return configs.map(c => ({"
+  },
+  {
+    "file": "src\\lib\\toolConfigMonitoring.ts",
+    "line": 403,
+    "code": "  const memoryUsageTrend = recentMetrics.map(m => m.memoryUsage / 1024 / 1024); // Convert to MB"
+  },
+  {
+    "file": "src\\lib\\toolConfigValidation.ts",
+    "line": 73,
+    "code": "    const uniqueTags = new Set(tags.map(tag => tag.toLowerCase()));"
+  },
+  {
+    "file": "src\\lib\\toolConfigValidation.ts",
+    "line": 140,
+    "code": "    const sanitizedTags = config.tags.map(tag => this.sanitizeString(tag)).filter(tag => tag.length > 0);"
+  },
+  {
+    "file": "src\\lib\\toolConfigValidation.ts",
+    "line": 214,
+    "code": "        ? config.tags.map((tag: string) => this.sanitizeString(tag)).filter((tag: string) => tag.length > 0)"
+  },
+  {
+    "file": "src\\lib\\toolConfigVersioning.ts",
+    "line": 309,
+    "code": "    const [major, minor, patch] = cleanVersion.split('.').map(Number);"
+  },
+  {
+    "file": "src\\lib\\toolConfigVersioning.ts",
+    "line": 423,
+    "code": "  const [major1, minor1, patch1] = cleanV1.split('.').map(Number);"
+  },
+  {
+    "file": "src\\lib\\toolConfigVersioning.ts",
+    "line": 424,
+    "code": "  const [major2, minor2, patch2] = cleanV2.split('.').map(Number);"
+  },
+  {
+    "file": "src\\pages\\AboutPage.tsx",
+    "line": 40,
+    "code": "          {pillars.map((value) => ("
+  },
+  {
+    "file": "src\\pages\\AboutPage.tsx",
+    "line": 41,
+    "code": "            <div key={value.title} className=\"glass-card rounded-lg p-6\">"
+  },
+  {
+    "file": "src\\pages\\AboutPage.tsx",
+    "line": 43,
+    "code": "              <h2 className=\"font-mono text-lg font-semibold mb-2\">{value.title}</h2>"
+  },
+  {
+    "file": "src\\pages\\BlogDetail.tsx",
+    "line": 27,
+    "code": "        <h1 className=\"font-mono text-3xl md:text-4xl font-bold mb-2\">{post.title}</h1>"
+  },
+  {
+    "file": "src\\pages\\BlogDetail.tsx",
+    "line": 55,
+    "code": "              {related.map((r) => ("
+  },
+  {
+    "file": "src\\pages\\BlogDetail.tsx",
+    "line": 58,
+    "code": "                    <h3 className=\"font-mono font-semibold mb-1\">{r.title}</h3>"
+  },
+  {
+    "file": "src\\pages\\CommunityPage.tsx",
+    "line": 122,
+    "code": "                  <p className=\"font-semibold\">{m.title}</p>"
+  },
+  {
+    "file": "src\\pages\\CommunityPage.tsx",
+    "line": 141,
+    "code": "              {([\"trending\", \"new\", \"unanswered\"] as const).map((item) => ("
+  },
+  {
+    "file": "src\\pages\\CommunityPage.tsx",
+    "line": 178,
+    "code": "                <h3 className=\"font-semibold\">{thread.title}</h3>"
+  },
+  {
+    "file": "src\\pages\\CommunityPage.tsx",
+    "line": 191,
+    "code": "                  {(thread.repliesList || []).map((reply) => ("
+  },
+  {
+    "file": "src\\pages\\ContactPage.tsx",
+    "line": 36,
+    "code": "            {contactChannels.map((channel) => ("
+  },
+  {
+    "file": "src\\pages\\ContactPage.tsx",
+    "line": 37,
+    "code": "              <article key={channel.title} className=\"cyber-card rounded-[24px] p-5 md:p-6\">"
+  },
+  {
+    "file": "src\\pages\\ContactPage.tsx",
+    "line": 38,
+    "code": "                <h2 className=\"terminal-font text-[11px] uppercase tracking-[0.2em]\" style={{ color: 'var(--theme-text-dim)' }}>{channel.title}</h2>"
+  },
+  {
+    "file": "src\\pages\\DashboardPage.tsx",
+    "line": 82,
+    "code": "          {sidebarItems.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\DashboardPage.tsx",
+    "line": 167,
+    "code": "            {stats.map((stat, i) => ("
+  },
+  {
+    "file": "src\\pages\\DashboardPage.tsx",
+    "line": 188,
+    "code": "              {quickActions.map((action, i) => ("
+  },
+  {
+    "file": "src\\pages\\DashboardPage.tsx",
+    "line": 215,
+    "code": "              ].map((activity, i) => ("
+  },
+  {
+    "file": "src\\pages\\HomePage.tsx",
+    "line": 14,
+    "code": "    document.title = \"ZeroDay Guardian \u2013 The One Line of Defense\";"
+  },
+  {
+    "file": "src\\pages\\HomePage.tsx",
+    "line": 55,
+    "code": "      {orbitSignals.map((signal) => ("
+  },
+  {
+    "file": "src\\pages\\HomePage.tsx",
+    "line": 124,
+    "code": "                    {nextMissionHook.title || \"Enter the training loop\"}"
+  },
+  {
+    "file": "src\\pages\\HomePage.tsx",
+    "line": 134,
+    "code": "                    ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\HomePage.tsx",
+    "line": 147,
+    "code": "                    {controlPills.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\Index.tsx",
+    "line": 14,
+    "code": "    document.title = \"ZeroDay Guardian \u2013 The One Line of Defense\";"
+  },
+  {
+    "file": "src\\pages\\Index.tsx",
+    "line": 55,
+    "code": "      {orbitSignals.map((signal) => ("
+  },
+  {
+    "file": "src\\pages\\Index.tsx",
+    "line": 124,
+    "code": "                    {nextMissionHook.title || \"Enter the training loop\"}"
+  },
+  {
+    "file": "src\\pages\\Index.tsx",
+    "line": 134,
+    "code": "                    ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\Index.tsx",
+    "line": 147,
+    "code": "                    {controlPills.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 148,
+    "code": "  const text = `${lab.id} ${lab.title} ${lab.track || \"\"} ${lab.objective} ${lab.description}`.toLowerCase();"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 284,
+    "code": "        const normalized = (labPayload.labs || []).map((lab) => normalizeSandboxLab(lab));"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 357,
+    "code": "    const aBoost = (mindset === \"offense\" ? /exploit|recon|xss|sqli|bypass|attack/i : /defen|incident|phishing|contain|hardening|detect/i).test(`${a.id} ${a.title} ${a.track || \"\"}`) ? 20 : 0;"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 358,
+    "code": "    const bBoost = (mindset === \"offense\" ? /exploit|recon|xss|sqli|bypass|attack/i : /defen|incident|phishing|contain|hardening|detect/i).test(`${b.id} ${b.title} ${b.track || \"\"}`) ? 20 : 0;"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 414,
+    "code": "    setConsoleLines([`Loaded ${lab.title}. Run 'help' to begin the operator workflow.`]);"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 420,
+    "code": "    setMentorPrompt(`Guide me through ${activeLab.title} in ${mindset} mode.\\nObjective: ${activeLab.objective}\\nNext action: ${(missionState || fallbackMissionState)?.next_action || \"help\"}\\nKeep it practical, safe, and explain why each step matters.`);"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 479,
+    "code": "            <div><p className=\"text-[11px] uppercase tracking-[0.22em] text-slate-500\">Active Lab</p><h2 className=\"mt-2 text-xl font-semibold text-white\">{activeLab.title}</h2><p className=\"mt-1 text-sm text-slate-300\">Resume with {missionProgress}% progress and {currentMissionScore} score.</p></div>"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 487,
+    "code": "              {([\"All\", \"Web App\", \"Network\", \"Forensics\", \"OSINT\", \"CTF\"] as LabCategory[]).map((category) => ("
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 493,
+    "code": "              {filteredLabs.slice(0, 6).map((lab) => {"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 502,
+    "code": "                    <h3 className=\"mt-2 text-xl font-semibold text-white\">{lab.title}</h3>"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 514,
+    "code": "            <div className=\"mt-5 space-y-3\">{leaderboard.length ? leaderboard.map((row) => <div key={`${row.alias}-${row.position}`} className=\"rounded-2xl border border-white/8 bg-black/20 p-3\"><div className=\"flex items-center justify-between gap-3\"><div><p className=\"font-semibold text-white\">{row.position}. {row.alias}</p><p className=\"mt-1 text-xs text-slate-400\">{row.rank} | Level {row.level}</p></div><span className=\"rounded-full border border-blue-400/16 px-2.5 py-1 text-[11px] text-blue-100\">{row.points} pts</span></div></div>) : <div className=\"rounded-2xl border border-white/8 bg-black/20 p-6 text-center\"><div className=\"mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-400/18 bg-amber-400/8\"><span className=\"text-2xl\">\ud83c\udfc6</span></div><p className=\"font-semibold text-white\">No rankings yet</p><p className=\"mt-2 text-sm text-slate-400\">Complete labs to earn XP and rank up!</p><button type=\"button\" className=\"mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/18 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-400/16\" onClick={() => { const firstLab = labs[0]; if (firstLab) { loadSelectedLab(firstLab); setLabModalOpen(true); } }}>Start a Lab</button></div>}</div>"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 525,
+    "code": "                <div className=\"flex flex-wrap items-start justify-between gap-3\"><div><p className=\"text-[11px] uppercase tracking-[0.22em] text-slate-500\">Mission Board</p><h2 className=\"mt-2 text-2xl font-semibold text-white\">{activeLab.title}</h2><p className=\"mt-2 text-sm leading-6 text-slate-300\">{activeLab.objective}</p></div><div className=\"flex flex-wrap gap-2\"><span className=\"rounded-full border border-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-slate-300\">{progression?.rank || \"Active\"}</span><span className={`rounded-full border px-3 py-1 text-[11px] ${dynamicDifficulty.accent}`}>{dynamicDifficulty.label}</span></div></div>"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 533,
+    "code": "              return signals.length ? <div className=\"mt-3 flex flex-wrap gap-2\">{signals.map((signal) => <span key={signal} className=\"rounded-full border border-blue-400/14 px-2.5 py-1 text-[11px] text-blue-100\">{signal.replace(/-/g, \" \")}</span>)}</div> : null;"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 538,
+    "code": "              <article className=\"rounded-[28px] border border-white/8 bg-[#090d14] p-5\"><div className=\"flex items-start justify-between gap-3\"><div><p className=\"text-[11px] uppercase tracking-[0.22em] text-slate-500\">Recommendations</p><h3 className=\"mt-2 text-xl font-semibold text-white\">Real next actions</h3></div><button type=\"button\" onClick={() => loadRecommendations().catch(() => undefined)} className=\"rounded-full border border-blue-400/16 bg-blue-500/10 px-3 py-1 text-[11px] font-medium text-blue-100 transition hover:bg-blue-500/16\" disabled={pyRecLoading}>{pyRecLoading ? \"Refreshing...\" : \"Refresh\"}</button></div>{pyRecError ? <p className=\"mt-3 text-xs text-rose-300\">{pyRecError}</p> : null}<div className=\"mt-4 space-y-3\">{pyRecommendations?.recommendations?.length ? pyRecommendations.recommendations.slice(0, 3).map((item) => <div key={`${item.title}-${item.action}`} className=\"rounded-2xl border border-white/8 bg-black/20 p-4\"><p className=\"font-medium text-white\">{item.title}</p><p className=\"mt-2 text-sm leading-6 text-slate-300\">{item.reason}</p><p className=\"mt-2 text-sm text-blue-100\">Action: {item.action}</p></div>) : recommendedLabs.length ? recommendedLabs.map((lab) => <button key={lab.id} type=\"button\" onClick={() => loadSelectedLab(lab)} className=\"w-full rounded-2xl border border-white/8 bg-black/20 p-4 text-left transition hover:border-blue-400/18\"><div className=\"flex items-center justify-between gap-3\"><p className=\"font-medium text-white\">{lab.title}</p><span className=\"text-[11px] uppercase tracking-[0.16em] text-slate-400\">{lab.level || \"mission\"}</span></div><p className=\"mt-2 text-sm leading-6 text-slate-300\">{lab.objective}</p></button>) : <div className=\"rounded-2xl border border-white/8 bg-black/20 p-4 text-sm text-slate-300\">Verified recommendations appear as you complete more labs.</div>}</div></article>"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 538,
+    "code": "              <article className=\"rounded-[28px] border border-white/8 bg-[#090d14] p-5\"><div className=\"flex items-start justify-between gap-3\"><div><p className=\"text-[11px] uppercase tracking-[0.22em] text-slate-500\">Recommendations</p><h3 className=\"mt-2 text-xl font-semibold text-white\">Real next actions</h3></div><button type=\"button\" onClick={() => loadRecommendations().catch(() => undefined)} className=\"rounded-full border border-blue-400/16 bg-blue-500/10 px-3 py-1 text-[11px] font-medium text-blue-100 transition hover:bg-blue-500/16\" disabled={pyRecLoading}>{pyRecLoading ? \"Refreshing...\" : \"Refresh\"}</button></div>{pyRecError ? <p className=\"mt-3 text-xs text-rose-300\">{pyRecError}</p> : null}<div className=\"mt-4 space-y-3\">{pyRecommendations?.recommendations?.length ? pyRecommendations.recommendations.slice(0, 3).map((item) => <div key={`${item.title}-${item.action}`} className=\"rounded-2xl border border-white/8 bg-black/20 p-4\"><p className=\"font-medium text-white\">{item.title}</p><p className=\"mt-2 text-sm leading-6 text-slate-300\">{item.reason}</p><p className=\"mt-2 text-sm text-blue-100\">Action: {item.action}</p></div>) : recommendedLabs.length ? recommendedLabs.map((lab) => <button key={lab.id} type=\"button\" onClick={() => loadSelectedLab(lab)} className=\"w-full rounded-2xl border border-white/8 bg-black/20 p-4 text-left transition hover:border-blue-400/18\"><div className=\"flex items-center justify-between gap-3\"><p className=\"font-medium text-white\">{lab.title}</p><span className=\"text-[11px] uppercase tracking-[0.16em] text-slate-400\">{lab.level || \"mission\"}</span></div><p className=\"mt-2 text-sm leading-6 text-slate-300\">{lab.objective}</p></button>) : <div className=\"rounded-2xl border border-white/8 bg-black/20 p-4 text-sm text-slate-300\">Verified recommendations appear as you complete more labs.</div>}</div></article>"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 540,
+    "code": "              <article className=\"rounded-[28px] border border-white/8 bg-[#090d14] p-5\"><p className=\"text-[11px] uppercase tracking-[0.22em] text-slate-500\">Lab Monitor</p><h3 className=\"mt-2 text-xl font-semibold text-white\">State, rewards, and rank</h3><div className=\"mt-4 grid gap-3 sm:grid-cols-2\"><div className=\"rounded-2xl border border-white/8 bg-black/20 p-4\"><p className=\"text-[10px] uppercase tracking-[0.16em] text-slate-500\">Momentum</p><p className=\"mt-2 text-xl font-semibold text-white\">{momentumPercent}%</p><p className=\"mt-2 text-xs text-slate-400\">Streak {progression?.streak || 0} \u00b7 {accentLabel}</p></div><div className=\"rounded-2xl border border-white/8 bg-black/20 p-4\"><p className=\"text-[10px] uppercase tracking-[0.16em] text-slate-500\">Overall progress</p><p className=\"mt-2 text-xl font-semibold text-white\">{progressPct}%</p><p className=\"mt-2 text-xs text-slate-400\">{completedLabs} completed / {Math.max(totalLabsTouched, labs.length)} touched</p></div></div><div className=\"mt-4 flex flex-wrap gap-2\">{badges.map((badge) => <span key={badge} className=\"rounded-full border border-blue-400/14 px-3 py-1 text-[11px] text-blue-100\">{badge}</span>)}</div>{missionPulse ? <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${missionPulse.tone === \"success\" ? \"border-emerald-400/18 bg-emerald-400/8 text-emerald-100\" : missionPulse.tone === \"warning\" ? \"border-amber-400/18 bg-amber-400/8 text-amber-100\" : \"border-blue-400/18 bg-blue-500/8 text-blue-100\"}`}><p className=\"font-medium\">{missionPulse.title}</p><p className=\"mt-1 text-xs opacity-85\">{missionPulse.detail}</p></div> : null}<div className=\"mt-4 space-y-3\">{recentRewards.slice(0, 2).map((reward) => <div key={reward.id} className=\"rounded-2xl border border-white/8 bg-black/20 p-4\"><p className=\"font-medium text-white\">{reward.title}</p><p className=\"mt-2 text-xs text-slate-400\">{reward.detail}</p></div>)}{!recentRewards.length ? <div className=\"rounded-2xl border border-white/8 bg-black/20 p-4 text-sm text-slate-300\">Rewards and debrief snapshots appear after successful runs.</div> : null}</div></article>"
+  },
+  {
+    "file": "src\\pages\\LabPage.tsx",
+    "line": 540,
+    "code": "              <article className=\"rounded-[28px] border border-white/8 bg-[#090d14] p-5\"><p className=\"text-[11px] uppercase tracking-[0.22em] text-slate-500\">Lab Monitor</p><h3 className=\"mt-2 text-xl font-semibold text-white\">State, rewards, and rank</h3><div className=\"mt-4 grid gap-3 sm:grid-cols-2\"><div className=\"rounded-2xl border border-white/8 bg-black/20 p-4\"><p className=\"text-[10px] uppercase tracking-[0.16em] text-slate-500\">Momentum</p><p className=\"mt-2 text-xl font-semibold text-white\">{momentumPercent}%</p><p className=\"mt-2 text-xs text-slate-400\">Streak {progression?.streak || 0} \u00b7 {accentLabel}</p></div><div className=\"rounded-2xl border border-white/8 bg-black/20 p-4\"><p className=\"text-[10px] uppercase tracking-[0.16em] text-slate-500\">Overall progress</p><p className=\"mt-2 text-xl font-semibold text-white\">{progressPct}%</p><p className=\"mt-2 text-xs text-slate-400\">{completedLabs} completed / {Math.max(totalLabsTouched, labs.length)} touched</p></div></div><div className=\"mt-4 flex flex-wrap gap-2\">{badges.map((badge) => <span key={badge} className=\"rounded-full border border-blue-400/14 px-3 py-1 text-[11px] text-blue-100\">{badge}</span>)}</div>{missionPulse ? <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${missionPulse.tone === \"success\" ? \"border-emerald-400/18 bg-emerald-400/8 text-emerald-100\" : missionPulse.tone === \"warning\" ? \"border-amber-400/18 bg-amber-400/8 text-amber-100\" : \"border-blue-400/18 bg-blue-500/8 text-blue-100\"}`}><p className=\"font-medium\">{missionPulse.title}</p><p className=\"mt-1 text-xs opacity-85\">{missionPulse.detail}</p></div> : null}<div className=\"mt-4 space-y-3\">{recentRewards.slice(0, 2).map((reward) => <div key={reward.id} className=\"rounded-2xl border border-white/8 bg-black/20 p-4\"><p className=\"font-medium text-white\">{reward.title}</p><p className=\"mt-2 text-xs text-slate-400\">{reward.detail}</p></div>)}{!recentRewards.length ? <div className=\"rounded-2xl border border-white/8 bg-black/20 p-4 text-sm text-slate-300\">Rewards and debrief snapshots appear after successful runs.</div> : null}</div></article>"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 127,
+    "code": "  const normalized = `${course.title} ${course.description}`.toLowerCase();"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 234,
+    "code": "      livePaths.map((track, index) => {"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 237,
+    "code": "        const difficulty = getTrackDifficulty(track.title, tags);"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 239,
+    "code": "          path.title.toLowerCase().includes(track.title.toLowerCase()) || track.title.toLowerCase().includes(path.title.toLowerCase())"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 254,
+    "code": "          icon: getTrackIcon(track.title, tags),"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 263,
+    "code": "    return liveCourses.map((course, index) => ({"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 278,
+    "code": "        track.title.toLowerCase().includes(normalizedSearch) ||"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 290,
+    "code": "        course.title.toLowerCase().includes(normalizedSearch) ||"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 306,
+    "code": "      .map(([label, missions], index) => ({"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 377,
+    "code": "                {FILTERS.map((filter) => ("
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 435,
+    "code": "            )) : filteredTracks.map((track) => {"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 454,
+    "code": "                  <h3 className=\"mt-5 text-xl font-semibold text-white\">{track.title}</h3>"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 514,
+    "code": "            )) : filteredCourses.map((course) => ("
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 531,
+    "code": "                  <h3 className=\"text-xl font-semibold text-white\">{course.title}</h3>"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 545,
+    "code": "                    onClick={() => handleCourseAction(course.title)}"
+  },
+  {
+    "file": "src\\pages\\LearnPage.tsx",
+    "line": 594,
+    "code": "              ]).map((item) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 395,
+    "code": "    return Object.entries(result.results).map(([key, value]: any) => ({"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 404,
+    "code": "    const entityNodes = entities.map((entity, index) => ({ id: `entity-${index}`, label: entity, type: \"entity\" }));"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 405,
+    "code": "    const moduleNodes = modules.map((module) => ({ id: `module-${module}`, label: module.toUpperCase(), type: \"module\" }));"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 412,
+    "code": "    const nodes = graphNodes.map((node, index) => {"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 477,
+    "code": "              {MODULES.map((module) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 537,
+    "code": "                {(summary || MODULES.map((module) => ({ id: module.id, status: \"idle\", provider: \"pending\" }))).map("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 578,
+    "code": "                    {(result?.insight?.highlights || [\"Run a scan to generate highlights.\"]).map("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 588,
+    "code": "                    {(result?.insight?.recommendations || [\"Run a scan to generate recommendations.\"]).map("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 599,
+    "code": "              {MODULES.map((module) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 634,
+    "code": "                  pyRecommendations.recommendations.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 635,
+    "code": "                    <div key={`${item.title}-${item.action}`} className=\"rounded-lg border border-white/10 bg-white/5 px-3 py-2\">"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 636,
+    "code": "                      <div className=\"text-sm font-semibold text-white\">{item.title}</div>"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 653,
+    "code": "                  {graphLayout.map((node) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 666,
+    "code": "                  {graphLayout.map((node) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 710,
+    "code": "                ].map((playbook) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 711,
+    "code": "                  <div key={playbook.title} className=\"rounded-lg border border-white/10 bg-white/5 px-3 py-2\">"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 712,
+    "code": "                    <div className=\"text-sm font-semibold text-white\">{playbook.title}</div>"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 715,
+    "code": "                      {playbook.modules.map((module) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 738,
+    "code": "                  ? Object.entries(providers).map(([key, value]: any) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 925,
+    "code": "                    ].map((row) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 958,
+    "code": "                    watchlists.map((watch) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 1048,
+    "code": "                  alerts.map((alert) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 1051,
+    "code": "                        <span>{alert.title}</span>"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 1105,
+    "code": "                    {caseTags.map((tag, index) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 1231,
+    "code": "                  entities.map((entity, index) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 1246,
+    "code": "                  events.slice(0, 12).map((event, index) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 1264,
+    "code": "                  cases.map((row) => ("
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 1273,
+    "code": "                      <div className=\"text-sm font-semibold\">{row.title}</div>"
+  },
+  {
+    "file": "src\\pages\\OsintPage.tsx",
+    "line": 1278,
+    "code": "                          {row.tags.slice(0, 4).map((tag: string) => ("
+  },
+  {
+    "file": "src\\pages\\OsintSharePage.tsx",
+    "line": 30,
+    "code": "        <h1 className=\"text-2xl font-bold text-white\">{shared.title}</h1>"
+  },
+  {
+    "file": "src\\pages\\OsintSharePage.tsx",
+    "line": 35,
+    "code": "            {shared.tags.map((tag: string, index: number) => ("
+  },
+  {
+    "file": "src\\pages\\OsintSharePage.tsx",
+    "line": 52,
+    "code": "                ? shared.entities.map((entity: string, idx: number) => ("
+  },
+  {
+    "file": "src\\pages\\PrivacyPage.tsx",
+    "line": 41,
+    "code": "            {privacySections.map((section) => ("
+  },
+  {
+    "file": "src\\pages\\PrivacyPage.tsx",
+    "line": 42,
+    "code": "              <article key={section.title} className=\"cyber-card rounded-[24px] p-5 md:p-6\">"
+  },
+  {
+    "file": "src\\pages\\PrivacyPage.tsx",
+    "line": 43,
+    "code": "                <h2 className=\"text-white\">{section.title}</h2>"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 526,
+    "code": "    : (detail?.module.learn_points || []).map((point, index) => ({"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 668,
+    "code": "      ? `Current task: ${currentTask.title}. Instruction: ${currentTask.instruction}.`"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 799,
+    "code": "              label: payload.lab_completed ? `Day ${day} cleared` : currentTask.title,"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 939,
+    "code": "                  {kaliTools.map((tool) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 952,
+    "code": "                {flowSteps.map((step, index) => {"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 989,
+    "code": "                <p className=\"mt-3 text-lg font-semibold text-white\">{stageFlash.title}</p>"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1010,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1031,
+    "code": "                    ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1053,
+    "code": "                    ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1081,
+    "code": "                    ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1107,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1135,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1162,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1189,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1217,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1244,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1272,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1300,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1328,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1356,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1383,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1412,
+    "code": "                {guidedSequence.map((item, index) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1421,
+    "code": "              <h2 className=\"mt-2 text-2xl font-semibold text-white\">{detail.module.title}</h2>"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1432,
+    "code": "                ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1440,
+    "code": "                {missionAssets.map((asset) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1457,
+    "code": "                {learnCards.map((card, index) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1472,
+    "code": "                    <p className=\"mt-4 text-lg font-semibold text-white\">{card.title}</p>"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1485,
+    "code": "                  {successCriteria.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1496,
+    "code": "                ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1563,
+    "code": "                {moduleTasks.map((task, index) => {"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1574,
+    "code": "                      <p className=\"mt-1 text-sm font-semibold text-white\">{task.title}</p>"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1589,
+    "code": "                          {task.validation_focus.map((focus) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1606,
+    "code": "                      <p className=\"text-lg font-semibold text-white\">{currentTask.title}</p>"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1789,
+    "code": "                  <p className=\"text-sm font-semibold text-white\">{currentTask.title}</p>"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1794,
+    "code": "                    {currentTask.options.map((option) => {"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1889,
+    "code": "                  <p className=\"text-sm font-semibold\">{lastValidation.title}</p>"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 1951,
+    "code": "                    {lastValidation.terminalOutput.map((line, index) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 2129,
+    "code": "                  {(terminalLog.length ? terminalLog : consoleBootLines.length ? consoleBootLines : [\"[console] Waiting for the first validated action.\"]).slice(-12).map((line, index) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 2162,
+    "code": "                  {solutionExplanation.map((line) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 2175,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 2187,
+    "code": "                      {moduleTasks.map((task) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 2189,
+    "code": "                          <p className=\"text-[11px] uppercase tracking-[0.18em] text-slate-400\">{task.title}</p>"
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 2214,
+    "code": "                      ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 2227,
+    "code": "                      {debriefPoints.map((point) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramLabPage.tsx",
+    "line": 2240,
+    "code": "                  ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramPage.tsx",
+    "line": 125,
+    "code": "            ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramPage.tsx",
+    "line": 145,
+    "code": "                ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramPage.tsx",
+    "line": 178,
+    "code": "                {overview.items.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ProgramPage.tsx",
+    "line": 201,
+    "code": "                    <p className=\"mt-3 text-sm text-white\">{item.title}</p>"
+  },
+  {
+    "file": "src\\pages\\PublicProfilePage.tsx",
+    "line": 66,
+    "code": "            ].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\PublicProfilePage.tsx",
+    "line": 80,
+    "code": "              {profile.badges.length ? profile.badges.map((badge) => ("
+  },
+  {
+    "file": "src\\pages\\PublicProfilePage.tsx",
+    "line": 91,
+    "code": "              {(leaderboard || []).slice(0, 5).map((entry) => ("
+  },
+  {
+    "file": "src\\pages\\ResourcesPage.tsx",
+    "line": 65,
+    "code": "    const courseEntries = courses.map((course, index) => ({"
+  },
+  {
+    "file": "src\\pages\\ResourcesPage.tsx",
+    "line": 79,
+    "code": "    const pathEntries = paths.map((path) => ({"
+  },
+  {
+    "file": "src\\pages\\ResourcesPage.tsx",
+    "line": 91,
+    "code": "    const missionEntries = missions.slice(0, 12).map((mission) => ({"
+  },
+  {
+    "file": "src\\pages\\ResourcesPage.tsx",
+    "line": 245,
+    "code": "                Object.entries(groupedResources).map(([category, items]) => ("
+  },
+  {
+    "file": "src\\pages\\ResourcesPage.tsx",
+    "line": 258,
+    "code": "                      {items.map((resource) => ("
+  },
+  {
+    "file": "src\\pages\\ResourcesPage.tsx",
+    "line": 267,
+    "code": "                              <h4 className=\"mt-2 text-xl font-bold text-white\">{resource.title}</h4>"
+  },
+  {
+    "file": "src\\pages\\TermsPage.tsx",
+    "line": 27,
+    "code": "              {termsItems.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 289,
+    "code": "      [resource.title, resource.source, resource.kind, resource.usage].join(\" \").toLowerCase().includes(needle)"
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 307,
+    "code": "          {(loading ? [] : filtered.slice(0, 8)).map((resource) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 308,
+    "code": "            <article key={`${resource.source}-${resource.title}`} className=\"rounded-2xl border border-white/10 bg-white/[0.04] p-4\">"
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 310,
+    "code": "              <h3 className=\"mt-2 text-base font-medium text-slate-100\">{resource.title}</h3>"
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 366,
+    "code": "          {(templates.length ? templates.map((item) => item.name) : [\"File exposure\", \"Login pages\", \"Directory listing\"]).map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 452,
+    "code": "                  {headerResult.findings.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 626,
+    "code": "              .map((item) => `<div class=\"row\"><span>${item.label}</span><span>${item.ok ? \"Pass\" : \"Check\"}</span></div>`)"
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 631,
+    "code": "            <ul>${(actionItems.length ? actionItems : [\"No critical fixes found.\"]).map((item) => `<li>${item}</li>`).join(\"\")}</ul>"
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 826,
+    "code": "                {checks.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 893,
+    "code": "                {(result.technologies.length ? result.technologies : [\"Unknown stack\"]).map((tech) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 938,
+    "code": "                {(result.missingHeaders?.length ? result.missingHeaders : [\"None detected\"]).map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 948,
+    "code": "                {(result.openPorts?.length ? result.openPorts : [{ port: 0, status: \"No common ports responded\" }]).map((entry) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 963,
+    "code": "              {(actionItems.length ? actionItems : [\"No critical fixes found. Maintain current hardening.\"]).map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 1018,
+    "code": "                {headerChecks.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 1033,
+    "code": "              {history.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 1129,
+    "code": "          {(tool.capabilities || []).map((capability) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 1301,
+    "code": "                    {(tool.capabilities || []).map((capability) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 1332,
+    "code": "                    {related.map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolDetail.tsx",
+    "line": 1355,
+    "code": "                  {(tool.tags || []).map((tag) => ("
+  },
+  {
+    "file": "src\\pages\\ToolsPage.tsx",
+    "line": 107,
+    "code": "      TOOL_FILTERS.filter((filter) => filter !== \"All Tools\").map((filter) => ({"
+  },
+  {
+    "file": "src\\pages\\ToolsPage.tsx",
+    "line": 120,
+    "code": "        .map((id) => toolsCatalog.find((tool) => tool.id === id))"
+  },
+  {
+    "file": "src\\pages\\ToolsPage.tsx",
+    "line": 197,
+    "code": "                {[`${activeCount} visible tools`, `${verifiedCount} verified workspaces`, recentTools[0] ? `Resume ${recentTools[0].name}` : \"Use smart search\"].map((item) => ("
+  },
+  {
+    "file": "src\\pages\\ToolsPage.tsx",
+    "line": 256,
+    "code": "                  {smartSuggestions.map((suggestion) => ("
+  },
+  {
+    "file": "src\\pages\\ToolsPage.tsx",
+    "line": 275,
+    "code": "                {categoryMetrics.map((metric) => {"
+  },
+  {
+    "file": "src\\pages\\ToolsPage.tsx",
+    "line": 324,
+    "code": "              {recentTools.map((tool) => ("
+  },
+  {
+    "file": "src\\pages\\ToolsPage.tsx",
+    "line": 414,
+    "code": "            {TOOL_FILTERS.map((filter) => ("
+  },
+  {
+    "file": "src\\pages\\ToolsPage.tsx",
+    "line": 440,
+    "code": "            {TOOL_GROUP_ORDER.map((group) => {"
+  },
+  {
+    "file": "src\\pages\\ToolsPage.tsx",
+    "line": 489,
+    "code": "                      {tools.map((tool) => ("
+  },
+  {
+    "file": "src\\test\\apiBackendIntegrity.test.ts",
+    "line": 7,
+    "code": " * actual arrays (never null/undefined) so frontend `.map()` calls are safe."
+  },
+  {
+    "file": "src\\test\\fileAnalyzer.test.ts",
+    "line": 38,
+    "code": "    .map((value, index) => (index === 0 ? \"0000000000 65535 f \\n\" : `${String(value).padStart(10, \"0\")} 00000 n \\n`))"
+  },
+  {
+    "file": "src\\utils\\safeData.ts",
+    "line": 19,
+    "code": " * Safe `.map()` that won't crash if `data` is undefined/null."
+  }
+]

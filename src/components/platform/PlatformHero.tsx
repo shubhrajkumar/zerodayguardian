@@ -27,7 +27,7 @@ const PlatformHero = ({ eyebrow, title, description, pills, actions, aside }: Pl
             <p className="max-w-3xl text-sm leading-6 text-slate-300/82 md:text-base md:leading-7">{description}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {pills.map((pill) => (
+            {(pills ?? []).map((pill) => (
               <span key={pill} className="cyber-badge">
                 {pill}
               </span>

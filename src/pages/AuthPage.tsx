@@ -95,7 +95,9 @@ export default function AuthPage() {
         ? "Sign-in cancelled"
         : err?.code === "auth/popup-blocked"
           ? "Pop-up was blocked by your browser. Please allow pop-ups and try again."
-          : "Google sign-in failed. Please try again.";
+          : err?.code === "auth/unauthorized-domain"
+            ? "This domain is not authorized for sign-in. Try using email/password instead."
+            : "Google sign-in failed. Please try again.";
       setError(message);
     } finally {
       setIsLoading(false);

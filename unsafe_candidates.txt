@@ -1,0 +1,595 @@
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\api\snapshot.d.ts:93	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\api\snapshot.d.ts:177	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\api\snapshot.d.ts:205	 *         assertEqual(post2.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\global_index.d.ts:6214	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\global_index.d.ts:6298	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\global_index.d.ts:6326	 *         assertEqual(post2.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\global_index.d.ts:8103	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\global_index.d.ts:8187	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\global_index.d.ts:8215	 *         assertEqual(post2.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\lite-api\snapshot.d.ts:92	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\lite-api\snapshot.d.ts:176	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\firestore\src\lite-api\snapshot.d.ts:204	 *         assertEqual(post2.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\lite\firestore\src\api\snapshot.d.ts:93	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\lite\firestore\src\api\snapshot.d.ts:177	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\lite\firestore\src\api\snapshot.d.ts:205	 *         assertEqual(post2.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\lite\firestore\src\lite-api\snapshot.d.ts:92	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\lite\firestore\src\lite-api\snapshot.d.ts:176	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\lite\firestore\src\lite-api\snapshot.d.ts:204	 *         assertEqual(post2.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\lite\packages\firestore\src\api\snapshot.d.ts:93	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\lite\packages\firestore\src\api\snapshot.d.ts:177	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\lite\packages\firestore\src\api\snapshot.d.ts:205	 *         assertEqual(post2.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\lite\packages\firestore\src\lite-api\snapshot.d.ts:92	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\lite\packages\firestore\src\lite-api\snapshot.d.ts:176	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\lite\packages\firestore\src\lite-api\snapshot.d.ts:204	 *         assertEqual(post2.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\packages\firestore\src\api\snapshot.d.ts:93	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\packages\firestore\src\api\snapshot.d.ts:177	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\packages\firestore\src\api\snapshot.d.ts:205	 *         assertEqual(post2.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\packages\firestore\src\lite-api\snapshot.d.ts:92	 *         return `${this.title} by ${this.author}`;
+TITLE	node_modules\@firebase\firestore\dist\packages\firestore\src\lite-api\snapshot.d.ts:176	 *         assertEqual(post1.title, 'My Life');
+TITLE	node_modules\@firebase\firestore\dist\packages\firestore\src\lite-api\snapshot.d.ts:204	 *         assertEqual(post2.title, 'My Life');
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\call-credentials.ts:155	      this.creds.map(cred => cred.generateMetadata(options))
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\channelz.ts:167	      events: this.events.map(event => {
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\channelz.ts:474	    .map(section => parseIPv6Section(section));
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\channelz.ts:489	        ipAddress.split('.').map(segment => Number.parseInt(segment))
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\channelz.ts:572	    channel_ref: resolvedInfo.children.channels.map(ref =>
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\channelz.ts:575	    subchannel_ref: resolvedInfo.children.subchannels.map(ref =>
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\channelz.ts:633	    listen_socket: resolvedInfo.listenerChildren.sockets.map(ref =>
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\channelz.ts:705	    socket_ref: resolvedInfo.children.sockets.map(ref =>
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\client-interceptors.ts:542	        interceptorArgs.callInterceptorProviders.map(provider =>
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\client-interceptors.ts:552	        interceptorArgs.clientInterceptorProviders.map(provider =>
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\filter-stack.ts:97	      this.factories.map(factory => factory.createFilter())
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\load-balancer-outlier-detection.ts:201	      child_policy: this.childPolicy.map(policy => policy.toJsonObject()),
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\load-balancer-outlier-detection.ts:313	      obj.child_policy.map(validateLoadBalancingConfig)
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\load-balancer-pick-first.ts:410	    const newChildrenList = addressList.map(address => ({
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\load-balancer-round-robin.ts:206	        addressList.map(address => subchannelAddressToString(address))
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\load-balancer-round-robin.ts:208	    this.subchannels = addressList.map(address =>
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\metadata.ts:178	      const clonedValue: MetadataValue[] = value.map(v => {
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\metadata.ts:227	      result[key] = values.map(bufToString);
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\resolver-dns.ts:64	      arrays.map(array => array.length)
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\resolver-dns.ts:227	          this.latestLookupResult = mergeArrays(ip6Addresses, ip4Addresses).map(
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\resolver-dns.ts:233	              .map(addr => addr.host + ':' + addr.port)
+MAP	node_modules\@firebase\firestore\node_modules\@grpc\grpc-js\src\server.ts:464	        addressList.map(address => {
+MAP	node_modules\@grpc\grpc-js\src\call-credentials.ts:156	      this.creds.map(cred => cred.generateMetadata(options))
+MAP	node_modules\@grpc\grpc-js\src\channelz.ts:187	      events: this.events.map(event => {
+MAP	node_modules\@grpc\grpc-js\src\channelz.ts:458	    .map(section => parseIPv6Section(section));
+MAP	node_modules\@grpc\grpc-js\src\channelz.ts:475	      ipAddress.split('.').map(segment => Number.parseInt(segment))
+MAP	node_modules\@grpc\grpc-js\src\client-interceptors.ts:550	        interceptorArgs.callInterceptorProviders.map(provider =>
+MAP	node_modules\@grpc\grpc-js\src\client-interceptors.ts:560	        interceptorArgs.clientInterceptorProviders.map(provider =>
+MAP	node_modules\@grpc\grpc-js\src\filter-stack.ts:97	      this.factories.map(factory => factory.createFilter())
+MAP	node_modules\@grpc\grpc-js\src\load-balancer-pick-first.ts:475	    trace('connectToAddressList([' + addressList.map(address => subchannelAddressToString(address)) + '])');
+MAP	node_modules\@grpc\grpc-js\src\load-balancer-pick-first.ts:476	    const newChildrenList = addressList.map(address => ({
+MAP	node_modules\@grpc\grpc-js\src\load-balancer-pick-first.ts:538	      ...endpointList.map(endpoint => endpoint.addresses)
+MAP	node_modules\@grpc\grpc-js\src\load-balancer-pick-first.ts:540	    trace('updateAddressList([' + rawAddressList.map(address => subchannelAddressToString(address)) + '])');
+MAP	node_modules\@grpc\grpc-js\src\load-balancer-round-robin.ts:159	          readyChildren.map(child => ({
+MAP	node_modules\@grpc\grpc-js\src\load-balancer-round-robin.ts:246	    trace('Connect to endpoint list ' + endpointList.map(endpointToString));
+MAP	node_modules\@grpc\grpc-js\src\load-balancer-round-robin.ts:248	    this.children = endpointList.map(
+MAP	node_modules\@grpc\grpc-js\src\load-balancer-weighted-round-robin.ts:314	      trace('Created picker with weights: ' + weightedPickers.map(entry => entry.endpointName + ':' + entry.weight).join(','));
+MAP	node_modules\@grpc\grpc-js\src\load-balancer-weighted-round-robin.ts:394	    trace('Connect to endpoint list ' + maybeEndpointList.value.map(endpointToString));
+MAP	node_modules\@grpc\grpc-js\src\metadata.ts:179	      const clonedValue: MetadataValue[] = value.map(v => {
+MAP	node_modules\@grpc\grpc-js\src\metadata.ts:231	      result[key] = values.map(bufToString);
+MAP	node_modules\@grpc\grpc-js\src\resolver-dns.ts:199	          this.latestLookupResult = statusOrFromValue(addressList.map(address => ({
+MAP	node_modules\@grpc\grpc-js\src\resolver-dns.ts:204	            addressList.map(addr => addr.host + ':' + addr.port).join(',') +
+MAP	node_modules\@grpc\grpc-js\src\resolver-dns.ts:337	        .map(addr => ({
+MAP	node_modules\@grpc\grpc-js\src\resolver-dns.ts:348	    return addressList.map(addr => ({ host: addr.address, port: +this.port! }));
+MAP	node_modules\@grpc\grpc-js\src\resolver-ip.ts:87	    this.endpoints = addresses.map(address => ({ addresses: [address] }));
+MAP	node_modules\@grpc\grpc-js\src\resolver-ip.ts:88	    trace('Parsed ' + target.scheme + ' address list ' + addresses.map(subchannelAddressToString));
+MAP	node_modules\@grpc\grpc-js\src\server.ts:726	          .map(address =>
+MAP	node_modules\@grpc\grpc-js\src\server.ts:732	          restAddresses.map(address =>
+MAP	node_modules\@grpc\grpc-js\src\server.ts:742	            .map(result => result.error!),
+MAP	node_modules\@grpc\grpc-js\src\server.ts:747	        addressList.map(address =>
+MAP	node_modules\@grpc\grpc-js\src\server.ts:756	          .map(result => result.error!),
+MAP	node_modules\@grpc\grpc-js\src\server.ts:801	          ...endpointList.value.map(endpoint => endpoint.addresses)
+MAP	node_modules\@grpc\grpc-js\src\subchannel-address.ts:114	    '[' + endpoint.addresses.map(subchannelAddressToString).join(', ') + ']'
+MAP	node_modules\@hookform\resolvers\io-ts\src\errorsToRecord.ts:41	    ReadonlyArray.map(({ key }) => key),
+MAP	node_modules\@hookform\resolvers\io-ts\src\errorsToRecord.ts:42	    ReadonlyArray.map((key) =>
+MAP	node_modules\@hookform\resolvers\io-ts\src\errorsToRecord.ts:62	        Option.map(
+MAP	node_modules\@hookform\resolvers\io-ts\src\errorsToRecord.ts:79	    Option.map((contextEntry) => contextEntry.type.name),
+MAP	node_modules\@hookform\resolvers\io-ts\src\errorsToRecord.ts:99	    ReadonlyArray.map((error) => ({
+MAP	node_modules\@hookform\resolvers\io-ts\src\errorsToRecord.ts:123	    ReadonlyRecord.map((errorWithPath) => {
+MAP	node_modules\@hookform\resolvers\io-ts\src\errorsToRecord.ts:138	    return pipe(validationErrors, ReadonlyArray.map(formatError), concat);
+MAP	node_modules\@jridgewell\gen-mapping\src\gen-mapping.ts:291	    // originalScopes: decoded.originalScopes.map((os) => encodeOriginalScopes(os)),
+MAP	node_modules\@jridgewell\gen-mapping\src\gen-mapping.ts:306	  cast(gen)._sourcesContent = map.sourcesContent || map.sources.map(() => null);
+MAP	node_modules\@jridgewell\gen-mapping\src\gen-mapping.ts:541	    scope.vars = variables.map((v) => put(names, v));
+MAP	node_modules\@jridgewell\remapping\src\build-source-map-tree.ts:28	  const maps = asArray(input).map((m) => new TraceMap(m, ''));
+MAP	node_modules\@jridgewell\remapping\src\build-source-map-tree.ts:56	  const children = resolvedSources.map((sourceFile: string | null, i: number): Sources => {
+MAP	node_modules\@jridgewell\trace-mapping\src\by-source.ts:14	  const sources: Source[] = memos.map(() => []);
+MAP	node_modules\@jridgewell\trace-mapping\src\trace-mapping.ts:122	    this.resolvedSources = sources.map(resolve);
+MAP	node_modules\@jridgewell\trace-mapping\src\trace-mapping.ts:487	  const bySourceMemos = (cast(map)._bySourceMemos ||= sources.map(memoizedState));
+TITLE	node_modules\@opentelemetry\semantic-conventions\build\src\experimental_attributes.d.ts:14785	 * Deprecated, use `vcs.change.title` instead.
+TITLE	node_modules\@opentelemetry\semantic-conventions\build\src\experimental_attributes.d.ts:14793	 * @deprecated Replaced by `vcs.change.title`.
+TITLE	node_modules\@radix-ui\react-alert-dialog\src\alert-dialog.tsx:170	    const { __scopeAlertDialog, ...titleProps } = props;
+TITLE	node_modules\@radix-ui\react-alert-dialog\src\alert-dialog.tsx:172	    return <DialogPrimitive.Title {...dialogScope} {...titleProps} ref={forwardedRef} />;
+MAP	node_modules\@tanstack\query-core\src\mutationCache.ts:236	        pausedMutations.map((mutation) => mutation.continue().catch(noop)),
+MAP	node_modules\@tanstack\query-core\src\queriesObserver.ts:96	      const queryHashes = queries.map(
+MAP	node_modules\@tanstack\query-core\src\queriesObserver.ts:116	      const newObservers = newObserverMatches.map((match) => match.observer)
+MAP	node_modules\@tanstack\query-core\src\queriesObserver.ts:117	      const newResult = newObservers.map((observer) =>
+MAP	node_modules\@tanstack\query-core\src\queriesObserver.ts:165	    return this.#observers.map((observer) => observer.getCurrentQuery())
+MAP	node_modules\@tanstack\query-core\src\queriesObserver.ts:181	    const result = matches.map((match) =>
+MAP	node_modules\@tanstack\query-core\src\queriesObserver.ts:184	    const queryHashes = matches.map(
+MAP	node_modules\@tanstack\query-core\src\queriesObserver.ts:203	    return matches.map((match, index) => {
+MAP	node_modules\@tanstack\query-core\src\queryClient.ts:169	    return this.#queryCache.findAll(filters).map(({ queryKey, state }) => {
+MAP	node_modules\@tanstack\query-core\src\queryClient.ts:224	        .map(({ queryKey }) => [
+MAP	node_modules\@tanstack\query-core\src\queryClient.ts:286	        .map((query) => query.cancel(defaultedCancelOptions)),
+MAP	node_modules\@tanstack\query-core\src\queryClient.ts:326	        .map((query) => {
+MAP	node_modules\@tanstack\query-core\src\types.ts:775	   *       {data.map(todo => (
+TITLE	node_modules\@tanstack\query-core\src\types.ts:776	   *         <li key={todo.id}>{todo.title}</li>
+MAP	node_modules\@tanstack\react-query\src\useMutationState.ts:36	    .map(
+MAP	node_modules\@tanstack\react-query\src\useQueries.ts:166	            // use this to infer the param types in the case of Array.map() argument
+MAP	node_modules\@tanstack\react-query\src\useQueries.ts:229	      queries.map((opts) => {
+MAP	node_modules\@tanstack\react-query\src\useSuspenseQueries.ts:129	            // use this to infer the param types in the case of Array.map() argument
+MAP	node_modules\@tanstack\react-query\src\useSuspenseQueries.ts:193	      queries: options.queries.map((query: any) => {
+MAP	node_modules\bson\src\extended_json.ts:184	  return array.map((v: unknown, index: number) => {
+MAP	node_modules\bson\src\extended_json.ts:217	      const props = options.seenObjects.map(entry => entry.propertyName);
+MAP	node_modules\bson\src\extended_json.ts:220	        .map(prop => `${prop} -> `)
+MAP	node_modules\bson\src\extended_json.ts:227	          .map(prop => `${prop} -> `)
+MAP	node_modules\bson\src\parser\deserializer.ts:171	    const utf8ValidationValues = Object.keys(utf8ValidatedKeys).map(function (key) {
+MAP	node_modules\entities\src\generated\decode-data-html.ts:7	        .map((c) => c.charCodeAt(0)),
+MAP	node_modules\entities\src\generated\decode-data-xml.ts:7	        .map((c) => c.charCodeAt(0)),
+MAP	node_modules\entities\src\index.spec.ts:10	        .map((name) => new URL(`../maps/${name}.json`, import.meta.url))
+MAP	node_modules\entities\src\index.spec.ts:11	        .map((url) => JSON.parse(readFileSync(url, "utf8")))
+MAP	node_modules\entities\src\index.spec.ts:12	        .map((document, index) => [index, document]);
+MAP	node_modules\mongodb\src\client-side-encryption\client_encryption.ts:203	      keyAltNames = options.keyAltNames.map((keyAltName, i) => {
+MAP	node_modules\mongodb\src\client-side-encryption\client_encryption.ts:319	    const replacements = dataKeys.map(
+MAP	node_modules\mongodb\src\client-side-encryption\client_encryption.ts:590	      const createDataKeyPromises = encryptedFields.fields.map(async field =>
+MAP	node_modules\mongodb\src\client-side-encryption\client_encryption.ts:605	      encryptedFields.fields = createDataKeyResolutions.map((resolution, index) =>
+MAP	node_modules\mongodb\src\cmap\connection.ts:894	      ? cmd.indexes.map((index: { key: Map<string, number> }) => index.key)
+MAP	node_modules\mongodb\src\collection.ts:325	        docs.map(doc => ({ insertOne: { document: doc } })),
+MAP	node_modules\mongodb\src\collection.ts:753	        .map(({ name }) => name)
+MAP	node_modules\mongodb\src\collection.ts:921	      indexes.map(({ name, key }) => [name, Object.entries(key)])
+MAP	node_modules\mongodb\src\connection_string.ts:100	  const hostAddresses = addresses.map(r => HostAddress.fromString(`${r.name}:${r.port ?? 27017}`));
+MAP	node_modules\mongodb\src\connection_string.ts:220	    super(entries.map(([k, v]) => [k.toLowerCase(), v]));
+MAP	node_modules\mongodb\src\connection_string.ts:260	  mongoOptions.hosts = isSRV ? [] : hosts.map(HostAddress.fromString);
+MAP	node_modules\mongodb\src\connection_string.ts:353	      .map(getBoolean.bind(null, 'tls/ssl'));
+MAP	node_modules\mongodb\src\connection_string.ts:1302	    .map(([k, d]) => [k, d.default])
+MAP	node_modules\mongodb\src\cursor\abstract_cursor.ts:745	   * cursor.map(() => null);
+MAP	node_modules\mongodb\src\cursor\abstract_cursor.ts:755	   * cursor.map(() => '');
+MAP	node_modules\mongodb\src\cursor\abstract_cursor.ts:769	   * const mappedCursor: FindCursor<number> = cursor.map(doc => Object.keys(doc).length);
+MAP	node_modules\mongodb\src\cursor\aggregation_cursor.ts:69	    return super.map(transform) as AggregationCursor<T>;
+MAP	node_modules\mongodb\src\cursor\find_cursor.ts:68	    return super.map(transform) as FindCursor<T>;
+MAP	node_modules\mongodb\src\db.ts:441	      .map(({ name }) => new Collection(this, name, this.s.options));
+MAP	node_modules\mongodb\src\error.ts:168	        : e.errors.map(({ message }) => message).join(', ');
+MAP	node_modules\mongodb\src\operations\indexes.ts:213	    validProvidedOptions.map(([name, value]) => (name === 'version' ? ['v', value] : [name, value]))
+MAP	node_modules\mongodb\src\operations\indexes.ts:263	    this.indexes = indexes.map((userIndex: IndexDescription): ResolvedIndexDescription => {
+MAP	node_modules\mongodb\src\operations\indexes.ts:322	    const indexNames = this.indexes.map(index => index.name || '');
+MAP	node_modules\mongodb\src\operations\search_indexes\create.ts:50	    return super.handleOk(response).indexesCreated.map((val: { name: string }) => val.name);
+MAP	node_modules\mongodb\src\sdam\srv_polling.ts:19	    return new Set(this.srvRecords.map(r => HostAddress.fromSrvRecord(r).toString()));
+MAP	node_modules\mongodb\src\sdam\topology.ts:435	      serverDescriptions.map(serverDescription => [
+MAP	node_modules\mongodb\src\sort.ts:89	  const sortEntries: SortPairForCmd[] = t.map(([k, v]) => [`${k}`, prepareDirection(v)]);
+MAP	node_modules\mongodb\src\sort.ts:95	  const sortEntries: SortPairForCmd[] = t.map(key => [`${key}`, 1]);
+MAP	node_modules\mongodb\src\sort.ts:101	  const sortEntries: SortPairForCmd[] = Object.entries(t).map(([k, v]) => [
+MAP	node_modules\mongoose\node_modules\mongodb\src\client-side-encryption\client_encryption.ts:203	      keyAltNames = options.keyAltNames.map((keyAltName, i) => {
+MAP	node_modules\mongoose\node_modules\mongodb\src\client-side-encryption\client_encryption.ts:319	    const replacements = dataKeys.map(
+MAP	node_modules\mongoose\node_modules\mongodb\src\client-side-encryption\client_encryption.ts:590	      const createDataKeyPromises = encryptedFields.fields.map(async field =>
+MAP	node_modules\mongoose\node_modules\mongodb\src\client-side-encryption\client_encryption.ts:605	      encryptedFields.fields = createDataKeyResolutions.map((resolution, index) =>
+MAP	node_modules\mongoose\node_modules\mongodb\src\cmap\connection.ts:892	      ? cmd.indexes.map((index: { key: Map<string, number> }) => index.key)
+MAP	node_modules\mongoose\node_modules\mongodb\src\collection.ts:325	        docs.map(doc => ({ insertOne: { document: doc } })),
+MAP	node_modules\mongoose\node_modules\mongodb\src\collection.ts:753	        .map(({ name }) => name)
+MAP	node_modules\mongoose\node_modules\mongodb\src\collection.ts:921	      indexes.map(({ name, key }) => [name, Object.entries(key)])
+MAP	node_modules\mongoose\node_modules\mongodb\src\connection_string.ts:100	  const hostAddresses = addresses.map(r => HostAddress.fromString(`${r.name}:${r.port ?? 27017}`));
+MAP	node_modules\mongoose\node_modules\mongodb\src\connection_string.ts:220	    super(entries.map(([k, v]) => [k.toLowerCase(), v]));
+MAP	node_modules\mongoose\node_modules\mongodb\src\connection_string.ts:260	  mongoOptions.hosts = isSRV ? [] : hosts.map(HostAddress.fromString);
+MAP	node_modules\mongoose\node_modules\mongodb\src\connection_string.ts:353	      .map(getBoolean.bind(null, 'tls/ssl'));
+MAP	node_modules\mongoose\node_modules\mongodb\src\connection_string.ts:1302	    .map(([k, d]) => [k, d.default])
+MAP	node_modules\mongoose\node_modules\mongodb\src\cursor\abstract_cursor.ts:742	   * cursor.map(() => null);
+MAP	node_modules\mongoose\node_modules\mongodb\src\cursor\abstract_cursor.ts:752	   * cursor.map(() => '');
+MAP	node_modules\mongoose\node_modules\mongodb\src\cursor\abstract_cursor.ts:766	   * const mappedCursor: FindCursor<number> = cursor.map(doc => Object.keys(doc).length);
+MAP	node_modules\mongoose\node_modules\mongodb\src\cursor\aggregation_cursor.ts:69	    return super.map(transform) as AggregationCursor<T>;
+MAP	node_modules\mongoose\node_modules\mongodb\src\cursor\find_cursor.ts:68	    return super.map(transform) as FindCursor<T>;
+MAP	node_modules\mongoose\node_modules\mongodb\src\db.ts:441	      .map(({ name }) => new Collection(this, name, this.s.options));
+MAP	node_modules\mongoose\node_modules\mongodb\src\error.ts:168	        : e.errors.map(({ message }) => message).join(', ');
+MAP	node_modules\mongoose\node_modules\mongodb\src\operations\indexes.ts:213	    validProvidedOptions.map(([name, value]) => (name === 'version' ? ['v', value] : [name, value]))
+MAP	node_modules\mongoose\node_modules\mongodb\src\operations\indexes.ts:263	    this.indexes = indexes.map((userIndex: IndexDescription): ResolvedIndexDescription => {
+MAP	node_modules\mongoose\node_modules\mongodb\src\operations\indexes.ts:322	    const indexNames = this.indexes.map(index => index.name || '');
+MAP	node_modules\mongoose\node_modules\mongodb\src\operations\search_indexes\create.ts:50	    return super.handleOk(response).indexesCreated.map((val: { name: string }) => val.name);
+MAP	node_modules\mongoose\node_modules\mongodb\src\sdam\srv_polling.ts:19	    return new Set(this.srvRecords.map(r => HostAddress.fromSrvRecord(r).toString()));
+MAP	node_modules\mongoose\node_modules\mongodb\src\sdam\topology.ts:435	      serverDescriptions.map(serverDescription => [
+MAP	node_modules\mongoose\node_modules\mongodb\src\sort.ts:89	  const sortEntries: SortPairForCmd[] = t.map(([k, v]) => [`${k}`, prepareDirection(v)]);
+MAP	node_modules\mongoose\node_modules\mongodb\src\sort.ts:95	  const sortEntries: SortPairForCmd[] = t.map(key => [`${key}`, 1]);
+MAP	node_modules\mongoose\node_modules\mongodb\src\sort.ts:101	  const sortEntries: SortPairForCmd[] = Object.entries(t).map(([k, v]) => [
+MAP	node_modules\react-day-picker\src\components\HeadRow\HeadRow.tsx:27	      {weekdays.map((weekday, i) => (
+MAP	node_modules\react-day-picker\src\components\MonthsDropdown\MonthsDropdown.tsx:67	      {dropdownMonths.map((m) => (
+TITLE	node_modules\react-day-picker\src\components\Root\Root.tsx:78	      title={initialProps.title}
+MAP	node_modules\react-day-picker\src\components\Root\Root.tsx:83	        {navigation.displayMonths.map((month, i) => (
+MAP	node_modules\react-day-picker\src\components\Row\Row.tsx:38	      {props.dates.map((date) => (
+MAP	node_modules\react-day-picker\src\components\Table\Table.tsx:53	        {weeks.map((week) => (
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:13	        const weekNumbers = weeks.map((week) => week.weekNumber);
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:19	        const lastWeekDates = lastWeek.dates.map((date) => date.getDate());
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:30	        const weekNumbers = weeks.map((week) => week.weekNumber);
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:36	        const lastWeekDates = lastWeek.dates.map((date) => date.getDate());
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:41	        expect(weeks[4].dates.map((date) => date.getDate())).toEqual([
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:55	      const weekNumbers = weeks.map((week) => week.weekNumber);
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:59	      expect(weeks[0].dates.map((date) => date.getDate())).toEqual([
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:64	      const weekNumbers = weeks.map((week) => week.weekNumber);
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:72	      const weekNumbers = weeks.map((week) => week.weekNumber);
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:84	      const weekNumbers = weeks.map((week) => week.weekNumber);
+MAP	node_modules\react-day-picker\src\components\Table\utils\getMonthWeeks.test.ts:96	      const weekNumbers = weeks.map((week) => week.weekNumber);
+MAP	node_modules\react-day-picker\src\components\YearsDropdown\YearsDropdown.tsx:68	      {years.map((year) => (
+MAP	node_modules\react-hot-toast\src\components\toaster.tsx:114	      {toasts.map((t) => {
+MAP	node_modules\react-hot-toast\src\core\store.ts:75	        toasts: state.toasts.map((t) =>
+MAP	node_modules\react-hot-toast\src\core\store.ts:94	        toasts: state.toasts.map((t) =>
+MAP	node_modules\react-hot-toast\src\core\store.ts:128	        toasts: state.toasts.map((t) => ({
+MAP	node_modules\react-hot-toast\src\core\store.ts:208	  const mergedToasts = state.toasts.map((t) => ({
+MAP	node_modules\react-hot-toast\src\core\use-toaster.ts:42	    const timeouts = toasts.map((t) => {
+MAP	node_modules\sift\src\operations.ts:118	    this._ops = this.params.map((op) =>
+MAP	node_modules\sift\src\operations.ts:160	    this._testers = params.map((value) => {
+MAP	node_modules\sift\src\operations.ts:238	      params.map((query) => createQueryOperation(query, owneryQuery, options)),
+MAP	node_modules\sift\src\operations.ts:261	      params.map((query) => createQueryOperation(query, owneryQuery, options)),
+MAP	node_modules\sift\src\utils.ts:16	    return value.map(comparable);
+MAP	node_modules\tailwind-merge\src\lib\class-group-utils.ts:197	    return classGroupEntries.map(([classGroupId, classGroup]) => {
+MAP	node_modules\tailwind-merge\src\lib\class-group-utils.ts:198	        const prefixedClassGroup = classGroup.map((classDefinition) => {
+MAP	node_modules\tailwind-merge\src\lib\class-group-utils.ts:205	                    Object.entries(classDefinition).map(([key, value]) => [prefix + key, value]),
+MAP	node_modules\zod\src\v3\helpers\util.ts:34	    return objectKeys(obj).map(function (e) {
+MAP	node_modules\zod\src\v3\helpers\util.ts:70	    return array.map((val) => (typeof val === "string" ? `'${val}'` : val)).join(separator);
+MAP	node_modules\zod\src\v3\tests\map.test.ts:8	const stringMap = z.map(z.string(), z.string());
+MAP	node_modules\zod\src\v3\tests\map.test.ts:90	  const map = z.map(
+MAP	node_modules\zod\src\v3\tests\readonly.test.ts:28	  z.map(z.string(), z.date()).readonly(),
+MAP	node_modules\zod\src\v3\tests\readonly.test.ts:150	        .map(z.string(), z.date())
+MAP	node_modules\zod\src\v3\tests\readonly.test.ts:175	        .map(z.string(), z.date())
+MAP	node_modules\zod\src\v3\tests\string.test.ts:413	  const results = invalidStrings.map((s) => cuid2.safeParse(s));
+MAP	node_modules\zod\src\v3\types.ts:2300	        ([...ctx.data] as any[]).map((item, i) => {
+MAP	node_modules\zod\src\v3\types.ts:2308	    const result = ([...ctx.data] as any[]).map((item, i) => {
+MAP	node_modules\zod\src\v3\types.ts:2444	    return ZodTuple.create(schema.items.map((item: any) => deepPartialify(item)));
+MAP	node_modules\zod\src\v3\types.ts:2967	      const unionErrors = results.map((result) => new ZodError(result.ctx.common.issues));
+MAP	node_modules\zod\src\v3\types.ts:2978	        options.map(async (option) => {
+MAP	node_modules\zod\src\v3\types.ts:3031	      const unionErrors = issues.map((issues) => new ZodError(issues));
+MAP	node_modules\zod\src\v3\types.ts:3434	      .map((item, itemIndex) => {
+MAP	node_modules\zod\src\v3\ZodError.ts:227	          issue.unionErrors.map(processError);
+MAP	node_modules\zod\src\v4\classic\schemas.ts:135	          ...checks.map((ch) =>
+MAP	node_modules\zod\src\v4\classic\schemas.ts:1493	  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
+MAP	node_modules\zod\src\v4\classic\tests\assignability.test.ts:86	  z.map(z.string(), z.number()) satisfies z.core.$ZodMap;
+MAP	node_modules\zod\src\v4\classic\tests\assignability.test.ts:87	  z.map(z.string(), z.number()) satisfies z.ZodMap;
+MAP	node_modules\zod\src\v4\classic\tests\assignability.test.ts:177	  z.map(z.string(), z.number()) satisfies z.ZodType;
+MAP	node_modules\zod\src\v4\classic\tests\index.test.ts:308	  const a = z.map(z.string(), z.number());
+MAP	node_modules\zod\src\v4\classic\tests\index.test.ts:330	  const a = z.map(z.bigint(), z.number());
+MAP	node_modules\zod\src\v4\classic\tests\index.test.ts:338	  const a = z.map(z.string().check(z.refine(async () => true)), z.number().check(z.refine(async () => true)));
+MAP	node_modules\zod\src\v4\classic\tests\index.test.ts:811	  z.map(z.string(), z.number()).def.type satisfies "map";
+MAP	node_modules\zod\src\v4\classic\tests\map.test.ts:4	const stringMap = z.map(z.string(), z.string());
+MAP	node_modules\zod\src\v4\classic\tests\map.test.ts:28	  const asyncMap = z.map(
+MAP	node_modules\zod\src\v4\classic\tests\map.test.ts:129	  const map = z.map(
+MAP	node_modules\zod\src\v4\classic\tests\map.test.ts:166	  const map = z.map(
+MAP	node_modules\zod\src\v4\classic\tests\readonly.test.ts:23	  const readonlyMap = z.map(z.string(), z.date()).readonly();
+MAP	node_modules\zod\src\v4\classic\tests\readonly.test.ts:127	        .map(z.string(), z.date())
+MAP	node_modules\zod\src\v4\classic\tests\readonly.test.ts:153	        .map(z.string(), z.date())
+MAP	node_modules\zod\src\v4\classic\tests\recursive-types.test.ts:314	      return z.map(z.string(), A);
+MAP	node_modules\zod\src\v4\classic\tests\string.test.ts:540	  const results = invalidStrings.map((s) => cuid2.safeParse(s));
+MAP	node_modules\zod\src\v4\classic\tests\template-literal.test.ts:215	    z.templateLiteral([z.map(z.string(), z.string())])
+MAP	node_modules\zod\src\v4\classic\tests\to-json-schema.test.ts:236	    expect(() => z.toJSONSchema(z.map(z.string(), z.number()))).toThrow("Map cannot be represented in JSON Schema");
+MAP	node_modules\zod\src\v4\core\api.ts:1216	  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
+MAP	node_modules\zod\src\v4\core\api.ts:1518	    truthyArray = truthyArray.map((v) => (typeof v === "string" ? v.toLowerCase() : v));
+MAP	node_modules\zod\src\v4\core\api.ts:1519	    falsyArray = falsyArray.map((v) => (typeof v === "string" ? v.toLowerCase() : v));
+MAP	node_modules\zod\src\v4\core\doc.ts:29	    const minIndent = Math.min(...lines.map((x) => x.length - x.trimStart().length));
+MAP	node_modules\zod\src\v4\core\doc.ts:30	    const dedented = lines.map((x) => x.slice(minIndent)).map((x) => " ".repeat(this.indent * 2) + x);
+MAP	node_modules\zod\src\v4\core\doc.ts:40	    const lines = [...content.map((x) => `  ${x}`)];
+MAP	node_modules\zod\src\v4\core\errors.ts:267	        issue.errors.map((issues) => processError({ issues }));
+MAP	node_modules\zod\src\v4\core\errors.ts:319	        issue.errors.map((issues) => processError({ issues }, issue.path));
+MAP	node_modules\zod\src\v4\core\parse.ts:23	    const e = new (_params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+MAP	node_modules\zod\src\v4\core\parse.ts:44	    const e = new (params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+MAP	node_modules\zod\src\v4\core\parse.ts:69	        error: new (_Err ?? errors.$ZodError)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+MAP	node_modules\zod\src\v4\core\parse.ts:89	        error: new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+MAP	node_modules\zod\src\v4\core\schemas.ts:1747	              ${id}.issues.map((iss) => ({
+MAP	node_modules\zod\src\v4\core\schemas.ts:1764	          if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+MAP	node_modules\zod\src\v4\core\schemas.ts:1932	    errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+MAP	node_modules\zod\src\v4\core\schemas.ts:1958	      const patterns = def.options.map((o) => o._zod.pattern);
+MAP	node_modules\zod\src\v4\core\schemas.ts:1959	      return new RegExp(`^(${patterns.map((p) => util.cleanRegex(p!.source)).join("|")})$`);
+MAP	node_modules\zod\src\v4\core\schemas.ts:2505	            issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+MAP	node_modules\zod\src\v4\core\schemas.ts:2622	        issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+MAP	node_modules\zod\src\v4\core\schemas.ts:2636	        issues: valueResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+MAP	node_modules\zod\src\v4\core\schemas.ts:2746	      .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o.toString()))
+MAP	node_modules\zod\src\v4\core\schemas.ts:2798	        .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? o.toString() : String(o)))
+MAP	node_modules\zod\src\v4\core\schemas.ts:3347	              issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+MAP	node_modules\zod\src\v4\core\schemas.ts:3363	          issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+MAP	node_modules\zod\src\v4\core\to-json-schema.ts:165	                  ...regexes.map((regex) => ({
+MAP	node_modules\zod\src\v4\core\to-json-schema.ts:311	            json.anyOf = def.options.map((x, i) =>
+MAP	node_modules\zod\src\v4\core\to-json-schema.ts:341	            const prefixItems = def.items.map((x, i) =>
+MAP	node_modules\zod\src\v4\core\to-json-schema.ts:462	                json.anyOf = mime.map((m) => {
+MAP	node_modules\zod\src\v4\core\util.ts:205	    .map(([_, v]) => v);
+MAP	node_modules\zod\src\v4\core\util.ts:210	  return array.map((val) => stringifyPrimitive(val)).join(separator);
+MAP	node_modules\zod\src\v4\core\util.ts:293	  const promises = keys.map((key) => (promisesObj as any)[key]);
+MAP	node_modules\zod\src\v4\core\util.ts:694	  return issues.map((iss) => {
+MAP	node_modules\zod\src\v4\core\util.ts:769	    .map((el) => el[1]);
+MAP	node_modules\zod\src\v4\mini\schemas.ts:57	            ...checks.map((ch) =>
+MAP	node_modules\zod\src\v4\mini\schemas.ts:1093	  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
+MAP	node_modules\zod\src\v4\mini\tests\assignability.test.ts:64	  z.map(z.string(), z.number()) satisfies z.core.$ZodMap;
+MAP	node_modules\zod\src\v4\mini\tests\index.test.ts:302	  const a = z.map(z.string(), z.number());
+MAP	node_modules\zod\src\v4\mini\tests\index.test.ts:324	  const a = z.map(z.bigint(), z.number());
+MAP	node_modules\zod\src\v4\mini\tests\index.test.ts:332	  const a = z.map(z.string().check(z.refine(async () => true)), z.number().check(z.refine(async () => true)));
+MAP	node_modules\zod\src\v4\mini\tests\index.test.ts:852	  z.map(z.string(), z.number()).def.type satisfies "map";
+MAP	node_modules\zod\src\v4\mini\tests\recursive-types.test.ts:236	      return z.map(z.string(), G);
+TITLE	src\App.tsx:237	      <title>{seo.title}</title>
+MAP	src\App.tsx:253	      {jsonLd.map((entry, index) => (
+MAP	src\App.tsx:423	                    {appRoutes.map((route) => (
+MAP	src\components\AssistantCommandPalette.tsx:82	          {assistantHints.map((hint) => (
+TITLE	src\components\AssistantCommandPalette.tsx:103	              <span>{hint.title}</span>
+MAP	src\components\AssistantCommandPalette.tsx:110	          {navigationItems.map((item) => {
+TITLE	src\components\BlogCard.tsx:41	            {sanitize(post.title)}
+TITLE	src\components\BlogCard.tsx:45	            {sanitize(post.title)}
+MAP	src\components\CookieConsent.tsx:166	              ]).map(({ key, label, description }) => (
+TITLE	src\components\CourseCard.tsx:19	      <h3 className="font-mono text-lg font-semibold mb-2">{sanitize(course.title)}</h3>
+MAP	src\components\Footer.tsx:65	            {footerColumns.map((column) => (
+TITLE	src\components\Footer.tsx:66	              <div key={column.title}>
+MAP	src\components\Footer.tsx:69	                  {column.links.map((link) => (
+MAP	src\components\InteractiveScene.tsx:112	          {particles.map((particle, i) => (
+TITLE	src\components\LabExecutionModal.tsx:141	                  <h2 className="mt-2 font-mono text-2xl font-semibold text-cyan-50 drop-shadow-[0_0_12px_rgba(34,211,238,0.45)]">{activeLab.title}</h2>
+MAP	src\components\LabExecutionModal.tsx:301	                    {responseMistakes.map((item) => (
+MAP	src\components\LabExecutionModal.tsx:309	                    {responseApproach.map((item) => (
+MAP	src\components\LabExecutionModal.tsx:322	                  {responseSignals.slice(0, 5).map((signal) => (
+MAP	src\components\LandingIntro.tsx:29	  const plainSpeech = useMemo(() => speechParts.map((part) => part.text).join(""), []);
+MAP	src\components\LandingIntro.tsx:93	    return speechParts.map((part, idx) => {
+MAP	src\components\Navbar.tsx:70	            {primaryNav.map((item) => {
+MAP	src\components\Navbar.tsx:114	                {toolsNav.map((item) => (
+MAP	src\components\Navbar.tsx:176	                {primaryNav.map((item) => (
+MAP	src\components\Navbar.tsx:200	                    {toolsNav.map((item) => (
+TITLE	src\components\NotificationBell.tsx:28	        <p className="text-sm font-semibold text-white">{item.title}</p>
+MAP	src\components\OllamaChat.tsx:156	    return parts.map((part, i) => {
+MAP	src\components\OllamaChat.tsx:203	    return boldParts.map((part, i) => {
+MAP	src\components\OllamaChat.tsx:209	      return codeParts.map((cp, j) => {
+MAP	src\components\platform\AdaptiveSaaSCommandCenter.tsx:19	      quickActions.map((action) => ({
+TITLE	src\components\platform\AdaptiveSaaSCommandCenter.tsx:95	              <p className="mt-2 text-lg font-semibold text-white">{nextMissionHook.title}</p>
+MAP	src\components\platform\AdaptiveSaaSCommandCenter.tsx:109	          {actionCards.map((action) => {
+TITLE	src\components\platform\AdaptiveSaaSCommandCenter.tsx:131	                      {action.title}
+MAP	src\components\platform\DailyMissionLoop.tsx:86	            ].map((item) => (
+MAP	src\components\platform\DailyMissionLoop.tsx:116	                {snapshot.dailyMissions.map((mission) => (
+TITLE	src\components\platform\DailyMissionLoop.tsx:127	                          {mission.title}
+MAP	src\components\platform\DailyMissionLoop.tsx:188	                {snapshot.weeklyMissions.map((mission) => (
+TITLE	src\components\platform\DailyMissionLoop.tsx:194	                          {mission.title}
+TITLE	src\components\platform\DailyMissionLoop.tsx:237	                  <p className="mt-2 text-lg font-semibold text-[#e2e8f0]">{latestReward.title}</p>
+MAP	src\components\platform\DailyMissionLoop.tsx:270	                snapshot.badges.slice(0, 6).map((badge) => (
+TITLE	src\components\platform\DailyMissionLoop.tsx:286	                      <p className="text-sm font-semibold text-[#e2e8f0]">{badge.title}</p>
+MAP	src\components\platform\DailyMissionLoop.tsx:301	                snapshot.recentRewards.slice(0, 5).map((reward) => (
+TITLE	src\components\platform\DailyMissionLoop.tsx:305	                      {reward.title}
+TITLE	src\components\platform\MentorDock.tsx:57	                <p className="mentor-dock__focus-title">{mentor.primaryFocus.title}</p>
+TITLE	src\components\platform\MentorDock.tsx:67	                <p className="mentor-dock__focus-title">{mentor.secondaryFocus.title}</p>
+MAP	src\components\platform\MissionRail.tsx:11	      {rails.map((track) => (
+TITLE	src\components\platform\MissionRail.tsx:19	          <h3 className="mt-3 text-xl font-bold text-white">{track.title}</h3>
+MAP	src\components\platform\PlatformHero.tsx:30	            {pills.map((pill) => (
+MAP	src\components\platform\QuizWidget.tsx:58	          {snapshot.quizQuestions.map((question, index) => {
+MAP	src\components\platform\QuizWidget.tsx:77	                      {question.options.map((option) => {
+TITLE	src\components\platform\RewardExperience.tsx:74	                <h3 className="mt-2 text-xl font-semibold text-white">{activeReward.title}</h3>
+MAP	src\components\platform\RewardExperience.tsx:111	                {badges.slice(0, 3).map((badge) => {
+TITLE	src\components\platform\RewardExperience.tsx:116	                      <span>{badge.title}</span>
+TITLE	src\components\platform\RewardExperience.tsx:128	                achievement={activeReward.title}
+MAP	src\components\SentryTestPanel.tsx:303	          {results.map((r, i) => (
+MAP	src\components\ToolCard.tsx:65	        {(tool.capabilities || []).slice(0, 2).map((capability) => (
+MAP	src\components\ToolConfigModal.tsx:111	      const tags = formState.tags.split(",").map(tag => tag.trim()).filter(tag => tag);
+MAP	src\components\ToolConfigModal.tsx:305	                    {filteredConfigs.map((config) => (
+MAP	src\components\ToolConfigModal.tsx:319	                                  {config.tags.slice(0, 3).map(tag => (
+MAP	src\components\ui\chart.tsx:72	          .map(
+MAP	src\components\ui\chart.tsx:76	  .map(([key, itemConfig]) => {
+MAP	src\components\ui\chart.tsx:163	          {payload.map((item, index) => {
+MAP	src\components\ui\chart.tsx:249	      {payload.map((item) => {
+MAP	src\components\ui\toaster.tsx:9	      {toasts.map(function ({ id, title, description, action, ...props }) {
+TITLE	src\components\Zorvix.tsx:167	  const rawTitle = String(topic.title || "").trim();
+MAP	src\components\Zorvix.tsx:170	    .map((tag) => String(tag || "").trim())
+MAP	src\components\Zorvix.tsx:277	    .map((message) => ({
+MAP	src\components\Zorvix.tsx:305	  ].map((item) => item.trim()).filter(Boolean);
+TITLE	src\components\Zorvix.tsx:525	  return error.retryHint || error.detail || error.title;
+MAP	src\components\Zorvix.tsx:536	  value.split(/(`[^`]+`)/g).map((part, index) => {
+MAP	src\components\Zorvix.tsx:613	            {items.map((item, itemIndex) => (
+TITLE	src\components\Zorvix.tsx:734	          ? `Guide me through ${nextMissionHook.title} with next action, risk, and validation.`
+MAP	src\components\Zorvix.tsx:883	          current.map((message) => (message.id === assistantId ? { ...message, content } : message))
+MAP	src\components\Zorvix.tsx:904	        current.map((message) =>
+TITLE	src\components\Zorvix.tsx:1572	            <span className="block text-xs text-[var(--theme-text-dim)]">{nextMissionHook.title || "ZeroDay Guardian control panel"}</span>
+TITLE	src\components\Zorvix.tsx:1602	                        {activeTopic.title}
+MAP	src\components\Zorvix.tsx:1658	                          {(missionStarterSuggestions.length ? missionStarterSuggestions : DEFAULT_SUGGESTIONS).slice(0, 4).map((suggestion) => (
+MAP	src\components\Zorvix.tsx:1672	                        {visibleMessages.map((message) => {
+TITLE	src\components\Zorvix.tsx:1709	                            <p className="font-semibold">{lastFailure.error.title}</p>
+MAP	src\components\Zorvix.tsx:1824	                              {deferredSuggestions.slice(0, 4).map((suggestion) => (
+TITLE	src\components\Zorvix.tsx:1848	                                  <span className="truncate">{activeTopic.title}</span>
+MAP	src\hooks\use-toast.ts:82	        toasts: state.toasts.map((t) => (t.id === action.toast.id ? { ...t, ...action.toast } : t)),
+MAP	src\hooks\use-toast.ts:100	        toasts: state.toasts.map((t) =>
+MAP	src\hooks\useGrowthFeatures.ts:98	      badges: (progress.badges || []).filter((badge) => badge.earned).map((badge) => badge.label),
+TITLE	src\lib\aiLearningEngine.ts:635	          gaps.push(`Complete ${path.title} (${Math.round(100 - pathProgress.progress)}% remaining)`);
+MAP	src\lib\aiLearningEngine.ts:814	      .map(content => content.id);
+MAP	src\lib\aiLearningEngine.ts:825	      .map(content => contentProgress[content.id]?.score)
+MAP	src\lib\aiLearningEngine.ts:860	      .map(c => c.score)
+MAP	src\lib\aiLearningEngine.ts:875	    return progress.skills.map(skill => ({
+MAP	src\lib\aiLearningEngine.ts:903	    return weeklyPlan.map(day => ({
+MAP	src\lib\aiLearningEngine.ts:913	    return goals.map((goal, index) => ({
+MAP	src\lib\assistantHints.ts:210	    .map((hint) => {
+TITLE	src\lib\cyberSandbox.ts:240	      lab.title,
+MAP	src\lib\firebase.ts:28	  .map(([key]) => key);
+MAP	src\lib\firestoreGrowth.ts:324	    return rows.docs.map((item, index) => ({
+MAP	src\lib\firestoreGrowth.ts:369	    return rows.docs.map((item) => notificationItemSchema.parse({ id: item.id, ...item.data() }));
+MAP	src\lib\gamificationSystem.ts:363	  seededOrder(DAILY_MISSION_BLUEPRINTS, dayKey).map((item, index) => ({
+MAP	src\lib\gamificationSystem.ts:372	  seededOrder(WEEKLY_MISSION_BLUEPRINTS, weekKey).map((item, index) => ({
+MAP	src\lib\gamificationSystem.ts:409	    ? item.options.map((option) => ({
+MAP	src\lib\gamificationSystem.ts:420	    Object.entries(value as Record<string, unknown>).map(([key, answer]) => {
+MAP	src\lib\gamificationSystem.ts:469	    dailyMissions: Array.isArray(data?.dailyMissions) ? data.dailyMissions.map((item: Partial<GamifiedMission>) => normalizeMission(item, "daily")) : buildDailyMissions(fallback.dailyKey),
+MAP	src\lib\gamificationSystem.ts:470	    weeklyMissions: Array.isArray(data?.weeklyMissions) ? data.weeklyMissions.map((item: Partial<GamifiedMission>) => normalizeMission(item, "weekly")) : buildWeeklyMissions(fallback.weeklyKey),
+MAP	src\lib\gamificationSystem.ts:471	    quizQuestions: Array.isArray(data?.quizQuestions) ? data.quizQuestions.map((item: Partial<DailyQuizQuestion>) => normalizeQuizQuestion(item)) : buildDailyQuiz(fallback.dailyKey),
+MAP	src\lib\gamificationSystem.ts:473	    badges: Array.isArray(data?.badges) ? data.badges.map((item: Partial<GamificationBadge>) => normalizeBadge(item)) : [],
+MAP	src\lib\gamificationSystem.ts:474	    recentRewards: Array.isArray(data?.recentRewards) ? data.recentRewards.map((item: Partial<GamificationReward>) => normalizeReward(item)).slice(0, 12) : [],
+TITLE	src\lib\gamificationSystem.ts:516	  const reward = buildReward(badge.title, badge.detail, 0, "badge");
+TITLE	src\lib\gamificationSystem.ts:624	      `${mission.title} cleared. ${mission.xp} XP banked.`,
+TITLE	src\lib\neurobotEngine.ts:100	  const corpus = `${resource.title} ${resource.summary} ${resource.tags.join(" ")}`.toLowerCase();
+MAP	src\lib\neurobotEngine.ts:127	    .map((resource) => ({ resource, score: scoreResource(resource, query, tags) }))
+MAP	src\lib\neurobotEngine.ts:130	    .map((item) => item.resource);
+TITLE	src\lib\neurobotEngine.ts:171	        `Roadmap for ${activeTopic.title}`,
+MAP	src\lib\toolConfigBackup.ts:185	      return this.getLocalBackups().map(b => b.metadata);
+MAP	src\lib\toolConfigBackup.ts:370	    const config1Names = new Set(backup1.configurations.map(c => c.name));
+MAP	src\lib\toolConfigBackup.ts:371	    const config2Names = new Set(backup2.configurations.map(c => c.name));
+MAP	src\lib\toolConfigBackup.ts:372	    const template1Names = new Set(backup1.templates.map(t => t.name));
+MAP	src\lib\toolConfigBackup.ts:373	    const template2Names = new Set(backup2.templates.map(t => t.name));
+MAP	src\lib\toolConfigBackup.ts:501	    const [hours, minutes] = time.split(':').map(Number);
+MAP	src\lib\toolConfigManager.ts:77	      return configs.map(config => this.validateAndMigrateConfig(config));
+MAP	src\lib\toolConfigManager.ts:318	      const existingConfigs = new Set(configs.map(c => `${c.toolId}-${c.name}`));
+MAP	src\lib\toolConfigManager.ts:357	    return configs.map(c => ({
+MAP	src\lib\toolConfigMonitoring.ts:403	  const memoryUsageTrend = recentMetrics.map(m => m.memoryUsage / 1024 / 1024); // Convert to MB
+MAP	src\lib\toolConfigValidation.ts:73	    const uniqueTags = new Set(tags.map(tag => tag.toLowerCase()));
+MAP	src\lib\toolConfigValidation.ts:140	    const sanitizedTags = config.tags.map(tag => this.sanitizeString(tag)).filter(tag => tag.length > 0);
+MAP	src\lib\toolConfigValidation.ts:214	        ? config.tags.map((tag: string) => this.sanitizeString(tag)).filter((tag: string) => tag.length > 0)
+MAP	src\lib\toolConfigVersioning.ts:309	    const [major, minor, patch] = cleanVersion.split('.').map(Number);
+MAP	src\lib\toolConfigVersioning.ts:423	  const [major1, minor1, patch1] = cleanV1.split('.').map(Number);
+MAP	src\lib\toolConfigVersioning.ts:424	  const [major2, minor2, patch2] = cleanV2.split('.').map(Number);
+MAP	src\pages\AboutPage.tsx:40	          {pillars.map((value) => (
+TITLE	src\pages\AboutPage.tsx:41	            <div key={value.title} className="glass-card rounded-lg p-6">
+TITLE	src\pages\AboutPage.tsx:43	              <h2 className="font-mono text-lg font-semibold mb-2">{value.title}</h2>
+MAP	src\pages\BlogDetail.tsx:55	              {related.map((r) => (
+TITLE	src\pages\BlogDetail.tsx:58	                    <h3 className="font-mono font-semibold mb-1">{r.title}</h3>
+TITLE	src\pages\CommunityPage.tsx:122	                  <p className="font-semibold">{m.title}</p>
+MAP	src\pages\CommunityPage.tsx:141	              {(["trending", "new", "unanswered"] as const).map((item) => (
+TITLE	src\pages\CommunityPage.tsx:178	                <h3 className="font-semibold">{thread.title}</h3>
+MAP	src\pages\CommunityPage.tsx:191	                  {(thread.repliesList || []).map((reply) => (
+MAP	src\pages\ContactPage.tsx:36	            {contactChannels.map((channel) => (
+MAP	src\pages\DashboardPage.tsx:82	          {sidebarItems.map((item) => (
+MAP	src\pages\DashboardPage.tsx:167	            {stats.map((stat, i) => (
+MAP	src\pages\DashboardPage.tsx:188	              {quickActions.map((action, i) => (
+MAP	src\pages\DashboardPage.tsx:215	              ].map((activity, i) => (
+TITLE	src\pages\HomePage.tsx:14	    document.title = "ZeroDay Guardian – The One Line of Defense";
+MAP	src\pages\HomePage.tsx:55	      {orbitSignals.map((signal) => (
+TITLE	src\pages\HomePage.tsx:124	                    {nextMissionHook.title || "Enter the training loop"}
+MAP	src\pages\HomePage.tsx:134	                    ].map((item) => (
+MAP	src\pages\HomePage.tsx:147	                    {controlPills.map((item) => (
+TITLE	src\pages\Index.tsx:14	    document.title = "ZeroDay Guardian – The One Line of Defense";
+MAP	src\pages\Index.tsx:55	      {orbitSignals.map((signal) => (
+TITLE	src\pages\Index.tsx:124	                    {nextMissionHook.title || "Enter the training loop"}
+MAP	src\pages\Index.tsx:134	                    ].map((item) => (
+MAP	src\pages\Index.tsx:147	                    {controlPills.map((item) => (
+TITLE	src\pages\LabPage.tsx:148	  const text = `${lab.id} ${lab.title} ${lab.track || ""} ${lab.objective} ${lab.description}`.toLowerCase();
+MAP	src\pages\LabPage.tsx:284	        const normalized = (labPayload.labs || []).map((lab) => normalizeSandboxLab(lab));
+TITLE	src\pages\LabPage.tsx:414	    setConsoleLines([`Loaded ${lab.title}. Run 'help' to begin the operator workflow.`]);
+TITLE	src\pages\LabPage.tsx:479	            <div><p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Active Lab</p><h2 className="mt-2 text-xl font-semibold text-white">{activeLab.title}</h2><p className="mt-1 text-sm text-slate-300">Resume with {missionProgress}% progress and {currentMissionScore} score.</p></div>
+MAP	src\pages\LabPage.tsx:487	              {(["All", "Web App", "Network", "Forensics", "OSINT", "CTF"] as LabCategory[]).map((category) => (
+MAP	src\pages\LabPage.tsx:493	              {filteredLabs.slice(0, 6).map((lab) => {
+TITLE	src\pages\LabPage.tsx:502	                    <h3 className="mt-2 text-xl font-semibold text-white">{lab.title}</h3>
+MAP	src\pages\LabPage.tsx:514	            <div className="mt-5 space-y-3">{leaderboard.length ? leaderboard.map((row) => <div key={`${row.alias}-${row.position}`} className="rounded-2xl border border-white/8 bg-black/20 p-3"><div className="flex items-center justify-between gap-3"><div><p className="font-semibold text-white">{row.position}. {row.alias}</p><p className="mt-1 text-xs text-slate-400">{row.rank} | Level {row.level}</p></div><span className="rounded-full border border-blue-400/16 px-2.5 py-1 text-[11px] text-blue-100">{row.points} pts</span></div></div>) : <div className="rounded-2xl border border-white/8 bg-black/20 p-6 text-center"><div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-400/18 bg-amber-400/8"><span className="text-2xl">🏆</span></div><p className="font-semibold text-white">No rankings yet</p><p className="mt-2 text-sm text-slate-400">Complete labs to earn XP and rank up!</p><button type="button" className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/18 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-400/16" onClick={() => { const firstLab = labs[0]; if (firstLab) { loadSelectedLab(firstLab); setLabModalOpen(true); } }}>Start a Lab</button></div>}</div>
+TITLE	src\pages\LabPage.tsx:525	                <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Mission Board</p><h2 className="mt-2 text-2xl font-semibold text-white">{activeLab.title}</h2><p className="mt-2 text-sm leading-6 text-slate-300">{activeLab.objective}</p></div><div className="flex flex-wrap gap-2"><span className="rounded-full border border-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-slate-300">{progression?.rank || "Active"}</span><span className={`rounded-full border px-3 py-1 text-[11px] ${dynamicDifficulty.accent}`}>{dynamicDifficulty.label}</span></div></div>
+MAP	src\pages\LabPage.tsx:533	              return signals.length ? <div className="mt-3 flex flex-wrap gap-2">{signals.map((signal) => <span key={signal} className="rounded-full border border-blue-400/14 px-2.5 py-1 text-[11px] text-blue-100">{signal.replace(/-/g, " ")}</span>)}</div> : null;
+TITLE	src\pages\LearnPage.tsx:127	  const normalized = `${course.title} ${course.description}`.toLowerCase();
+MAP	src\pages\LearnPage.tsx:234	      livePaths.map((track, index) => {
+TITLE	src\pages\LearnPage.tsx:237	        const difficulty = getTrackDifficulty(track.title, tags);
+TITLE	src\pages\LearnPage.tsx:239	          path.title.toLowerCase().includes(track.title.toLowerCase()) || track.title.toLowerCase().includes(path.title.toLowerCase())
+MAP	src\pages\LearnPage.tsx:263	    return liveCourses.map((course, index) => ({
+TITLE	src\pages\LearnPage.tsx:278	        track.title.toLowerCase().includes(normalizedSearch) ||
+TITLE	src\pages\LearnPage.tsx:290	        course.title.toLowerCase().includes(normalizedSearch) ||
+MAP	src\pages\LearnPage.tsx:306	      .map(([label, missions], index) => ({
+MAP	src\pages\LearnPage.tsx:377	                {FILTERS.map((filter) => (
+MAP	src\pages\LearnPage.tsx:435	            )) : filteredTracks.map((track) => {
+TITLE	src\pages\LearnPage.tsx:454	                  <h3 className="mt-5 text-xl font-semibold text-white">{track.title}</h3>
+MAP	src\pages\LearnPage.tsx:514	            )) : filteredCourses.map((course) => (
+TITLE	src\pages\LearnPage.tsx:531	                  <h3 className="text-xl font-semibold text-white">{course.title}</h3>
+TITLE	src\pages\LearnPage.tsx:545	                    onClick={() => handleCourseAction(course.title)}
+MAP	src\pages\LearnPage.tsx:594	              ]).map((item) => (
+MAP	src\pages\OsintPage.tsx:395	    return Object.entries(result.results).map(([key, value]: any) => ({
+MAP	src\pages\OsintPage.tsx:404	    const entityNodes = entities.map((entity, index) => ({ id: `entity-${index}`, label: entity, type: "entity" }));
+MAP	src\pages\OsintPage.tsx:405	    const moduleNodes = modules.map((module) => ({ id: `module-${module}`, label: module.toUpperCase(), type: "module" }));
+MAP	src\pages\OsintPage.tsx:412	    const nodes = graphNodes.map((node, index) => {
+MAP	src\pages\OsintPage.tsx:477	              {MODULES.map((module) => (
+MAP	src\pages\OsintPage.tsx:537	                {(summary || MODULES.map((module) => ({ id: module.id, status: "idle", provider: "pending" }))).map(
+MAP	src\pages\OsintPage.tsx:578	                    {(result?.insight?.highlights || ["Run a scan to generate highlights."]).map(
+MAP	src\pages\OsintPage.tsx:588	                    {(result?.insight?.recommendations || ["Run a scan to generate recommendations."]).map(
+MAP	src\pages\OsintPage.tsx:599	              {MODULES.map((module) => (
+MAP	src\pages\OsintPage.tsx:634	                  pyRecommendations.recommendations.map((item) => (
+TITLE	src\pages\OsintPage.tsx:635	                    <div key={`${item.title}-${item.action}`} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+TITLE	src\pages\OsintPage.tsx:636	                      <div className="text-sm font-semibold text-white">{item.title}</div>
+MAP	src\pages\OsintPage.tsx:653	                  {graphLayout.map((node) => (
+MAP	src\pages\OsintPage.tsx:666	                  {graphLayout.map((node) => (
+MAP	src\pages\OsintPage.tsx:710	                ].map((playbook) => (
+TITLE	src\pages\OsintPage.tsx:711	                  <div key={playbook.title} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+TITLE	src\pages\OsintPage.tsx:712	                    <div className="text-sm font-semibold text-white">{playbook.title}</div>
+MAP	src\pages\OsintPage.tsx:715	                      {playbook.modules.map((module) => (
+MAP	src\pages\OsintPage.tsx:738	                  ? Object.entries(providers).map(([key, value]: any) => (
+MAP	src\pages\OsintPage.tsx:925	                    ].map((row) => (
+MAP	src\pages\OsintPage.tsx:958	                    watchlists.map((watch) => (
+MAP	src\pages\OsintPage.tsx:1048	                  alerts.map((alert) => (
+TITLE	src\pages\OsintPage.tsx:1051	                        <span>{alert.title}</span>
+MAP	src\pages\OsintPage.tsx:1105	                    {caseTags.map((tag, index) => (
+MAP	src\pages\OsintPage.tsx:1231	                  entities.map((entity, index) => (
+MAP	src\pages\OsintPage.tsx:1246	                  events.slice(0, 12).map((event, index) => (
+MAP	src\pages\OsintPage.tsx:1264	                  cases.map((row) => (
+TITLE	src\pages\OsintPage.tsx:1273	                      <div className="text-sm font-semibold">{row.title}</div>
+MAP	src\pages\OsintPage.tsx:1278	                          {row.tags.slice(0, 4).map((tag: string) => (
+TITLE	src\pages\OsintSharePage.tsx:30	        <h1 className="text-2xl font-bold text-white">{shared.title}</h1>
+MAP	src\pages\OsintSharePage.tsx:35	            {shared.tags.map((tag: string, index: number) => (
+MAP	src\pages\OsintSharePage.tsx:52	                ? shared.entities.map((entity: string, idx: number) => (
+MAP	src\pages\PrivacyPage.tsx:41	            {privacySections.map((section) => (
+TITLE	src\pages\PrivacyPage.tsx:43	                <h2 className="text-white">{section.title}</h2>
+MAP	src\pages\ProgramLabPage.tsx:526	    : (detail?.module.learn_points || []).map((point, index) => ({
+MAP	src\pages\ProgramLabPage.tsx:939	                  {kaliTools.map((tool) => (
+MAP	src\pages\ProgramLabPage.tsx:952	                {flowSteps.map((step, index) => {
+TITLE	src\pages\ProgramLabPage.tsx:989	                <p className="mt-3 text-lg font-semibold text-white">{stageFlash.title}</p>
+MAP	src\pages\ProgramLabPage.tsx:1010	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1031	                    ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1053	                    ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1081	                    ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1107	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1135	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1162	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1189	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1217	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1244	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1272	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1300	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1328	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1356	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1383	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1412	                {guidedSequence.map((item, index) => (
+TITLE	src\pages\ProgramLabPage.tsx:1421	              <h2 className="mt-2 text-2xl font-semibold text-white">{detail.module.title}</h2>
+MAP	src\pages\ProgramLabPage.tsx:1432	                ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1440	                {missionAssets.map((asset) => (
+MAP	src\pages\ProgramLabPage.tsx:1457	                {learnCards.map((card, index) => (
+TITLE	src\pages\ProgramLabPage.tsx:1472	                    <p className="mt-4 text-lg font-semibold text-white">{card.title}</p>
+MAP	src\pages\ProgramLabPage.tsx:1485	                  {successCriteria.map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1496	                ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:1563	                {moduleTasks.map((task, index) => {
+TITLE	src\pages\ProgramLabPage.tsx:1574	                      <p className="mt-1 text-sm font-semibold text-white">{task.title}</p>
+MAP	src\pages\ProgramLabPage.tsx:1589	                          {task.validation_focus.map((focus) => (
+TITLE	src\pages\ProgramLabPage.tsx:1606	                      <p className="text-lg font-semibold text-white">{currentTask.title}</p>
+TITLE	src\pages\ProgramLabPage.tsx:1789	                  <p className="text-sm font-semibold text-white">{currentTask.title}</p>
+MAP	src\pages\ProgramLabPage.tsx:1794	                    {currentTask.options.map((option) => {
+TITLE	src\pages\ProgramLabPage.tsx:1889	                  <p className="text-sm font-semibold">{lastValidation.title}</p>
+MAP	src\pages\ProgramLabPage.tsx:1951	                    {lastValidation.terminalOutput.map((line, index) => (
+MAP	src\pages\ProgramLabPage.tsx:2129	                  {(terminalLog.length ? terminalLog : consoleBootLines.length ? consoleBootLines : ["[console] Waiting for the first validated action."]).slice(-12).map((line, index) => (
+MAP	src\pages\ProgramLabPage.tsx:2162	                  {solutionExplanation.map((line) => (
+MAP	src\pages\ProgramLabPage.tsx:2175	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:2187	                      {moduleTasks.map((task) => (
+TITLE	src\pages\ProgramLabPage.tsx:2189	                          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{task.title}</p>
+MAP	src\pages\ProgramLabPage.tsx:2214	                      ].map((item) => (
+MAP	src\pages\ProgramLabPage.tsx:2227	                      {debriefPoints.map((point) => (
+MAP	src\pages\ProgramLabPage.tsx:2240	                  ].map((item) => (
+MAP	src\pages\ProgramPage.tsx:125	            ].map((item) => (
+MAP	src\pages\ProgramPage.tsx:145	                ].map((item) => (
+MAP	src\pages\ProgramPage.tsx:178	                {overview.items.map((item) => (
+TITLE	src\pages\ProgramPage.tsx:201	                    <p className="mt-3 text-sm text-white">{item.title}</p>
+MAP	src\pages\PublicProfilePage.tsx:66	            ].map((item) => (
+MAP	src\pages\PublicProfilePage.tsx:80	              {profile.badges.length ? profile.badges.map((badge) => (
+MAP	src\pages\PublicProfilePage.tsx:91	              {(leaderboard || []).slice(0, 5).map((entry) => (
+MAP	src\pages\ResourcesPage.tsx:65	    const courseEntries = courses.map((course, index) => ({
+MAP	src\pages\ResourcesPage.tsx:79	    const pathEntries = paths.map((path) => ({
+MAP	src\pages\ResourcesPage.tsx:91	    const missionEntries = missions.slice(0, 12).map((mission) => ({
+MAP	src\pages\ResourcesPage.tsx:245	                Object.entries(groupedResources).map(([category, items]) => (
+MAP	src\pages\ResourcesPage.tsx:258	                      {items.map((resource) => (
+TITLE	src\pages\ResourcesPage.tsx:267	                              <h4 className="mt-2 text-xl font-bold text-white">{resource.title}</h4>
+MAP	src\pages\TermsPage.tsx:27	              {termsItems.map((item) => (
+TITLE	src\pages\ToolDetail.tsx:289	      [resource.title, resource.source, resource.kind, resource.usage].join(" ").toLowerCase().includes(needle)
+MAP	src\pages\ToolDetail.tsx:307	          {(loading ? [] : filtered.slice(0, 8)).map((resource) => (
+TITLE	src\pages\ToolDetail.tsx:308	            <article key={`${resource.source}-${resource.title}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+TITLE	src\pages\ToolDetail.tsx:310	              <h3 className="mt-2 text-base font-medium text-slate-100">{resource.title}</h3>
+MAP	src\pages\ToolDetail.tsx:366	          {(templates.length ? templates.map((item) => item.name) : ["File exposure", "Login pages", "Directory listing"]).map((item) => (
+MAP	src\pages\ToolDetail.tsx:452	                  {headerResult.findings.map((item) => (
+MAP	src\pages\ToolDetail.tsx:626	              .map((item) => `<div class="row"><span>${item.label}</span><span>${item.ok ? "Pass" : "Check"}</span></div>`)
+MAP	src\pages\ToolDetail.tsx:631	            <ul>${(actionItems.length ? actionItems : ["No critical fixes found."]).map((item) => `<li>${item}</li>`).join("")}</ul>
+MAP	src\pages\ToolDetail.tsx:826	                {checks.map((item) => (
+MAP	src\pages\ToolDetail.tsx:893	                {(result.technologies.length ? result.technologies : ["Unknown stack"]).map((tech) => (
+MAP	src\pages\ToolDetail.tsx:938	                {(result.missingHeaders?.length ? result.missingHeaders : ["None detected"]).map((item) => (
+MAP	src\pages\ToolDetail.tsx:948	                {(result.openPorts?.length ? result.openPorts : [{ port: 0, status: "No common ports responded" }]).map((entry) => (
+MAP	src\pages\ToolDetail.tsx:963	              {(actionItems.length ? actionItems : ["No critical fixes found. Maintain current hardening."]).map((item) => (
+MAP	src\pages\ToolDetail.tsx:1018	                {headerChecks.map((item) => (
+MAP	src\pages\ToolDetail.tsx:1033	              {history.map((item) => (
+MAP	src\pages\ToolDetail.tsx:1129	          {(tool.capabilities || []).map((capability) => (
+MAP	src\pages\ToolDetail.tsx:1301	                    {(tool.capabilities || []).map((capability) => (
+MAP	src\pages\ToolDetail.tsx:1332	                    {related.map((item) => (
+MAP	src\pages\ToolDetail.tsx:1355	                  {(tool.tags || []).map((tag) => (
+MAP	src\pages\ToolsPage.tsx:107	      TOOL_FILTERS.filter((filter) => filter !== "All Tools").map((filter) => ({
+MAP	src\pages\ToolsPage.tsx:120	        .map((id) => toolsCatalog.find((tool) => tool.id === id))
+MAP	src\pages\ToolsPage.tsx:197	                {[`${activeCount} visible tools`, `${verifiedCount} verified workspaces`, recentTools[0] ? `Resume ${recentTools[0].name}` : "Use smart search"].map((item) => (
+MAP	src\pages\ToolsPage.tsx:256	                  {smartSuggestions.map((suggestion) => (
+MAP	src\pages\ToolsPage.tsx:275	                {categoryMetrics.map((metric) => {
+MAP	src\pages\ToolsPage.tsx:324	              {recentTools.map((tool) => (
+MAP	src\pages\ToolsPage.tsx:414	            {TOOL_FILTERS.map((filter) => (
+MAP	src\pages\ToolsPage.tsx:440	            {TOOL_GROUP_ORDER.map((group) => {
+MAP	src\pages\ToolsPage.tsx:489	                      {tools.map((tool) => (
+MAP	src\test\apiBackendIntegrity.test.ts:7	 * actual arrays (never null/undefined) so frontend `.map()` calls are safe.
+MAP	src\test\fileAnalyzer.test.ts:38	    .map((value, index) => (index === 0 ? "0000000000 65535 f \n" : `${String(value).padStart(10, "0")} 00000 n \n`))
+MAP	src\utils\safeData.ts:19	 * Safe `.map()` that won't crash if `data` is undefined/null.

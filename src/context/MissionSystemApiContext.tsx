@@ -581,14 +581,14 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
     hiddenChallenges: missionData.hidden_challenges,
     streakReminder: missionData.streak_reminder,
     curiosityTrigger: missionData.curiosity_trigger,
-    nextMissionHook: {
+    nextMissionHook: missionData.next_mission_hook ? {
       title: missionData.next_mission_hook.title,
       detail: missionData.next_mission_hook.detail,
       ctaLabel: missionData.next_mission_hook.cta_label,
       target: missionData.next_mission_hook.target,
       taskId: missionData.next_mission_hook.task_id || undefined,
       route: missionData.next_mission_hook.route,
-    },
+    } : { title: 'Mission ready', detail: 'Intel loading.', ctaLabel: 'Deploy', target: 'return', route: '/program' },
     activeReward,
     rails: safeArray<MissionControlPayload['rails'][0]>(missionData.rails).map((rail) => ({
       id: rail.id,
@@ -609,10 +609,10 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       actionType: action.action_type,
       status: action.status,
     })),
-    recommendations: missionData.recommendations,
-    completedDays: missionData.completed_days,
-    completedSandboxLabs: missionData.completed_sandbox_labs,
-    referral: {
+    recommendations: missionData.recommendations ?? [],
+    completedDays: missionData.completed_days ?? 0,
+    completedSandboxLabs: missionData.completed_sandbox_labs ?? 0,
+    referral: missionData.referral ? {
       code: missionData.referral.code,
       inviteCount: missionData.referral.invite_count,
       signupCount: missionData.referral.signup_count,
@@ -622,7 +622,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       headline: missionData.referral.headline,
       nextReward: missionData.referral.next_reward,
       conversionRate: missionData.referral.conversion_rate,
-    },
+    } : { code: '', inviteCount: 0, signupCount: 0, conversionCount: 0, rewardPoints: 0, shareUrl: '/auth', headline: 'Referral program loading.', nextReward: '', conversionRate: 0 },
     shareableInsights: safeArray<MissionControlPayload['shareable_insights'][0]>(missionData.shareable_insights).map((item) => ({
       id: item.id,
       title: item.title,
@@ -645,7 +645,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       priority: item.priority,
       trigger: item.trigger,
     })),
-    notificationPreferences: {
+    notificationPreferences: missionData.notification_preferences ? {
       emailEnabled: missionData.notification_preferences.email_enabled,
       pushEnabled: missionData.notification_preferences.push_enabled,
       streakAlerts: missionData.notification_preferences.streak_alerts,
@@ -654,8 +654,8 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       preferredWindow: missionData.notification_preferences.preferred_window,
       quietHours: missionData.notification_preferences.quiet_hours,
       timezone: missionData.notification_preferences.timezone,
-    },
-    debug: {
+    } : { emailEnabled: true, pushEnabled: true, streakAlerts: true, referralAlerts: true, digestEnabled: true, preferredWindow: '18:00-20:00', quietHours: '22:00-07:00', timezone: 'UTC' },
+    debug: missionData.debug ? {
       requestId: missionData.debug.request_id,
       generatedAt: missionData.debug.generated_at,
       autoRetryReady: missionData.debug.auto_retry_ready,
@@ -670,7 +670,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
         createdAt: item.created_at,
         payload: item.payload,
       })),
-    },
+    } : { requestId: '', generatedAt: '', autoRetryReady: true, validationState: 'strict', errorCapture: 'enabled', warnings: [], recentEvents: [] },
     error,
     loading,
     refreshMissionData,

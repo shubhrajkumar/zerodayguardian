@@ -196,7 +196,10 @@ export const usePlatformGrowthOps = () => {
   });
 
   const activeCertification = useMemo(
-    () => overviewQuery.data?.certifications.find((item) => item.enrolledAt) || overviewQuery.data?.certifications[0] || null,
+    () => {
+      const certs = overviewQuery.data?.certifications ?? [];
+      return certs.find((item) => item.enrolledAt) || certs[0] || null;
+    },
     [overviewQuery.data]
   );
 
