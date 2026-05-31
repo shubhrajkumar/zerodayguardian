@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { Activity, Newspaper, RefreshCw, ShieldAlert, Sparkles } from "lucide-react";
+import { safeArray } from "@/utils/safeData";
 import { debounce } from "@/utils/debounce";
 import api from "@/lib/api";
 
@@ -128,7 +129,7 @@ await (await api.get(`/api/intelligence/news?category=${categoryToApi(selectedCa
 
         {loading && !posts.length ? <p className="text-sm text-muted-foreground">Loading live intelligence feed...</p> : null}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
+          {safeArray(posts).map((post) => (
             <BlogCard
               key={post.id}
               post={{

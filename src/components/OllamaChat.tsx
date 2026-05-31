@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { safeArray } from "@/utils/safeData";
 
 type Message = {
   id: string;
@@ -222,7 +223,7 @@ export default function OllamaChat({
     <div className="flex flex-col h-full">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {messages.map(renderMessage)}
+        {safeArray(messages).map(renderMessage)}
         {isTyping && (
           <div className="flex justify-start animate-fade-in">
             <div className="glass-card rounded-2xl rounded-bl-md p-4" style={{ borderColor: "var(--theme-border)" }}>

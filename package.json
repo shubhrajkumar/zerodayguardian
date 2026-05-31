@@ -25,7 +25,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run --config vitest.config.mjs",
-    "test:watch": "vitest --config vitest.config.mjs"
+    "test:watch": "vitest --config vitest.config.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.9.0",
@@ -119,6 +121,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.60.0",
     "@sentry/vite-plugin": "^5.3.0",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.0",

@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Award, MessageCircle, Shield, ThumbsUp, Users, Zap } from "lucide-react";
+import { safeArray } from "@/utils/safeData";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
 
@@ -102,7 +103,7 @@ const CommunityPage = () => {
           <article className="glass-card rounded-lg p-5">
             <h2 className="font-semibold inline-flex items-center gap-2"><Award className="h-4 w-4 text-amber-300" /> Challenge Leaderboard</h2>
             <div className="mt-3 text-sm space-y-2">
-              {leaderboard.slice(0, 6).map((row) => (
+              {safeArray(leaderboard).slice(0, 6).map((row) => (
                 <div key={row.alias} className="flex items-center justify-between">
                   <span>{row.alias}</span>
                   <span>{row.rank} - {row.points} pts</span>
@@ -116,7 +117,7 @@ const CommunityPage = () => {
           <article className="glass-card rounded-lg p-5">
             <h2 className="font-semibold inline-flex items-center gap-2"><Zap className="h-4 w-4 text-cyan-300" /> Weekly Challenges</h2>
             <div className="mt-3 text-sm space-y-2">
-              {missions.map((m) => (
+              {safeArray(missions).map((m) => (
                 <div key={m.id}>
                   <p className="font-semibold">{m.title}</p>
                   <p className="text-muted-foreground">{m.objective}</p>
@@ -172,7 +173,7 @@ const CommunityPage = () => {
           </form>
 
           <div className="space-y-3">
-            {threads.map((thread) => (
+            {safeArray(threads).map((thread) => (
               <article key={thread.id} className="rounded-md border border-primary/15 p-3 bg-black/20">
                 <h3 className="font-semibold">{thread.title}</h3>
                 <p className="mt-1 text-[11px] inline-flex rounded-full border border-cyan-300/30 bg-cyan-500/10 px-2 py-0.5">{thread.roleTag || "Beginner"}</p>

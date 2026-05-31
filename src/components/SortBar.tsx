@@ -1,4 +1,5 @@
 import React from "react";
+import { safeArray } from "@/utils/safeData";
 
 interface SortBarProps {
   options: { label: string; value: string }[];
@@ -15,7 +16,7 @@ const SortBar: React.FC<SortBarProps> = ({
 }) => {
   return (
     <div className="flex flex-wrap gap-2 w-full sm:w-auto" role="group" aria-label={ariaLabel}>
-      {options.map((opt) => (
+      {safeArray(options).map((opt) => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}

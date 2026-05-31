@@ -40,6 +40,11 @@ one_drive_do_not_sync.txt
 dist/
 node_modules/
 
+# Playwright E2E test artifacts
+playwright-report/
+test-results/
+e2e/screenshots/
+
 # Python cache
 __pycache__/
 *.pyc

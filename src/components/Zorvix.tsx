@@ -728,14 +728,16 @@ const Zorvix = () => {
   const missionStarterSuggestions = useMemo(
     () =>
       [
-        nextMissionHook.title
+        nextMissionHook?.title
           ? `Guide me through ${nextMissionHook.title} with next action, risk, and validation.`
           : "",
-        recommendations[0]?.action ? `Convert this recommendation into a tactical checklist: ${recommendations[0].action}` : "",
+        Array.isArray(recommendations) && recommendations[0]?.action
+          ? `Convert this recommendation into a tactical checklist: ${recommendations[0].action}`
+          : "",
         "Assess my current cyber momentum and tell me the most important move today.",
         "Think like a senior analyst and debrief my current blind spots.",
       ].filter(Boolean),
-    [nextMissionHook.title, recommendations]
+    [nextMissionHook?.title, recommendations]
   );
 
   const statusTone = useMemo(() => {

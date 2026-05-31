@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { safeArray } from "@/utils/safeData";
 
 interface CommentsProps {
   storageKey: string;
@@ -37,7 +38,7 @@ const Comments: React.FC<CommentsProps> = ({ storageKey }) => {
         </p>
       ) : (
         <ul className="space-y-2 mb-4">
-          {comments.map((c, i) => (
+          {safeArray(comments).map((c, i) => (
             <li key={i} className="bg-secondary/50 p-3 rounded">
               <p className="text-sm text-foreground whitespace-pre-wrap">{c}</p>
             </li>
