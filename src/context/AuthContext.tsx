@@ -253,9 +253,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     try {
-      await api.post("/api/auth/logout", {});
+      await api.post("/api/auth/logout", {}, { timeout: 8000 });
     } catch {
-      // Ignore backend logout failures
+      // Backend may reject with 403 CSRF if session expired — proceed with local cleanup
     }
     try {
       localStorage.removeItem("zdg_token");

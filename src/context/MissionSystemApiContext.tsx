@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { PyApiError, getPyApiUserMessage, pyGetJson, pyPostJson } from "@/lib/pyApiClient";
+import { getPyApiUserMessage } from "@/lib/pyApiClient";
+import { apiGetJson, apiPostJson, getStoredAccessToken } from "@/lib/apiClient";
 import { useAuth } from "@/context/AuthContext";
-import { getStoredAccessToken } from "@/lib/apiClient";
 import { toast } from "@/hooks/use-toast";
 import { safeArray } from "@/utils/safeData";
 
@@ -412,11 +412,11 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
 
   const ensurePyUser = useCallback(async () => {
     if (!user?.email) return;
-    await pyPostJson("/users", {
+    await apiPostJson("/api/users", {
       email: user.email,
       name: user.name || user.email,
       external_id: user.id,
-    });
+    }).catch(() => undefined);
   }, [user]);
 
   const refreshMissionData = useCallback(async () => {
@@ -428,16 +428,21 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
     }
     setLoading(true);
     try {
-      const payload = await pyGetJson<MissionControlPayload>("/mission-control");
+      const payload = await apiGetJson<MissionControlPayload>("/api/mission-control");
       if (payload) setMissionData(payload);
       setError("");
     } catch (error) {
-      const err = error as PyApiError;
+      const err = error as { status?: number; message?: string };
       if (err.status === 404) {
         await ensurePyUser();
-        const payload = await pyGetJson<MissionControlPayload>("/mission-control");
-        if (payload) setMissionData(payload);
-        setError("");
+        try {
+          const payload = await apiGetJson<MissionControlPayload>("/api/mission-control");
+          if (payload) setMissionData(payload);
+          setError("");
+        } catch {
+          setMissionData(emptyPayload);
+          setError("");
+        }
         return;
       }
       if (err.status === 401 || err.status === 403) {
@@ -445,7 +450,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
         setError("");
         return;
       }
-      setError(getPyApiUserMessage(err, "We couldn't load your mission dashboard right now."));
+      setError(getPyApiUserMessage(error, "We couldn't load your mission dashboard right now."));
     } finally {
       setLoading(false);
     }
@@ -459,7 +464,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
     async (actionType: MissionActionType, options?: { target?: string; metadata?: Record<string, unknown> }) => {
       if (!isAuthenticated || !user || !getStoredAccessToken()) return;
       try {
-        const response = await pyPostJson<MissionActionResponse>("/mission-control/actions", {
+        const response = await apiPostJson<MissionActionResponse>("/api/mission-control/actions", {
           action_type: actionType,
           target: options?.target || actionType,
           metadata: options?.metadata || {},
@@ -534,7 +539,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
   const updateNotificationPreferences = useCallback(async (payload: Partial<MissionNotificationPreferences>) => {
     if (!isAuthenticated || !user) return;
     try {
-      const response = await pyPostJson<MissionControlPayload>("/mission-control/preferences", {
+      const response = await apiPostJson<MissionControlPayload>("/api/mission-control/preferences", {
         email_enabled: payload.emailEnabled,
         push_enabled: payload.pushEnabled,
         streak_alerts: payload.streakAlerts,
