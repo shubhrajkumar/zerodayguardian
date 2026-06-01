@@ -477,7 +477,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
             createdAt: response.reward.awarded_at || Date.now(),
           });
         }
-        if (!response.ok) {
+        if (response && !response.ok) {
           const message = response.mission_control?.debug?.warnings?.[0] || "That action did not save cleanly. You can retry in a moment.";
           setError(message);
           toast({ title: "Action needs a retry", description: message });

@@ -70,6 +70,14 @@ const connectMongoBestEffort = async () => {
     ]);
 
     clearReconnectTimer();
+    // Reconcile indexes once after connect to resolve any conflicts
+    try {
+      const User = (await import("./backend/src/models/User.mjs")).User;
+      await User.syncIndexes();
+      console.log("[MongoDB] User model indexes synced");
+    } catch {
+      console.warn("[MongoDB] User.syncIndexes() skipped — will resolve on next startup");
+    }
   } catch (error) {
     console.warn("[MongoDB] Atlas connect skipped:", error instanceof Error ? error.message : String(error));
   }
