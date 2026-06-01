@@ -846,7 +846,7 @@ router.post("/preferences", validateBody(preferencesSchema), async (req, res, ne
   }
 });
 
-router.get("/memory/summary", async (req, res, next) => {
+router.get("/memory/summary", async (req, res) => {
   try {
     const userId = req.user?.sub || null;
     const sessionId = req.neurobotSessionId || null;
@@ -854,7 +854,16 @@ router.get("/memory/summary", async (req, res, next) => {
     const stats = await getMemoryStats({ userId, sessionId });
     res.json({ status: "ok", snapshot, stats });
   } catch (error) {
-    next(error);
+    logWarn("Memory summary unavailable — returning empty snapshot", {
+      requestId: req.requestId,
+      traceId: req.traceId || "",
+      reason: String(error?.message || error?.code || "memory_unavailable"),
+    });
+    res.json({
+      status: "ok",
+      snapshot: { profile: {}, preferences: {}, learning: {}, security: {} },
+      stats: { preferences: 0, learning: 0, security: 0, uploads: 0 },
+    });
   }
 });
 
