@@ -504,17 +504,18 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
       const response = await api.post<{ result: WebScanResult }>("/api/intelligence/tools/webscan", {
         url: target,
       });
-      setResult(response.data.result);
+      const scanResult = response.data.result;
+      setResult(scanResult);
       setLastScanAt(new Date().toISOString());
-      const target = response.data.result?.target;
-      const ssl = response.data.result?.ssl;
-      const headers = response.data.result?.headers;
+      const scanTarget = scanResult?.target;
+      const ssl = scanResult?.ssl;
+      const headers = scanResult?.headers;
       const next = {
-        id: `${Date.now()}-${target?.hostname || "unknown"}`,
+        id: `${Date.now()}-${scanTarget?.hostname || "unknown"}`,
         timestamp: new Date().toISOString(),
-        target: target?.normalizedUrl || "",
+        target: scanTarget?.normalizedUrl || "",
         grade: scoreFromChecks([
-          { ok: response.data.result?.httpsEnforced ?? false },
+          { ok: scanResult?.httpsEnforced ?? false },
           { ok: ssl?.enabled && ssl?.authorized },
           { ok: !!headers?.hsts },
           { ok: !!headers?.csp },
@@ -524,7 +525,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           { ok: !!headers?.permissionsPolicy },
         ]).grade,
         score: scoreFromChecks([
-          { ok: response.data.result?.httpsEnforced ?? false },
+          { ok: scanResult?.httpsEnforced ?? false },
           { ok: ssl?.enabled && ssl?.authorized },
           { ok: !!headers?.hsts },
           { ok: !!headers?.csp },
@@ -533,8 +534,8 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           { ok: !!headers?.referrerPolicy },
           { ok: !!headers?.permissionsPolicy },
         ]).score,
-        httpsEnforced: response.data.result?.httpsEnforced ?? false,
-        sslStatus: response.data.result?.sslStatus || "Unknown",
+        httpsEnforced: scanResult?.httpsEnforced ?? false,
+        sslStatus: scanResult?.sslStatus || "Unknown",
       } as WebScanHistoryItem;
       setHistory((prev) => {
         const updated = [next, ...prev].slice(0, 10);

@@ -9,6 +9,7 @@
  * Safely coerce a value to an array. Returns `[]` for null/undefined/non-array values.
  */
 export function safeArray<T>(data: T[]): T[];
+export function safeArray<T>(data: null | undefined): T[];
 export function safeArray<T>(data: unknown): T[];
 export function safeArray<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data as T[];
@@ -19,45 +20,40 @@ export function safeArray<T>(data: unknown): T[] {
  * Safe `.map()` that won't crash if `data` is undefined/null.
  * Returns `[]` for falsy data.
  */
-export const safeMap = <T, R>(
-  data: unknown,
-  fn: (item: T, index: number) => R
-): R[] => {
+export function safeMap<T, R>(data: T[], fn: (item: T, index: number) => R): R[];
+export function safeMap<T, R>(data: unknown, fn: (item: T, index: number) => R): R[];
+export function safeMap<T, R>(data: unknown, fn: (item: T, index: number) => R): R[] {
   return safeArray<T>(data).map(fn);
-};
+}
 
 /**
  * Safe `.filter()` that won't crash if `data` is undefined/null.
  * Returns `[]` for falsy data.
  */
-export const safeFilter = <T>(
-  data: unknown,
-  fn: (item: T, index: number) => boolean
-): T[] => {
+export function safeFilter<T>(data: T[], fn: (item: T, index: number) => boolean): T[];
+export function safeFilter<T>(data: unknown, fn: (item: T, index: number) => boolean): T[];
+export function safeFilter<T>(data: unknown, fn: (item: T, index: number) => boolean): T[] {
   return safeArray<T>(data).filter(fn);
-};
+}
 
 /**
  * Safe `.forEach()` that won't crash if `data` is undefined/null.
  */
-export const safeForEach = <T>(
-  data: unknown,
-  fn: (item: T, index: number) => void
-): void => {
+export function safeForEach<T>(data: T[], fn: (item: T, index: number) => void): void;
+export function safeForEach<T>(data: unknown, fn: (item: T, index: number) => void): void;
+export function safeForEach<T>(data: unknown, fn: (item: T, index: number) => void): void {
   safeArray<T>(data).forEach(fn);
-};
+}
 
 /**
  * Safe `.reduce()` that won't crash if `data` is undefined/null.
  * Returns `initialValue` for falsy data.
  */
-export const safeReduce = <T, R>(
-  data: unknown,
-  fn: (acc: R, item: T, index: number) => R,
-  initialValue: R
-): R => {
+export function safeReduce<T, R>(data: T[], fn: (acc: R, item: T, index: number) => R, initialValue: R): R;
+export function safeReduce<T, R>(data: unknown, fn: (acc: R, item: T, index: number) => R, initialValue: R): R;
+export function safeReduce<T, R>(data: unknown, fn: (acc: R, item: T, index: number) => R, initialValue: R): R {
   return safeArray<T>(data).reduce(fn, initialValue);
-};
+}
 
 /**
  * Safely access a nested property using a dot-path string.
