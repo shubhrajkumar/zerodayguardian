@@ -35,7 +35,7 @@ import DashboardPage from "@/pages/DashboardPage";
 
 const renderDashboardPage = () => {
   return render(
-    <MemoryRouter>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <DashboardPage />
     </MemoryRouter>
   );

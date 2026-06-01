@@ -506,32 +506,35 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
       });
       setResult(response.data.result);
       setLastScanAt(new Date().toISOString());
+      const target = response.data.result?.target;
+      const ssl = response.data.result?.ssl;
+      const headers = response.data.result?.headers;
       const next = {
-        id: `${Date.now()}-${response.data.result.target.hostname}`,
+        id: `${Date.now()}-${target?.hostname || "unknown"}`,
         timestamp: new Date().toISOString(),
-        target: response.data.result.target.normalizedUrl,
+        target: target?.normalizedUrl || "",
         grade: scoreFromChecks([
-          { ok: response.data.result.httpsEnforced },
-          { ok: response.data.result.ssl?.enabled && response.data.result.ssl?.authorized },
-          { ok: !!response.data.result.headers?.hsts },
-          { ok: !!response.data.result.headers?.csp },
-          { ok: !!response.data.result.headers?.xFrameOptions },
-          { ok: !!response.data.result.headers?.xContentTypeOptions },
-          { ok: !!response.data.result.headers?.referrerPolicy },
-          { ok: !!response.data.result.headers?.permissionsPolicy },
+          { ok: response.data.result?.httpsEnforced ?? false },
+          { ok: ssl?.enabled && ssl?.authorized },
+          { ok: !!headers?.hsts },
+          { ok: !!headers?.csp },
+          { ok: !!headers?.xFrameOptions },
+          { ok: !!headers?.xContentTypeOptions },
+          { ok: !!headers?.referrerPolicy },
+          { ok: !!headers?.permissionsPolicy },
         ]).grade,
         score: scoreFromChecks([
-          { ok: response.data.result.httpsEnforced },
-          { ok: response.data.result.ssl?.enabled && response.data.result.ssl?.authorized },
-          { ok: !!response.data.result.headers?.hsts },
-          { ok: !!response.data.result.headers?.csp },
-          { ok: !!response.data.result.headers?.xFrameOptions },
-          { ok: !!response.data.result.headers?.xContentTypeOptions },
-          { ok: !!response.data.result.headers?.referrerPolicy },
-          { ok: !!response.data.result.headers?.permissionsPolicy },
+          { ok: response.data.result?.httpsEnforced ?? false },
+          { ok: ssl?.enabled && ssl?.authorized },
+          { ok: !!headers?.hsts },
+          { ok: !!headers?.csp },
+          { ok: !!headers?.xFrameOptions },
+          { ok: !!headers?.xContentTypeOptions },
+          { ok: !!headers?.referrerPolicy },
+          { ok: !!headers?.permissionsPolicy },
         ]).score,
-        httpsEnforced: response.data.result.httpsEnforced,
-        sslStatus: response.data.result.sslStatus,
+        httpsEnforced: response.data.result?.httpsEnforced ?? false,
+        sslStatus: response.data.result?.sslStatus || "Unknown",
       } as WebScanHistoryItem;
       setHistory((prev) => {
         const updated = [next, ...prev].slice(0, 10);
@@ -570,12 +573,12 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
     : [];
   const summary = result
     ? [
-        `Target: ${result.target.normalizedUrl}`,
+        `Target: ${result.target?.normalizedUrl || "n/a"}`,
         `Grade: ${score.grade} (${score.score}%)`,
         result.riskScore != null ? `Risk score: ${result.riskScore} (${result.riskLevel || "n/a"})` : null,
         `HTTPS enforced: ${result.httpsEnforced ? "Yes" : "No"}`,
         `SSL: ${result.sslStatus}`,
-        `Server: ${result.headers.server || "n/a"}`,
+        `Server: ${result.headers?.server || "n/a"}`,
       ]
         .filter(Boolean)
         .join("\n")
@@ -611,13 +614,13 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         </head>
         <body>
           <h1>Web Security Scan Report</h1>
-          <div class="meta">Target: ${result.target.normalizedUrl}</div>
+          <div class="meta">Target: ${result.target?.normalizedUrl || "n/a"}</div>
           <div class="meta">Generated: ${new Date().toLocaleString()}</div>
           <div class="card">
             <div class="row"><strong>Grade</strong><span class="badge">${score.grade} (${score.score}%)</span></div>
             <div class="row"><strong>HTTPS enforced</strong><span>${result.httpsEnforced ? "Yes" : "No"}</span></div>
             <div class="row"><strong>SSL status</strong><span>${result.sslStatus}</span></div>
-            <div class="row"><strong>Server</strong><span>${result.headers.server || "n/a"}</span></div>
+            <div class="row"><strong>Server</strong><span>${result.headers?.server || "n/a"}</span></div>
             <div class="row"><strong>Response time</strong><span>${formatMs(result.responseTimeMs)}</span></div>
           </div>
           <h2>Security Checks</h2>
@@ -654,7 +657,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
     setReportError("");
     try {
       const response = await api.post("/api/intelligence/tools/webscan/report", {
-          url: result.target.normalizedUrl,
+          url: result.target?.normalizedUrl || "",
           report: {
             template: reportTemplate,
             brandName: reportBrandName,
@@ -879,18 +882,18 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
                     <Server className="h-4 w-4 text-cyan-200" />
                     Server
                   </div>
-                  <span className="text-xs text-slate-300">{result.headers.server}</span>
+                  <span className="text-xs text-slate-300">{result.headers?.server}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
                   <div className="flex items-center gap-2 text-sm text-slate-200">
                     <Globe2 className="h-4 w-4 text-cyan-200" />
                     Final URL
                   </div>
-                  <span className="text-xs text-slate-300">{result.target.normalizedUrl}</span>
+                  <span className="text-xs text-slate-300">{result.target?.normalizedUrl}</span>
                 </div>
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
-                {(result.technologies.length ? result.technologies : ["Unknown stack"]).map((tech) => (
+                {(result.technologies?.length ? result.technologies : ["Unknown stack"]).map((tech) => (
                   <span key={tech} className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs text-slate-200">
                     {tech}
                   </span>
@@ -981,34 +984,34 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">SSL Status</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
                 <p>Status: {result.sslStatus}</p>
-                <p>Valid from: {formatDate(result.ssl.validFrom)}</p>
-                <p>Valid to: {formatDate(result.ssl.validTo)}</p>
-                <p>Days remaining: {result.ssl.daysRemaining ?? "n/a"}</p>
-                <p>Issuer: {result.ssl.issuer || "n/a"}</p>
-                <p>Self-signed: {result.ssl.selfSigned === null ? "n/a" : result.ssl.selfSigned ? "Yes" : "No"}</p>
-                <p>Authorized: {result.ssl.authorized ? "Yes" : "No"}</p>
-                {result.ssl.authorizationError ? <p>Auth error: {result.ssl.authorizationError}</p> : null}
+                <p>Valid from: {formatDate(result.ssl?.validFrom)}</p>
+                <p>Valid to: {formatDate(result.ssl?.validTo)}</p>
+                <p>Days remaining: {result.ssl?.daysRemaining ?? "n/a"}</p>
+                <p>Issuer: {result.ssl?.issuer || "n/a"}</p>
+                <p>Self-signed: {result.ssl?.selfSigned === null ? "n/a" : result.ssl?.selfSigned ? "Yes" : "No"}</p>
+                <p>Authorized: {result.ssl?.authorized ? "Yes" : "No"}</p>
+                {result.ssl?.authorizationError ? <p>Auth error: {result.ssl?.authorizationError}</p> : null}
               </div>
             </div>
 
             <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Domain Info</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
-                <p>Host: {result.domain.hostname}</p>
-                <p>IPv4: {formatList(result.domain.ipv4)}</p>
-                <p>IPv6: {formatList(result.domain.ipv6)}</p>
-                <p>CNAME: {formatList(result.domain.cname)}</p>
+                <p>Host: {result.domain?.hostname}</p>
+                <p>IPv4: {formatList(result.domain?.ipv4)}</p>
+                <p>IPv6: {formatList(result.domain?.ipv6)}</p>
+                <p>CNAME: {formatList(result.domain?.cname)}</p>
               </div>
             </div>
 
             <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Server Info</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
-                <p>Powered by: {result.headers.poweredBy}</p>
-                <p>Content type: {result.headers.contentType}</p>
-                <p>Content length: {result.headers.contentLength || "n/a"}</p>
-                <p>HSTS: {result.headers.hsts ? "Enabled" : "Missing"}</p>
-                <p>CSP: {result.headers.csp ? "Present" : "Missing"}</p>
+                <p>Powered by: {result.headers?.poweredBy}</p>
+                <p>Content type: {result.headers?.contentType}</p>
+                <p>Content length: {result.headers?.contentLength || "n/a"}</p>
+                <p>HSTS: {result.headers?.hsts ? "Enabled" : "Missing"}</p>
+                <p>CSP: {result.headers?.csp ? "Present" : "Missing"}</p>
               </div>
             </div>
 

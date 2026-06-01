@@ -441,7 +441,7 @@ const LabPage = () => {
         setMissionObjectives((prev) => ({ ...prev, [activeLab.id]: result.state?.completed_objectives || [] }));
       }
       if (result.rewards?.length) {
-        const normalizedRewards = result.rewards.map((reward) => ({ id: reward.id, title: reward.title, detail: reward.detail, earnedAt: reward.earnedAt || Date.now() }));
+        const normalizedRewards = safeArray(result.rewards).map((reward) => ({ id: reward.id, title: reward.title, detail: reward.detail, earnedAt: reward.earnedAt || Date.now() }));
         setRecentRewards((prev) => [...normalizedRewards, ...prev].slice(0, 6));
       }
       const completed = Boolean(result.state?.completed || result.code === "completed");

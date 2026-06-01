@@ -68,7 +68,7 @@ import AuthPage from "@/pages/AuthPage";
 
 const renderAuthPage = () => {
   return render(
-    <MemoryRouter>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div id="toast-container" data-testid="toast-container" />
       <AuthPage />
     </MemoryRouter>
