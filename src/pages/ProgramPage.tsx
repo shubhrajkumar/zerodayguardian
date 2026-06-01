@@ -93,22 +93,8 @@ const ProgramPage = () => {
         setError("");
       } catch (err) {
         if (!active) return;
-        // Graceful fallback: show a default overview so the page isn't empty
-        const fallbackItems: DayOverviewItem[] = Array.from({ length: 60 }, (_, index) => ({
-          day: index + 1,
-          title: `Day ${index + 1} Lab`,
-          focus: "Cyber skills",
-          difficulty: index < 20 ? "Beginner" : index < 40 ? "Intermediate" : "Advanced",
-          unlocked: index === 0,
-          completed: false,
-        }));
-        setOverview({
-          items: fallbackItems,
-          recommended_day: 1,
-          streak_message: "Sign in to track your daily progress.",
-        });
-        setSelectedDay(1);
-        setError("");
+        setOverview(null);
+        setError("The program data is syncing with the backend. Please try again in a moment.");
       } finally {
         if (active) setLoading(false);
       }
