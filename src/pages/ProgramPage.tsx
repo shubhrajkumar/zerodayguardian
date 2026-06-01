@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import PlatformHero from "@/components/platform/PlatformHero";
 import { getPyApiUserMessage, pyGetJson, pyPostJson } from "@/lib/pyApiClient";
 import { useAuth } from "@/context/AuthContext";
+import { safeArray } from "@/utils/safeData";
 
 type DayOverviewItem = {
   day: number;
@@ -80,11 +81,12 @@ const ProgramPage = () => {
     };
   }, [authState, isAuthenticated, user]);
 
+  const items = useMemo(() => safeArray(overview?.items), [overview]);
   const selected = useMemo(
-    () => overview?.items.find((item) => item.day === selectedDay) || overview?.items[0] || null,
-    [overview, selectedDay]
+    () => items.find((item) => item.day === selectedDay) || items[0] || null,
+    [items, selectedDay]
   );
-  const completionCount = overview?.items.filter((item) => item.completed).length || 0;
+  const completionCount = useMemo(() => items.filter((item) => item.completed).length, [items]);
 
   return (
     <div className="container grid-bg mx-auto px-4 py-12 page-shell">
@@ -99,7 +101,7 @@ const ProgramPage = () => {
             }
             description="The day program is built like a premium training product: pick the recommended day, complete each task, get validated, and unlock the next stage with real backend state."
             pills={[
-              overview ? `${overview.items.filter((item) => item.completed).length}/60 complete` : "60 days",
+              overview ? `${items.filter((item) => item.completed).length}/60 complete` : "60 days",
               overview?.recommended_day ? `Next day ${overview.recommended_day}` : "Sign in to unlock",
             ]}
             aside={
@@ -120,7 +122,7 @@ const ProgramPage = () => {
             {[
               { label: "Completed", value: `${completionCount}/60` },
               { label: "Recommended", value: `Day ${overview.recommended_day || 1}` },
-              { label: "Unlocked", value: `${overview.items.filter((item) => item.unlocked).length}` },
+              { label: "Unlocked", value: `${items.filter((item) => item.unlocked).length}` },
               { label: "Current Focus", value: selected?.focus || "Core skills" },
             ].map((item) => (
               <div key={item.label} className="cyber-card rounded-[24px] p-4">
@@ -175,7 +177,7 @@ const ProgramPage = () => {
             <section className="premium-section-card cyber-card">
               <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-slate-500">Program map</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {overview.items.map((item) => (
+                {items.map((item) => (
                   <button
                     key={item.day}
                     type="button"

@@ -6,6 +6,7 @@ import { getPyApiUserMessage, pyGetJson, pyPostJson } from "@/lib/pyApiClient";
 import { useAuth } from "@/context/AuthContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import { useUserProgress } from "@/context/UserProgressContext";
+import { safeArray } from "@/utils/safeData";
 
 type LabTask = {
   id: string;
@@ -183,10 +184,11 @@ const ProgramLabPage = () => {
   };
 
   const normalizeFlowSnapshot = (payload: LabDetailResponse, snapshot: FlowSnapshot | null): FlowSnapshot => {
-    const completedCount = payload.state.completed_task_ids.length;
-    const currentTaskId = payload.current_task_id || payload.module.tasks?.find((task) => !payload.state.completed_task_ids.includes(task.id))?.id || null;
+    const completedCount = safeArray(payload.state?.completed_task_ids).length;
+    const moduleTasksArr = safeArray(payload.module?.tasks);
+    const currentTaskId = payload.current_task_id || moduleTasksArr.find((task) => !safeArray(payload.state?.completed_task_ids).includes(task.id))?.id || null;
 
-    if (payload.state.completed) {
+    if (payload.state?.completed) {
       return {
         stage: "completed",
         currentTaskId: null,
@@ -345,21 +347,21 @@ const ProgramLabPage = () => {
 
   const currentTask = useMemo(() => {
     if (!detail) return null;
-    const tasks = detail.module.tasks || [];
+    const tasks = safeArray(detail.module?.tasks);
     if (detail.current_task_id) {
       return tasks.find((task) => task.id === detail.current_task_id) || null;
     }
-    return tasks.find((task) => !detail.state.completed_task_ids.includes(task.id)) || null;
+    return tasks.find((task) => !safeArray(detail.state?.completed_task_ids).includes(task.id)) || null;
   }, [detail]);
 
-  const kaliTools = detail?.module.kali_tools || [];
-  const successCriteria = detail?.module.success_criteria || [];
-  const moduleTasks = detail?.module.tasks || [];
-  const solutionExplanation = detail?.module.solution_explanation || [];
-  const missionAssets = detail?.module.mission_assets || [];
-  const debriefPoints = detail?.module.debrief_points || [];
-  const consoleBootLines = detail?.module.console_boot_lines || [];
-  const terminalLog = detail?.state.terminal_log || [];
+  const kaliTools = safeArray(detail?.module?.kali_tools);
+  const successCriteria = safeArray(detail?.module?.success_criteria);
+  const moduleTasks = safeArray(detail?.module?.tasks);
+  const solutionExplanation = safeArray(detail?.module?.solution_explanation);
+  const missionAssets = safeArray(detail?.module?.mission_assets);
+  const debriefPoints = safeArray(detail?.module?.debrief_points);
+  const consoleBootLines = safeArray(detail?.module?.console_boot_lines);
+  const terminalLog = safeArray(detail?.state?.terminal_log);
   const isDayOne = day === 1;
   const isDayTwo = day === 2;
   const isDayThree = day === 3;
@@ -521,9 +523,9 @@ const ProgramLabPage = () => {
           ? "UNCERTAINTY HANDLER"
           : "REACTIVE NOVICE";
 
-  const learnCards = detail?.module.learn_cards?.length
-    ? detail.module.learn_cards
-    : (detail?.module.learn_points || []).map((point, index) => ({
+  const learnCards = safeArray(detail?.module?.learn_cards).length
+    ? safeArray(detail?.module?.learn_cards)
+    : safeArray(detail?.module?.learn_points).map((point, index) => ({
         id: `fallback-learn-${index + 1}`,
         eyebrow: `Core concept ${index + 1}`,
         title: point.split(".")[0]?.trim() || `Concept ${index + 1}`,
@@ -736,7 +738,7 @@ const ProgramLabPage = () => {
       setFlowStage("validate");
       return;
     }
-    if (detail.state.completed_task_ids.includes(currentTask.id)) return;
+    if (safeArray(detail.state?.completed_task_ids).includes(currentTask.id)) return;
     const submitGuardKey = `${day}:${currentTask.id}:${answer.trim()}`;
     if (submitGuardRef.current === submitGuardKey) return;
     submitGuardRef.current = submitGuardKey;
@@ -1562,7 +1564,7 @@ const ProgramLabPage = () => {
               <div className="mt-4 grid gap-3">
                 {moduleTasks.map((task, index) => {
                   const active = currentTask?.id === task.id;
-                  const done = detail.state.completed_task_ids.includes(task.id);
+                  const done = safeArray(detail.state?.completed_task_ids).includes(task.id);
                   return (
                     <div
                       key={task.id}
