@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Connection test probe (read-only, authenticated) ──
+    match /connection_tests/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ── Referral records ──
+    // Each user owns their own referral doc (doc ID = userId).
+    // findReferrerByCode queries by "code" field — requires collection-wide read.
+    // applyReferralSignup transaction writes to TWO referral docs (referrer + referred)
+    // and two public_profiles docs. Because this is a legitimate cross-user operation
+    // triggered by a referral signup, we allow any authenticated user to write.
+    // The application layer (firestoreGrowth.ts) validates all data with Zod schemas.
+    match /referrals/{userId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // ── Public profiles ──
+    // Users primarily write their own profile via syncPublicProfile().
+    // applyReferralSignup also writes to the referred user's profile (cross-user).
+    // Because of this legitimate cross-user referral operation, we allow any
+    // authenticated user to write. The application layer validates all data.
+    match /public_profiles/{userId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // ── Notification preferences + items subcollection ──
+    // preferences doc ID = userId
+    // items: /notifications/{userId}/items/{notificationId}
+    match /notifications/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+
+      match /items/{notificationId} {
+        allow read, write: if request.auth != null
+                           && request.auth.uid == userId;
+      }
+    }
+
+    // ── Frontend error logs ──
+    // Client writes error reports for debugging. No client-side reads.
+    // Backend monitoring reads for alerting.
+    match /frontend_errors/{docId} {
+      allow read: if false;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+  }
+}
