@@ -898,6 +898,11 @@ const createDayTask = ({
   answerFormat,
   artifactLabel,
   validator,
+  interactionType,
+  score,
+  xp,
+  options,
+  validationFocus,
 }) => ({
   id,
   kind,
@@ -910,6 +915,11 @@ const createDayTask = ({
   success_message: successMessage,
   success_criteria: successCriteria,
   validator,
+  interaction_type: interactionType || (kind === "quiz" ? "single-select" : "text"),
+  score: score || 25,
+  xp: xp || 15,
+  options: options || [],
+  validation_focus: validationFocus || [],
 });
 
 const isBlockedBypassAnswer = (answer = "") => {
@@ -1282,21 +1292,117 @@ const buildDayLabTasks = (focus = "foundation") => {
 const buildDayLabModule = (dayNumber = 1) => {
   const day = DAY_LAB_PROGRAM.find((item) => item.day === dayNumber) || DAY_LAB_PROGRAM[0];
   const meta = DAY_LAB_FOCUS_META[day.focus] || DAY_LAB_FOCUS_META.foundation;
+  const scenarioTaglineMap = {
+    foundation: "Build the habits that separate operators from observers.",
+    intel: "Gather verified signals before anyone else moves.",
+    appsec: "Test trust boundaries like a real reviewer.",
+    defense: "Contain the breach before the attacker deepens access.",
+    cloud: "Harden the workload before exposure becomes an incident.",
+    hunt: "Find the signal hiding in noisy telemetry.",
+    capstone: "Deliver operator-grade output that holds up to review.",
+  };
+  const operatorRoleMap = {
+    foundation: "Junior Security Analyst",
+    intel: "OSINT Recon Operator",
+    appsec: "Application Security Reviewer",
+    defense: "SOC Analyst on Shift",
+    cloud: "Cloud Security Engineer",
+    hunt: "Threat Hunter",
+    capstone: "Security Consultant",
+  };
+  const threatLevelMap = {
+    foundation: "Low — learning environment",
+    intel: "Medium — active target profiling",
+    appsec: "Medium — application attack surface",
+    defense: "High — live incident simulation",
+    cloud: "Medium — cloud exposure risk",
+    hunt: "High — threat hunting under uncertainty",
+    capstone: "Pro — real-world operator scenario",
+  };
+  const primaryActionLabelMap = {
+    quiz: "Start quiz",
+    tool_action: "Run command",
+    mindset: "Start mission",
+    analysis: "Write analysis",
+    report: "Submit report",
+  };
+  const tasks = buildDayLabTasks(day.focus);
+  const firstTask = tasks[0] || {};
   return {
     day: day.day,
     title: day.title,
     objective: `Complete a realistic guided lab for ${day.title} using an operator action, evidence, and a concise conclusion.`,
     scenario: meta.scenario,
+    scenario_tagline: scenarioTaglineMap[day.focus] || scenarioTaglineMap.foundation,
+    operator_role: operatorRoleMap[day.focus] || operatorRoleMap.foundation,
+    threat_level: threatLevelMap[day.focus] || threatLevelMap.foundation,
     focus: day.focus,
     difficulty: meta.difficulty,
     estimated_minutes: meta.difficulty === "beginner" ? 18 : meta.difficulty === "intermediate" ? 24 : meta.difficulty === "advanced" ? 30 : 36,
     environment: meta.environment,
     kali_tools: meta.kaliTools,
-    tasks: buildDayLabTasks(day.focus),
+    tasks,
+    mentor_intro: `Welcome to Day ${day.day}: ${day.title}. ${meta.scenario} Focus on evidence quality, not speed. ZORVIX is watching your reasoning chain.`,
+    example_story: `In a real engagement, an operator working on ${day.title.toLowerCase()} would start by establishing scope, collecting a baseline signal, and then validating the finding with a second source before reporting. The habit that matters most is evidence-first thinking: one observation means nothing without corroboration.`,
+    learn_points: [
+      `Core concept: ${day.title} connects directly to operator judgment in ${day.focus} scenarios.`,
+      `Practical habit: always validate before escalating. One signal is a lead; two signals are evidence.`,
+      `Operator rule: clean, reproducible actions beat noisy guesswork every time.`,
+    ],
+    learn_cards: [
+      {
+        id: `card-intro-${day.day}`,
+        eyebrow: "Core concept",
+        title: day.title,
+        detail: `Day ${day.day} focuses on ${day.focus} skills. ${meta.scenario}`,
+        proof_point: `This concept is validated by the active backend-scored task flow.`,
+        action_label: "Apply concept",
+      },
+      {
+        id: `card-habit-${day.day}`,
+        eyebrow: "Operator habit",
+        title: "Evidence-first workflow",
+        detail: "Start with a safe observation, confirm it with a second source, then decide whether to escalate or contain.",
+        proof_point: "Every task in this lab requires evidence before progression.",
+        action_label: "Build the habit",
+      },
+      {
+        id: `card-rule-${day.day}`,
+        eyebrow: "Operator rule",
+        title: "Clean signal beats noisy volume",
+        detail: "A precise command with a clear output is more valuable than ten guesses. Quality of evidence drives the score.",
+        proof_point: "Backend scoring rewards evidence quality over submission count.",
+        action_label: "Apply the rule",
+      },
+    ],
+    mission_assets: [
+      { id: `asset-env-${day.day}`, label: "Environment", value: meta.environment, tone: "neutral" },
+      { id: `asset-tools-${day.day}`, label: "Kali tools", value: meta.kaliTools.join(", "), tone: "info" },
+      { id: `asset-focus-${day.day}`, label: "Focus area", value: day.focus, tone: "active" },
+      { id: `asset-diff-${day.day}`, label: "Difficulty", value: meta.difficulty, tone: "warning" },
+    ],
+    console_boot_lines: [
+      `[day-${day.day}] ${day.title} lab environment ready.`,
+      `[system] Focus: ${day.focus} | Difficulty: ${meta.difficulty}`,
+      `[zorvix] Mentor assist available — ask ZORVIX anytime.`,
+      `[lab] Execute → Validate → Score → Unlock next day.`,
+    ],
+    completion_badge: `day-${day.day}-complete`,
+    primary_action_label: primaryActionLabelMap[firstTask.kind] || "Start mission",
+    success_criteria: [
+      `Complete all ${tasks.length} tasks in Day ${day.day}.`,
+      `Each answer must include evidence, not just a command or keyword.`,
+      `Backend validation must accept every submission before progression unlocks.`,
+    ],
     solution_explanation: [
       `Day ${day.day} trains ${day.focus} judgment through a realistic action, a verification step, and an operator note.`,
       "A correct run begins with a plausible terminal or reasoning step, then proves why the signal matters.",
       "Unlock progression is based on validated completion rather than simply opening the module.",
+    ],
+    debrief_points: [
+      `Review the strongest signal you used in each task.`,
+      `Identify one habit that would improve speed on the next day.`,
+      `Connect the ${day.focus} skills to a real-world scenario you might encounter.`,
     ],
     next_steps: [
       "Capture the strongest signal you used in this lab.",
@@ -1351,6 +1457,13 @@ const ensureDayLabState = async (userId, dayNumber) => {
   };
   await collection.insertOne(created);
   return created;
+};
+
+const getDayLabPersistedStage = (row, dayNumber, completedTaskCount, isCompleted, currentTaskId) => {
+  if (isCompleted) return "completed";
+  // Synchronous fallback: derive stage from state without querying events collection
+  if (completedTaskCount === 0) return "learn";
+  return "task";
 };
 
 const dayLabStateResponse = (row, dayNumber) => ({
@@ -2323,7 +2436,8 @@ router.get("/labs/day/:dayNumber", validateParams(dayLabParamsSchema), async (re
     }
     const completedTaskIds = Array.isArray(row?.completedTaskIds) ? row.completedTaskIds : [];
     const taskAttemptsById = row?.taskAttemptsById && typeof row.taskAttemptsById === "object" ? row.taskAttemptsById : {};
-    const currentTask = module.tasks.find((task) => !completedTaskIds.includes(task.id)) || null;
+    const currentTask = module.tasks.find((task) => !completedTaskIds.includes(task.id)) || null;      const completedCount = completedTaskIds.length;
+    const persistedStage = getDayLabPersistedStage(row, dayNumber, completedCount, Boolean(row?.completed), currentTask?.id || null);
     respondOk(res, {
       module: {
         ...module,
@@ -2339,6 +2453,7 @@ router.get("/labs/day/:dayNumber", validateParams(dayLabParamsSchema), async (re
         ? `Stay deliberate on '${currentTask.title}'. Show the action, then the evidence, then the operator conclusion.`
         : "Lab complete. Move to the next day.",
       current_task_id: currentTask?.id || null,
+      current_stage: persistedStage,
     });
   } catch (error) {
     next(error);

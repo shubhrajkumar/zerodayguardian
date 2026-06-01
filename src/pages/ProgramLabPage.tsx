@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Lightbulb, Lock, TerminalSquare } from "lucide-react";
 import PlatformHero from "@/components/platform/PlatformHero";
@@ -125,6 +125,55 @@ type StageFlash = {
   detail: string;
 };
 
+type FallbackDayInfo = {
+  title: string;
+  objective: string;
+  scenario: string;
+  scenarioTagline: string;
+  operatorRole: string;
+  threatLevel: string;
+  difficulty: string;
+  environment: string;
+  primaryActionLabel: string;
+  executionModel: string[];
+};
+
+const FALLBACK_DAYS: Record<number, FallbackDayInfo> = {
+  1: { title: "Security mindset + CIA triad", objective: "Understand confidentiality, integrity, and availability through a real defacement scenario.", scenario: "A public page has been defaced. Trust is broken. Your thinking has to be cleaner than the attacker's. ZORVIX will guide you, but the unlock is earned only if your classification, command choice, and evidence chain all validate cleanly.", scenarioTagline: "Build the habits that separate operators from observers.", operatorRole: "Junior Security Analyst", threatLevel: "Low — learning environment", difficulty: "beginner", environment: "Kali shell + safe workstation baseline target", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 2"] },
+  2: { title: "Recon workflow", objective: "Profile a scoped target using WHOIS, DNS, and subdomain enumeration before escalating risk.", scenario: "Before an attacker scans loudly, they gather simple facts first: who owns the domain, where the nameservers point, and whether hidden subdomains exist. Day 2 teaches that habit in a clean order.", scenarioTagline: "Gather verified signals before anyone else moves.", operatorRole: "OSINT Recon Operator", threatLevel: "Medium — active target profiling", difficulty: "intermediate", environment: "Recon workspace + verified external footprint review", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 3"] },
+  3: { title: "Web attack-surface discovery", objective: "Map hidden endpoints, login panels, and admin routes like doors in a building.", scenario: "Websites hide important functionality behind side entries, maintenance doors, and unlabeled rooms. Day 3 trains you to find the risky doors before an attacker does.", scenarioTagline: "Map the surface like a real operator.", operatorRole: "Application Security Reviewer", threatLevel: "Medium — application attack surface", difficulty: "intermediate", environment: "Staging web target + safe validation workflow", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 4"] },
+  4: { title: "Vulnerability identification", objective: "Classify auth weakness, reflected input, and misconfiguration as trust failures.", scenario: "A vulnerability is usually just trust breaking in a specific place. One door opens with a default key, one receptionist repeats anything you whisper, and one maintenance room was left unlocked.", scenarioTagline: "Spot the weakness before it becomes an incident.", operatorRole: "Application Security Reviewer", threatLevel: "Medium — application attack surface", difficulty: "intermediate", environment: "Staging web target + safe validation workflow", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 5"] },
+  5: { title: "Controlled exploitation simulation", objective: "Step through breach logic safely and prove impact with one controlled command.", scenario: "Weak admin auth is the shortest path to meaningful impact. Use one safe request to prove the chain without changing state, then name attacker gain and first containment move.", scenarioTagline: "Break the chain safely.", operatorRole: "Application Security Reviewer", threatLevel: "Medium — controlled exploitation", difficulty: "intermediate", environment: "Staging web target + safe validation workflow", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 6"] },
+  6: { title: "Defense-thinking drill", objective: "Detect a breach sequence, inspect live telemetry, and choose the first response action.", scenario: "You are on shift and must move from alert to containment with disciplined evidence handling. Prove the timeline, call the incident, and choose containment without destroying evidence.", scenarioTagline: "Defend the breach with evidence.", operatorRole: "SOC Analyst on Shift", threatLevel: "High — live incident simulation", difficulty: "intermediate", environment: "SOC console + synthetic alert evidence", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 7"] },
+  7: { title: "Full attack-chain simulation", objective: "Turn recon into entry, entry into exploit impact.", scenario: "Each validated move deepens the chain. Choose clean signals, prove the foothold, and let ZORVIX pressure-test whether the exploit outcome really follows.", scenarioTagline: "Chain the mission from recon to impact.", operatorRole: "SOC Analyst on Shift", threatLevel: "High — full attack-chain", difficulty: "intermediate", environment: "SOC console + synthetic alert evidence", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 8"] },
+  8: { title: "Branching decision lab", objective: "Choose attack or defense paths and evaluate tradeoffs.", scenario: "Your selected branch changes the outcome logic. Pick a path, support it with evidence, and let ZORVIX tell you whether the tradeoff actually holds up.", scenarioTagline: "Choose the path wisely.", operatorRole: "SOC Analyst on Shift", threatLevel: "High — branching decision", difficulty: "intermediate", environment: "SOC console + synthetic alert evidence", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 9"] },
+  9: { title: "Incident response simulation", objective: "Investigate the timeline, contain the attack, and define recovery.", scenario: "You are a senior incident commander: explain the timeline, evaluate containment and recovery choices, and judge performance under urgency.", scenarioTagline: "Run the incident from first alert to recovery.", operatorRole: "Incident Commander", threatLevel: "High — live incident response", difficulty: "intermediate", environment: "SOC console + synthetic alert evidence", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 10"] },
+  10: { title: "Elite challenge arena", objective: "Clear SIGMA, APEX, and OMEGA under strict countdowns.", scenario: "No guidance. Hints cost 20% score. No partial credit. The cold evaluator judges every move.", scenarioTagline: "Enter the arena.", operatorRole: "Elite Operator", threatLevel: "Pro — timed elite challenge", difficulty: "pro", environment: "Operator project lab + reporting workspace", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 11"] },
+  11: { title: "Active threat simulation", objective: "Observe partial signals and decide under uncertainty.", scenario: "ZORVIX is silent during thinking. Your choice is permanent. The response comes only after you commit.", scenarioTagline: "Think under uncertainty.", operatorRole: "Threat Analyst", threatLevel: "High — active threat", difficulty: "advanced", environment: "Hunt workstation + event timeline simulator", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 12"] },
+  12: { title: "Lateral movement simulation", objective: "Choose the right pivot node and validate the credential path.", scenario: "Think in sequence: compromised source, best pivot, credential proof, then the privilege gain that makes the move worth it.", scenarioTagline: "Map the lateral path.", operatorRole: "Threat Analyst", threatLevel: "High — lateral movement", difficulty: "advanced", environment: "Hunt workstation + event timeline simulator", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 13"] },
+  13: { title: "Data exfiltration vs defense", objective: "Identify the sensitive path and act under a timed window.", scenario: "Pick the role, prove the sensitive path, and act before the transfer or containment window closes. Hint requests cost performance score.", scenarioTagline: "Control the data path.", operatorRole: "Incident Operator", threatLevel: "High — exfiltration window", difficulty: "advanced", environment: "Hunt workstation + event timeline simulator", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 14"] },
+  14: { title: "Multi-vector attack simulation", objective: "Identify web, network, and logic flaws and prove the shortest credible chain.", scenario: "No soft guidance. Prove the shortest web-to-network-to-logic chain before the timer kills the path.", scenarioTagline: "Chain every vector.", operatorRole: "Elite Operator", threatLevel: "Pro — multi-vector", difficulty: "pro", environment: "Operator project lab + reporting workspace", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 15"] },
+  15: { title: "Strategic cyber battle arena", objective: "Balance attack and defense across multiple stages under resource pressure.", scenario: "ZORVIX stays silent here. Validate the board, spend the right resource, and finish the sequence before tempo collapses.", scenarioTagline: "Win the board.", operatorRole: "Strategic Operator", threatLevel: "Pro — strategic battle", difficulty: "pro", environment: "Operator project lab + reporting workspace", primaryActionLabel: "Start mission", executionModel: ["Execute", "Validate", "Score", "Unlock Day 16"] },
+};
+
+const getFallbackDayInfo = (dayNumber: number): FallbackDayInfo => {
+  if (FALLBACK_DAYS[dayNumber]) return FALLBACK_DAYS[dayNumber];
+  return {
+    title: `Day ${dayNumber} Lab`,
+    objective: `Complete a realistic guided lab for Day ${dayNumber} using an operator action, evidence, and a concise conclusion.`,
+    scenario: `Day ${dayNumber} is part of the structured 60-day cybersecurity program. Complete each task with evidence-based answers to unlock the next stage.`,
+    scenarioTagline: `Day ${dayNumber} is waiting for the training engine.`,
+    operatorRole: "Security Operator",
+    threatLevel: "Medium",
+    difficulty: dayNumber <= 20 ? "beginner" : dayNumber <= 40 ? "intermediate" : "advanced",
+    environment: "Safe training environment",
+    primaryActionLabel: "Start mission",
+    executionModel: ["Execute", "Validate", "Score", "Unlock"],
+  };
+};
+
+const MAX_RETRIES = 3;
+
 const ProgramLabPage = () => {
   const navigate = useNavigate();
   const { authState, user } = useAuth();
@@ -136,6 +185,19 @@ const ProgramLabPage = () => {
   const [detail, setDetail] = useState<LabDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
+  const [retrying, setRetrying] = useState(false);
+  const retriesExhausted = retryCount >= MAX_RETRIES;
+  const handleRetry = useCallback(() => {
+    if (retriesExhausted) return;
+    setRetrying(true);
+    setError("");
+    const delay = Math.min(1000 * Math.pow(2, retryCount), 8000);
+    setTimeout(() => {
+      setRetryCount((prev) => prev + 1);
+      setRetrying(false);
+    }, delay);
+  }, [retryCount, retriesExhausted]);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [mentorGuidance, setMentorGuidance] = useState("");
@@ -316,10 +378,16 @@ const ProgramLabPage = () => {
             setFlowStage(snapshot.stage);
             writeFlowSnapshot(snapshot);
             trackDayEvent("day_lab_open", `day-${day}`, { current_stage: retryPayload.current_stage }).catch(() => undefined);
-          } catch {
+          } catch (retryErr) {
             if (!active) return;
             setDetail(null);
-            setError("This lab is being prepared. Please try again in a moment.");
+            const retryStatus = (retryErr as Error & { status?: number }).status;
+            const isTransient = !retryStatus || retryStatus >= 500 || retryStatus === 0;
+            setError(
+              isTransient
+                ? "The training service is waking up. This usually resolves after a few seconds — click Retry below."
+                : getPyApiUserMessage(retryErr, "We couldn't load this lab right now.")
+            );
           }
         } else {
           if (!active) return;
@@ -339,7 +407,7 @@ const ProgramLabPage = () => {
     return () => {
       active = false;
     };
-  }, [authState, day, user]);
+  }, [authState, day, user, retryCount]);
 
   useEffect(() => {
     if (day !== 9) return;
@@ -897,7 +965,78 @@ const ProgramLabPage = () => {
         />
 
         {loading ? <div className="glass-card rounded-2xl p-5 text-sm text-cyan-100/72">Loading lab…</div> : null}
-        {error ? <div className="glass-card rounded-2xl p-5 text-sm text-rose-300">{error}</div> : null}
+        {error && !detail ? (() => {
+          const fallback = getFallbackDayInfo(day);
+          return (
+            <>
+              <div className="glass-card rounded-2xl p-5 text-sm text-amber-200/80">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-amber-100/60">Service recovery mode</p>
+                    <p className="mt-2 text-sm text-amber-100/90">{retriesExhausted ? "The training service is temporarily unavailable. Please try again later." : error}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-cyan-300/24 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20"
+                    disabled={retrying || retriesExhausted}
+                    onClick={handleRetry}
+                  >
+                    {retriesExhausted ? "Try again later" : retrying ? "Retrying…" : "Retry"}
+                  </button>
+                </div>
+              </div>
+
+              <section className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Day {day} Lab — Degraded Preview</p>
+                <h2 className="mt-3 text-2xl font-semibold text-white">{fallback.title}</h2>
+                <p className="mt-2 text-sm text-cyan-100/72">{fallback.scenarioTagline}</p>
+                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-black/25 p-4 text-sm text-cyan-100/78">
+                  {fallback.scenario}
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                  {[
+                    { label: "Operator Role", value: fallback.operatorRole },
+                    { label: "Threat Level", value: fallback.threatLevel },
+                    { label: "Difficulty", value: fallback.difficulty },
+                    { label: "Environment", value: fallback.environment },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
+                      <p className="mt-3 text-sm font-semibold text-white">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-black/25 p-4 text-sm text-cyan-100/78">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Objective</p>
+                  <p className="mt-2 text-sm text-slate-300/82">{fallback.objective}</p>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {fallback.executionModel.map((item) => (
+                    <span key={item} className="premium-metric-pill">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    className="home-clean-mini-cta-link"
+                    disabled={retrying || retriesExhausted}
+                    onClick={handleRetry}
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                    {retriesExhausted ? "Service unavailable" : retrying ? "Reconnecting…" : "Connect to training engine"}
+                  </button>
+                </div>
+              </section>
+            </>
+          );
+        })() : null}
+        {error && detail ? (
+          <div className="glass-card rounded-2xl p-5 text-sm text-rose-300">
+            <p>{error}</p>
+          </div>
+        ) : null}
 
         {detail ? (
           <>
