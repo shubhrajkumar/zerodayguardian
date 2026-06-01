@@ -3,7 +3,7 @@ import { ArrowUpRight, BookOpen, Radar, ShieldCheck, TerminalSquare } from "luci
 import { Link } from "react-router-dom";
 import PlatformHero from "@/components/platform/PlatformHero";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
-import { pyGetJson } from "@/lib/pyApiClient";
+import { apiGetJson } from "@/lib/apiClient";
 import { useAuth } from "@/context/AuthContext";
 
 type CourseItem = {
@@ -123,9 +123,9 @@ const ResourcesPage = () => {
       setLoading(true);
       setApiError(false);
       const [coursesResult, pathsResult, missionsResult] = await Promise.allSettled([
-        pyGetJson<CoursesResponse>("/courses"),
-        pyGetJson<LearningPathItem[]>("/learning/paths"),
-        pyGetJson<MissionItem[]>("/missions"),
+        apiGetJson<CoursesResponse>("/api/courses"),
+        apiGetJson<LearningPathItem[]>("/api/learning/paths"),
+        apiGetJson<MissionItem[]>("/api/missions"),
       ]);
 
       if (!active) return;

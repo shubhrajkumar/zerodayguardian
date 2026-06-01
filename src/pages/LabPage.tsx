@@ -2,7 +2,8 @@ import { FormEvent, startTransition, useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Bot, Fingerprint, Flag, Globe, PlayCircle, Radar, Search, Shield } from "lucide-react";
 import api from "@/lib/api";
-import { getPyApiUserMessage, pyGetJson, pyPostJson } from "@/lib/pyApiClient";
+import { apiGetJson } from "@/lib/apiClient";
+import { getPyApiUserMessage, pyPostJson } from "@/lib/pyApiClient";
 import PlatformHero from "@/components/platform/PlatformHero";
 import LabExecutionModal from "@/components/LabExecutionModal";
 import { useLearningMode } from "@/context/LearningModeContext";
@@ -249,7 +250,7 @@ const LabPage = () => {
     setPyRecLoading(true);
     setPyRecError("");
     try {
-      const payload = await pyGetJson<PyRecommendationResponse>("/recommendations");
+      const payload = await apiGetJson<PyRecommendationResponse>("/api/recommendations");
       setPyRecommendations(payload);
     } catch (error) {
       setPyRecError(getPyApiUserMessage(error, "Live recommendations are temporarily unavailable."));
@@ -279,9 +280,9 @@ const LabPage = () => {
     let mounted = true;
     const load = async () => {
       try {
-        const labPayload = await pyGetJson<{ labs?: Array<Record<string, unknown>> }>("/labs/sandbox");
+        const labPayload = await apiGetJson<{ sandbox?: { status?: string; available?: boolean; labs?: Array<Record<string, unknown>> }; labs?: Array<Record<string, unknown>> }>('/api/labs/sandbox').catch(() => ({}));
         if (!mounted) return;
-        const normalized = (labPayload.labs || []).map((lab) => normalizeSandboxLab(lab));
+        const normalized = ((labPayload as Record<string, unknown>).labs || []).map((lab) => normalizeSandboxLab(lab as Record<string, unknown>));
         setLabs(normalized);
         if (!normalized.length) {
           setLabLoadError("Live labs are temporarily unavailable right now. Please retry in a moment.");
@@ -333,8 +334,8 @@ const LabPage = () => {
       }
 
       try {
-        const status = await pyGetJson<{ sandbox?: LabSandboxStatus }>("/labs/sandbox/status");
-        if (mounted) setSandboxStatus(status.sandbox || null);
+        const status = await apiGetJson<{ ready?: boolean; status?: string }>('/api/labs/sandbox/status').catch(() => null);
+        if (mounted) setSandboxStatus(status ? { enabled: Boolean(status.ready), ready: Boolean(status.ready), message: status.ready ? 'Sandbox ready' : 'Sandbox offline' } : null);
       } catch {
         if (mounted) setSandboxStatus(null);
       }

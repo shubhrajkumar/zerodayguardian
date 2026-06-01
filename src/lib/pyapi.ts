@@ -1,6 +1,18 @@
 import axios, { AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { API_BASE_URL, PY_API_BASE_URL } from '@/lib/apiConfig';
 
+const CSRF_TOKEN_KEY = 'neurobot_csrf_token';
+
+const getCsrfTokenFromSession = (): string => {
+  try { return sessionStorage.getItem(CSRF_TOKEN_KEY) || ''; } catch { return ''; }
+};
+const getCsrfTokenFromCookie = (): string => {
+  try {
+    return document.cookie.split('; ').find((entry) => entry.startsWith('neurobot_csrf='))?.split('=')[1] || '';
+  } catch { return ''; }
+};
+const getCsrfToken = () => getCsrfTokenFromSession() || getCsrfTokenFromCookie();
+
 const pyapi = axios.create({
   baseURL: PY_API_BASE_URL,
   withCredentials: true,
@@ -11,10 +23,26 @@ const pyapi = axios.create({
 });
 
 // REQUEST INTERCEPTOR
-pyapi.interceptors.request.use((config) => {
+pyapi.interceptors.request.use(async (config) => {
   const token = localStorage.getItem("zdg_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  // Attach CSRF token for state-changing requests
+  const method = (config.method || 'get').toLowerCase();
+  if (!['get', 'head', 'options'].includes(method)) {
+    let csrf = getCsrfToken();
+    if (!csrf) {
+      try {
+        const csrfUrl = API_BASE_URL ? `${API_BASE_URL}/api/auth/csrf` : '/api/auth/csrf';
+        const resp = await fetch(csrfUrl, { credentials: 'include', headers: { Accept: 'application/json' } });
+        if (resp.ok) {
+          const body = await resp.json().catch(() => ({}));
+          csrf = body?.csrfToken || getCsrfTokenFromCookie();
+        }
+      } catch { /* CSRF fetch failed */ }
+    }
+    if (csrf) config.headers['X-CSRF-Token'] = csrf;
   }
   return config;
 }, (error) => Promise.reject(error));

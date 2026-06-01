@@ -255,7 +255,7 @@ const ProgramLabPage = () => {
         email: user.email,
         name: user.name || user.email,
         external_id: user.id,
-      });
+      }).catch(() => undefined);
     };
 
     const load = async () => {
@@ -291,30 +291,36 @@ const ProgramLabPage = () => {
         const error = err as Error & { status?: number };
         if (error.status === 404) {
           await ensurePyUser();
-          const retryPayload = await pyGetJson<LabDetailResponse>(`/labs/day/${day}`);
-          if (!active) return;
-          const snapshot = normalizeFlowSnapshot(retryPayload, readFlowSnapshot());
-          setDetail(retryPayload);
-          setFeedback(snapshot.feedback || retryPayload.state.last_feedback || retryPayload.recommendation);
-          setMentorGuidance(snapshot.mentorGuidance || retryPayload.mentor_guidance || "");
-          setHint(snapshot.hint || "");
-          setAnswer("");
-          setCelebration(snapshot.celebration || "");
-          setLastValidation(
-            snapshot.stage === "validate" && typeof snapshot.accepted === "boolean"
-              ? {
-                  accepted: snapshot.accepted,
-                  title: snapshot.accepted ? "Validation passed" : "Validation blocked",
-                  detail: snapshot.accepted
-                    ? "Backend scoring recorded this step and advanced the mission."
-                    : "The validator rejected this answer. Refine the input and resubmit.",
-                  terminalOutput: snapshot.terminalOutput || [],
-                }
-              : null
-          );
-          setFlowStage(snapshot.stage);
-          writeFlowSnapshot(snapshot);
-          trackDayEvent("day_lab_open", `day-${day}`, { current_stage: retryPayload.current_stage }).catch(() => undefined);
+          try {
+            const retryPayload = await pyGetJson<LabDetailResponse>(`/labs/day/${day}`);
+            if (!active) return;
+            const snapshot = normalizeFlowSnapshot(retryPayload, readFlowSnapshot());
+            setDetail(retryPayload);
+            setFeedback(snapshot.feedback || retryPayload.state.last_feedback || retryPayload.recommendation);
+            setMentorGuidance(snapshot.mentorGuidance || retryPayload.mentor_guidance || "");
+            setHint(snapshot.hint || "");
+            setAnswer("");
+            setCelebration(snapshot.celebration || "");
+            setLastValidation(
+              snapshot.stage === "validate" && typeof snapshot.accepted === "boolean"
+                ? {
+                    accepted: snapshot.accepted,
+                    title: snapshot.accepted ? "Validation passed" : "Validation blocked",
+                    detail: snapshot.accepted
+                      ? "Backend scoring recorded this step and advanced the mission."
+                      : "The validator rejected this answer. Refine the input and resubmit.",
+                    terminalOutput: snapshot.terminalOutput || [],
+                  }
+                : null
+            );
+            setFlowStage(snapshot.stage);
+            writeFlowSnapshot(snapshot);
+            trackDayEvent("day_lab_open", `day-${day}`, { current_stage: retryPayload.current_stage }).catch(() => undefined);
+          } catch {
+            if (!active) return;
+            setDetail(null);
+            setError("This lab is being prepared. Please try again in a moment.");
+          }
         } else {
           if (!active) return;
           setDetail(null);

@@ -28,13 +28,41 @@ function getRequestKey(config: { method?: string; url?: string; params?: Record<
   return `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
 }
 
+const getCsrfTokenFromCookie = (): string => {
+  try {
+    return document.cookie.split('; ').find((entry) => entry.startsWith('neurobot_csrf='))?.split('=')[1] || '';
+  } catch { return ''; }
+};
+const getCsrfTokenFromSession = (): string => {
+  try { return sessionStorage.getItem('neurobot_csrf_token') || ''; } catch { return ''; }
+};
+const getCsrfToken = () => getCsrfTokenFromSession() || getCsrfTokenFromCookie();
+
 // REQUEST INTERCEPTOR
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
   const token = localStorage.getItem('zdg_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
+
+  // Attach CSRF token for state-changing requests (required by backend)
+  const method = (config.method || 'get').toLowerCase();
+  if (!['get', 'head', 'options'].includes(method)) {
+    let csrf = getCsrfToken();
+    if (!csrf) {
+      // Fetch a fresh CSRF token if none exists
+      try {
+        const csrfUrl = resolvedBaseUrl ? `${resolvedBaseUrl}/api/auth/csrf` : '/api/auth/csrf';
+        const resp = await fetch(csrfUrl, { credentials: 'include', headers: { Accept: 'application/json' } });
+        if (resp.ok) {
+          const body = await resp.json().catch(() => ({}));
+          csrf = body?.csrfToken || getCsrfTokenFromCookie();
+        }
+      } catch { /* CSRF fetch failed — will retry on next request */ }
+    }
+    if (csrf) config.headers['X-CSRF-Token'] = csrf;
+  }
+
   const extConfig = config as typeof config & ExtendedRequestConfig;
 
   // Deduplicate GET requests — set key immediately to prevent concurrent duplicates

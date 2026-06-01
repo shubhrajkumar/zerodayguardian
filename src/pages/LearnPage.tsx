@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
+import { apiGetJson } from "@/lib/apiClient";
 import { pyGetJson } from "@/lib/pyApiClient";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
@@ -169,10 +170,10 @@ const LearnPage = () => {
     const load = async () => {
       const [dashboardResult, adaptiveResult, coursesResult, pathsResult, missionsResult] = await Promise.allSettled([
         api.get<DashboardLite>("/api/intelligence/dashboard").then(r => r.data),
-        pyGetJson<AdaptiveRecommendationPayload>("/adaptive/recommendations"),
-        pyGetJson<CoursesResponse>("/courses"),
-        pyGetJson<LearningPathItem[]>("/learning/paths"),
-        pyGetJson<MissionItem[]>("/missions"),
+        apiGetJson<AdaptiveRecommendationPayload>("/api/adaptive/recommendations").catch(() => ({ generated_at: new Date().toISOString(), recommendations: [] })),
+        apiGetJson<CoursesResponse>("/api/courses"),
+        apiGetJson<{ paths: LearningPathItem[] }>('/api/learning/paths').then(r => r.paths || []),
+        apiGetJson<{ missions: MissionItem[] }>('/api/missions').then(r => r.missions || []),
       ]);
 
       if (!active) return;

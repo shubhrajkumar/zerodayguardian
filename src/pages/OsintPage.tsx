@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getStoredAccessToken } from "@/lib/apiClient";
+import { getStoredAccessToken, apiGetJson } from "@/lib/apiClient";
 import api from "@/lib/api";
-import { getPyApiUserMessage, pyGetJson, pyPostJson, resolvePublicPyApiUrl } from "@/lib/pyApiClient";
+import { getPyApiUserMessage, pyPostJson, resolvePublicPyApiUrl } from "@/lib/pyApiClient";
 import { useToast } from "@/hooks/use-toast";
 
 const MODULES = [
@@ -231,7 +231,7 @@ const OsintPage = () => {
     setPyRecLoading(true);
     setPyRecError("");
     try {
-      const payload = await pyGetJson<PyRecommendationResponse>("/recommendations");
+      const payload = await apiGetJson<PyRecommendationResponse>("/api/recommendations");
       setPyRecommendations(payload);
     } catch (error) {
       setPyRecommendations(null);
