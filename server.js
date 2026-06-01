@@ -62,7 +62,7 @@ const connectMongoBestEffort = async () => {
         connectTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
         family: 4,
         maxPoolSize: 10,
-        autoIndex: true,
+        autoIndex: false,
       }),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error(`Mongo connect timeout after ${MONGO_CONNECT_TIMEOUT_MS}ms`)), MONGO_CONNECT_TIMEOUT_MS)

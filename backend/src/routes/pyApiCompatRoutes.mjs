@@ -25,7 +25,7 @@ const scanReportCache = new TtlCache({ ttlMs: 20_000, maxEntries: 300 });
 const osintHistoryCache = new TtlCache({ ttlMs: 12_000, maxEntries: 300 });
 const PyUserBridgeSchema = new mongoose.Schema(
   {
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     name: { type: String, default: null },
     externalId: { type: String, default: null, index: true },
   },

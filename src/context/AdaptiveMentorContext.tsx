@@ -66,7 +66,7 @@ export const AdaptiveMentorProvider = ({ children }: { children: ReactNode }) =>
         ? `Run a short ${mindset} mission that strengthens ${primaryFocus.title.replace("Close gap: ", "")}.`
         : `Stay in ${accentLabel.toLowerCase()} and finish one guided task to give the mentor more performance signal.`);
 
-    const microAction = tasks.find((task) => !task.completed)?.title || challenge.detail;
+    const microAction = tasks.find((task) => !task.completed)?.title || challenge?.detail || 'Complete a mission step.';
     const pathTitle =
       recommendedPath?.label ||
       (primaryFocus ? primaryFocus.title.replace("Close gap: ", "") : strongest?.label || "Mission momentum");
@@ -90,7 +90,7 @@ export const AdaptiveMentorProvider = ({ children }: { children: ReactNode }) =>
       microAction,
       pathTitle,
     };
-  }, [accentLabel, challenge.detail, mindset, momentum, progress.completedLabs, progress.level, progress.skillGraph.recommendedPath, progress.skillGraph.strongest, progress.skillGraph.weakest, progress.todayActions, streak, tasks]);
+  }, [accentLabel, challenge?.detail, mindset, momentum, progress.completedLabs, progress.level, progress.skillGraph.recommendedPath, progress.skillGraph.strongest, progress.skillGraph.weakest, progress.todayActions, streak, tasks]);
 
   return <AdaptiveMentorContext.Provider value={value}>{children}</AdaptiveMentorContext.Provider>;
 };

@@ -429,14 +429,14 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
     setLoading(true);
     try {
       const payload = await pyGetJson<MissionControlPayload>("/mission-control");
-      setMissionData(payload);
+      if (payload) setMissionData(payload);
       setError("");
     } catch (error) {
       const err = error as PyApiError;
       if (err.status === 404) {
         await ensurePyUser();
         const payload = await pyGetJson<MissionControlPayload>("/mission-control");
-        setMissionData(payload);
+        if (payload) setMissionData(payload);
         setError("");
         return;
       }
@@ -464,15 +464,17 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
           target: options?.target || actionType,
           metadata: options?.metadata || {},
         });
-        setMissionData(response.mission_control);
-        if (response.reward) {
+        if (response?.mission_control) {
+          setMissionData(response.mission_control);
+        }
+        if (response?.reward) {
           setActiveReward({
-            id: response.reward.id,
-            title: response.reward.label,
-            detail: response.reward.detail,
-            xp: response.reward.xp,
-            tone: response.reward.tone,
-            createdAt: response.reward.awarded_at,
+            id: response.reward.id || '',
+            title: response.reward.label || '',
+            detail: response.reward.detail || '',
+            xp: response.reward.xp || 0,
+            tone: response.reward.tone || 'xp',
+            createdAt: response.reward.awarded_at || Date.now(),
           });
         }
         if (!response.ok) {
@@ -542,8 +544,8 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
         quiet_hours: payload.quietHours,
         timezone: payload.timezone,
       });
-      setMissionData(response);
-      setError(response.debug?.warnings?.[0] || "");
+      if (response) setMissionData(response);
+      setError(response?.debug?.warnings?.[0] || "");
     } catch (err) {
       const message = getPyApiUserMessage(err, "We couldn't update those notification settings right now.");
       setError(message);

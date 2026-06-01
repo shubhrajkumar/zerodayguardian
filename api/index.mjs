@@ -25,6 +25,7 @@ const CSP_DIRECTIVES = [
   ["font-src", ["'self'", "data:", "https://fonts.gstatic.com"]],
   // connect-src: explicit allowlist for Firebase, Sentry, Google APIs, backend, and Vercel preview domains
   ["connect-src", ["'self'", "https://*.firebaseio.com", "https://identitytoolkit.googleapis.com", "https://*.googleapis.com", "https://*.ingest.sentry.io", "https://*.vercel.app", "https://*.onrender.com", "wss:", "ws:"]],
+  ["worker-src", ["'self'", "blob:"]],
   ["frame-src", ["'none'"]],
   ["object-src", ["'none'"]],
   ["base-uri", ["'self'"]],
