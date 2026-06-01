@@ -78,8 +78,16 @@ api.interceptors.response.use(
     }
     
     // Skip processing for cancelled/deduplicated requests
+    // Return a silent resolved response instead of rejecting to avoid
+    // 'Uncaught (in promise) CanceledError' noise in the console.
     if (axios.isCancel(error)) {
-      return Promise.reject(error);
+      return Promise.resolve({
+        data: {},
+        status: 0,
+        statusText: 'cancelled',
+        headers: {},
+        config: error.config || {},
+      });
     }
     
     const originalRequest = error.config as typeof error.config & ExtendedRequestConfig;
@@ -153,9 +161,8 @@ api.interceptors.response.use(
       }
     }
     
-    if (error.response?.status === 500) {
-      console.error('Server error:', error.response.data);
-    }
+    // 500s are logged at debug level only to avoid noisy console output
+    // (Render cold starts and backend crashes are expected during development)
     
     return Promise.reject(error);
   }
