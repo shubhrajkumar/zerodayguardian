@@ -14,7 +14,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import { apiGetJson } from "@/lib/apiClient";
-import { pyGetJson } from "@/lib/pyApiClient";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import { useAuth } from "@/context/AuthContext";
