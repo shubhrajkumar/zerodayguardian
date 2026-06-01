@@ -1374,7 +1374,7 @@ const Zorvix = () => {
   useEffect(() => {
     const handler = (event: Event) => {
       const custom = event as CustomEvent<NeuroTopicEvent>;
-      const topic = normalizeTopicPayload(custom.detail);
+      const topic = normalizeTopicPayload((custom as CustomEvent<NeuroTopicEvent>)?.detail);
       if (!topic) {
         setStatusHint("Topic saved locally. Add a clearer title or prompt to sync it.");
         return;
@@ -1578,6 +1578,9 @@ const Zorvix = () => {
         <div
           className="zorvix-overlay fixed inset-0 bg-[var(--theme-bg)]/90 backdrop-blur-md"
           style={{ zIndex: 1450, opacity: 1, visibility: "visible", pointerEvents: "auto", display: "block" }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="ZORVIX AI Assistant"
         >
           <section className="zorvix-shell-root mx-auto flex h-[100dvh] w-full max-w-[1240px] flex-col p-2 sm:p-4">
             <div className="zorvix-surface relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-[var(--theme-border)] text-[var(--theme-text)] sm:rounded-[30px]">

@@ -392,7 +392,7 @@ const ToolsPage = () => {
               <h2 className="mt-2 text-2xl font-semibold text-slate-50">{operatorOverride?.discovered ? operatorOverride.title : "Unknown mission"}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-300/78">
                 {operatorOverride?.discovered
-                  ? operatorOverride.detail
+                  ? (operatorOverride.detail || '')
                   : "There is a hidden access path in the tools hub. Layered progress and mission completion will expose it."}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">

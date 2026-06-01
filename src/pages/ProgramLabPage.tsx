@@ -990,7 +990,7 @@ const ProgramLabPage = () => {
               >
                 <p className="text-[11px] uppercase tracking-[0.22em] text-white/68">Live guidance</p>
                 <p className="mt-3 text-lg font-semibold text-white">{stageFlash.title}</p>
-                <p className="mt-2 text-sm text-white/80">{stageFlash.detail}</p>
+                <p className="mt-2 text-sm text-white/80">{stageFlash.detail || ''}</p>
               </section>
             ) : null}
 
@@ -1033,8 +1033,7 @@ const ProgramLabPage = () => {
                       { label: "Brief", detail: "Turn one verified signal into a clean next recon move." },
                     ].map((item) => (
                       <div key={item.label} className="rounded-2xl border border-cyan-300/14 bg-cyan-500/8 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{item.label}</p>
-                        <p className="mt-3 text-sm text-slate-200">{item.detail}</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{item.label}</p>                           <p className="mt-3 text-sm text-slate-200">{item.detail || ''}</p>
                       </div>
                     ))}
                   </div>
@@ -1055,8 +1054,7 @@ const ProgramLabPage = () => {
                       { label: "/admin/api/health", detail: "Hidden service doorway" },
                     ].map((item) => (
                       <div key={item.label} className="rounded-2xl border border-cyan-300/14 bg-cyan-500/8 p-4">
-                        <p className="text-sm font-semibold text-white">{item.label}</p>
-                        <p className="mt-2 text-xs text-slate-300/80">{item.detail}</p>
+                        <p className="text-sm font-semibold text-white">{item.label}</p>                          <p className="mt-2 text-xs text-slate-300/80">{item.detail || ''}</p>
                       </div>
                     ))}
                   </div>
@@ -1083,8 +1081,7 @@ const ProgramLabPage = () => {
                       { label: "Misconfig", detail: "Debug routes and missing headers leave hidden doors open." },
                     ].map((item) => (
                       <div key={item.label} className="rounded-2xl border border-cyan-300/14 bg-cyan-500/8 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{item.label}</p>
-                        <p className="mt-3 text-sm text-slate-200">{item.detail}</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{item.label}</p>                           <p className="mt-3 text-sm text-slate-200">{item.detail || ''}</p>
                       </div>
                     ))}
                   </div>
@@ -1110,7 +1107,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className="rounded-2xl border border-amber-300/16 bg-amber-500/10 p-4">
                           <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/72">{item.label}</p>
-                          <p className="mt-3 text-sm text-slate-200">{item.detail}</p>
+                          <p className="mt-3 text-sm text-slate-200">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1138,7 +1135,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-six-defense-card ${item.tone === "critical" ? "day-six-defense-card--critical" : item.tone === "alert" ? "day-six-defense-card--alert" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1165,7 +1162,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-seven-chain-card ${item.tone === "active" ? "day-seven-chain-card--active" : item.tone === "ready" ? "day-seven-chain-card--ready" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-fuchsia-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1192,7 +1189,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-eight-decision-card ${item.tone === "alert" ? "day-eight-decision-card--alert" : item.tone === "ready" ? "day-eight-decision-card--ready" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1220,7 +1217,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-nine-ir-card ${item.tone === "critical" ? "day-nine-ir-card--critical" : item.tone === "alert" ? "day-nine-ir-card--alert" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-rose-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1247,7 +1244,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-eleven-threat-card ${item.tone === "critical" ? "day-eleven-threat-card--critical" : item.tone === "alert" ? "day-eleven-threat-card--alert" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1275,7 +1272,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-twelve-lateral-card ${item.tone === "critical" ? "day-twelve-lateral-card--critical" : item.tone === "active" ? "day-twelve-lateral-card--active" : item.tone === "alert" ? "day-twelve-lateral-card--alert" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1303,7 +1300,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-thirteen-exfil-card ${item.tone === "critical" ? "day-thirteen-exfil-card--critical" : item.tone === "active" ? "day-thirteen-exfil-card--active" : item.tone === "alert" ? "day-thirteen-exfil-card--alert" : item.tone === "success" ? "day-thirteen-exfil-card--success" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1331,7 +1328,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-fourteen-vector-card ${item.tone === "critical" ? "day-fourteen-vector-card--critical" : item.tone === "active" ? "day-fourteen-vector-card--active" : item.tone === "alert" ? "day-fourteen-vector-card--alert" : item.tone === "success" ? "day-fourteen-vector-card--success" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1359,7 +1356,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-fifteen-battle-card ${item.tone === "critical" ? "day-fifteen-battle-card--critical" : item.tone === "active" ? "day-fifteen-battle-card--active" : item.tone === "alert" ? "day-fifteen-battle-card--alert" : item.tone === "success" ? "day-fifteen-battle-card--success" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1386,7 +1383,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-ten-arena-card ${item.tone === "active" ? "day-ten-arena-card--active" : item.tone === "critical" ? "day-ten-arena-card--critical" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail}</p>
+                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1415,8 +1412,7 @@ const ProgramLabPage = () => {
                 {guidedSequence.map((item, index) => (
                   <div key={`${item.label}-${index}`} className="mentor-sequence-card">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">0{index + 1}</p>
-                    <p className="mt-3 text-sm font-semibold text-white">{item.label}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-300/78">{item.detail}</p>
+                    <p className="mt-3 text-sm font-semibold text-white">{item.label}</p>                     <p className="mt-2 text-sm leading-6 text-slate-300/78">{item.detail || ''}</p>
                   </div>
                 ))}
               </div>

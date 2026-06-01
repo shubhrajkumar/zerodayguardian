@@ -114,7 +114,7 @@
 
     <!-- CSP is enforced primarily via HTTP header (set by api/index.mjs with a per‑request nonce). -->
     <!-- This meta-tag fallback provides defense-in-depth if the Vercel serverless function fails to inject the header. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://*.firebaseio.com https://*.googleapis.com https://apis.google.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss: ws:; worker-src 'self' blob:; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' https://*.sentry.io https://*.firebaseio.com https://*.googleapis.com https://apis.google.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.firebaseio.com https://identitytoolkit.googleapis.com https://*.googleapis.com https://*.ingest.sentry.io https://accounts.google.com https: wss: ws:; worker-src 'self' blob: https://*.sentry.io; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
 
     <!-- Vite injects modulepreload for entry points automatically during build -->
   </head>

@@ -89,7 +89,7 @@ const DailyMissionLoop = ({
                 <item.icon className="h-5 w-5 text-emerald-300" />
                 <p className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
                 <p className="mt-2 text-2xl font-semibold text-[#e2e8f0]">{item.value}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300/78">{item.detail}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300/78">{item.detail || ''}</p>
               </div>
             ))}
           </div>
@@ -236,7 +236,7 @@ const DailyMissionLoop = ({
                 <div>
                   <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-emerald-100/72">Reward uplink</p>
                   <p className="mt-2 text-lg font-semibold text-[#e2e8f0]">{latestReward.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-200/82">{latestReward.detail}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-200/82">{latestReward.detail || ''}</p>
                 </div>
                 <button type="button" onClick={onDismissReward} className="text-xs uppercase tracking-[0.18em] text-slate-300">
                   close
@@ -285,7 +285,7 @@ const DailyMissionLoop = ({
                     </motion.span>
                     <div>
                       <p className="text-sm font-semibold text-[#e2e8f0]">{badge.title}</p>
-                      <p className="text-xs leading-5 text-slate-300/74">{badge.detail}</p>
+                      <p className="text-xs leading-5 text-slate-300/74">{badge.detail || ''}</p>
                     </div>
                   </motion.div>
                 ))
@@ -305,7 +305,7 @@ const DailyMissionLoop = ({
                       <CheckCircle2 className="h-4 w-4 text-emerald-300" />
                       {reward.title}
                     </p>
-                    <p className="mt-1 text-sm text-slate-300/76">{reward.detail}</p>
+                    <p className="mt-1 text-sm text-slate-300/76">{reward.detail || ''}</p>
                   </div>
                 ))
               ) : (

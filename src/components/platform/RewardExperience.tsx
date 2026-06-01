@@ -72,7 +72,7 @@ const RewardExperience = () => {
               <div>
                 <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/62">Breach Complete</p>
                 <h3 className="mt-2 text-xl font-semibold text-white">{activeReward.title}</h3>
-                <p className="mt-1 text-sm text-slate-300/82">{activeReward.detail}</p>
+                <p className="mt-1 text-sm text-slate-300/82">{activeReward.detail || ''}</p>
               </div>
             </div>
             <button

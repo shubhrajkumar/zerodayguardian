@@ -26,7 +26,7 @@ const LandingIntro = () => {
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const reducedMotionRef = useRef(false);
 
-  const plainSpeech = useMemo(() => speechParts.map((part) => part.text).join(""), []);
+  const plainSpeech = useMemo(() => (speechParts ?? []).map((part) => part.text).join(""), []);
   const isSpeaking = voiceState === "playing";
 
   useEffect(() => {

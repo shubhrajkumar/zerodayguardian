@@ -493,7 +493,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
   );
 
   const completeTask = useCallback(async (taskId: string) => {
-    const task = missionData.tasks.find((item) => item.id === taskId);
+    const task = safeArray(missionData.tasks).find((item) => item.id === taskId);
     if (!task) return;
     await recordAction(task.action_type, {
       target: task.action_type,
@@ -506,7 +506,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
   }, [missionData.tasks, recordAction]);
 
   const discoverHiddenChallenge = useCallback(async (challengeId: string) => {
-    const challenge = missionData.hidden_challenges.find((item) => item.id === challengeId);
+    const challenge = safeArray(missionData.hidden_challenges).find((item) => item.id === challengeId);
     await recordAction("mission_hidden_discovered", {
       target: challengeId,
       metadata: {
@@ -517,7 +517,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
   }, [missionData.hidden_challenges, recordAction]);
 
   const completeHiddenChallenge = useCallback(async (challengeId: string) => {
-    const challenge = missionData.hidden_challenges.find((item) => item.id === challengeId);
+    const challenge = safeArray(missionData.hidden_challenges).find((item) => item.id === challengeId);
     await recordAction("mission_hidden_completed", {
       target: challengeId,
       metadata: {
@@ -564,7 +564,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       route: task.route,
       ctaLabel: task.cta_label,
     })),
-    challenge: missionData.challenge,
+    challenge: missionData.challenge ?? { id: 'daily-combo', title: 'Momentum Combo', detail: 'Complete meaningful actions today.', reward: 0, goal: 3, progress: 0, completed: false },
     streak: missionData.streak,
     bestStreak: missionData.best_streak,
     totalCompleted: missionData.total_completed,
@@ -578,11 +578,11 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       tone: reward.tone,
       awardedAt: reward.awarded_at,
     })),
-    badges: missionData.badges,
-    unlockedGates: missionData.unlocked_gates,
-    hiddenChallenges: missionData.hidden_challenges,
-    streakReminder: missionData.streak_reminder,
-    curiosityTrigger: missionData.curiosity_trigger,
+    badges: missionData.badges ?? [],
+    unlockedGates: missionData.unlocked_gates ?? { advanced_labs: false, elite_program: false, intel_tools: false, shadow_challenge: false },
+    hiddenChallenges: missionData.hidden_challenges ?? [],
+    streakReminder: missionData.streak_reminder ?? 'Sign in to unlock mission tracking.',
+    curiosityTrigger: missionData.curiosity_trigger ?? 'Complete one real action to unlock recommendations.',
     nextMissionHook: missionData.next_mission_hook ? {
       title: missionData.next_mission_hook.title,
       detail: missionData.next_mission_hook.detail,

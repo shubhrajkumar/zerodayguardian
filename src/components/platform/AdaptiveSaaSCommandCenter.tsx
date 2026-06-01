@@ -130,7 +130,7 @@ const AdaptiveSaaSCommandCenter = () => {
                       <Icon className="h-4 w-4 text-cyan-300" />
                       {action.title}
                     </p>
-                    <p className="mt-2 text-sm text-slate-300/78">{action.detail}</p>
+                    <p className="mt-2 text-sm text-slate-300/78">{action.detail || ''}</p>
                   </div>
                   <span className="rounded-full border border-cyan-300/18 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100/75">
                     {action.status === "completed" ? "Completed" : action.cta}
