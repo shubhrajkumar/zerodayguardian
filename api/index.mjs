@@ -30,6 +30,7 @@ const CSP_DIRECTIVES = [
   ["object-src", ["'none'"]],
   ["base-uri", ["'self'"]],
   ["form-action", ["'self'"]],
+  ["frame-ancestors", ["'self'"]],
 ];
 
 /**

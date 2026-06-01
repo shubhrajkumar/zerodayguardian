@@ -345,14 +345,16 @@ const ProgramLabPage = () => {
     return () => window.clearInterval(timer);
   }, [day]);
 
+  const completedTaskIds = useMemo(() => safeArray(detail?.state?.completed_task_ids), [detail?.state?.completed_task_ids]);
+
   const currentTask = useMemo(() => {
     if (!detail) return null;
     const tasks = safeArray(detail.module?.tasks);
     if (detail.current_task_id) {
       return tasks.find((task) => task.id === detail.current_task_id) || null;
     }
-    return tasks.find((task) => !safeArray(detail.state?.completed_task_ids).includes(task.id)) || null;
-  }, [detail]);
+    return tasks.find((task) => !completedTaskIds.includes(task.id)) || null;
+  }, [detail, completedTaskIds]);
 
   const kaliTools = safeArray(detail?.module?.kali_tools);
   const successCriteria = safeArray(detail?.module?.success_criteria);
@@ -462,7 +464,7 @@ const ProgramLabPage = () => {
   const arenaDebriefFullText = !isDayTen || !detail?.state.completed
     ? ""
     : `ZORVIX evaluator mode engaged. Strengths: you sustained a validated chain across SIGMA, APEX, and OMEGA with clean operator intent. Failures: every hint request reduced arena confidence and any vague language would have collapsed the rank ceiling. Optimal approach: identify the decisive signal faster, state the leverage change with less filler, and finish with a colder final judgment.`;
-  const progressPercent = detail ? Math.round((detail.state.completed_task_ids.length / Math.max(1, moduleTasks.length)) * 100) : 0;
+  const progressPercent = detail ? Math.round((completedTaskIds.length / Math.max(1, moduleTasks.length)) * 100) : 0;
   useEffect(() => {
     if (day !== 10 || !currentTask) return;
     setArenaElapsed(0);
@@ -563,7 +565,7 @@ const ProgramLabPage = () => {
     writeFlowSnapshot({
       stage: "completed",
       currentTaskId: null,
-      completedCount: detail.state.completed_task_ids.length,
+      completedCount: completedTaskIds.length,
       celebration,
       feedback,
       mentorGuidance,
@@ -583,7 +585,7 @@ const ProgramLabPage = () => {
         xp_earned: detail.state.xp_earned,
       },
     }).catch(() => undefined);
-  }, [celebration, day, detail?.state.completed, detail?.state.completed_task_ids.length, detail?.state.score, detail?.state.xp_earned, feedback, mentorGuidance, recordAction]);
+  }, [celebration, day, detail?.state.completed, completedTaskIds.length, detail?.state.score, detail?.state.xp_earned, feedback, mentorGuidance, recordAction]);
 
   const openTaskFlow = () => {
     if (!detail || detail.state.completed || flowStage !== "learn") return;
@@ -596,7 +598,7 @@ const ProgramLabPage = () => {
     writeFlowSnapshot({
       stage: "task",
       currentTaskId: currentTask?.id || null,
-      completedCount: detail.state.completed_task_ids.length,
+      completedCount: completedTaskIds.length,
       feedback,
       mentorGuidance,
       celebration,
@@ -620,7 +622,7 @@ const ProgramLabPage = () => {
     writeFlowSnapshot({
       stage: "execute",
       currentTaskId: currentTask.id,
-      completedCount: detail.state.completed_task_ids.length,
+      completedCount: completedTaskIds.length,
       feedback,
       mentorGuidance,
       celebration,
@@ -657,7 +659,7 @@ const ProgramLabPage = () => {
     writeFlowSnapshot({
       stage: nextStage,
       currentTaskId: nextStage === "completed" ? null : currentTask?.id || null,
-      completedCount: detail.state.completed_task_ids.length,
+      completedCount: completedTaskIds.length,
       feedback,
       mentorGuidance,
       celebration,
@@ -738,7 +740,7 @@ const ProgramLabPage = () => {
       setFlowStage("validate");
       return;
     }
-    if (safeArray(detail.state?.completed_task_ids).includes(currentTask.id)) return;
+    if (completedTaskIds.includes(currentTask.id)) return;
     const submitGuardKey = `${day}:${currentTask.id}:${answer.trim()}`;
     if (submitGuardRef.current === submitGuardKey) return;
     submitGuardRef.current = submitGuardKey;
@@ -785,7 +787,7 @@ const ProgramLabPage = () => {
       writeFlowSnapshot({
         stage: payload.lab_completed ? "completed" : "validate",
         currentTaskId: currentTask.id,
-        completedCount: payload.state.completed_task_ids.length,
+        completedCount: safeArray(payload.state?.completed_task_ids).length,
         accepted: payload.accepted,
         feedback: payload.feedback,
         mentorGuidance: payload.mentor_guidance,
@@ -899,11 +901,10 @@ const ProgramLabPage = () => {
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/8">
                   <div
                     className="h-full rounded-full bg-[linear-gradient(90deg,rgba(94,234,212,0.9),rgba(56,189,248,0.95))] transition-all duration-500"
-                    style={{ width: `${Math.round((detail.state.completed_task_ids.length / Math.max(1, moduleTasks.length)) * 100)}%` }}
+                    style={{ width: `${Math.round((completedTaskIds.length / Math.max(1, moduleTasks.length)) * 100)}%` }}
                   />
                 </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="premium-metric-pill">{detail.state.completed_task_ids.length}/{moduleTasks.length} tasks cleared</span>
+              <div className="mt-4 flex flex-wrap gap-2">                   <span className="premium-metric-pill">{completedTaskIds.length}/{moduleTasks.length} tasks cleared</span>
                   <span className="premium-metric-pill">{detail.state.score} score</span>
                   <span className="premium-metric-pill">{detail.state.xp_earned} XP</span>
                 </div>
@@ -1492,8 +1493,7 @@ const ProgramLabPage = () => {
               <div className="mt-4 grid gap-3 md:grid-cols-4">
                 {[
                   { label: "Environment", value: detail.module.environment },
-                  { label: "Difficulty", value: detail.module.difficulty },
-                  { label: "Tasks Cleared", value: `${detail.state.completed_task_ids.length}/${moduleTasks.length}` },
+                  { label: "Difficulty", value: detail.module.difficulty },                   { label: "Tasks Cleared", value: `${completedTaskIds.length}/${moduleTasks.length}` },
                   { label: "Attempts", value: `${detail.state.attempts}` },
                 ].map((item) => (
                   <div key={item.label} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
@@ -1564,7 +1564,7 @@ const ProgramLabPage = () => {
               <div className="mt-4 grid gap-3">
                 {moduleTasks.map((task, index) => {
                   const active = currentTask?.id === task.id;
-                  const done = safeArray(detail.state?.completed_task_ids).includes(task.id);
+                  const done = completedTaskIds.includes(task.id);
                   return (
                     <div
                       key={task.id}
