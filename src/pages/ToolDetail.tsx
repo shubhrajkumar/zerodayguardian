@@ -175,10 +175,10 @@ const WorkspaceShell = ({
   description: string;
   children: ReactNode;
 }) => (
-  <section className="rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(8,13,25,0.98),rgba(5,8,18,0.98))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)] md:p-6">
+  <section className="rounded-[28px] border border-cyan-400/15 bg-[var(--theme-surface)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)] md:p-6">
     <div className="mb-5 space-y-2">
       <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Dedicated Workspace</p>
-      <h2 className="text-2xl font-semibold tracking-tight text-slate-50">{title}</h2>
+      <h2 className="text-2xl font-semibold tracking-tight text-[var(--theme-text)]">{title}</h2>
       <p className="max-w-3xl text-sm leading-6 text-slate-300/78">{description}</p>
     </div>
     {children}
@@ -212,7 +212,7 @@ const ResearchWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         <textarea
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          className="min-h-36 w-full rounded-2xl border border-cyan-300/15 bg-black/25 px-4 py-3 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/35"
+          className="min-h-36 w-full rounded-2xl border border-cyan-300/15 bg-[var(--theme-overlay)] px-4 py-3 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/35"
           placeholder="Describe the research goal, target, or topic you want to investigate."
         />
         <div className="flex flex-wrap gap-3">
@@ -228,7 +228,7 @@ const ResearchWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           <button
             type="button"
             onClick={() => sendToolPromptToZorvix(tool, result?.prompt || query)}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-white/[0.08]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)]"
           >
             <BrainCircuit className="h-4 w-4 text-cyan-200" />
             Send to ZORVIX
@@ -236,14 +236,14 @@ const ResearchWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           <button
             type="button"
             onClick={() => copyText(result?.prompt || query)}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-white/[0.08]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)]"
           >
             <Copy className="h-4 w-4" />
             Copy Prompt
           </button>
         </div>
 
-        <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+        <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
           {result ? (
             <div className="space-y-4">
               <div>
@@ -251,11 +251,11 @@ const ResearchWorkspace = ({ tool }: { tool: ToolDefinition }) => {
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-100">{result.prompt}</p>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Next Step</p>
                   <p className="mt-2 text-sm text-slate-200">{result.nextStep}</p>
                 </div>
-                <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Intent</p>
                   <p className="mt-2 text-sm text-slate-200">{result.intent}</p>
                   <p className="mt-2 text-xs text-slate-400">Relevance: {Math.round((result.relevance || 0) * 100)}%</p>
@@ -300,12 +300,12 @@ const KnowledgeWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Filter knowledge resources by title, source, or use case"
-            className="h-12 w-full rounded-2xl border border-cyan-300/15 bg-black/25 pl-12 pr-4 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/35"
+            className="h-12 w-full rounded-2xl border border-cyan-300/15 bg-[var(--theme-overlay)] pl-12 pr-4 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/35"
           />
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           {(loading ? [] : filtered.slice(0, 8)).map((resource) => (
-            <article key={`${resource.source}-${resource.title}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <article key={`${resource.source}-${resource.title}`} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
               <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{resource.source}</p>
               <h3 className="mt-2 text-base font-medium text-slate-100">{resource.title}</h3>
               <p className="mt-2 text-sm leading-6 text-slate-300/78">{resource.usage}</p>
@@ -355,13 +355,13 @@ const DorkWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         <input
           value={target}
           onChange={(event) => setTarget(event.target.value)}
-          className="h-12 rounded-2xl border border-cyan-300/15 bg-black/25 px-4 text-sm text-slate-100 outline-none transition-colors focus:border-cyan-300/35"
+          className="h-12 rounded-2xl border border-cyan-300/15 bg-[var(--theme-overlay)] px-4 text-sm text-slate-100 outline-none transition-colors focus:border-cyan-300/35"
           placeholder="Authorized domain target"
         />
         <select
           value={category}
           onChange={(event) => setCategory(event.target.value)}
-          className="h-12 rounded-2xl border border-cyan-300/15 bg-black/25 px-4 text-sm text-slate-100 outline-none transition-colors focus:border-cyan-300/35"
+          className="h-12 rounded-2xl border border-cyan-300/15 bg-[var(--theme-overlay)] px-4 text-sm text-slate-100 outline-none transition-colors focus:border-cyan-300/35"
         >
           {(templates.length ? templates.map((item) => item.name) : ["File exposure", "Login pages", "Directory listing"]).map((item) => (
             <option key={item}>{item}</option>
@@ -380,16 +380,16 @@ const DorkWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           <button
             type="button"
             onClick={() => sendToolPromptToZorvix(tool)}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-white/[0.08]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)]"
           >
             <BrainCircuit className="h-4 w-4 text-cyan-200" />
             Ask ZORVIX
           </button>
         </div>
         {result ? (
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
             <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Generated Query</p>
-            <code className="mt-3 block break-all rounded-2xl border border-cyan-300/10 bg-black/25 px-4 py-3 text-sm text-cyan-100">
+            <code className="mt-3 block break-all rounded-2xl border border-cyan-300/10 bg-[var(--theme-overlay)] px-4 py-3 text-sm text-cyan-100">
               {result.query}
             </code>
             <p className="mt-4 text-sm leading-6 text-slate-300/82">{result.explanation}</p>
@@ -424,7 +424,7 @@ const DomainWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         <input
           value={target}
           onChange={(event) => setTarget(event.target.value)}
-          className="h-12 rounded-2xl border border-cyan-300/15 bg-black/25 px-4 text-sm text-slate-100 outline-none transition-colors focus:border-cyan-300/35"
+          className="h-12 rounded-2xl border border-cyan-300/15 bg-[var(--theme-overlay)] px-4 text-sm text-slate-100 outline-none transition-colors focus:border-cyan-300/35"
           placeholder="https://target.example"
         />
         <div className="flex flex-wrap gap-3">
@@ -440,7 +440,7 @@ const DomainWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         </div>
 
         <div className="grid gap-4 xl:grid-cols-2">
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
             <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Header Analysis</p>
             {headerResult ? (
               <div className="mt-4 space-y-3 text-sm text-slate-300/82">
@@ -459,7 +459,7 @@ const DomainWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             )}
           </div>
 
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
             <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Surface Review</p>
             <div className="mt-4 space-y-3 text-sm text-slate-300/82">
               <p>Verified exposure review is limited to live DNS, headers, TLS, and website scan evidence.</p>
@@ -699,16 +699,16 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             </div>
           </div>
           <div className="relative mt-4 flex flex-wrap gap-2 text-xs text-cyan-100/70">
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">HTTPS + SSL</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">Security headers</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">Redirects + status</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">Tech detection</span>
+            <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1">HTTPS + SSL</span>
+            <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1">Security headers</span>
+            <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1">Redirects + status</span>
+            <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1">Tech detection</span>
           </div>
           <div className="relative mt-5 flex flex-col gap-3 md:flex-row md:items-center">
             <input
               value={url}
               onChange={(event) => setUrl(event.target.value)}
-              className="h-12 w-full rounded-2xl border border-cyan-300/15 bg-black/35 px-4 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/35"
+              className="h-12 w-full rounded-2xl border border-cyan-300/15 bg-[var(--theme-overlay)] px-4 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300/35"
               placeholder="https://yourwebsite.com"
             />
             <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
@@ -725,7 +725,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
                 type="button"
                 onClick={() => copyText(summary)}
                 disabled={!result}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 text-sm text-slate-100 transition-colors hover:bg-white/[0.08] disabled:opacity-60"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)] disabled:opacity-60"
               >
                 <Copy className="h-4 w-4" />
                 Copy Summary
@@ -734,7 +734,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
                 type="button"
                 onClick={downloadReportPdf}
                 disabled={!result}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 text-sm text-slate-100 transition-colors hover:bg-white/[0.08] disabled:opacity-60"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)] disabled:opacity-60"
               >
                 {reportBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
                 Download PDF
@@ -743,7 +743,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
                 type="button"
                 onClick={openReportPdf}
                 disabled={!result}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 text-sm text-slate-100 transition-colors hover:bg-white/[0.08] disabled:opacity-60"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)] disabled:opacity-60"
               >
                 <ExternalLink className="h-4 w-4" />
                 Print Report
@@ -751,7 +751,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               <button
                 type="button"
                 onClick={() => sendToolPromptToZorvix(tool, summary || tool.prompt)}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 text-sm text-slate-100 transition-colors hover:bg-white/[0.08]"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)]"
               >
                 <BrainCircuit className="h-4 w-4 text-cyan-200" />
                 Ask ZORVIX
@@ -759,7 +759,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             </div>
           </div>
           {loading ? (
-            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-[var(--theme-overlay)]">
               <div className="h-full w-1/3 animate-pulse rounded-full bg-cyan-400/60" />
             </div>
           ) : null}
@@ -769,13 +769,13 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           {lastScanAt ? <p className="mt-2 text-[11px] text-cyan-100/70">Last scan: {formatDate(lastScanAt)}</p> : null}
           {error ? <p className="mt-3 text-sm text-rose-200">{error}</p> : null}
           {reportError ? <p className="mt-3 text-sm text-rose-200">{reportError}</p> : null}
-          <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 text-xs text-slate-300/90 md:grid-cols-3">
+          <div className="mt-4 grid gap-3 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4 text-xs text-slate-300/90 md:grid-cols-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Report Template</p>
               <select
                 value={reportTemplate}
                 onChange={(event) => setReportTemplate(event.target.value as "classic" | "dark" | "neon")}
-                className="mt-2 h-10 w-full rounded-xl border border-white/10 bg-black/40 px-3 text-xs text-slate-100"
+                className="mt-2 h-10 w-full rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 text-xs text-slate-100"
               >
                 <option value="classic">Classic</option>
                 <option value="dark">Dark</option>
@@ -787,7 +787,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               <input
                 value={reportBrandName}
                 onChange={(event) => setReportBrandName(event.target.value)}
-                className="mt-2 h-10 w-full rounded-xl border border-white/10 bg-black/40 px-3 text-xs text-slate-100"
+                className="mt-2 h-10 w-full rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 text-xs text-slate-100"
                 placeholder="ZeroDay Guardian"
               />
             </div>
@@ -796,7 +796,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               <input
                 value={reportTagline}
                 onChange={(event) => setReportTagline(event.target.value)}
-                className="mt-2 h-10 w-full rounded-xl border border-white/10 bg-black/40 px-3 text-xs text-slate-100"
+                className="mt-2 h-10 w-full rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 text-xs text-slate-100"
                 placeholder="Security posture snapshot"
               />
             </div>
@@ -806,7 +806,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
 
         {result ? (
           <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr,0.9fr]">
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Security Checks</p>
                 <div
@@ -830,7 +830,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
                 {checks.map((item) => (
                   <div
                     key={item.label}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
+                    className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3"
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-slate-200">{item.label}</span>
@@ -859,10 +859,10 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               {result.notes ? <p className="mt-4 text-xs text-amber-200/80">{result.notes}</p> : null}
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Quick Summary</p>
               <div className="mt-4 grid gap-3">
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <div className="flex items-center gap-2 text-sm text-slate-200">
                     <ShieldCheck className="h-4 w-4 text-cyan-200" />
                     Risk score
@@ -871,21 +871,21 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
                     {result.riskScore != null ? `${result.riskScore} (${result.riskLevel || "n/a"})` : "n/a"}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <div className="flex items-center gap-2 text-sm text-slate-200">
                     <Clock className="h-4 w-4 text-cyan-200" />
                     Response time
                   </div>
                   <span className="text-xs text-slate-300">{formatMs(result.responseTimeMs)}</span>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <div className="flex items-center gap-2 text-sm text-slate-200">
                     <Server className="h-4 w-4 text-cyan-200" />
                     Server
                   </div>
                   <span className="text-xs text-slate-300">{result.headers?.server}</span>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <div className="flex items-center gap-2 text-sm text-slate-200">
                     <Globe2 className="h-4 w-4 text-cyan-200" />
                     Final URL
@@ -895,37 +895,37 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
                 {(result.technologies?.length ? result.technologies : ["Unknown stack"]).map((tech) => (
-                  <span key={tech} className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs text-slate-200">
+                  <span key={tech} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-xs text-slate-200">
                     {tech}
                   </span>
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
+                <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-xs text-slate-300">
                   HTTPS: {result.httpsStatus ?? "n/a"}
                 </span>
-                <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
+                <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-xs text-slate-300">
                   SSL: {result.sslStatus}
                 </span>
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Protocol & Redirects</p>
               <div className="mt-4 grid gap-3 text-sm text-slate-300/82">
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <span>HTTP status</span>
                   <span className="text-xs text-slate-300">{result.httpStatus ?? "n/a"}</span>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <span>HTTPS status</span>
                   <span className="text-xs text-slate-300">{result.httpsStatus ?? "n/a"}</span>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <span>HTTP response time</span>
                   <span className="text-xs text-slate-300">{formatMs(result.httpResponseTimeMs)}</span>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <span>Redirect target</span>
                   <span className="text-xs text-slate-300">{result.redirectTarget || "n/a"}</span>
                 </div>
@@ -936,21 +936,21 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
 
         {result ? (
           <div className="grid gap-4 xl:grid-cols-2">
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Missing Headers</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {(result.missingHeaders?.length ? result.missingHeaders : ["None detected"]).map((item) => (
-                  <span key={item} className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs text-slate-200">
+                  <span key={item} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-xs text-slate-200">
                     {item}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Open Ports (basic)</p>
               <div className="mt-4 grid gap-2 text-sm text-slate-300/82">
                 {(result.openPorts?.length ? result.openPorts : [{ port: 0, status: "No common ports responded" }]).map((entry) => (
-                  <div key={`${entry.port}-${entry.status}`} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                  <div key={`${entry.port}-${entry.status}`} className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                     <span>{entry.port ? `Port ${entry.port}` : "Ports"}</span>
                     <span className="text-xs text-slate-300">{entry.status}</span>
                   </div>
@@ -961,16 +961,16 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         ) : null}
 
         {result ? (
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
             <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Recommended Fixes</p>
             <div className="mt-4 grid gap-2 text-sm text-slate-300/82">
               {(actionItems.length ? actionItems : ["No critical fixes found. Maintain current hardening."]).map((item) => (
-                <label key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                <label key={item} className="flex items-center gap-3 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <input
                     type="checkbox"
                     checked={!!checklist[item]}
                     onChange={(event) => setChecklist((prev) => ({ ...prev, [item]: event.target.checked }))}
-                    className="h-4 w-4 rounded border-white/20 bg-black/40"
+                    className="h-4 w-4 rounded border-[var(--theme-border)] bg-[var(--theme-overlay)]"
                   />
                   <span>{item}</span>
                 </label>
@@ -981,7 +981,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
 
         {result ? (
           <div className="grid gap-4 xl:grid-cols-4">
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">SSL Status</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
                 <p>Status: {result.sslStatus}</p>
@@ -995,7 +995,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Domain Info</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
                 <p>Host: {result.domain?.hostname}</p>
@@ -1005,7 +1005,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Server Info</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
                 <p>Powered by: {result.headers?.poweredBy}</p>
@@ -1016,7 +1016,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Security Headers</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
                 {headerChecks.map((item) => (
@@ -1031,19 +1031,19 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         ) : null}
 
         {history.length ? (
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
             <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Recent Scans</p>
             <div className="mt-4 grid gap-3">
               {history.map((item) => (
-                <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-300/82">
+                <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3 text-sm text-slate-300/82">
                   <div>
                     <p className="text-slate-100">{item.target}</p>
                     <p className="text-xs text-slate-400">{formatDateTime(item.timestamp)}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs">Grade {item.grade}</span>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs">{item.score}%</span>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs">
+                    <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-2 py-0.5 text-xs">Grade {item.grade}</span>
+                    <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-2 py-0.5 text-xs">{item.score}%</span>
+                    <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-2 py-0.5 text-xs">
                       HTTPS {item.httpsEnforced ? "On" : "Off"}
                     </span>
                   </div>
@@ -1060,7 +1060,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
 const GuidedWorkspace = ({ tool }: { tool: ToolDefinition }) => (
   <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
     <div className="grid gap-4 xl:grid-cols-[1.15fr,0.85fr]">
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+      <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Guided Prompt</p>
         <p className="mt-3 text-sm leading-7 text-slate-100">{tool.prompt}</p>
         <div className="mt-5 flex flex-wrap gap-3">
@@ -1075,14 +1075,14 @@ const GuidedWorkspace = ({ tool }: { tool: ToolDefinition }) => (
           <button
             type="button"
             onClick={() => copyText(tool.prompt || "")}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-white/[0.08]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)]"
           >
             <Copy className="h-4 w-4" />
             Copy Prompt
           </button>
         </div>
       </div>
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+      <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Workflow</p>
         <ol className="mt-4 space-y-3 text-sm text-slate-300/82">
           <li>1. Scope the asset, symptom, or code path before expanding the investigation.</li>
@@ -1091,7 +1091,7 @@ const GuidedWorkspace = ({ tool }: { tool: ToolDefinition }) => (
         </ol>
         <Link
           to={`/lab?tool=${tool.id}`}
-          className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-white/[0.08]"
+          className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)]"
         >
           Open Lab Workspace
           <ArrowUpRight className="h-4 w-4" />
@@ -1104,7 +1104,7 @@ const GuidedWorkspace = ({ tool }: { tool: ToolDefinition }) => (
 const LabWorkspace = ({ tool }: { tool: ToolDefinition }) => (
   <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
     <div className="grid gap-4 xl:grid-cols-[1.15fr,0.85fr]">
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+      <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Lab Launch</p>
         <p className="mt-3 text-sm leading-7 text-slate-300/82">
           Move into a dedicated practice flow to review the concept, rehearse the response, and keep your learning path organized.
@@ -1120,14 +1120,14 @@ const LabWorkspace = ({ tool }: { tool: ToolDefinition }) => (
           <button
             type="button"
             onClick={() => sendToolPromptToZorvix(tool)}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-white/[0.08]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)]"
           >
             <BrainCircuit className="h-4 w-4 text-cyan-200" />
             Build a Guided Plan
           </button>
         </div>
       </div>
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+      <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">What This Workspace Delivers</p>
         <ul className="mt-4 space-y-2 text-sm text-slate-300/82">
           {(tool.capabilities || []).map((capability) => (
@@ -1142,7 +1142,7 @@ const LabWorkspace = ({ tool }: { tool: ToolDefinition }) => (
 const LearningWorkspace = ({ tool }: { tool: ToolDefinition }) => (
   <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
     <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+      <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Learning Prompt</p>
         <p className="mt-3 text-sm leading-7 text-slate-100">{tool.prompt}</p>
         <div className="mt-5 flex flex-wrap gap-3">
@@ -1156,14 +1156,14 @@ const LearningWorkspace = ({ tool }: { tool: ToolDefinition }) => (
           </button>
           <Link
             to={`/lab?tool=${tool.id}`}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-white/[0.08]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)]"
           >
             Open Practice Environment
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+      <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Recommended Sequence</p>
         <ol className="mt-4 space-y-3 text-sm text-slate-300/82">
           <li>1. Ask for a concept-first explanation and one practical example.</li>
@@ -1230,7 +1230,7 @@ const ToolDetail = () => {
 
   if (!catalogReady) {
     return (
-      <div className="page-shell bg-[#050816]">
+      <div className="page-shell bg-[var(--theme-bg)]">
         <div className="container mx-auto px-4 py-10 md:py-14">
           <div className="mx-auto max-w-7xl space-y-6">
             <div className="skeleton-block h-10 w-40 rounded-full" />
@@ -1251,7 +1251,7 @@ const ToolDetail = () => {
   const Icon = getToolIcon(tool.icon);
 
   return (
-    <div className="page-shell bg-[#050816]">
+    <div className="page-shell bg-[var(--theme-bg)]">
       <div className="container mx-auto px-4 py-10 md:py-14">
         <div className="mx-auto max-w-7xl space-y-8">
           <Link to="/tools" className="inline-flex items-center gap-2 text-sm text-slate-300 transition-colors hover:text-slate-100">
@@ -1285,7 +1285,7 @@ const ToolDetail = () => {
                   </button>
                   <Link
                     to={`/lab?tool=${tool.id}`}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-white/[0.08]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-2 text-sm text-slate-100 transition-colors hover:bg-[var(--theme-overlay-hover)]"
                   >
                     Open Lab
                     <ArrowUpRight className="h-4 w-4" />
@@ -1294,12 +1294,12 @@ const ToolDetail = () => {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+                <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Mission Group</p>
-                  <p className="mt-3 text-xl font-semibold text-slate-50">{tool.group}</p>
+                  <p className="mt-3 text-xl font-semibold text-[var(--theme-text)]">{tool.group}</p>
                   <p className="mt-2 text-sm text-slate-300/75">{tool?.detail ?? ''}</p>
                 </div>
-                <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+                <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Capabilities</p>
                   <ul className="mt-3 space-y-2 text-sm text-slate-300/78">
                     {(tool.capabilities || []).map((capability) => (
@@ -1309,7 +1309,7 @@ const ToolDetail = () => {
                 </div>
                 <div className="rounded-[24px] border border-cyan-300/15 bg-cyan-400/[0.04] p-5 sm:col-span-2">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/72">Trust Profile</p>
-                  <p className="mt-3 text-base font-medium text-slate-50">{trustMeta.headline}</p>
+                  <p className="mt-3 text-base font-medium text-[var(--theme-text)]">{trustMeta.headline}</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300/78">{trustMeta?.detail ?? ''}</p>
                 </div>
               </div>
@@ -1320,7 +1320,7 @@ const ToolDetail = () => {
             <div>{renderWorkspace(tool)}</div>
 
             <aside className="space-y-5">
-              <section className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,13,25,0.96),rgba(5,8,18,0.96))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
+              <section className="rounded-[28px] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
                 <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Operational Notes</p>
                 <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-300/78">
                   <li>Use this workspace only on systems you own or are explicitly authorized to assess.</li>
@@ -1330,14 +1330,14 @@ const ToolDetail = () => {
               </section>
 
               {related.length ? (
-                <section className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,13,25,0.96),rgba(5,8,18,0.96))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
+                <section className="rounded-[28px] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Related Workspaces</p>
                   <div className="mt-4 space-y-3">
                     {related.map((item) => (
                       <Link
                         key={item.id}
                         to={`/tools/${item.id}`}
-                        className="block rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition-colors hover:border-cyan-300/20 hover:bg-white/[0.06]"
+                        className="block rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4 transition-colors hover:border-cyan-300/20 hover:bg-[var(--theme-overlay-hover)]"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -1353,11 +1353,11 @@ const ToolDetail = () => {
                 </section>
               ) : null}
 
-              <section className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,13,25,0.96),rgba(5,8,18,0.96))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
+              <section className="rounded-[28px] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
                 <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Tags</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {(tool.tags || []).map((tag) => (
-                    <span key={tag} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300/82">
+                    <span key={tag} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-xs text-slate-300/82">
                       {tag}
                     </span>
                   ))}
