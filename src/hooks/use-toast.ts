@@ -1,6 +1,17 @@
 import * as React from "react";
 
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type ToastActionElement = React.ReactElement<{}>;
+
+export type ToastProps = {
+  id?: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: ToastActionElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  [key: string]: unknown;
+};
 
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000000;

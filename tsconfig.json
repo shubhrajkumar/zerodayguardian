@@ -9,6 +9,7 @@
     "noImplicitAny": false,
     "noUnusedParameters": false,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "noUnusedLocals": false,
     "strictNullChecks": false,
