@@ -11,7 +11,7 @@ import RequireAuth from "./components/RequireAuth";
 import CookieConsent from "./components/CookieConsent";
 import WakeUpLoader from "./components/ui/WakeUpLoader";
 import ServerWakeUpBanner from "./components/ui/ServerWakeUpBanner";
-import { ToastContainer } from "./components/ui/Toast";
+import { ToastContainer } from "./components/ui/toast";
 
 const RewardExperience = lazy(() => import("./components/platform/RewardExperience"));
 import { clearAnonymousClientState } from "./lib/apiClient";
