@@ -46,7 +46,7 @@ const ensureIndexes = async () => {
   await Promise.all([
     users.createIndex({ userId: 1 }, { unique: false }),
     users.createIndex({ sessionId: 1 }),
-    users.createIndex({ email: 1 }),
+    users.createIndex({ email: 1 }, { unique: true }),
     users.createIndex({ updatedAt: -1 }),
     prefs.createIndex({ actorKey: 1 }, { unique: true }),
     learning.createIndex({ actorKey: 1 }, { unique: true }),
