@@ -44,6 +44,10 @@
         {
           "key": "X-DNS-Prefetch-Control",
           "value": "on"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://*.firebaseio.com https://*.googleapis.com https://apis.google.com; worker-src 'self' blob:; connect-src 'self' https://*.onrender.com https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.google.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;"
         }
       ]
     },

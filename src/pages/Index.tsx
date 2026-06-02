@@ -37,13 +37,13 @@ const Index = () => {
   );
 
   return (
-    <div className="ui-shell relative min-h-[calc(100vh-4rem)] overflow-hidden bg-[#0a0a0f]">
+    <div className="ui-shell relative min-h-[calc(100vh-4rem)] overflow-hidden" style={{ backgroundColor: 'var(--theme-bg)' }}>
       <Seo
         title="ZeroDay Guardian | The One Line of Defense"
         description="AI-guided cybersecurity platform with real progress, referrals, public profiles, mission streaks, and ZORVIX assistance."
         path="/"
       />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,102,255,0.14),transparent_22%),radial-gradient(circle_at_80%_18%,rgba(0,255,136,0.08),transparent_20%),linear-gradient(180deg,#0a0a0f_0%,#10101a_100%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: 'radial-gradient(circle at top, color-mix(in srgb, var(--theme-accent-blue) 14%, transparent), transparent 22%), radial-gradient(circle at 80% 18%, color-mix(in srgb, var(--theme-accent-green) 8%, transparent), transparent 20%), linear-gradient(180deg, var(--theme-bg) 0%, color-mix(in srgb, var(--theme-bg) 80%, var(--theme-accent-blue) 10%) 100%)' }} />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:44px_44px] opacity-20" />
 
       <motion.div
@@ -196,17 +196,29 @@ const Index = () => {
             transition={{ duration: 0.6, delay: 0.38 }}
             className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-3"
           >
-            <div className="skeleton-block h-[72px] border border-white/6 bg-white/[0.02] p-4">
-              <div className="h-3 w-20 rounded bg-white/10" />
-              <div className="mt-3 h-4 w-24 rounded bg-white/10" />
+            <div className="group rounded-xl border p-5 transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,212,255,0.12)]" style={{borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-surface, var(--theme-card))'}}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🔬</span>
+                <span className="rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{border: '1px solid color-mix(in srgb, var(--theme-accent-blue) 30%, transparent)', backgroundColor: 'color-mix(in srgb, var(--theme-accent-blue) 10%, transparent)', color: 'var(--theme-accent-blue)'}}>Coming Soon</span>
+              </div>
+              <h3 className="mt-3 text-sm font-semibold" style={{color: 'var(--theme-text)'}}>Interactive Labs</h3>
+              <p className="mt-1.5 text-xs leading-5" style={{color: 'var(--theme-text-muted)'}}>Hands-on cybersecurity challenges in a safe sandbox environment</p>
             </div>
-            <div className="skeleton-block h-[72px] border border-white/6 bg-white/[0.02] p-4">
-              <div className="h-3 w-16 rounded bg-white/10" />
-              <div className="mt-3 h-4 w-28 rounded bg-white/10" />
+            <div className="group rounded-xl border p-5 transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,255,136,0.12)]" style={{borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-surface, var(--theme-card))'}}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎯</span>
+                <span className="rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{border: '1px solid color-mix(in srgb, var(--theme-accent-green) 30%, transparent)', backgroundColor: 'color-mix(in srgb, var(--theme-accent-green) 10%, transparent)', color: 'var(--theme-accent-green)'}}>Active</span>
+              </div>
+              <h3 className="mt-3 text-sm font-semibold" style={{color: 'var(--theme-text)'}}>Daily Missions</h3>
+              <p className="mt-1.5 text-xs leading-5" style={{color: 'var(--theme-text-muted)'}}>Earn XP and build streaks with daily cybersecurity challenges</p>
             </div>
-            <div className="skeleton-block h-[72px] border border-white/6 bg-white/[0.02] p-4">
-              <div className="h-3 w-24 rounded bg-white/10" />
-              <div className="mt-3 h-4 w-20 rounded bg-white/10" />
+            <div className="group rounded-xl border p-5 transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.12)]" style={{borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-surface, var(--theme-card))'}}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🤖</span>
+                <span className="rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{border: '1px solid color-mix(in srgb, var(--theme-accent-purple) 30%, transparent)', backgroundColor: 'color-mix(in srgb, var(--theme-accent-purple) 10%, transparent)', color: 'var(--theme-accent-purple)'}}>Online</span>
+              </div>
+              <h3 className="mt-3 text-sm font-semibold" style={{color: 'var(--theme-text)'}}>Zorvix AI</h3>
+              <p className="mt-1.5 text-xs leading-5" style={{color: 'var(--theme-text-muted)'}}>Your personal AI mentor for cyber defense guidance</p>
             </div>
           </motion.div>
         </div>

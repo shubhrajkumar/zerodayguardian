@@ -1,7 +1,25 @@
-import { cn } from "@/lib/utils";
+import React from "react";
 
-function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("animate-pulse rounded-md bg-muted", className)} {...props} />;
-}
+export const Skeleton = ({
+  width = "100%",
+  height = "20px",
+  borderRadius = "8px",
+}: {
+  width?: string;
+  height?: string;
+  borderRadius?: string;
+}) => (
+  <div
+    style={{
+      width,
+      height,
+      borderRadius,
+      background:
+        "linear-gradient(90deg, var(--card, rgba(255,255,255,0.04)) 25%, var(--card-hover, rgba(255,255,255,0.08)) 50%, var(--card, rgba(255,255,255,0.04)) 75%)",
+      backgroundSize: "200% 100%",
+      animation: "shimmer 1.5s infinite",
+    }}
+  />
+);
 
-export { Skeleton };
+export default Skeleton;
