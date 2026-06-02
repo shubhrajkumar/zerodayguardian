@@ -282,7 +282,7 @@ const LabPage = () => {
       try {
         const labPayload = await apiGetJson<{ sandbox?: { status?: string; available?: boolean; labs?: Array<Record<string, unknown>> }; labs?: Array<Record<string, unknown>> }>('/api/labs/sandbox').catch(() => ({}));
         if (!mounted) return;
-        const normalized = ((labPayload as Record<string, unknown>).labs || []).map((lab) => normalizeSandboxLab(lab as Record<string, unknown>));
+        const normalized = safeArray((labPayload as Record<string, unknown>).labs).map((lab) => normalizeSandboxLab(lab as Record<string, unknown>));
         setLabs(normalized);
         if (!normalized.length) {
           setLabLoadError("Live labs are temporarily unavailable right now. Please retry in a moment.");

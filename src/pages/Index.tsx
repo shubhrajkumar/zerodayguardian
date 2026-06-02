@@ -14,7 +14,7 @@ const Index = () => {
     document.title = "ZeroDay Guardian – The One Line of Defense";
   }, []);
 
-  const entryRoute = nextMissionHook.route || "/program";
+  const entryRoute = nextMissionHook?.route || "/program";
 
   const orbitSignals = useMemo(
     () => [
@@ -121,10 +121,10 @@ const Index = () => {
                 <div className="text-center md:text-left">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Primary Mission</p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-white md:text-3xl">
-                    {nextMissionHook.title || "Enter the training loop"}
+                    {nextMissionHook?.title || "Enter the training loop"}
                   </h2>
                   <p className="mt-3 text-sm leading-7 text-slate-300/80">
-                    {nextMissionHook.detail || "Start the next guided cyber mission with ZORVIX watching your path, scoring your actions, and keeping the flow clear."}
+                    {nextMissionHook?.detail || "Start the next guided cyber mission with ZORVIX watching your path, scoring your actions, and keeping the flow clear."}
                   </p>
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -135,7 +135,7 @@ const Index = () => {
                       <div key={item.label} className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
                         <item.icon className="h-4 w-4 text-[#00ff88]" />
                         <p className="mt-3 text-sm font-semibold text-white">{item.label}</p>
-                        <p className="mt-2 text-sm text-slate-300/70">{item.detail}</p>
+                        <p className="mt-2 text-sm text-slate-300/70">{item?.detail || ''}</p>
                       </div>
                     ))}
                   </div>

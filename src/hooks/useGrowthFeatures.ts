@@ -119,7 +119,7 @@ export const useAchievementNotifications = (activeReward: { id: string; title: s
     const payload: Omit<NotificationItem, "id" | "createdAt" | "read"> = {
       type: "achievement",
       title: activeReward.title,
-      message: activeReward.detail,
+      message: activeReward?.detail ?? '',
       actionUrl: "/dashboard",
     };
     pushNotification(user.id, payload)

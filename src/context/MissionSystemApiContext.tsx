@@ -476,7 +476,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
           setActiveReward({
             id: response.reward.id || '',
             title: response.reward.label || '',
-            detail: response.reward.detail || '',
+            detail: response.reward?.detail || '',
             xp: response.reward.xp || 0,
             tone: response.reward.tone || 'xp',
             createdAt: response.reward.awarded_at || Date.now(),
@@ -562,7 +562,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
     tasks: safeArray<MissionControlPayload['tasks'][0]>(missionData.tasks).map((task) => ({
       id: task.id,
       title: task.title,
-      detail: task.detail,
+      detail: task.detail || '',
       reward: task.reward,
       actionType: task.action_type,
       completed: task.completed,
@@ -578,7 +578,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
     recentRewards: safeArray<MissionControlPayload['recent_rewards'][0]>(missionData.recent_rewards).map((reward) => ({
       id: reward.id,
       label: reward.label,
-      detail: reward.detail,
+      detail: reward.detail || '',
       xp: reward.xp,
       tone: reward.tone,
       awardedAt: reward.awarded_at,
@@ -590,7 +590,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
     curiosityTrigger: missionData.curiosity_trigger ?? 'Complete one real action to unlock recommendations.',
     nextMissionHook: missionData.next_mission_hook ? {
       title: missionData.next_mission_hook.title,
-      detail: missionData.next_mission_hook.detail,
+      detail: missionData.next_mission_hook?.detail ?? '',
       ctaLabel: missionData.next_mission_hook.cta_label,
       target: missionData.next_mission_hook.target,
       taskId: missionData.next_mission_hook.task_id || undefined,
@@ -610,7 +610,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
     quickActions: safeArray<MissionControlPayload['quick_actions'][0]>(missionData.quick_actions).map((action) => ({
       id: action.id,
       title: action.title,
-      detail: action.detail,
+      detail: action.detail || '',
       cta: action.cta,
       route: action.route,
       actionType: action.action_type,
@@ -646,7 +646,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
       id: item.id,
       channel: item.channel,
       title: item.title,
-      detail: item.detail,
+      detail: item.detail || '',
       sendWindow: item.send_window,
       enabled: item.enabled,
       priority: item.priority,

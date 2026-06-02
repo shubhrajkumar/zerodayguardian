@@ -55,7 +55,7 @@ const MentorDock = () => {
               <Target className="h-4 w-4 text-cyan-300" />
               <div>
                 <p className="mentor-dock__focus-title">{mentor.primaryFocus.title}</p>
-                <p className="mentor-dock__focus-detail">{mentor.primaryFocus.detail}</p>
+                <p className="mentor-dock__focus-detail">{mentor.primaryFocus?.detail ?? ''}</p>
               </div>
             </div>
           ) : null}
@@ -65,7 +65,7 @@ const MentorDock = () => {
               <Flame className="h-4 w-4 text-amber-300" />
               <div>
                 <p className="mentor-dock__focus-title">{mentor.secondaryFocus.title}</p>
-                <p className="mentor-dock__focus-detail">{mentor.secondaryFocus.detail}</p>
+                <p className="mentor-dock__focus-detail">{mentor.secondaryFocus?.detail ?? ''}</p>
               </div>
             </div>
           ) : null}

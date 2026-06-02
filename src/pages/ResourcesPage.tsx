@@ -210,7 +210,7 @@ const ResourcesPage = () => {
         <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <section className="glass-card rounded-[28px] p-6">
             <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">High-value collection</p>
-            <h2 className="mt-2 text-2xl font-black text-white">Curated by live workflow state</h2>
+            <h2 className="mt-2 text-2xl font-black text-[var(--theme-text)]">Curated by live workflow state</h2>
             <div className="mt-5 grid gap-5">
               {loading ? (
                 Array.from({ length: 3 }).map((_, index) => (
@@ -218,7 +218,7 @@ const ResourcesPage = () => {
                 ))
               ) : !isAuthenticated ? (
                 <div className="rounded-2xl border border-cyan-300/12 bg-black/20 p-5">
-                  <p className="text-sm font-semibold text-white">Sign in to unlock your live resource library</p>
+                  <p className="text-sm font-semibold text-[var(--theme-text)]">Sign in to unlock your live resource library</p>
                   <p className="mt-2 text-sm text-slate-300/82">
                     Resources now come from your real course, learning-path, and mission feeds, so we wait for an authenticated session before syncing them.
                   </p>
@@ -228,8 +228,8 @@ const ResourcesPage = () => {
                   </Link>
                 </div>
               ) : apiError ? (
-                <div className="rounded-2xl border border-amber-300/15 bg-[#090d14] p-5 text-center">
-                  <p className="text-sm font-semibold text-white">Content unavailable</p>
+                <div className="rounded-2xl border border-amber-300/15 bg-[var(--theme-surface)] p-5 text-center">
+                  <p className="text-sm font-semibold text-[var(--theme-text)]">Content unavailable</p>
                   <p className="mt-2 text-sm text-slate-300/82">
                     Please try again in a moment
                   </p>
@@ -247,7 +247,7 @@ const ResourcesPage = () => {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/60">{category}</p>
-                        <h3 className="mt-2 text-lg font-bold text-white">{items.length} operator-ready resource{items.length === 1 ? "" : "s"}</h3>
+                        <h3 className="mt-2 text-lg font-bold text-[var(--theme-text)]">{items.length} operator-ready resource{items.length === 1 ? "" : "s"}</h3>
                       </div>
                       <span className="rounded-full border border-cyan-300/16 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-cyan-100/72">
                         Live library
@@ -264,7 +264,7 @@ const ResourcesPage = () => {
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/60">{resource.track}</p>
-                              <h4 className="mt-2 text-xl font-bold text-white">{resource.title}</h4>
+                              <h4 className="mt-2 text-xl font-bold text-[var(--theme-text)]">{resource.title}</h4>
                             </div>
                             <span className="rounded-full border border-cyan-300/16 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-cyan-100/72">
                               {resource.format}
@@ -291,7 +291,7 @@ const ResourcesPage = () => {
                 ))
               ) : ready ? (
                 <div className="rounded-2xl border border-cyan-300/12 bg-black/20 p-5">
-                  <p className="text-sm font-semibold text-white">No live resources synced yet</p>
+                  <p className="text-sm font-semibold text-[var(--theme-text)]">No live resources synced yet</p>
                   <p className="mt-2 text-sm text-slate-300/82">
                     Your backend is reachable, but it has not returned active paths, courses, or missions for this account yet.
                   </p>
@@ -302,7 +302,7 @@ const ResourcesPage = () => {
 
           <section className="glass-card rounded-[28px] p-6">
             <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">How to use this library</p>
-            <h2 className="mt-2 text-2xl font-black text-white">A tighter operator loop</h2>
+            <h2 className="mt-2 text-2xl font-black text-[var(--theme-text)]">A tighter operator loop</h2>
 
             <div className="mt-5 grid gap-4">
               <div className="rounded-2xl border border-cyan-300/16 bg-black/25 p-4">

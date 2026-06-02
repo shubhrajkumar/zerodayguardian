@@ -179,7 +179,7 @@ const ToolsPage = () => {
   }, []);
 
   return (
-    <div className="page-shell bg-[#050816]">
+    <div className="page-shell bg-[var(--theme-bg)]">
       <div className="container mx-auto px-4 py-10 md:py-14">
         <div className="mx-auto max-w-7xl space-y-8">
           <section data-reveal className="engagement-strip">
@@ -189,7 +189,7 @@ const ToolsPage = () => {
                   <Sparkles className="h-3.5 w-3.5" />
                   Smart Discovery
                 </span>
-                <h2 className="engagement-headline mt-3 text-xl font-semibold text-white md:text-2xl">
+                <h2 className="engagement-headline mt-3 text-xl font-semibold text-[var(--theme-text)] md:text-2xl">
                   {dynamicHeadlines[headlineIndex]}
                 </h2>
               </div>
@@ -392,7 +392,7 @@ const ToolsPage = () => {
               <h2 className="mt-2 text-2xl font-semibold text-slate-50">{operatorOverride?.discovered ? operatorOverride.title : "Unknown mission"}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-300/78">
                 {operatorOverride?.discovered
-                  ? (operatorOverride.detail || '')
+                  ? (operatorOverride?.detail || '')
                   : "There is a hidden access path in the tools hub. Layered progress and mission completion will expose it."}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -446,7 +446,7 @@ const ToolsPage = () => {
               return (
                 <section
                   key={group}
-                  className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,25,0.96),rgba(5,9,19,0.96))] shadow-[0_18px_60px_rgba(0,0,0,0.28)]"
+                  className="overflow-hidden rounded-[28px] border border-white/10 bg-[var(--theme-surface)] shadow-[0_18px_60px_rgba(0,0,0,0.28)]"
                 >
                   <div className="flex flex-col gap-4 border-b border-white/6 px-5 py-5 md:flex-row md:items-center md:justify-between md:px-6">
                     <div className="space-y-2">

@@ -152,7 +152,7 @@ const ProgramPage = () => {
             ].map((item) => (
               <div key={item.label} className="cyber-card rounded-[24px] p-4">
                 <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                <p className="mt-3 text-xl font-semibold text-white">{item.value}</p>
+                <p className="mt-3 text-xl font-semibold text-[var(--theme-text)]">{item.value}</p>
               </div>
             ))}
           </section>
@@ -162,7 +162,7 @@ const ProgramPage = () => {
           <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
             <section className="premium-section-card cyber-card">
               <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-slate-500">Recommended Entry</p>
-              <h2 className="glow-text mt-3 text-3xl font-semibold tracking-[-0.04em] text-white">Day {selected?.day}</h2>
+              <h2 className="glow-text mt-3 text-3xl font-semibold tracking-[-0.04em] text-[var(--theme-text)]">Day {selected?.day}</h2>
               <p className="mt-2 text-sm text-slate-300/82">{selected?.title}</p>
               <div className="mt-5 grid gap-3 md:grid-cols-3">
                 {[
@@ -225,7 +225,7 @@ const ProgramPage = () => {
                         <Lock className="h-4 w-4 text-slate-400" />
                       )}
                     </div>
-                    <p className="mt-3 text-sm text-white">{item.title}</p>
+                    <p className="mt-3 text-sm text-[var(--theme-text)]">{item.title}</p>
                   </button>
                 ))}
               </div>
@@ -236,7 +236,7 @@ const ProgramPage = () => {
                 </p>
                 <button type="button" className="premium-nav-row cyber-card mt-4 rounded-3xl" onClick={() => navigate(`/program/day/${overview.recommended_day || 1}`)}>
                   <div>
-                    <p className="text-sm font-semibold text-white">Open recommended day</p>
+                    <p className="text-sm font-semibold text-[var(--theme-text)]">Open recommended day</p>
                     <p className="mt-1 text-xs text-slate-400">Jump straight into the next backend-approved lab.</p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-slate-500" />

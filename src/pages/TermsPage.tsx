@@ -22,10 +22,10 @@ const TermsPage = () => {
           </div>
 
           <div className="cyber-card rounded-[24px] p-5 md:p-6">
-            <h2 className="text-white">Core Rules</h2>
+            <h2 className="text-[var(--theme-text)]">Core Rules</h2>
             <div className="mt-4 space-y-3">
               {termsItems.map((item) => (
-                <div key={item} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-base leading-7 text-slate-300">
+                <div key={item} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4 text-base leading-7 text-[var(--theme-text-muted)]">
                   {item}
                 </div>
               ))}
@@ -33,7 +33,7 @@ const TermsPage = () => {
           </div>
 
           <div className="cyber-card rounded-[24px] p-5 md:p-6">
-            <h2 className="text-white">Account And Service Limits</h2>
+            <h2 className="text-[var(--theme-text)]">Account And Service Limits</h2>
             <p className="mt-3 text-base leading-7 text-slate-300">
               Abuse, credential sharing, scraping, or attempts to bypass platform security controls can result in rate
               limiting, suspension, or permanent removal. Service availability may vary during maintenance or security events.

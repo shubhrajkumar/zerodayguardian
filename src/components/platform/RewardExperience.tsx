@@ -126,7 +126,7 @@ const RewardExperience = () => {
               <AchievementShareCard
                 userName={user.name}
                 achievement={activeReward.title}
-                detail={`${activeReward.detail} Referral code: ${referral?.code || "syncing"}`}
+                detail={`${activeReward?.detail ?? ''} Referral code: ${referral?.code || "syncing"}`}
                 shareUrl={shareUrl}
               />
             </div>

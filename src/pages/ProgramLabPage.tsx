@@ -1135,7 +1135,7 @@ const ProgramLabPage = () => {
               >
                 <p className="text-[11px] uppercase tracking-[0.22em] text-white/68">Live guidance</p>
                 <p className="mt-3 text-lg font-semibold text-white">{stageFlash.title}</p>
-                <p className="mt-2 text-sm text-white/80">{stageFlash.detail || ''}</p>
+                <p className="mt-2 text-sm text-white/80">{stageFlash?.detail || ''}</p>
               </section>
             ) : null}
 
@@ -1614,7 +1614,7 @@ const ProgramLabPage = () => {
                       </span>
                     </div>
                     <p className="mt-4 text-lg font-semibold text-white">{card.title}</p>
-                    <p className="mt-3 text-sm leading-6 text-slate-300/82">{card.detail}</p>
+                    <p className="mt-3 text-sm leading-6 text-slate-300/82">{card?.detail ?? ''}</p>
                     <div className="mt-4 rounded-2xl border border-cyan-300/14 bg-black/20 p-4">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Proof point</p>
                       <p className="mt-2 text-sm text-cyan-50/84">{card.proof_point}</p>
@@ -2030,7 +2030,7 @@ const ProgramLabPage = () => {
                   }`}
                 >
                   <p className="text-sm font-semibold">{lastValidation.title}</p>
-                  <p className="mt-2 text-sm opacity-90">{lastValidation.detail}</p>
+                  <p className="mt-2 text-sm opacity-90">{lastValidation?.detail || ''}</p>
                   {isDayFive ? (
                     <p className="mt-3 text-xs uppercase tracking-[0.18em] opacity-80">
                       {lastValidation.accepted ? "Tension converted into proof. Chain contained and scored." : "Pressure rising. Refine the chain before the breach story holds."}

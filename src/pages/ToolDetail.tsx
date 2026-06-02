@@ -207,7 +207,7 @@ const ResearchWorkspace = ({ tool }: { tool: ToolDefinition }) => {
   }, [run]);
 
   return (
-    <WorkspaceShell title={tool.name} description={tool.detail}>
+    <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
       <div className="grid gap-4">
         <textarea
           value={query}
@@ -291,7 +291,7 @@ const KnowledgeWorkspace = ({ tool }: { tool: ToolDefinition }) => {
   }, [query, resources]);
 
   return (
-    <WorkspaceShell title={tool.name} description={tool.detail}>
+    <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
       <div className="space-y-4">
         <div className="relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-200/55" />
@@ -350,7 +350,7 @@ const DorkWorkspace = ({ tool }: { tool: ToolDefinition }) => {
   };
 
   return (
-    <WorkspaceShell title={tool.name} description={tool.detail}>
+    <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
       <div className="grid gap-4">
         <input
           value={target}
@@ -419,7 +419,7 @@ const DomainWorkspace = ({ tool }: { tool: ToolDefinition }) => {
   };
 
   return (
-    <WorkspaceShell title={tool.name} description={tool.detail}>
+    <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
       <div className="grid gap-4">
         <input
           value={target}
@@ -682,7 +682,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
   };
 
   return (
-    <WorkspaceShell title={tool.name} description={tool.detail}>
+    <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
       <div className="grid gap-4">
         <div className="relative overflow-hidden rounded-[26px] border border-cyan-400/10 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.14),transparent_55%),linear-gradient(180deg,rgba(8,13,28,0.96),rgba(4,7,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
           <div className="pointer-events-none absolute inset-0 opacity-60 [background-image:radial-gradient(circle_at_10%_15%,rgba(34,211,238,0.16),transparent_50%),radial-gradient(circle_at_85%_20%,rgba(59,130,246,0.12),transparent_55%),radial-gradient(circle_at_40%_90%,rgba(244,114,182,0.12),transparent_60%)]" />
@@ -1058,7 +1058,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
 };
 
 const GuidedWorkspace = ({ tool }: { tool: ToolDefinition }) => (
-  <WorkspaceShell title={tool.name} description={tool.detail}>
+  <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
     <div className="grid gap-4 xl:grid-cols-[1.15fr,0.85fr]">
       <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Guided Prompt</p>
@@ -1102,7 +1102,7 @@ const GuidedWorkspace = ({ tool }: { tool: ToolDefinition }) => (
 );
 
 const LabWorkspace = ({ tool }: { tool: ToolDefinition }) => (
-  <WorkspaceShell title={tool.name} description={tool.detail}>
+  <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
     <div className="grid gap-4 xl:grid-cols-[1.15fr,0.85fr]">
       <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Lab Launch</p>
@@ -1140,7 +1140,7 @@ const LabWorkspace = ({ tool }: { tool: ToolDefinition }) => (
 );
 
 const LearningWorkspace = ({ tool }: { tool: ToolDefinition }) => (
-  <WorkspaceShell title={tool.name} description={tool.detail}>
+  <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
     <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
       <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Learning Prompt</p>
@@ -1297,7 +1297,7 @@ const ToolDetail = () => {
                 <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Mission Group</p>
                   <p className="mt-3 text-xl font-semibold text-slate-50">{tool.group}</p>
-                  <p className="mt-2 text-sm text-slate-300/75">{tool.detail}</p>
+                  <p className="mt-2 text-sm text-slate-300/75">{tool?.detail ?? ''}</p>
                 </div>
                 <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Capabilities</p>
@@ -1310,7 +1310,7 @@ const ToolDetail = () => {
                 <div className="rounded-[24px] border border-cyan-300/15 bg-cyan-400/[0.04] p-5 sm:col-span-2">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/72">Trust Profile</p>
                   <p className="mt-3 text-base font-medium text-slate-50">{trustMeta.headline}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300/78">{trustMeta.detail}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300/78">{trustMeta?.detail ?? ''}</p>
                 </div>
               </div>
             </div>

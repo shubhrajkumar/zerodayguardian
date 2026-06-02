@@ -36,15 +36,15 @@ const ContactPage = () => {
             {contactChannels.map((channel) => (
               <article key={channel.title} className="cyber-card rounded-[24px] p-5 md:p-6">
                 <h2 className="terminal-font text-[11px] uppercase tracking-[0.2em]" style={{ color: 'var(--theme-text-dim)' }}>{channel.title}</h2>
-                <p className="mt-3 break-all text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>{channel.detail}</p>
+                <p className="mt-3 break-all text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>{channel?.detail ?? ''}</p>
                 <p className="mt-3 text-base leading-7" style={{ color: 'var(--theme-text-muted)' }}>{channel.note}</p>
               </article>
             ))}
           </div>
 
           <div className="cyber-card rounded-[24px] p-5 md:p-6">
-            <h2 className="text-white">Best Way To Reach Us</h2>
-            <p className="mt-3 text-base leading-7 text-slate-300">
+            <h2 className="text-[var(--theme-text)]">Best Way To Reach Us</h2>
+            <p className="mt-3 text-base leading-7 text-[var(--theme-text-muted)]">
               Include your account email, affected page, exact error, and screenshots if available. That helps us breach
               the issue faster and avoid back-and-forth delays.
             </p>

@@ -1248,7 +1248,7 @@ const OsintPage = () => {
                       <div className="text-[11px] text-slate-400">
                         {new Date(event.at || Date.now()).toLocaleString()}
                       </div>
-                      <div className="text-sm text-white">{event.detail || event.type}</div>
+                      <div className="text-sm text-white">{event?.detail || event?.type}</div>
                     </div>
                   ))
                 ) : (

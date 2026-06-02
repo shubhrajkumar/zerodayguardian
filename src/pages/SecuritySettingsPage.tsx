@@ -33,11 +33,11 @@ const SecuritySettingsPage = () => {
         description="Manage account security, growth profile visibility, and referral progress."
         path="/security"
       />
-      <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-slate-950/70 p-6">
-        <h1 className="text-2xl font-bold text-white">Security Settings</h1>
-        <p className="mt-2 text-sm text-slate-300">Your account uses the app's secure email and password session system.</p>
+      <div className="mx-auto max-w-3xl rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-6">
+        <h1 className="text-2xl font-bold text-[var(--theme-text)]">Security Settings</h1>
+        <p className="mt-2 text-sm text-[var(--theme-text-muted)]">Your account uses the app's secure email and password session system.</p>
 
-        <div className="mt-6 grid gap-3 rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-slate-200">
+        <div className="mt-6 grid gap-3 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4 text-sm text-[var(--theme-text)]">
           <div>Name: {loading ? "Loading..." : profile?.name || "-"}</div>
           <div>Email: {loading ? "Loading..." : profile?.email || "-"}</div>
           <div>Role: {loading ? "Loading..." : profile?.role || "-"}</div>
