@@ -988,9 +988,9 @@ const ProgramLabPage = () => {
 
               <section className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Day {day} Lab — Degraded Preview</p>
-                <h2 className="mt-3 text-2xl font-semibold text-white">{fallback.title}</h2>
+                <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">{fallback.title}</h2>
                 <p className="mt-2 text-sm text-cyan-100/72">{fallback.scenarioTagline}</p>
-                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-black/25 p-4 text-sm text-cyan-100/78">
+                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
                   {fallback.scenario}
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -1000,13 +1000,13 @@ const ProgramLabPage = () => {
                     { label: "Difficulty", value: fallback.difficulty },
                     { label: "Environment", value: fallback.environment },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                    <div key={item.label} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                      <p className="mt-3 text-sm font-semibold text-white">{item.value}</p>
+                      <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.value}</p>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-black/25 p-4 text-sm text-cyan-100/78">
+                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Objective</p>
                   <p className="mt-2 text-sm text-slate-300/82">{fallback.objective}</p>
                 </div>
@@ -1043,7 +1043,7 @@ const ProgramLabPage = () => {
             <section className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
               <div className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Progress</p>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/8">
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--theme-overlay)]">
                   <div
                     className="h-full rounded-full bg-[linear-gradient(90deg,rgba(94,234,212,0.9),rgba(56,189,248,0.95))] transition-all duration-500"
                     style={{ width: `${Math.round((completedTaskIds.length / Math.max(1, moduleTasks.length)) * 100)}%` }}
@@ -1064,7 +1064,7 @@ const ProgramLabPage = () => {
                     <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">XP reward</p>
                     <div className="mt-2 flex items-end justify-between gap-4">
                       <div>
-                        <p className="text-lg font-semibold text-white">{rewardPulse.label}</p>
+                        <p className="text-lg font-semibold text-[var(--theme-text)]">{rewardPulse.label}</p>
                         <p className="mt-1 text-sm text-slate-300/76">Validated operator step recorded in backend state.</p>
                       </div>
                       <div className="text-right">
@@ -1085,7 +1085,7 @@ const ProgramLabPage = () => {
                 <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Lab stack</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {kaliTools.map((tool) => (
-                    <span key={tool} className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1 text-xs uppercase tracking-[0.16em] text-slate-200/82">
+                    <span key={tool} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-slate-200/82">
                       {tool}
                     </span>
                   ))}
@@ -1112,11 +1112,11 @@ const ProgramLabPage = () => {
                           ? "border-cyan-300/36 bg-cyan-500/10"
                           : reached
                             ? "border-emerald-300/20 bg-emerald-500/10"
-                            : "border-white/8 bg-white/[0.03]"
+                            : "border-[var(--theme-border)] bg-[var(--theme-overlay)]"
                       }`}
                     >
                       <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">0{index + 1}</p>
-                      <p className="mt-3 text-sm font-semibold text-white">{step.label}</p>
+                      <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{step.label}</p>
                     </div>
                   );
                 })}
@@ -1133,9 +1133,9 @@ const ProgramLabPage = () => {
                       : ""
                 }`}
               >
-                <p className="text-[11px] uppercase tracking-[0.22em] text-white/68">Live guidance</p>
-                <p className="mt-3 text-lg font-semibold text-white">{stageFlash.title}</p>
-                <p className="mt-2 text-sm text-white/80">{stageFlash?.detail || ''}</p>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--theme-text)]/68">Live guidance</p>
+                <p className="mt-3 text-lg font-semibold text-[var(--theme-text)]">{stageFlash.title}</p>
+                <p className="mt-2 text-sm text-[var(--theme-text)]/80">{stageFlash?.detail || ''}</p>
               </section>
             ) : null}
 
@@ -1146,7 +1146,7 @@ const ProgramLabPage = () => {
                   <div className="day-one-intro-shell__pulse" />
                   <div className="day-one-intro-shell__content">
                     <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Animated intro</p>
-                    <h2 className="mt-3 text-2xl font-semibold text-white">Public page defaced. Trust is broken. Your thinking has to be cleaner than the attacker’s.</h2>
+                    <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">Public page defaced. Trust is broken. Your thinking has to be cleaner than the attacker’s.</h2>
                     <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300/82">
                       Imagine a customer opening a page that still loads perfectly, but the information on it was changed by someone unauthorized. That is the feeling we want you to notice here: trust can break before a system goes down. ZORBIX will guide you, but the unlock is earned only if your classification, command choice, and evidence chain all validate cleanly.
                     </p>
@@ -1167,7 +1167,7 @@ const ProgramLabPage = () => {
               {isDayTwo ? (
                 <div className="day-two-recon-shell mb-5">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Recon board</p>
-                  <h2 className="mt-3 text-2xl font-semibold text-white">Good recon feels quiet, fast, and believable.</h2>
+                  <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">Good recon feels quiet, fast, and believable.</h2>
                   <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300/82">
                     Before an attacker scans loudly, they often gather simple facts first: who owns the domain, where the nameservers point, and whether subdomains like <span className="text-cyan-100">api</span> or <span className="text-cyan-100">staging</span> exist. Day 2 teaches that habit in a clean order so every command has a reason behind it.
                   </p>
@@ -1187,7 +1187,7 @@ const ProgramLabPage = () => {
               {isDayThree ? (
                 <div className="day-three-surface-shell mb-5">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Surface map</p>
-                  <h2 className="mt-3 text-2xl font-semibold text-white">Attack surface discovery is really door-finding with context.</h2>
+                  <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">Attack surface discovery is really door-finding with context.</h2>
                   <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300/82">
                     Imagine walking around a building. The front door is obvious, but the risky doors are often side entries, maintenance doors, staff entrances, or unlabeled rooms. Websites work the same way. Pages like <span className="text-cyan-100">/login</span>, <span className="text-cyan-100">/admin</span>, and hidden API endpoints tell you where the important functionality actually lives.
                   </p>
@@ -1199,13 +1199,13 @@ const ProgramLabPage = () => {
                       { label: "/admin/api/health", detail: "Hidden service doorway" },
                     ].map((item) => (
                       <div key={item.label} className="rounded-2xl border border-cyan-300/14 bg-cyan-500/8 p-4">
-                        <p className="text-sm font-semibold text-white">{item.label}</p>                          <p className="mt-2 text-xs text-slate-300/80">{item.detail || ''}</p>
+                        <p className="text-sm font-semibold text-[var(--theme-text)]">{item.label}</p>                          <p className="mt-2 text-xs text-slate-300/80">{item.detail || ''}</p>
                       </div>
                     ))}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {["Observe", "Enumerate", "Prioritize", "Validate"].map((item) => (
-                      <span key={item} className="rounded-full border border-white/8 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/78">
+                      <span key={item} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/78">
                         {item}
                       </span>
                     ))}
@@ -1215,7 +1215,7 @@ const ProgramLabPage = () => {
               {isDayFour ? (
                 <div className="day-four-vuln-shell mb-5">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Vulnerability triage board</p>
-                  <h2 className="mt-3 text-2xl font-semibold text-white">A vulnerability is usually just trust breaking in a specific place.</h2>
+                  <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">A vulnerability is usually just trust breaking in a specific place.</h2>
                   <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300/82">
                     Think of a building again: one door opens with a default key, one receptionist repeats anything you whisper, and one maintenance room was left unlocked. Web apps fail in similar ways. Day 4 trains you to see whether the app is trusting the wrong user, the wrong input, or the wrong configuration.
                   </p>
@@ -1232,7 +1232,7 @@ const ProgramLabPage = () => {
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {["Observe", "Classify", "Validate", "Remediate"].map((item) => (
-                      <span key={item} className="rounded-full border border-white/8 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/78">
+                      <span key={item} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/78">
                         {item}
                       </span>
                     ))}
@@ -1280,7 +1280,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-six-defense-card ${item.tone === "critical" ? "day-six-defense-card--critical" : item.tone === "alert" ? "day-six-defense-card--alert" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1307,7 +1307,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-seven-chain-card ${item.tone === "active" ? "day-seven-chain-card--active" : item.tone === "ready" ? "day-seven-chain-card--ready" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-fuchsia-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1334,7 +1334,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-eight-decision-card ${item.tone === "alert" ? "day-eight-decision-card--alert" : item.tone === "ready" ? "day-eight-decision-card--ready" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1362,7 +1362,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-nine-ir-card ${item.tone === "critical" ? "day-nine-ir-card--critical" : item.tone === "alert" ? "day-nine-ir-card--alert" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-rose-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1389,7 +1389,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-eleven-threat-card ${item.tone === "critical" ? "day-eleven-threat-card--critical" : item.tone === "alert" ? "day-eleven-threat-card--alert" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1417,7 +1417,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-twelve-lateral-card ${item.tone === "critical" ? "day-twelve-lateral-card--critical" : item.tone === "active" ? "day-twelve-lateral-card--active" : item.tone === "alert" ? "day-twelve-lateral-card--alert" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1445,7 +1445,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-thirteen-exfil-card ${item.tone === "critical" ? "day-thirteen-exfil-card--critical" : item.tone === "active" ? "day-thirteen-exfil-card--active" : item.tone === "alert" ? "day-thirteen-exfil-card--alert" : item.tone === "success" ? "day-thirteen-exfil-card--success" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1473,7 +1473,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-fourteen-vector-card ${item.tone === "critical" ? "day-fourteen-vector-card--critical" : item.tone === "active" ? "day-fourteen-vector-card--active" : item.tone === "alert" ? "day-fourteen-vector-card--alert" : item.tone === "success" ? "day-fourteen-vector-card--success" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1501,7 +1501,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-fifteen-battle-card ${item.tone === "critical" ? "day-fifteen-battle-card--critical" : item.tone === "active" ? "day-fifteen-battle-card--active" : item.tone === "alert" ? "day-fifteen-battle-card--alert" : item.tone === "success" ? "day-fifteen-battle-card--success" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1528,7 +1528,7 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className={`day-ten-arena-card ${item.tone === "active" ? "day-ten-arena-card--active" : item.tone === "critical" ? "day-ten-arena-card--critical" : ""}`}>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/70">{item.label}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{item.detail || ''}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -1545,7 +1545,7 @@ const ProgramLabPage = () => {
               <div className="mentor-brief-grid mb-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
                 <div className="mentor-brief-card">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Intro</p>
-                  <h2 className="mt-3 text-2xl font-semibold text-white">Learn this like a guided mission, not a lecture.</h2>
+                  <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">Learn this like a guided mission, not a lecture.</h2>
                   <p className="mt-3 text-sm leading-6 text-slate-300/82">{detail.module.mentor_intro}</p>
                 </div>
                 <div className="mentor-brief-card mentor-brief-card--example">
@@ -1557,15 +1557,15 @@ const ProgramLabPage = () => {
                 {guidedSequence.map((item, index) => (
                   <div key={`${item.label}-${index}`} className="mentor-sequence-card">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">0{index + 1}</p>
-                    <p className="mt-3 text-sm font-semibold text-white">{item.label}</p>                     <p className="mt-2 text-sm leading-6 text-slate-300/78">{item.detail || ''}</p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.label}</p>                     <p className="mt-2 text-sm leading-6 text-slate-300/78">{item.detail || ''}</p>
                   </div>
                 ))}
               </div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Mission briefing</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">{detail.module.title}</h2>
+              <h2 className="mt-2 text-2xl font-semibold text-[var(--theme-text)]">{detail.module.title}</h2>
               <p className="mt-2 text-sm text-cyan-100/72">{detail.module.scenario_tagline}</p>
               <p className="mt-2 text-sm text-slate-300/82">{detail.module.scenario}</p>
-              <div className="mt-4 rounded-xl border border-cyan-300/16 bg-black/25 p-4 text-sm text-cyan-100/78">
+              <div className="mt-4 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
                 {detail.module.mission_brief}
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -1574,9 +1574,9 @@ const ProgramLabPage = () => {
                   { label: "Threat Level", value: detail.module.threat_level },
                   { label: "Primary Objective", value: detail.module.objective },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                  <div key={item.label} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                    <p className="mt-3 text-sm font-semibold text-white">{item.value}</p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.value}</p>
                   </div>
                 ))}
               </div>
@@ -1589,11 +1589,11 @@ const ProgramLabPage = () => {
                         ? "border-amber-300/18 bg-amber-500/10"
                         : asset.tone === "success"
                           ? "border-emerald-300/18 bg-emerald-500/10"
-                          : "border-white/8 bg-white/[0.03]"
+                          : "border-[var(--theme-border)] bg-[var(--theme-overlay)]"
                     }`}
                   >
                     <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{asset.label}</p>
-                    <p className="mt-3 text-sm font-semibold text-white">{asset.value}</p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{asset.value}</p>
                   </div>
                 ))}
               </div>
@@ -1604,18 +1604,18 @@ const ProgramLabPage = () => {
                     className={`premium-card-lift rounded-[1.4rem] border p-5 ${
                       day === 1
                         ? "border-cyan-300/18 bg-[linear-gradient(180deg,rgba(14,116,144,0.16),rgba(2,6,23,0.5))]"
-                        : "border-white/8 bg-white/[0.03]"
+                        : "border-[var(--theme-border)] bg-[var(--theme-overlay)]"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{card.eyebrow}</p>
-                      <span className="rounded-full border border-white/8 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300/72">
+                      <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300/72">
                         0{index + 1}
                       </span>
                     </div>
-                    <p className="mt-4 text-lg font-semibold text-white">{card.title}</p>
+                    <p className="mt-4 text-lg font-semibold text-[var(--theme-text)]">{card.title}</p>
                     <p className="mt-3 text-sm leading-6 text-slate-300/82">{card?.detail ?? ''}</p>
-                    <div className="mt-4 rounded-2xl border border-cyan-300/14 bg-black/20 p-4">
+                    <div className="mt-4 rounded-2xl border border-cyan-300/14 bg-[var(--theme-overlay)] p-4">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Proof point</p>
                       <p className="mt-2 text-sm text-cyan-50/84">{card.proof_point}</p>
                     </div>
@@ -1623,7 +1623,7 @@ const ProgramLabPage = () => {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+              <div className="mt-4 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Success criteria</p>
                 <div className="mt-3 grid gap-2">
                   {successCriteria.map((item) => (
@@ -1637,9 +1637,9 @@ const ProgramLabPage = () => {
                   { label: "Difficulty", value: detail.module.difficulty },                   { label: "Tasks Cleared", value: `${completedTaskIds.length}/${moduleTasks.length}` },
                   { label: "Attempts", value: `${detail.state.attempts}` },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                  <div key={item.label} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                    <p className="mt-3 text-sm font-semibold text-white">{item.value}</p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.value}</p>
                   </div>
                 ))}
               </div>
@@ -1668,7 +1668,7 @@ const ProgramLabPage = () => {
               ) : null}
 
               <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">{isDayEleven && flowStage !== "validate" && flowStage !== "completed" ? "Thinking phase" : "What should I do next?"}</p>
-              <div className="mt-3 rounded-xl border border-cyan-300/16 bg-black/25 p-4">
+              <div className="mt-3 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4">
                 <p className="text-sm text-slate-300/82">
                   {isDayEleven && flowStage !== "validate" && flowStage !== "completed"
                     ? "ZORVIX is silent. Observe, analyze, decide, and own the consequence before the system responds."
@@ -1687,17 +1687,17 @@ const ProgramLabPage = () => {
               <div className="mentor-sequence-grid mt-4 grid gap-3 md:grid-cols-3">
                 <div className="mentor-sequence-card">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Task</p>
-                  <p className="mt-3 text-sm font-semibold text-white">Understand the objective</p>
+                  <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">Understand the objective</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300/78">Read the active step closely and decide what kind of proof the validator will actually accept.</p>
                 </div>
                 <div className="mentor-sequence-card">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{currentActionLabel}</p>
-                  <p className="mt-3 text-sm font-semibold text-white">Make one clean move</p>
+                  <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">Make one clean move</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300/78">Choose the smallest command, answer, or note that changes confidence for a real reason.</p>
                 </div>
                 <div className="mentor-sequence-card">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Validate</p>
-                  <p className="mt-3 text-sm font-semibold text-white">Let the backend score it</p>
+                  <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">Let the backend score it</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300/78">Progress only advances when the evidence, logic, and wording hold up together.</p>
                 </div>
               </div>
@@ -1710,14 +1710,14 @@ const ProgramLabPage = () => {
                     <div
                       key={task.id}
                       className={`premium-card-lift rounded-2xl border p-4 ${
-                        done ? "border-emerald-300/24 bg-emerald-500/10" : active ? "border-cyan-300/36 bg-cyan-500/10" : "border-cyan-300/12 bg-white/[0.03]"
+                        done ? "border-emerald-300/24 bg-emerald-500/10" : active ? "border-cyan-300/36 bg-cyan-500/10" : "border-cyan-300/12 bg-[var(--theme-overlay)]"
                       }`}
                     >
                       <p className="text-xs text-cyan-100/60">Step {index + 1}</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{task.title}</p>
+                      <p className="mt-1 text-sm font-semibold text-[var(--theme-text)]">{task.title}</p>
                       <p className="mt-2 text-sm text-slate-300/82">{task.instruction}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-full border border-white/8 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300/72">
+                        <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300/72">
                           {task.interaction_type === "single-select" ? "Validated Quiz" : task.expected_type === "terminal" ? "Terminal Task" : "Operator Response"}
                         </span>
                         <span className="rounded-full border border-emerald-300/14 bg-emerald-500/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-emerald-100/72">
@@ -1746,7 +1746,7 @@ const ProgramLabPage = () => {
                   <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Active mission</p>
                   <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
-                      <p className="text-lg font-semibold text-white">{currentTask.title}</p>
+                      <p className="text-lg font-semibold text-[var(--theme-text)]">{currentTask.title}</p>
                       <p className="mt-2 max-w-2xl text-sm text-slate-300/80">{currentTask.instruction}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1929,7 +1929,7 @@ const ProgramLabPage = () => {
                   </div>
                 ) : null}
                 <div className="mt-3 rounded-2xl border border-cyan-300/16 bg-cyan-500/8 p-4">
-                  <p className="text-sm font-semibold text-white">{currentTask.title}</p>
+                  <p className="text-sm font-semibold text-[var(--theme-text)]">{currentTask.title}</p>
                   <p className="mt-2 text-sm text-slate-300/78">{currentTask.instruction}</p>
                 </div>
                 {currentTask.interaction_type === "single-select" && currentTask.options?.length ? (
@@ -1944,11 +1944,11 @@ const ProgramLabPage = () => {
                           className={`premium-card-lift rounded-2xl border p-4 text-left transition ${
                             selected
                               ? "border-cyan-300/40 bg-cyan-500/12"
-                              : "border-cyan-300/14 bg-black/20 hover:border-cyan-300/26 hover:bg-cyan-500/8"
+                              : "border-cyan-300/14 bg-[var(--theme-overlay)] hover:border-cyan-300/26 hover:bg-cyan-500/8"
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <span className="text-sm text-white">{option.label}</span>
+                            <span className="text-sm text-[var(--theme-text)]">{option.label}</span>
                             {selected ? <CheckCircle2 className="h-4 w-4 text-cyan-300" /> : null}
                           </div>
                         </button>
@@ -1958,7 +1958,7 @@ const ProgramLabPage = () => {
                 ) : currentTask.expected_type === "terminal" ? (
                   <div className="mt-3 rounded-2xl border border-cyan-300/16 bg-[#050816] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Terminal-style execution</p>
-                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/8 bg-black/30 px-3 py-3">
+                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-3">
                       <span className="text-sm text-cyan-300">$</span>
                       <input
                         value={answer}
@@ -2084,7 +2084,7 @@ const ProgramLabPage = () => {
                 </div>
               ) : null}
               <p className="mt-3 text-sm text-slate-300/82">{feedback}</p>
-              <div className="mt-3 rounded-xl border border-cyan-300/12 bg-white/[0.03] p-3 text-xs text-cyan-100/70">
+              <div className="mt-3 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-3 text-xs text-cyan-100/70">
                 Difficulty band: {detail.state.difficulty_band} | Attempts: {detail.state.attempts} | Score: {detail.state.score} | XP: {detail.state.xp_earned}
               </div>
               {lastValidation?.terminalOutput?.length ? (
@@ -2100,7 +2100,7 @@ const ProgramLabPage = () => {
                 </div>
               ) : null}
               {mentorGuidance ? (
-                <div className="mt-4 rounded-xl border border-white/8 bg-white/[0.03] p-4 text-sm text-slate-300/78">
+                <div className="mt-4 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4 text-sm text-slate-300/78">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">ZORVIX guidance</p>
                   <p className="mt-2">{mentorGuidance}</p>
                 </div>
@@ -2183,70 +2183,70 @@ const ProgramLabPage = () => {
                 </div>
               ) : null}
               {isDayThirteen ? (
-                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-white/[0.03] p-4 text-sm text-cyan-100/78">
+                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Performance scoring</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-4">
-                    <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Base score</p>
-                      <p className="mt-2 text-lg font-semibold text-white">{detail.state.score}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">{detail.state.score}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Hint penalty</p>
-                      <p className="mt-2 text-lg font-semibold text-white">-{exfilHintPenalty}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">-{exfilHintPenalty}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Speed penalty</p>
-                      <p className="mt-2 text-lg font-semibold text-white">-{exfilSpeedPenalty}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">-{exfilSpeedPenalty}</p>
                     </div>
                     <div className="rounded-2xl border border-emerald-300/18 bg-emerald-500/10 p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-100/70">Rank</p>
-                      <p className="mt-2 text-lg font-semibold text-white">{exfilRank} | {exfilPerformanceScore}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">{exfilRank} | {exfilPerformanceScore}</p>
                     </div>
                   </div>
                 </div>
               ) : null}
               {isDayFourteen ? (
-                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-white/[0.03] p-4 text-sm text-cyan-100/78">
+                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Tactical scoring</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-4">
-                    <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Base score</p>
-                      <p className="mt-2 text-lg font-semibold text-white">{detail.state.score}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">{detail.state.score}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Hint penalty</p>
-                      <p className="mt-2 text-lg font-semibold text-white">-{vectorHintPenalty}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">-{vectorHintPenalty}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Speed penalty</p>
-                      <p className="mt-2 text-lg font-semibold text-white">-{vectorSpeedPenalty}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">-{vectorSpeedPenalty}</p>
                     </div>
                     <div className="rounded-2xl border border-emerald-300/18 bg-emerald-500/10 p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-100/70">Rank</p>
-                      <p className="mt-2 text-lg font-semibold text-white">{vectorRank} | {vectorPerformanceScore}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">{vectorRank} | {vectorPerformanceScore}</p>
                     </div>
                   </div>
                 </div>
               ) : null}
               {isDayFifteen ? (
-                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-white/[0.03] p-4 text-sm text-cyan-100/78">
+                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Battle scoring</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-4">
-                    <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Base score</p>
-                      <p className="mt-2 text-lg font-semibold text-white">{detail.state.score}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">{detail.state.score}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Hint penalty</p>
-                      <p className="mt-2 text-lg font-semibold text-white">-{battleHintPenalty}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">-{battleHintPenalty}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
+                    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Tempo penalty</p>
-                      <p className="mt-2 text-lg font-semibold text-white">-{battleSpeedPenalty}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">-{battleSpeedPenalty}</p>
                     </div>
                     <div className="rounded-2xl border border-emerald-300/18 bg-emerald-500/10 p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-100/70">Rank</p>
-                      <p className="mt-2 text-lg font-semibold text-white">{battleRank} | {battlePerformanceScore}</p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">{battleRank} | {battlePerformanceScore}</p>
                     </div>
                   </div>
                 </div>
@@ -2293,7 +2293,7 @@ const ProgramLabPage = () => {
                   <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/72">Mission badge</p>
                   <div className="mt-3 flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-lg font-semibold text-white">{detail.module.completion_badge || `Day ${day} Cleared`}</p>
+                      <p className="text-lg font-semibold text-[var(--theme-text)]">{detail.module.completion_badge || `Day ${day} Cleared`}</p>
                       <p className="mt-1 text-sm text-slate-300/82">Validated progression recorded. Reward, badge, and unlock state are now live.</p>
                     </div>
                     <span className="rounded-full border border-emerald-300/18 bg-emerald-500/12 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-emerald-50">
@@ -2318,19 +2318,19 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className="rounded-2xl border border-amber-300/14 bg-amber-500/8 p-4">
                           <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/72">{item.label}</p>
-                          <p className="mt-3 text-lg font-semibold text-white">{item.value}</p>
+                          <p className="mt-3 text-lg font-semibold text-[var(--theme-text)]">{item.value}</p>
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4 rounded-2xl border border-amber-300/14 bg-black/20 p-4">
+                    <div className="mt-4 rounded-2xl border border-amber-300/14 bg-[var(--theme-overlay)] p-4">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/72">Rank</p>
-                      <p className="mt-3 text-2xl font-semibold text-white">{arenaRank}</p>
+                      <p className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">{arenaRank}</p>
                     </div>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       {moduleTasks.map((task) => (
-                        <div key={task.id} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                        <div key={task.id} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
                           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{task.title}</p>
-                          <p className="mt-3 text-sm font-semibold text-white">{task.completed ? "Pass" : "Fail"}</p>
+                          <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{task.completed ? "Pass" : "Fail"}</p>
                           <p className="mt-2 text-xs text-slate-300/74">Score: {task.score}</p>
                           <p className="mt-1 text-xs text-slate-300/74">Hint used: {arenaHintedTasks.includes(task.id) ? "Yes" : "No"}</p>
                         </div>
@@ -2357,14 +2357,14 @@ const ProgramLabPage = () => {
                       ].map((item) => (
                         <div key={item.label} className="rounded-2xl border border-cyan-300/14 bg-cyan-500/8 p-4">
                           <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/72">{item.label}</p>
-                          <p className="mt-3 text-lg font-semibold text-white">{item.value}</p>
+                          <p className="mt-3 text-lg font-semibold text-[var(--theme-text)]">{item.value}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                 ) : null}
                 {debriefPoints.length ? (
-                  <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                  <div className="mt-4 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/72">Debrief prompts</p>
                     <div className="mt-3 grid gap-2">
                       {debriefPoints.map((point) => (
@@ -2383,7 +2383,7 @@ const ProgramLabPage = () => {
                   ].map((item) => (
                     <div key={item.label} className="rounded-2xl border border-emerald-300/16 bg-emerald-500/10 p-4">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/72">{item.label}</p>
-                      <p className="mt-3 text-lg font-semibold text-white">{item.value}</p>
+                      <p className="mt-3 text-lg font-semibold text-[var(--theme-text)]">{item.value}</p>
                     </div>
                   ))}
                 </div>
