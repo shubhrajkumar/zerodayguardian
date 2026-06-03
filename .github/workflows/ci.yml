@@ -41,6 +41,18 @@ jobs:
       - name: Production build
         run: npx vite build
 
+      - name: Lighthouse performance budget
+        run: |
+          npx serve dist -l 3456 --no-clipboard &
+          sleep 3
+          npx lighthouse http://localhost:3456 \
+            --output=json \
+            --output-path=/tmp/lighthouse-ci-report.json \
+            --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
+            --only-categories=performance \
+            --quiet
+          node scripts/lighthouse-budget-check.mjs /tmp/lighthouse-ci-report.json
+
       - name: Upload build artifact
         if: success()
         uses: actions/upload-artifact@v4
@@ -48,3 +60,12 @@ jobs:
           name: dist
           path: dist/
           retention-days: 3
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: /tmp/lighthouse-ci-report.json
+          retention-days: 7
+          if-no-files-found: ignore
