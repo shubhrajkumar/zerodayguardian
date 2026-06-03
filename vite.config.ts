@@ -100,8 +100,9 @@ export default defineConfig(() => {
             if (id.includes("react") && !id.includes("react-router") && !id.includes("react-helmet") && !id.includes("react-hot-toast") && !id.includes("sonner") && !id.includes("react-hook-form") && !id.includes("react-day-picker") && !id.includes("react-window")) return "react-vendor";
             // Router: loaded with React but separated
             if (id.includes("react-router") || id.includes("@remix-run")) return "router-vendor";
-            // Firebase: largest vendor — deferred
-            if (id.includes("firebase")) return "firebase-vendor";
+            // Firebase: split core (app init) from services (auth, firestore) — services are dynamically imported
+            if (id.includes("firebase/app") || id.includes("firebase/compat/app")) return "firebase-core";
+            if (id.includes("firebase/auth") || id.includes("firebase/firestore") || id.includes("firebase/storage") || id.includes("firebase/messaging") || id.includes("firebase/analytics")) return "firebase-services";
             // Framer Motion: deferred (only needed for animations)
             if (id.includes("framer-motion")) return "motion-vendor";
             // Charts: deferred (only needed on dashboard)
@@ -122,8 +123,11 @@ export default defineConfig(() => {
             if (id.includes("react-hook-form") || id.includes("@hookform")) return "forms-vendor";
             // Date: deferred
             if (id.includes("date-fns") || id.includes("react-day-picker")) return "date-vendor";
-            // Other small vendors: bundle together
-            if (id.includes("zod") || id.includes("cmdk") || id.includes("canvas-confetti") || id.includes("html2canvas") || id.includes("embla-carousel") || id.includes("react-window")) return "misc-vendor";
+            // Misc: split heavy deferrable packages into separate chunks
+            if (id.includes("canvas-confetti")) return "confetti-vendor";
+            if (id.includes("html2canvas")) return "html2canvas-vendor";
+            // Remaining small vendors: bundle together
+            if (id.includes("zod") || id.includes("cmdk") || id.includes("embla-carousel") || id.includes("react-window")) return "misc-vendor";
           },
         },
       },
