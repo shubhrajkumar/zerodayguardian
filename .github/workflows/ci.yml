@@ -53,6 +53,7 @@ jobs:
             --output-path=/tmp/lighthouse-ci-report.json \
             --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
             --only-categories=performance \
+            --throttling-method=provided \
             --quiet
           node scripts/lighthouse-budget-check.mjs /tmp/lighthouse-ci-report.json
 
