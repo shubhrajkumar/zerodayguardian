@@ -41,6 +41,9 @@ jobs:
       - name: Production build
         run: npx vite build
 
+      - name: Bundle size budget
+        run: node scripts/bundle-size-check.mjs dist
+
       - name: Lighthouse performance budget
         run: |
           npx serve dist -l 3456 --no-clipboard &
