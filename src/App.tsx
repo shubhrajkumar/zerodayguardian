@@ -66,15 +66,9 @@ const AppLoadingShell = () => (
         </div>
       </div>
     </main>
-    {/* Placeholder for footer to reserve space */}
+    {/* Placeholder for footer — reserve space without text to prevent CLS */}
     <div className="relative z-10" style={{ borderTop: "1px solid var(--theme-border)" }}>
-      <div className="container mx-auto px-4 py-10">
-        <div className="text-center">
-          <p className="terminal-font text-xs" style={{ color: "var(--theme-text-dim)" }}>
-            (c) {new Date().getFullYear()} ZeroDay Guardian
-          </p>
-        </div>
-      </div>
+      <div className="container mx-auto px-4 py-10" aria-hidden="true" />
     </div>
   </div>
 );

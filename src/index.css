@@ -485,12 +485,10 @@ body {
     border-top-color: var(--theme-accent-blue); border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
-  .spinner-lg { width: 32px; height: 32px; border-width: 3px; }
 
-  /* ── CLS prevention: content-visibility for below-fold sections ── */
+  /* ── CLS prevention: contain layout reflows on route boundaries ── */
   .page-shell {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 800px;
+    contain: layout style;
   }
   .spinner-sm { width: 16px; height: 16px; border-width: 2px; }
   .spinner-lg { width: 32px; height: 32px; border-width: 3px; }
