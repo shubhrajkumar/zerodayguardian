@@ -100,9 +100,11 @@ export default defineConfig(() => {
             if (id.includes("react") && !id.includes("react-router") && !id.includes("react-helmet") && !id.includes("react-hot-toast") && !id.includes("sonner") && !id.includes("react-hook-form") && !id.includes("react-day-picker") && !id.includes("react-window")) return "react-vendor";
             // Router: loaded with React but separated
             if (id.includes("react-router") || id.includes("@remix-run")) return "router-vendor";
-            // Firebase: split core (app init) from services (auth, firestore) — services are dynamically imported
+            // Firebase: split core (app init) from individual services — each is dynamically imported
             if (id.includes("firebase/app") || id.includes("firebase/compat/app")) return "firebase-core";
-            if (id.includes("firebase/auth") || id.includes("firebase/firestore") || id.includes("firebase/storage") || id.includes("firebase/messaging") || id.includes("firebase/analytics")) return "firebase-services";
+            if (id.includes("firebase/auth")) return "firebase-auth";
+            if (id.includes("firebase/firestore")) return "firebase-firestore";
+            if (id.includes("firebase/storage") || id.includes("firebase/messaging") || id.includes("firebase/analytics")) return "firebase-extras";
             // Framer Motion: deferred (only needed for animations)
             if (id.includes("framer-motion")) return "motion-vendor";
             // Charts: deferred (only needed on dashboard)
