@@ -47,17 +47,34 @@ const queryClient = new QueryClient({
   },
 });
 
-/** Minimal loading shell while AppShell chunk loads */
+/** Minimal loading shell — matches final layout dimensions to prevent CLS */
 const AppLoadingShell = () => (
   <div
-    className="flex min-h-screen items-center justify-center"
+    className="relative flex min-h-screen flex-col overflow-x-hidden"
     style={{ backgroundColor: "var(--theme-bg)" }}
   >
-    <div className="text-center">
-      <div className="spinner-cyber mx-auto mb-4" />
-      <p className="terminal-font text-[11px] uppercase tracking-[0.24em]" style={{ color: "var(--theme-text-dim)" }}>
-        Loading workspace...
-      </p>
+    {/* Placeholder for fixed navbar (z-50, h-16) to reserve space */}
+    <div className="fixed left-0 right-0 top-0 z-50 h-16" style={{ borderBottom: "1px solid var(--theme-border)", backgroundColor: "color-mix(in srgb, var(--theme-bg) 92%, transparent)" }} />
+    {/* Main content area with pt-16 to account for navbar, matching Layout.tsx */}
+    <main className="relative z-10 min-w-0 flex-1 pt-16">
+      <div className="container mx-auto flex flex-1 items-center justify-center px-4 py-16">
+        <div className="text-center">
+          <div className="spinner-cyber mx-auto mb-4" />
+          <p className="terminal-font text-[11px] uppercase tracking-[0.24em]" style={{ color: "var(--theme-text-dim)" }}>
+            Loading workspace...
+          </p>
+        </div>
+      </div>
+    </main>
+    {/* Placeholder for footer to reserve space */}
+    <div className="relative z-10" style={{ borderTop: "1px solid var(--theme-border)" }}>
+      <div className="container mx-auto px-4 py-10">
+        <div className="text-center">
+          <p className="terminal-font text-xs" style={{ color: "var(--theme-text-dim)" }}>
+            (c) {new Date().getFullYear()} ZeroDay Guardian
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 );
