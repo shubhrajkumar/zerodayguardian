@@ -1,17 +1,54 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ComponentType, lazy, LazyExoticComponent, ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { BrowserRouter, matchPath, Route, Routes, useLocation } from "react-router-dom";
-import { Toaster as HotToaster } from "react-hot-toast";
-import { Toaster as SonnerToaster } from "sonner";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import ErrorBoundary from "./components/ErrorBoundary";
-import FirebaseStatusBadge from "./components/FirebaseStatusBadge";
 import Layout from "./components/Layout";
 import RequireAuth from "./components/RequireAuth";
-import CookieConsent from "./components/CookieConsent";
 import WakeUpLoader from "./components/ui/WakeUpLoader";
 import ServerWakeUpBanner from "./components/ui/ServerWakeUpBanner";
-import { ToastContainer } from "./components/ui/toast";
+
+// ── Deferred imports: loaded after initial paint ──
+const LazyToasters = lazy(() =>
+  Promise.all([
+    import("react-hot-toast"),
+    import("sonner"),
+  ]).then(([hotMod, sonnerMod]) => {
+    const HotToaster = hotMod.Toaster;
+    const SonnerToaster = sonnerMod.Toaster;
+    return {
+      default: () => (
+        <>
+          <HotToaster
+            position="top-right"
+            toastOptions={{
+              duration: 4200,
+              style: {
+                background: "var(--theme-card)",
+                color: "var(--theme-text)",
+                border: "1px solid var(--theme-border)",
+              },
+            }}
+          />
+          <SonnerToaster
+            position="top-right"
+            richColors
+            closeButton
+            toastOptions={{
+              style: {
+                background: "var(--theme-card)",
+                color: "var(--theme-text)",
+                border: "1px solid var(--theme-border)",
+              },
+            }}
+          />
+        </>
+      ),
+    };
+  })
+);
+// CookieConsent already loaded via Layout.tsx — no separate chunk needed
+const LazyFirebaseStatusBadge = lazy(() => import("./components/FirebaseStatusBadge"));
 
 const RewardExperience = lazy(() => import("./components/platform/RewardExperience"));
 import { clearAnonymousClientState } from "./lib/apiClient";
@@ -23,6 +60,7 @@ import { AdaptiveMentorProvider } from "./context/AdaptiveMentorContext";
 import { warmHighIntentRoutes } from "./lib/routeWarmup";
 import { useScrollReveal } from "./hooks/useScrollReveal";
 import { useGrowthProfileSync } from "./hooks/useGrowthFeatures";
+import { ToastContainer } from "./components/ui/toast";
 
 const IndexPage = lazy(() => import("./pages/HomePage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -413,9 +451,9 @@ const AppShell = () => {
               <GlobalScrollReveal />
               <GamificationTracker />
               <GrowthProfileSync />
-              <FirebaseStatusBadge />
+              <Suspense fallback={null}><LazyFirebaseStatusBadge /></Suspense>
               <RewardExperience />
-              <CookieConsent />
+              {/* CookieConsent rendered inside Layout.tsx */}
               <ServerWakeUpBanner />
               <ColdStartWatcher />
               <Layout>
@@ -433,29 +471,7 @@ const AppShell = () => {
                 </Suspense>
               </Layout>
 
-              <HotToaster
-                position="top-right"
-                toastOptions={{
-                  duration: 4200,
-                  style: {
-                    background: "var(--theme-card)",
-                    color: "var(--theme-text)",
-                    border: "1px solid var(--theme-border)",
-                  },
-                }}
-              />
-              <SonnerToaster
-                position="top-right"
-                richColors
-                closeButton
-                toastOptions={{
-                  style: {
-                    background: "var(--theme-card)",
-                    color: "var(--theme-text)",
-                    border: "1px solid var(--theme-border)",
-                  },
-                }}
-              />
+              <Suspense fallback={null}><LazyToasters /></Suspense>
               <ToastContainer />
             </BrowserRouter>
           </AdaptiveMentorProvider>

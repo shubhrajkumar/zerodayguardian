@@ -1,27 +1,12 @@
-// ── Sentry instrumentation: must be the very first import ──
-import "./instrument";
-
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { initFirebase } from "./lib/firebase";
 import { applyThemeToDocument, getStoredTheme } from "./lib/theme";
-import { installGlobalDiagnostics } from "./lib/runtimeDiagnostics";
-import { registerPlatformServiceWorker } from "./lib/pushNotifications";
 
-// ── Monitoring: initialize global diagnostics & error boundaries ──
+// ── Critical path: sync theme application to prevent FOUC ──
 applyThemeToDocument(getStoredTheme());
-installGlobalDiagnostics();
-
-// ── Firebase: lazy-initialize (loads Firebase SDK as deferred chunk) ──
-initFirebase().catch(() => undefined);
-
-// ── Service Worker (PWA) ──
-if (typeof window !== "undefined") {
-  registerPlatformServiceWorker().catch(() => undefined);
-}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -30,3 +15,34 @@ createRoot(document.getElementById("root")!).render(
     </ErrorBoundary>
   </StrictMode>
 );
+
+// ── Deferred: non-critical modules loaded after first paint ──
+const deferWork = (fn: () => void) => {
+  if (typeof requestIdleCallback !== "undefined") {
+    requestIdleCallback(fn, { timeout: 5000 });
+  } else {
+    setTimeout(fn, 1);
+  }
+};
+
+deferWork(() => {
+  // Sentry: lazy-loaded, only needed for error tracking
+  import("./instrument").catch(() => undefined);
+
+  // Firebase: lazy-initialize (loads Firebase SDK as deferred chunk)
+  import("./lib/firebase").then(({ initFirebase }) => {
+    initFirebase().catch(() => undefined);
+  }).catch(() => undefined);
+
+  // Global diagnostics: error handlers
+  import("./lib/runtimeDiagnostics").then(({ installGlobalDiagnostics }) => {
+    installGlobalDiagnostics();
+  }).catch(() => undefined);
+
+  // Service Worker (PWA)
+  if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+    import("./lib/pushNotifications").then(({ registerPlatformServiceWorker }) => {
+      registerPlatformServiceWorker().catch(() => undefined);
+    }).catch(() => undefined);
+  }
+});

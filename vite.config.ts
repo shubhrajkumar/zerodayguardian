@@ -81,31 +81,49 @@ export default defineConfig(() => {
     },
     build: {
       target: "es2020",
-      modulePreload: false,
+      modulePreload: { polyfill: false },
+      cssCodeSplit: true,
       sourcemap: process.env.SENTRY_AUTH_TOKEN ? "hidden" : false,
       reportCompressedSize: false,
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 500,
+      minify: "esbuild",
+      esbuild: {
+        drop: ["debugger"],
+        pure: ["console.log"],
+        legalComments: "none",
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {
             if (!id.includes("node_modules")) return;
+            // Core React: minimal critical chunk
+            if (id.includes("react") && !id.includes("react-router") && !id.includes("react-helmet") && !id.includes("react-hot-toast") && !id.includes("sonner") && !id.includes("react-hook-form") && !id.includes("react-day-picker") && !id.includes("react-window")) return "react-vendor";
+            // Router: loaded with React but separated
             if (id.includes("react-router") || id.includes("@remix-run")) return "router-vendor";
-            if (id.includes("react-helmet-async") || id.includes("react-hot-toast") || id.includes("sonner")) return "react-ui-vendor";
-            if (id.includes("lucide-react")) return "icons-vendor";
-            if (id.includes("react-day-picker")) return "datepicker-vendor";
-            if (id.includes("react-hook-form") || id.includes("@hookform")) return "forms-vendor";
-            if (id.includes("react-window")) return "virtual-vendor";
-            if (id.includes("react") || id.includes("scheduler")) return "react-vendor";
-            if (id.includes("@tanstack") || id.includes("react-query")) return "query-vendor";
+            // Firebase: largest vendor — deferred
             if (id.includes("firebase")) return "firebase-vendor";
+            // Framer Motion: deferred (only needed for animations)
             if (id.includes("framer-motion")) return "motion-vendor";
+            // Charts: deferred (only needed on dashboard)
             if (id.includes("recharts")) return "charts-vendor";
+            // Sentry: deferred (only needed for monitoring)
+            if (id.includes("@sentry")) return "sentry-vendor";
+            // Radix UI: deferred
             if (id.includes("@radix-ui")) return "ui-vendor";
-            if (id.includes("canvas-confetti")) return "confetti-vendor";
-            if (id.includes("date-fns")) return "date-vendor";
-            if (id.includes("zod")) return "validation-vendor";
-            if (id.includes("cmdk")) return "command-vendor";
-            if (id.includes("html2canvas") || id.includes("embla-carousel")) return "ui-utils-vendor";
+            // Icons: deferred
+            if (id.includes("lucide-react")) return "icons-vendor";
+            // Toast/notifications: deferred
+            if (id.includes("react-hot-toast") || id.includes("sonner")) return "toast-vendor";
+            // Helmet: deferred
+            if (id.includes("react-helmet-async")) return "helmet-vendor";
+            // Query: deferred
+            if (id.includes("@tanstack") || id.includes("react-query")) return "query-vendor";
+            // Forms: deferred
+            if (id.includes("react-hook-form") || id.includes("@hookform")) return "forms-vendor";
+            // Date: deferred
+            if (id.includes("date-fns") || id.includes("react-day-picker")) return "date-vendor";
+            // Other small vendors: bundle together
+            if (id.includes("zod") || id.includes("cmdk") || id.includes("canvas-confetti") || id.includes("html2canvas") || id.includes("embla-carousel") || id.includes("react-window")) return "misc-vendor";
           },
         },
       },

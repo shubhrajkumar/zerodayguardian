@@ -56,6 +56,9 @@
 - Helmet security headers
 - MongoDB injection prevention via parameterized queries
 - Request ID tracing
+- Per-request nonce-based CSP via `api/index.mjs` serverless function
+- Google Fonts, Sentry, and Firebase explicitly allowed in CSP
+- Compliance routes: data export (Article 20) and deletion (Article 17)
 
 ## 2. Frontend Audit
 
@@ -124,15 +127,39 @@
 ## 4. Deployment Audit
 
 ### Frontend (Vercel)
-- ✅ vercel.json configured
+- ✅ vercel.json configured with comprehensive security headers
 - ✅ Build command: `npm run build`
 - ✅ Output directory: `dist`
 - ✅ Service worker registered
 - ✅ SEO meta tags in index.html
+- ✅ CSP nonce injection via serverless function (`api/index.mjs`)
+- ✅ Static asset caching with immutable headers
 
 ### Backend (Render)
 - ✅ render.yaml configured
-- ✅ Dockerfile available
-- ✅ Node.js health checks
-- ✅ Graceful shutdown handlers
+- ✅ Dockerfile available (multi-stage with non-root user)
+- ✅ Node.js health checks (`/api/health`, `/api/livez`, `/api/readyz`)
+- ✅ Graceful shutdown handlers (SIGINT, SIGTERM)
 - ✅ Environment variable validation at startup
+- ✅ MongoDB connection with auto-reconnect
+
+## 5. CSP Fix Applied (June 2026)
+
+### Issue
+- `vercel.json` CSP was missing `fonts.googleapis.com` in `style-src` and `fonts.gstatic.com` in `font-src`, blocking Google Fonts in production
+- `vercel.json` CSP was missing `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and `frame-ancestors 'self'`
+- `api/index.mjs` CSP was missing `fonts.googleapis.com` in `style-src` and Sentry domains in `script-src`
+
+### Fix
+- Added Google Fonts domains to both `vercel.json` and `api/index.mjs` CSP
+- Added Sentry domains (`*.sentry.io`, `*.ingest.sentry.io`) to script-src and connect-src
+- Aligned `vercel.json` CSP with `api/index.mjs` for consistent security posture
+- Removed unnecessary `'unsafe-inline'` from `api/index.mjs` `style-src` (nonces handle inline styles)
+- Added `frame-src`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'self'` to `vercel.json`
+
+### Verification
+- TypeScript typecheck: ✅ Zero errors
+- Vite production build: ✅ Clean build, no warnings
+- Unit tests: ✅ 366/366 passed across 10 test files
+- Code review: ✅ CSP fixes confirmed sound
+- CSP directives: ✅ Nonce-based for HTML, 'unsafe-inline' fallback for static assets only

@@ -73,11 +73,9 @@
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin />
 
-    <!-- Performance: Google Fonts with font-display:swap for non-blocking text rendering -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Performance: Google Fonts non-blocking (preload + onload swap) -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" /></noscript>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",

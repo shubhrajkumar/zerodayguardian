@@ -1,6 +1,6 @@
 # ZeroDay Guardian — World-Class Audit Report
 
-**Generated:** June 2026  
+**Generated:** June 2026 (last verified June 3, 2026)  
 **Project:** ZeroDay Guardian (zerodayguardian-delta.vercel.app)  
 **Backend:** zerodayguardian-backend.onrender.com  
 **Repository:** zeroday-guardian-main
@@ -24,8 +24,11 @@
 | npm install | ✅ Passed |
 | TypeScript typecheck | ✅ Passed (0 errors) |
 | Vite production build | ✅ Passed (26s) |
-| Unit tests | ✅ 123/123 passed |
+| Unit tests | ✅ 366/366 passed (10 test files) |
 | Frontend live | ✅ HTTPS, 200 OK |
 | Backend live | ✅ HTTPS, 200 OK |
 | `/api/labs` | ✅ 200 OK |
 | `/api/health` | ✅ 200 OK |
+| CSP nonce injection | ✅ Google Fonts, Sentry, Firebase allowed |
+| CSP static fallback | ✅ Aligned with nonce-based CSP |
+| Code review | ✅ CSP fixes confirmed sound |

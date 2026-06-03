@@ -19,8 +19,9 @@ import crypto from "crypto";
 const CSP_DIRECTIVES = [
   ["default-src", ["'self'"]],
   // 'unsafe-eval' required by Sentry & Firebase for dynamic code evaluation
-  ["script-src", ["'self'", "'unsafe-eval'", "'nonce-{nonce}'", "https://*.firebaseio.com", "https://apis.google.com", "https://accounts.google.com"]],
-  ["style-src", ["'self'", "'nonce-{nonce}'"]],
+  ["script-src", ["'self'", "'unsafe-eval'", "'nonce-{nonce}'", "https://*.sentry.io", "https://*.firebaseio.com", "https://*.googleapis.com", "https://apis.google.com", "https://accounts.google.com"]],
+  // 'unsafe-inline' omitted — nonces are injected into all inline <style> tags by this handler
+  ["style-src", ["'self'", "'nonce-{nonce}'", "https://fonts.googleapis.com"]],
   ["img-src", ["'self'", "data:", "blob:", "https:"]],
   ["font-src", ["'self'", "data:", "https://fonts.gstatic.com"]],
   // connect-src: explicit allowlist for Firebase, Sentry, Google APIs, backend, and Vercel preview domains
