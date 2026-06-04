@@ -9,15 +9,16 @@
  * Backend URL: https://zerodayguardian-backend.onrender.com
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 const BACKEND = "https://zerodayguardian-backend.onrender.com";
-const TIMEOUT = 30_000; // Render cold starts can take 15-30s
+const FETCH_TIMEOUT = 30_000; // Render cold starts can take 15-30s
+const TEST_TIMEOUT = 45_000; // vitest timeout must exceed fetch timeout
 
 /** Fetch helper with timeout — gives a clear error message on failure */
 async function fetchJson(url: string): Promise<unknown> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT);
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
   try {
     const response = await fetch(url, { signal: controller.signal });
     expect(response.status).toBe(200);
@@ -35,7 +36,7 @@ async function fetchJson(url: string): Promise<unknown> {
 /** Fetch helper that accepts non-200 responses (for auth-required routes) */
 async function fetchStatusAny(url: string): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT);
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
   try {
     const response = await fetch(url, { signal: controller.signal });
     return response;

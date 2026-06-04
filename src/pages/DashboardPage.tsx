@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useUserProgress } from "@/context/UserProgressContext";
 import AnimatedCyberBackground from "@/components/AnimatedCyberBackground";
@@ -24,6 +24,7 @@ const sidebarItems: SidebarItem[] = [
 ];
 
 export default function DashboardPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { progress } = useUserProgress();
@@ -78,12 +79,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <nav className="p-3 space-y-1">
+        <nav className="p-3 space-y-1" aria-label="Dashboard sidebar navigation">
           {sidebarItems.map((item) => (
             <button
               key={item.path}
               onClick={() => { navigate(item.path); setSidebarOpen(false); }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group hover:bg-[var(--theme-overlay)]"
+              aria-current={location.pathname === item.path ? "page" : undefined}
               style={{ color: "var(--theme-text-muted)" }}
               onMouseEnter={(e) => e.currentTarget.style.color = "var(--theme-text)"}
               onMouseLeave={(e) => e.currentTarget.style.color = "var(--theme-text-muted)"}
@@ -122,7 +124,7 @@ export default function DashboardPage() {
               className="btn-cyber-ghost p-3 -m-1"
               aria-label="Toggle sidebar"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -207,13 +209,13 @@ export default function DashboardPage() {
           {/* Recent Activity */}
           <div className="glass-card p-5 animate-fade-in-up">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--theme-text)" }}>Recent Activity</h2>
-            <div className="space-y-3">
+            <div className="space-y-3" role="list" aria-label="Recent activity">
               {[
                 { icon: "🛡️", text: "Threat scan completed", date: new Date(Date.now() - 2 * 60 * 1000), color: "green" },
                 { icon: "📊", text: "Weekly report generated", date: new Date(Date.now() - 1 * 60 * 60 * 1000), color: "blue" },
                 { icon: "⚡", text: "Lab exercise completed", date: new Date(Date.now() - 3 * 60 * 60 * 1000), color: "purple" },
               ].map((activity, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg transition-colors" style={{ backgroundColor: "var(--theme-overlay)" }}
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg transition-colors" role="listitem" style={{ backgroundColor: "var(--theme-overlay)" }}
     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--theme-overlay-hover)"}
     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "var(--theme-overlay)"}>
                   <span className="text-lg">{activity.icon}</span>

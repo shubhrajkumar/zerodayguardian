@@ -1,47 +1,56 @@
-name: ZeroDay Guardian — Build & Deploy
+name: Deploy
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+# Only deploy if CI passed
+if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
 jobs:
-  build:
-    name: Build Application
+  deploy-frontend:
+    name: Deploy Frontend (Vercel)
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 10
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version-file: .nvmrc
+          cache: npm
 
-      - name: Install Dependencies
-        run: npm ci --prefer-offline
+      - name: Install dependencies
+        run: npm install --no-fund --no-audit --prefer-offline
 
-      - name: Create env file
-        run: |
-          echo "VITE_API_URL=https://zerodayguardian-backend.onrender.com" >> .env
-          echo "VITE_APP_NAME=ZeroDay Guardian" >> .env
-
-      - name: Build Production Bundle
-        run: npm run build
+      - name: Build production bundle
+        run: npx vite build
         env:
           NODE_ENV: production
-          VITE_API_URL: https://zerodayguardian-backend.onrender.com
+          VITE_API_BASE_URL: https://zerodayguardian-backend.onrender.com
+          VITE_SITE_URL: https://zerodayguardian-delta.vercel.app
 
-      - name: Verify Build Output
+      - name: Verify build output
         run: |
-          if [ -d "dist" ]; then
-            echo "✅ Build successful"
-            ls -la dist/
+          if [ -d "dist" ] && [ -f "dist/index.html" ]; then
+            echo "✅ Build output verified"
+            echo "### Deploy Build ✅" >> $GITHUB_STEP_SUMMARY
+            echo "- Build size: $(du -sh dist/ | cut -f1)" >> $GITHUB_STEP_SUMMARY
+            echo "- JS chunks: $(ls dist/assets/*.js 2>/dev/null | wc -l)" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Build failed — dist folder missing"
+            echo "❌ Build failed — dist/index.html missing"
             exit 1
           fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-dist
+          path: dist/
+          retention-days: 1

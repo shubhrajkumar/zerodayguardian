@@ -112,7 +112,7 @@
 
     <!-- CSP is enforced primarily via HTTP headers (vercel.json + api/index.mjs with per-request nonce). -->
     <!-- This meta-tag aligns with the HTTP header to prevent conflicts. api/index.mjs strips this tag for HTML responses and injects a nonce-based CSP instead. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://*.firebaseio.com https://*.googleapis.com https://apis.google.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.firebaseio.com https://identitytoolkit.googleapis.com https://*.googleapis.com https://*.ingest.sentry.io https://*.sentry.io https://*.vercel.app https://*.onrender.com https://*.google.com https://accounts.google.com https: wss: ws:; worker-src 'self' blob: https://*.sentry.io; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';" />
+    <!-- CSP is enforced via HTTP header (vercel.json + api/index.mjs nonce). frame-ancestors is ignored in meta tags per spec; handled by HTTP header only. -->
 
     <!-- Vite injects modulepreload for entry points automatically during build -->
   </head>

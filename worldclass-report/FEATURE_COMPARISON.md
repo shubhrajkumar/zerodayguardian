@@ -1,71 +1,41 @@
 # ZeroDay Guardian — Feature Comparison
 
-## vs TryHackMe & CyberMindSpace
+## Current Feature Matrix
 
-| Feature | ZeroDay Guardian | TryHackMe | CyberMindSpace |
-|---------|:-:|:-:|:-:|
-| **Core Platform** | | | |
-| Interactive cyber labs | ✅ | ✅ | ✅ |
-| Browser-based sandbox | ✅ | ✅ | ❌ |
-| Docker-backed lab execution | ✅ (configurable) | ✅ | ❌ |
-| Self-hosted option | ✅ (Docker/Render) | ❌ | ❌ |
-| Offline capability | ✅ (SSR) | ❌ | ❌ |
-| **AI & Mentorship** | | | |
-| AI-powered mentor (ZORVIX) | ✅ | ❌ | ❌ |
-| Adaptive learning paths | ✅ | ✅ (limited) | ❌ |
-| Socratic hint system | ✅ | ❌ | ❌ |
-| AI-guided mission feedback | ✅ | ❌ | ❌ |
-| Multi-provider LLM routing | ✅ | ❌ | ❌ |
-| **OSINT & Intelligence** | | | |
-| Dedicated OSINT module | ✅ | ❌ | ❌ |
-| Domain/IP/username investigation | ✅ | ❌ | ❌ |
-| WHOIS, DNS, MX lookups | ✅ | ❌ | ❌ |
-| Shareable OSINT reports | ✅ | ❌ | ❌ |
-| Breach monitor | ✅ | ❌ | ❌ |
-| **Learning & Programs** | | | |
-| Structured 60-day program | ✅ | ✅ (paths) | ✅ |
-| Daily/weekly missions | ✅ | ✅ | ❌ |
-| Gamification (XP, streaks, badges) | ✅ | ✅ | ✅ |
-| Certifications | ✅ | ✅ | ✅ |
-| CTF events | ✅ | ✅ | ✅ |
-| **Security Tooling** | | | |
-| Website security scanner | ✅ | ❌ | ❌ |
-| HTTP headers analyzer | ✅ | ❌ | ❌ |
-| SSL/TLS checker | ✅ | ❌ | ❌ |
-| AI-powered threat detection | ✅ | ❌ | ❌ |
-| Real-time scan results | ✅ | ❌ | ❌ |
-| **Authentication & Security** | | | |
-| Google OAuth | ✅ | ✅ | ✅ |
-| Email/password auth | ✅ | ✅ | ✅ |
-| JWT with refresh tokens | ✅ | ❌ | ❌ |
-| CSRF protection | ✅ | ❌ | ❌ |
-| Rate limiting | ✅ | ✅ | ❌ |
-| HSTS + security headers | ✅ | ✅ | ❌ |
-| **Compliance** | | | |
-| GDPR/CCPA compliance | ✅ | ❌ | ❌ |
-| User data export | ✅ | ❌ | ❌ |
-| Account deletion API | ✅ | ✅ | ✅ |
-| Cookie consent | ✅ | ✅ | ❌ |
-| **Enterprise** | | | |
-| Self-hosted (Docker/K8s) | ✅ | ❌ | ❌ |
-| Telemetry/monitoring | ✅ (OpenTelemetry) | ✅ | ❌ |
-| Prometheus metrics | ✅ | ❌ | ❌ |
-| Health check endpoints | ✅ (livez/readyz) | ❌ | ❌ |
-| CI/CD ready | ✅ | ❌ | ❌ |
-| **Deployment** | | | |
-| Vercel frontend | ✅ | N/A | N/A |
-| Render backend | ✅ | N/A | N/A |
-| Docker support | ✅ | N/A | N/A |
-| Kubernetes manifests | ✅ | N/A | N/A |
+| Feature | Status | Backend Route | Frontend Page | Notes |
+|---------|--------|---------------|---------------|-------|
+| **Authentication** | ✅ Complete | `/api/auth/*` | `AuthPage.tsx` | Firebase + Google OAuth + Email |
+| **Dashboard** | ✅ Complete | `/api/dashboard/*` | `DashboardPage.tsx` | Stats, adaptive, platform-cockpit |
+| **User Profile** | ✅ Complete | `/api/users/*` | `PublicProfilePage.tsx` | Public profiles, badges |
+| **Cyber Labs** | ✅ Complete | `/api/labs/*` | `LabPage.tsx` | CRUD, filtering, start/complete |
+| **Missions** | ✅ Complete | `/api/missions/*` | Integrated in dashboard | Daily, weekly, start/complete |
+| **Courses** | ✅ Complete | `/api/courses/*` | `LearnPage.tsx` | Catalog, detail, filtering |
+| **Learning Paths** | ✅ Complete | `/api/learning/*` | `ProgramPage.tsx` | Structured tracks |
+| **OSINT** | ✅ Complete | `/api/osint/*` | `OsintPage.tsx` | Domain/IP/username intel |
+| **AI Chat (ZORVIX)** | ✅ Complete | `/api/neurobot/*` | `AssistantPage.tsx` + `Zorvix.tsx` | Adaptive AI mentor |
+| **Tools Hub** | ✅ Complete | Various | `ToolsPage.tsx` + `ToolDetail.tsx` | Web/header/port scanners |
+| **Notifications** | ✅ Complete | `/api/notifications/*` | `NotificationBell.tsx` | Push + in-app |
+| **Blog** | ✅ Complete | Static | `BlogPage.tsx` + `BlogDetail.tsx` | Intel feed |
+| **Resources** | ✅ Complete | Static | `ResourcesPage.tsx` | Curated security resources |
+| **Community** | ✅ Complete | Static | `CommunityPage.tsx` | Leaderboard, threads |
+| **Theme Toggle** | ✅ Complete | N/A | `ThemeToggle.tsx` | Dark/light with persistence |
+| **Cookie Consent** | ✅ Complete | N/A | `CookieConsent.tsx` | GDPR/CCPA compliant |
+| **SEO** | ✅ Complete | N/A | `AppShell.tsx` RouteSeo | Meta, OG, Twitter, JSON-LD |
+| **Error Boundaries** | ✅ Complete | N/A | Multiple levels | Double-wrapped + per-route |
+| **PWA** | ✅ Complete | N/A | `sw.js` | Service worker + manifest |
+| **Gamification** | ✅ Complete | Integrated | XP, streaks, badges | Integrated across pages |
+| **Adaptive Mentor** | ✅ Complete | `/api/adaptive/*` | `AdaptiveMentorContext` | Difficulty adaptation |
+| **Compliance (GDPR)** | ✅ Complete | `/api/compliance/*` | Cookie consent + policy | Data operations |
 
-## Key Differentiators
+## Planned Features (60-Day Roadmap)
 
-1. **ZORVIX AI Mentor** — No other platform offers an adaptive AI mentor with Socratic guidance, multi-provider failover, and real-time mission feedback.
-
-2. **OSINT Command Center** — Dedicated OSINT investigation workflows with WHOIS, DNS, breach monitoring, and shareable reports — unique in the market.
-
-3. **Comprehensive Compliance** — Full GDPR/CCPA data export and deletion APIs make this suitable for enterprise and EU users.
-
-4. **Open Architecture** — Self-hostable via Docker/K8s with OpenTelemetry monitoring, health checks, and Prometheus metrics — unlike SaaS-only competitors.
-
-5. **Security-First Design** — CSRF protection, rate limiting, JWT refresh tokens, HSTS preload, and permission policies are built in from day one.
+| Feature | Priority | Target Date |
+|---------|----------|-------------|
+| Real Sentry DSN integration | High | Week 1 |
+| WCAG 2.1 AA compliance | High | Week 2 |
+| Zorvix-style profile UI | Medium | Week 5 |
+| Real-time RUM metrics | Medium | Week 3 |
+| CI/CD quality gates | Medium | Week 7 |
+| GDPR data export/delete | Medium | Week 7 |
+| Command palette (Cmd+K) | Low | Week 5 |
+| Voice input for ZORVIX | Low | Week 6 |

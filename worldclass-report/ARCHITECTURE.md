@@ -1,118 +1,95 @@
-# ZeroDay Guardian — Architecture
+# ZeroDay Guardian — Architecture Overview
 
-## System Overview
+## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Browser (User)                        │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │  React SPA (Vite + TypeScript)                    │  │
-│  │  • 23 lazy-loaded routes                          │  │
-│  │  • React Query for data fetching                  │  │
-│  │  • Context API for auth/progress/mission state    │  │
-│  │  • Tailwind CSS + CSS variables (dark/light mode) │  │
-│  └────────────┬──────────────────────────────────────┘  │
-└───────────────┼──────────────────────────────────────────┘
-                │ HTTPS / CORS / CSRF
-                ▼
-┌─────────────────────────────────────────────────────────┐
-│              Vercel (Frontend Hosting)                    │
-│  • Edge network                                         │
-│  • Serverless API function (api/index.mjs)              │
-│  • Static assets + CSP headers                          │
-└────────────┬────────────────────────────────────────────┘
-             │ HTTPS
-             ▼
-┌─────────────────────────────────────────────────────────┐
-│          Render (Backend Hosting)                        │
-│                                                          │
-│  ┌────────────────────────────────────────────────────┐ │
-│  │  Express.js Server (backend/server.js)             │ │
-│  │                                                    │ │
-│  │  Middleware Stack:                                  │ │
-│  │  1. CORS (production origin validation)            │ │
-│  │  2. Helmet (security headers)                      │ │
-│  │  3. Cookie parser                                  │ │
-│  │  4. Request context + audit log                    │ │
-│  │  5. Compression (excluding SSE)                    │ │
-│  │  6. JSON body parser (1mb limit)                   │ │
-│  │  7. CSRF token issuance + verification             │ │
-│  │  8. Input sanitization                             │ │
-│  │  9. Request guard (request validation)             │ │
-│  │  10. Session management (encrypted cookies)        │ │
-│  │  11. Optional auth parsing                         │ │
-│  │  12. Rate limiting (per-endpoint)                  │ │
-│  │  13. Route handlers                                │ │
-│  │  14. 404 handler                                   │ │
-│  │  15. Error handler                                 │ │
-│  └────────────────────────────────────────────────────┘ │
-│                         │                                │
-│  ┌────────────────────────────────────────────────────┐ │
-│  │  Routes:                                           │ │
-│  │  /api/auth/*      → authRoutes                     │ │
-│  │  /api/labs        → labsRoutes                     │ │
-│  │  /api/missions    → missionsRoutes                 │ │
-│  │  /api/courses     → coursesRoutes                  │ │
-│  │  /api/users       → userRoutes                     │ │
-│  │  /api/compliance  → complianceRoutes               │ │
-│  │  /api/dashboard   → dashboardRoutes                │ │
-│  │  /api/osint       → osintRoutes                    │ │
-│  │  /api/neurobot    → neurobotRoutes + chat          │ │
-│  │  /api/scans       → scanRoutes                     │ │
-│  │  /api/notifications → notificationRoutes           │ │
-│  │  /api/intelligence → intelligenceRoutes            │ │
-│  │  /api/adaptive    → adaptiveRoutes                 │ │
-│  │  /api/mission     → missionRoutes                  │ │
-│  │  /api/platform    → platformRoutes                 │ │
-│  │  /pyapi           → pyApiCompatRoutes              │ │
-│  └────────────────────────────────────────────────────┘ │
-│                         │                                │
-│  ┌────────────────────────────────────────────────────┐ │
-│  │  Database Layer:                                    │ │
-│  │  • MongoDB (native driver + Mongoose)               │ │
-│  │  • Collections: users, labs, missions, courses,     │ │
-│  │    lab_progress, mission_progress, scans,           │ │
-│  │    osint_queries, conversations, security_events,   │ │
-│  │    growth_* (certifications, ctf, billing, etc.)   │ │
-│  │  • Redis (optional, for SSE checkpoint store)       │ │
-│  └────────────────────────────────────────────────────┘ │
-│                         │                                │
-│  ┌────────────────────────────────────────────────────┐ │
-│  │  External Services:                                 │ │
-│  │  • OpenRouter / Google AI / OpenAI / DeepSeek (LLM) │ │
-│  │  • Firebase (optional auth)                         │ │
-│  │  • Stripe (subscription billing)                    │ │
-│  │  • WHOIS XML API (OSINT)                            │ │
-│  │  • LeakCheck / DeHashed (breach data)              │ │
-│  │  • Google OAuth                                     │ │
-│  └────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                        VERCEL (Frontend)                         │
+│                                                                  │
+│  ┌──────────┐  ┌──────────────┐  ┌────────────────────────────┐ │
+│  │ index.html│  │ api/index.mjs│  │ Static Assets (dist/)      │ │
+│  │ (SPA)     │  │ (CSP Nonce)  │  │ JS/CSS/Fonts/Images        │ │
+│  └─────┬─────┘  └──────┬───────┘  └────────────────────────────┘ │
+│        │               │                                          │
+│  ┌─────┴───────────────┴──────┐                                   │
+│  │     React App (SPA)        │                                   │
+│  │  ├─ App.tsx (critical)     │                                   │
+│  │  ├─ AppShell.tsx (lazy)    │                                   │
+│  │  ├─ Pages (lazy)           │                                   │
+│  │  ├─ Components             │                                   │
+│  │  └─ Contexts/Providers     │                                   │
+│  └────────────┬───────────────┘                                   │
+│               │ fetch() with CSRF token                           │
+└───────────────┼──────────────────────────────────────────────────┘
+                │
+                │ CORS: zerodayguardian-delta.vercel.app
+                │
+┌───────────────┼──────────────────────────────────────────────────┐
+│               │          RENDER (Backend)                         │
+│  ┌────────────┴───────────────────────────────────────────────┐   │
+│  │                Express.js Server                           │   │
+│  │                                                            │   │
+│  │  Middleware Stack:                                         │   │
+│  │  ├─ CORS (origin allowlist)                               │   │
+│  │  ├─ Helmet (security headers)                             │   │
+│  │  ├─ Compression (gzip/brotli)                             │   │
+│  │  ├─ Request Context (requestId, traceId)                  │   │
+│  │  ├─ CSRF Protection (encrypted tokens)                    │   │
+│  │  ├─ Input Sanitization                                    │   │
+│  │  ├─ Rate Limiting (per-route)                             │   │
+│  │  ├─ Auth (Firebase verify + session)                      │   │
+│  │  └─ Error Handler                                         │   │
+│  │                                                            │   │
+│  │  Route Modules:                                           │   │
+│  │  ├─ /api/auth/*          (Firebase + Google OAuth)        │   │
+│  │  ├─ /api/dashboard/*     (Stats, Adaptive, Cockpit)      │   │
+│  │  ├─ /api/users/*         (Profile, Sync, Update)         │   │
+│  │  ├─ /api/labs/*          (CRUD, Start, Complete)         │   │
+│  │  ├─ /api/missions/*      (Daily, Weekly, Start, Complete)│   │
+│  │  ├─ /api/courses/*       (Catalog, Detail)               │   │
+│  │  ├─ /api/learning/*      (Tracks, Progress)              │   │
+│  │  ├─ /api/neurobot/*      (AI Chat via LLM)              │   │
+│  │  ├─ /api/osint/*         (Domain/IP/Username Intel)      │   │
+│  │  ├─ /api/scans/*         (Web/Header/Port Scans)        │   │
+│  │  ├─ /api/notifications/* (Push, In-App)                  │   │
+│  │  ├─ /api/recommendations/*(AI Suggestions)              │   │
+│  │  ├─ /api/mission-control/*(Progress Tracking)           │   │
+│  │  ├─ /api/adaptive/*      (Difficulty Adaptation)        │   │
+│  │  ├─ /api/compliance/*    (GDPR Data Ops)                │   │
+│  │  ├─ /api/files/*         (Upload, Processing)           │   │
+│  │  ├─ /api/intelligence/*  (Threat Intel)                 │   │
+│  │  └─ /pyapi/*             (Python API Compat)            │   │
+│  │                                                            │   │
+│  │  Data Layer:                                              │   │
+│  │  ├─ MongoDB Atlas (native driver + Mongoose)             │   │
+│  │  ├─ Redis (caching, rate limiting)                       │   │
+│  │  └─ Firebase Auth (token verification)                   │   │
+│  │                                                            │   │
+│  │  Observability:                                           │   │
+│  │  ├─ OpenTelemetry (distributed tracing)                  │   │
+│  │  ├─ Prometheus metrics                                   │   │
+│  │  └─ Structured logging                                   │   │
+│  └────────────────────────────────────────────────────────────┘   │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ## Data Flow
 
 ```
-User Request → Vercel Edge → Express Server → Middleware Pipeline → Route Handler → MongoDB
-                                                                                         │
-                                                                                         ▼
-User Response ← JSON/SSE ← Middleware Pipeline ← Route Handler ← Model/Service Layer ←───┘
-```
-
-## Authentication Flow
-
-```
-1. POST /api/auth/login → validates credentials → issues JWT (access + refresh)
-2. Frontend stores tokens → fetches CSRF token from /api/auth/csrf
-3. All API calls include: Authorization: Bearer <access_token> + X-CSRF-Token: <csrf>
-4. On 401 → POST /api/auth/refresh → new access token
-5. On refresh failure → clear state → redirect to /auth
+User Browser → Vercel Edge → React SPA → fetch(Backend URL) → Render Express
+                                              ↓
+                                    MongoDB Atlas ←→ Redis Cache
+                                              ↓
+                                    Firebase Auth (token verify)
 ```
 
 ## Key Design Decisions
 
-1. **Dual Database Drivers**: Native MongoDB driver for high-performance queries, Mongoose for schema validation and model layers
-2. **Token-based CSRF**: Double-submit cookie pattern prevents CSRF while allowing stateless API
-3. **Multi-provider LLM Routing**: Failover between OpenRouter, Google AI, OpenAI, DeepSeek with circuit breaker
-4. **Lazy-loaded Frontend**: All routes are lazy-loaded with Suspense for optimal initial bundle size
-5. **SSE for Chat**: Server-Sent Events for AI chat streaming with heartbeat and checkpoint store
-6. **Observability**: OpenTelemetry + Prometheus metrics + Sentry error tracking
+1. **Monorepo** — Frontend and backend share a single repository for simplicity
+2. **Dual database driver** — Native MongoDB driver for performance + Mongoose for schema validation
+3. **Per-request CSP nonce** — Eliminates `unsafe-inline` from production CSP
+4. **Lazy everything** — AppShell, pages, Firebase, Sentry, toasters all lazy-loaded
+5. **Safe data utilities** — Prevent all `undefined.map()` crashes at the utility level
+6. **Mock auth mode** — Enables frontend development without backend
+7. **Free tier optimization** — Keep-alive pings, cold start detection, server wake-up UI
