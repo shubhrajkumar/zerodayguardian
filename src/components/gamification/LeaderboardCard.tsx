@@ -110,10 +110,10 @@ export default function LeaderboardCard() {
             <div className="flex items-end justify-center gap-3 mb-4">
               {[1, 0, 2].map((podiumIndex) => {
                 const entry = topThree[podiumIndex];
-                if (!entry) return <div key={podiumIndex} className="w-20" />;
+                if (!entry) return <div key={`podium-placeholder-${podiumIndex}`} className="w-20" />;
                 const isFirst = podiumIndex === 0;
                 return (
-                  <div key={entry.position} className="flex flex-col items-center w-20">
+                  <div key={`podium-${entry.alias}-${entry.position}`} className="flex flex-col items-center w-20">
                     <div className="text-center mb-1">
                       <p className="text-xs font-bold" style={{ color: "var(--theme-text)" }}>{entry.alias}</p>
                       <p className="text-[10px]" style={{ color: "var(--theme-text-dim)" }}>{entry.points} XP</p>
