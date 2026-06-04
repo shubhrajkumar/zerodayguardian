@@ -1,9 +1,35 @@
 import { ReactNode, Suspense, lazy, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Zorvix from "@/components/Zorvix";
 import AssistantCommandPalette from "@/components/AssistantCommandPalette";
 import CookieConsent from "@/components/CookieConsent";
+
+/** Floating ZORVIX launcher — navigates to the full-screen /assistant page */
+function ZorvixLauncher() {
+  const navigate = useNavigate();
+  return (
+    <div
+      style={{ position: "fixed", right: "1rem", bottom: "1rem", zIndex: 1400 }}
+    >
+      <button
+        type="button"
+        onClick={() => navigate("/assistant")}
+        className="group inline-flex items-center gap-3 rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)]/90 px-3 py-3 text-left text-[var(--theme-text)] shadow-lg backdrop-blur transition hover:border-[var(--theme-accent-blue)]/30 hover:shadow-[0_0_24px_rgba(0,212,255,0.15)] sm:px-4"
+        aria-label="Open ZORVIX AI Assistant"
+      >
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[var(--theme-accent-blue)] to-[var(--theme-accent-green)] text-white">
+          <Sparkles className="h-5 w-5" />
+        </span>
+        <span className="hidden min-w-0 sm:block">
+          <strong className="block text-sm font-semibold tracking-tight text-[var(--theme-text)]">ZORVIX AI</strong>
+          <span className="block text-xs text-[var(--theme-text-muted)]">Ask anything</span>
+        </span>
+      </button>
+    </div>
+  );
+}
 
 const InteractiveScene = lazy(() => import("@/components/InteractiveScene"));
 const AnimatedCyberBackground = lazy(() => import("@/components/AnimatedCyberBackground"));
@@ -67,7 +93,8 @@ const Layout = ({ children }: LayoutProps) => {
         <Footer />
       </div>
       <AssistantCommandPalette />
-      <Zorvix />
+      {/* ZORVIX floating launcher — navigates to full-screen /assistant page */}
+      <ZorvixLauncher />
       <CookieConsent />
     </div>
   );

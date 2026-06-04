@@ -667,7 +667,12 @@ const TypingBubble = () => (
   </div>
 );
 
-const Zorvix = () => {
+interface ZorvixProps {
+  /** Render as a full-screen page (no overlay, no portal, no launcher button) */
+  fullScreen?: boolean;
+}
+
+const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
   const { authState, isAuthenticated } = useAuth();
   const { nextMissionHook, recommendations } = useMissionSystem();
   const [isOpen, setIsOpen] = useState(false);
@@ -1545,10 +1550,160 @@ const Zorvix = () => {
     await runAssistant(lastFailure.prompt, lastFailure.topic, lastFailure.attachmentPayload);
   }, [isPreparingAttachment, isStreaming, lastFailure, runAssistant]);
 
-  const portalTarget = typeof document !== "undefined" ? document.body : null;
-  if (!portalTarget) return null;
+  // ── Full-screen mode: auto-load session on mount ──
+  useEffect(() => {
+    if (fullScreen && !messages.length) void loadSession();
+  }, [fullScreen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return createPortal(
+  // ── Full-screen mode: render chat shell directly (no portal, no overlay, no launcher) ──
+  if (fullScreen) {
+    const chatShell = (
+      <section className="mx-auto flex h-full w-full max-w-[1240px] flex-col p-2 sm:p-4">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-[var(--theme-border)] text-[var(--theme-text)] sm:rounded-[30px]">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.14),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(14,165,233,0.06),transparent_24%),linear-gradient(180deg,transparent,rgba(4,10,18,0.18)_40%,rgba(2,5,10,0.28))]"
+          />
+          <header className="relative z-10 flex items-center justify-between gap-3 border-b border-[var(--theme-border)] bg-[var(--theme-bg)]/96 px-3 py-2.5 sm:px-4 sm:py-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] text-[var(--theme-text)]">
+                <Bot className="h-4 w-4" />
+              </span>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${!online ? "bg-slate-500" : backendHealth?.status && backendHealth.status !== "ok" ? "bg-amber-500" : "bg-[#00ff88]"}`} />
+                <span className="text-sm font-semibold text-[var(--theme-text)]">{ZORVIX_NAME} AI</span>
+                {activeTopic ? (
+                  <span className="max-w-[42vw] truncate rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--theme-text-muted)] sm:max-w-[240px]">
+                    {activeTopic.title}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`h-2 w-2 rounded-full ${!online ? "bg-slate-500" : backendHealth?.status === "down" ? "bg-red-500" : "bg-emerald-500"}`} />
+              <span className="text-xs text-[var(--theme-text-muted)]">{statusTone}</span>
+            </div>
+          </header>
+
+          <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col">
+              {isLoadingSession && !visibleMessages.length ? (
+                <div className="mx-auto flex min-h-full w-full max-w-[880px] items-center justify-center py-10">
+                  <div className="inline-flex items-center gap-3 rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] px-4 py-3 text-sm font-medium text-[var(--theme-text)]">
+                    <Loader2 className="h-4 w-4 animate-spin text-cyan-300" />
+                    ZORVIX session loading
+                  </div>
+                </div>
+              ) : !visibleMessages.length ? (
+                <div className="mx-auto flex min-h-full w-full max-w-[760px] flex-col justify-center gap-4 py-4 sm:gap-5">
+                  <div className="space-y-2 px-1">
+                    <h3 className="text-xl font-semibold tracking-tight text-[var(--theme-text)] sm:text-2xl">Ask ZORVIX</h3>
+                    <p className="max-w-[46ch] text-sm leading-6 text-[var(--theme-text-muted)]">
+                      Clear guidance, next actions, and focused cyber answers without noise.
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    {(missionStarterSuggestions.length ? missionStarterSuggestions : DEFAULT_SUGGESTIONS).slice(0, 4).map((suggestion) => (
+                      <button key={suggestion} type="button" onClick={() => void runAssistant(suggestion)} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] px-4 py-3 text-left text-sm font-medium text-[var(--theme-text)] transition hover:border-[var(--theme-accent-blue)]/30 hover:bg-[var(--theme-overlay-hover)]">
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="mx-auto flex w-full max-w-[840px] flex-col gap-3 sm:gap-4">
+                  {visibleMessages.map((message) => {
+                    const isAssistant = message.role === "assistant";
+                    const isPendingAssistant = isAssistant && isStreaming && !message.content.trim();
+                    return (
+                      <article key={message.id} className={`flex w-full ${isAssistant ? "justify-start" : "justify-end"}`}>
+                        <div className={`min-w-0 max-w-[92%] rounded-[22px] px-4 py-3 text-[15px] leading-7 text-[var(--theme-text)] sm:max-w-[78%] sm:px-5 ${isAssistant ? "border-l-[3px] border-[#00ff88] bg-[var(--theme-surface)]" : "bg-[var(--theme-card)]"}`}>
+                          {isPendingAssistant ? (
+                            <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-[var(--theme-surface)] px-4 py-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] fadeInUp">
+                              {[0, 1, 2].map((dot) => (
+                                <span key={dot} className="h-2 w-2 animate-bounce rounded-full bg-[var(--theme-accent-blue)]" style={{ animationDelay: `${dot * 0.12}s`, animationDuration: "0.9s" }} />
+                              ))}
+                              <span className="text-xs font-medium text-[var(--theme-text-dim)]">{ZORVIX_NAME} thinking...</span>
+                            </div>
+                          ) : (
+                            <div className={`space-y-3 ${isAssistant ? "zorvix-assistant-copy" : "zorvix-user-copy"}`}>
+                              {isAssistant ? renderMarkdownLite(message.content) : <p className="whitespace-pre-wrap">{message.content}</p>}
+                            </div>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                  <div ref={bottomRef} />
+                </div>
+              )}
+            </div>
+
+            {/* Composer — reused in both modes */}
+            <div className="border-t border-[var(--theme-border)] bg-[var(--theme-bg)]/98 px-2.5 py-2.5 backdrop-blur sm:px-4 sm:py-3">
+              <div className="mx-auto flex w-full max-w-[840px] flex-col gap-2">
+                {lastFailure?.error ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-amber-500/20 bg-amber-950/30 px-3 py-2.5 text-xs text-amber-100 sm:text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">{lastFailure.error.title}</p>
+                      <p className="mt-1 text-amber-100/80">{renderFailureDetail(lastFailure.error)}</p>
+                    </div>
+                    {lastFailure.error.retryable ? (
+                      <button type="button" onClick={() => void retryLastFailure()} disabled={isStreaming || isLoadingSession || isPreparingAttachment} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-amber-600/30 px-3 text-xs font-medium text-amber-100 transition disabled:cursor-not-allowed disabled:opacity-60">
+                        <RefreshCcw className="h-3.5 w-3.5" />
+                        Retry
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+                <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+                  <div className="flex items-end gap-2">
+                    <div className="min-w-0 flex-1 rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-card)] px-3 py-2">
+                      {attachment ? (
+                        <div className="mb-2.5 rounded-[18px] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-2.5">
+                          <div className="flex items-start gap-3">
+                            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--theme-overlay)] text-[var(--theme-text-muted)] shadow-sm">
+                              <FileText className="h-5 w-5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <span className="truncate text-sm font-medium text-[var(--theme-text)]">{attachment.filename}</span>
+                              <p className="mt-1 text-xs leading-5 text-[var(--theme-text-dim)]">{formatBytes(attachment.size)} ready</p>
+                            </div>
+                            <button type="button" onClick={() => resetAttachment("Attachment removed.")} className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--theme-text-dim)] transition hover:text-[var(--theme-text)]" aria-label="Remove attachment">
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+                      <textarea ref={textareaRef} rows={1} value={input} onChange={(event) => { hideFreshSessionBanner(); setInput(event.target.value); }} onFocus={() => hideFreshSessionBanner()} onKeyDown={handleComposerKeyDown} placeholder="Ask a question, share a problem, or request the next step." className="min-h-[44px] w-full resize-none border-0 bg-transparent px-0.5 py-1 text-[15px] leading-6 text-[var(--theme-text)] outline-none placeholder:text-[var(--theme-text-dim)] sm:min-h-[48px]" aria-label={`Message ${ZORVIX_NAME}`} />
+                    </div>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isPreparingAttachment} className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-card)] text-[var(--theme-text)] transition hover:border-[var(--theme-accent-blue)]/30 disabled:cursor-not-allowed disabled:opacity-60" aria-label="Attach file">
+                      {isPreparingAttachment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+                    </button>
+                    <button type="submit" disabled={(!input.trim() && !attachment) || isStreaming || isLoadingSession || isPreparingAttachment} className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--theme-accent-green)] text-[var(--theme-bg)] transition hover:shadow-[0_0_0_1px_rgba(0,255,136,0.18),0_14px_32px_rgba(0,255,136,0.18)] disabled:cursor-not-allowed disabled:opacity-50">
+                      {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-end px-1 text-[11px] text-[var(--theme-text-dim)]">
+                    <span className="max-w-full truncate">{statusTone}{statusHint ? ` \u2022 ${statusHint}` : ""}</span>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+
+    return chatShell;
+  }
+
+  // ── Overlay mode (default): portal-based floating chat ──
+  // NOTE: When fullScreen=false and no portal target, render nothing.
+  // The ZorvixLauncher in Layout.tsx handles navigation to /assistant.
+  if (typeof document === "undefined") return null;
+
+  return (
     <>
       <div
         className="zorvix-launcher-root"
@@ -1574,7 +1729,7 @@ const Zorvix = () => {
         </button>
       </div>
 
-      {isOpen ? (
+      {isOpen ? createPortal(
         <div
           className="zorvix-overlay fixed inset-0 bg-[var(--theme-bg)]/90 backdrop-blur-md"
           style={{ zIndex: 1450, opacity: 1, visibility: "visible", pointerEvents: "auto", display: "block" }}
@@ -1954,12 +2109,12 @@ const Zorvix = () => {
               </div>
             </div>
           </section>
-        </div>
+        </div>,
+        document.body
       ) : null}
 
       <input ref={fileInputRef} type="file" accept={ATTACHMENT_ACCEPT} className="hidden" onChange={handleAttachmentPick} />
-    </>,
-    portalTarget
+    </>
   );
 };
 
