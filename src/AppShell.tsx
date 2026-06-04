@@ -91,6 +91,8 @@ const PublicProfilePage = lazy(() => import("./pages/PublicProfilePage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const MissionsPage = lazy(() => import("./pages/MissionsPage"));
 
 // ── Site config ──
 const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "").replace(/\/+$/, "");
@@ -215,6 +217,18 @@ const routeSeoConfig: RouteSeoConfig[] = [
     title: "Cyber Portfolio | ZeroDay Guardian",
     description: "Review public cyber progress, badges, and achievement signals from a shareable ZeroDay Guardian profile.",
     keywords: "cyber portfolio, public profile, cybersecurity achievements, cyber resume",
+  },
+  {
+    patterns: ["/profile"],
+    title: "My Profile | ZeroDay Guardian",
+    description: "View your XP, streak, badges, leaderboard rank, and recent activity.",
+    keywords: "cyber profile, xp, streak, badges, leaderboard",
+  },
+  {
+    patterns: ["/missions"],
+    title: "Missions | ZeroDay Guardian",
+    description: "Complete daily and weekly missions to earn XP, level up, and unlock achievement badges.",
+    keywords: "cyber missions, daily missions, weekly missions, xp, achievements",
   },
 ];
 
@@ -393,6 +407,8 @@ const appRoutes: AppRouteDefinition[] = [
   { path: "/u/:handle", component: PublicProfilePage, requiresAuth: true },
   { path: "/security", component: SecuritySettingsPage, requiresAuth: true },
   { path: "/dashboard", component: DashboardPage, requiresAuth: true },
+  { path: "/profile", component: ProfilePage, requiresAuth: true },
+  { path: "/missions", component: MissionsPage, requiresAuth: true },
 ];
 
 const renderRouteElement = (PageComponent: AppPageComponent, requiresAuth = false) => {
