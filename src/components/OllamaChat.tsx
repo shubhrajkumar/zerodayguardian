@@ -225,6 +225,44 @@ export default function OllamaChat({
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {safeArray(messages).map(renderMessage)}
+
+        {/* Quick prompts — shown when only the welcome message exists */}
+        {messages.length === 1 && !isTyping && (
+          <div className="flex flex-col items-start gap-2 animate-fade-in px-1">
+            <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>Quick prompts:</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                "What is SQL Injection?",
+                "Explain network scanning",
+                "How to start ethical hacking?",
+                "What is OSINT?",
+                "Explain XSS attacks",
+              ].map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => { setInput(prompt); inputRef.current?.focus(); }}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 hover:scale-[1.03]"
+                  style={{
+                    backgroundColor: "var(--theme-overlay)",
+                    border: "1px solid var(--theme-border)",
+                    color: "var(--theme-text-muted)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--theme-accent-blue)";
+                    e.currentTarget.style.color = "var(--theme-accent-blue)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--theme-border)";
+                    e.currentTarget.style.color = "var(--theme-text-muted)";
+                  }}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {isTyping && (
           <div className="flex justify-start animate-fade-in">
             <div className="glass-card rounded-2xl rounded-bl-md p-4" style={{ borderColor: "var(--theme-border)" }}>

@@ -45,7 +45,7 @@ describe("OllamaChat", () => {
 
   it("renders send button", () => {
     renderChat();
-    expect(screen.getByRole("button")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /send message/i })).toBeTruthy();
   });
 
   it("renders disclaimer text", () => {
@@ -59,13 +59,13 @@ describe("OllamaChat", () => {
 
   it("disables send button when input is empty", () => {
     renderChat();
-    expect(screen.getByRole("button")).toBeDisabled();
+    expect(screen.getByRole("button", { name: /send message/i })).toBeDisabled();
   });
 
   it("enables send button when input has text", async () => {
     renderChat();
     await userEvent.type(screen.getByRole("textbox"), "Hello");
-    expect(screen.getByRole("button")).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /send message/i })).not.toBeDisabled();
   });
 
   // ── Sending Messages ──
@@ -73,7 +73,7 @@ describe("OllamaChat", () => {
   it("adds user message when send is clicked", async () => {
     renderChat();
     await userEvent.type(screen.getByRole("textbox"), "What is a firewall?");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     expect(screen.getByText("What is a firewall?")).toBeTruthy();
   });
 
@@ -81,7 +81,7 @@ describe("OllamaChat", () => {
     renderChat();
     const textarea = screen.getByRole("textbox");
     await userEvent.type(textarea, "Hello");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     expect((textarea as HTMLTextAreaElement).value).toBe("");
   });
 
@@ -91,7 +91,7 @@ describe("OllamaChat", () => {
     await userEvent.type(textarea, "Hello");
     fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false });
     expect(screen.getByText("Hello")).toBeTruthy();
-  });
+  })
 
   it("does not send on Shift+Enter", async () => {
     renderChat();
@@ -99,19 +99,19 @@ describe("OllamaChat", () => {
     await userEvent.type(textarea, "Hello");
     fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true });
     expect(screen.getByDisplayValue("Hello")).toBeTruthy();
-  });
+  })
 
   it("does not send empty message", async () => {
     renderChat();
     const initial = screen.getByText(WELCOME_TEXT);
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     expect(screen.getByText(WELCOME_TEXT)).toBe(initial);
   });
 
   it("does not send whitespace-only message", async () => {
     renderChat();
     await userEvent.type(screen.getByRole("textbox"), "   ");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     expect(screen.queryByText("   ")).toBeFalsy();
   });
 
@@ -120,14 +120,14 @@ describe("OllamaChat", () => {
   it("shows typing indicator after sending a message", async () => {
     renderChat();
     await userEvent.type(screen.getByRole("textbox"), "Hello");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     expect(document.querySelectorAll(".animate-typing-dot").length).toBe(3);
   });
 
   it("hides typing indicator after response is generated", async () => {
     renderChat();
     await userEvent.type(screen.getByRole("textbox"), "Hello");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     await waitFor(
       () =>
         expect(document.querySelectorAll(".animate-typing-dot").length).toBe(0),
@@ -139,7 +139,7 @@ describe("OllamaChat", () => {
     renderChat();
     const textarea = screen.getByRole("textbox");
     await userEvent.type(textarea, "Hello");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     expect(textarea).toBeDisabled();
     await waitFor(
       () => expect(textarea).not.toBeDisabled(),
@@ -152,7 +152,7 @@ describe("OllamaChat", () => {
   it("renders assistant response after user message", async () => {
     renderChat();
     await userEvent.type(screen.getByRole("textbox"), "Hello");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     await waitFor(
       () => expect(screen.getByText(/I'm a local AI assistant/)).toBeTruthy(),
       { timeout: ASYNC_TIMEOUT }
@@ -165,7 +165,7 @@ describe("OllamaChat", () => {
     const mockOnSend = vi.fn().mockResolvedValue("Custom response");
     renderChat({ onSend: mockOnSend });
     await userEvent.type(screen.getByRole("textbox"), "Test message");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     expect(mockOnSend).toHaveBeenCalledWith("Test message");
     await waitFor(
       () => expect(screen.getByText("Custom response")).toBeTruthy(),
@@ -177,7 +177,7 @@ describe("OllamaChat", () => {
     const mockOnSend = vi.fn().mockRejectedValue(new Error("Network error"));
     renderChat({ onSend: mockOnSend });
     await userEvent.type(screen.getByRole("textbox"), "Test");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     await waitFor(
       () =>
         expect(
@@ -194,7 +194,7 @@ describe("OllamaChat", () => {
   it("renders code blocks from response", async () => {
     renderChat();
     await userEvent.type(screen.getByRole("textbox"), "Show code");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     await waitFor(
       () =>
         expect(document.querySelectorAll("pre").length).toBeGreaterThan(0),
@@ -205,7 +205,7 @@ describe("OllamaChat", () => {
   it("renders code block language label", async () => {
     renderChat();
     await userEvent.type(screen.getByRole("textbox"), "Show python");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     await waitFor(
       () => expect(screen.getByText("python")).toBeTruthy(),
       { timeout: ASYNC_TIMEOUT }
@@ -215,7 +215,7 @@ describe("OllamaChat", () => {
   it("renders copy button on code blocks", async () => {
     renderChat();
     await userEvent.type(screen.getByRole("textbox"), "Show code");
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
     await waitFor(
       () =>
         expect(screen.getAllByText("Copy").length).toBeGreaterThan(0),

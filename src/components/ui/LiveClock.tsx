@@ -1,68 +1,57 @@
+/**
+ * LiveClock — real-time clock that updates every minute.
+ *
+ * Renders: "Mon, 04 Jun 2026 • 14:32"
+ * Uses monospace font, muted color, updates every 60s.
+ */
 import { useState, useEffect } from "react";
 
-const formatLiveTime = (): string => {
-  const now = new Date();
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  };
-  return now.toLocaleDateString("en-US", options).replace(",", " •");
-};
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-const formatRelativeTime = (date: Date): string => {
+function formatClock(date: Date): string {
+  const day = DAYS[date.getDay()];
+  const d = String(date.getDate()).padStart(2, "0");
+  const month = MONTHS[date.getMonth()];
+  const y = date.getFullYear();
+  const h = String(date.getHours()).padStart(2, "0");
+  const m = String(date.getMinutes()).padStart(2, "0");
+  return `${day}, ${d} ${month} ${y} \u2022 ${h}:${m}`;
+}
+
+/**
+ * Format a Date as a relative time string (e.g. "2 minutes ago", "3 hours ago").
+ */
+export function formatRelativeTime(date: Date): string {
   const now = Date.now();
-  const diffMs = now - date.getTime();
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHr = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHr / 24);
+  const diff = now - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months === 1 ? "" : "s"} ago`;
+}
 
-  if (diffSec < 60) return "Just now";
-  if (diffMin < 60) return `${diffMin} ${diffMin === 1 ? "minute" : "minutes"} ago`;
-  if (diffHr < 24) return `${diffHr} ${diffHr === 1 ? "hour" : "hours"} ago`;
-  if (diffDay === 1) return "Yesterday";
-  if (diffDay < 7) return `${diffDay} days ago`;
-  if (diffDay < 30) return `${Math.floor(diffDay / 7)} ${Math.floor(diffDay / 7) === 1 ? "week" : "weeks"} ago`;
-
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-export const LiveClock = () => {
-  const [time, setTime] = useState(formatLiveTime);
+export default function LiveClock({ className = "" }: { className?: string }) {
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    setTime(formatLiveTime());
-    const interval = setInterval(() => {
-      setTime(formatLiveTime());
-    }, 60_000); // Update every minute
-    return () => clearInterval(interval);
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
   }, []);
 
   return (
     <time
-      dateTime={new Date().toISOString()}
-      title={new Date().toISOString()}
-      style={{
-        color: "var(--color-text-muted, #94a3b8)",
-        fontSize: "13px",
-        fontFamily: "monospace",
-        whiteSpace: "nowrap",
-        letterSpacing: "0.02em",
-      }}
+      dateTime={now.toISOString()}
+      className={`font-mono text-xs tabular-nums ${className}`}
+      style={{ color: "var(--text-muted, #64748b)" }}
     >
-      {time}
+      {formatClock(now)}
     </time>
   );
-};
-
-export { formatRelativeTime };
-export default LiveClock;
+}
