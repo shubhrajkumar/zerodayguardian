@@ -139,7 +139,7 @@ export default function LeaderboardCard() {
           <div className="space-y-1.5">
             {rest.map((entry) => (
               <div
-                key={entry.position}
+                key={`list-${entry.alias}-${entry.position}`}
                 className="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors"
                 style={{ backgroundColor: "var(--theme-overlay)" }}
               >
