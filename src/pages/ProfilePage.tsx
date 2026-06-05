@@ -36,7 +36,7 @@ export default function ProfilePage() {
   const handle = profile?.handle || displayName.toLowerCase().replace(/\s+/g, ".");
   const xp = progress?.xp ?? snapshot.totalXp;
   const streak = progress?.streak ?? snapshot.streakDays;
-  const rank = progress?.rank || snapshot.level >= 7 ? "Expert" : snapshot.level >= 5 ? "Specialist" : "Operative";
+  const rank = progress?.rank || (snapshot.level >= 7 ? "Expert" : snapshot.level >= 5 ? "Specialist" : "Operative");
   const labsCompleted = progress?.completedLabs ?? 0;
 
   useEffect(() => {

@@ -284,4 +284,124 @@ describe("DashboardPage", () => {
     const sentinelElements = screen.getAllByText("Cyber Sentinel");
     expect(sentinelElements.length).toBeGreaterThanOrEqual(1);
   });
+
+  // ── Edge Cases ──
+
+  it("hides streak message when streak is 0", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2025, 0, 1, 14, 0, 0));
+    mockUseUserProgress.mockReturnValue({ progress: { ...defaultProgress, streak: 0 } });
+    renderDashboardPage();
+    // When streak is 0, the "0-day streak" message should not render
+    expect(screen.queryByText(/day streak/)).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("formats large XP values with locale separators", () => {
+    mockUseUserProgress.mockReturnValue({ progress: { ...defaultProgress, xp: 1000000 } });
+    renderDashboardPage();
+    // toLocaleString formats 1000000 as "1,000,000" in en-US
+    expect(screen.getByText("1,000,000")).toBeTruthy();
+  });
+
+  it("shows XP of 0 as \"0\"", () => {
+    mockUseUserProgress.mockReturnValue({ progress: { ...defaultProgress, xp: 0 } });
+    renderDashboardPage();
+    expect(screen.getByText("0")).toBeTruthy();
+  });
+
+  it("renders email prefix as display name when name is empty string", () => {
+    mockUseAuth.mockReturnValue({
+      user: { ...defaultUser, name: "" },
+    });
+    renderDashboardPage();
+    const heading = screen.getByRole("heading", { level: 1 });
+    // email is "test@example.com", split("@")[0] = "test"
+    expect(heading.textContent).toContain("test");
+  });
+
+  it("uses default avatar initial from email when name is missing", () => {
+    mockUseAuth.mockReturnValue({
+      user: { ...defaultUser, name: undefined, email: "alice@example.com" },
+    });
+    renderDashboardPage();
+    const initials = screen.getAllByText("A");
+    expect(initials.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows badge count from array length when badges is an array", () => {
+    mockUseUserProgress.mockReturnValue({
+      progress: {
+        ...defaultProgress,
+        badges: ["badge1", "badge2", "badge3"],
+      },
+    });
+    renderDashboardPage();
+    // badges is array of length 3, so value is "3"
+    expect(screen.getByText("3")).toBeTruthy();
+  });
+
+  it("shows badge count as number when badges is a number", () => {
+    mockUseUserProgress.mockReturnValue({
+      progress: { ...defaultProgress, badges: 25 },
+    });
+    renderDashboardPage();
+    expect(screen.getByText("25")).toBeTruthy();
+  });
+
+  it("mobile sidebar toggle opens sidebar when clicked", async () => {
+    renderDashboardPage();
+    const toggleButton = screen.getByRole("button", { name: /toggle sidebar/i });
+    await userEvent.click(toggleButton);
+    // After clicking, sidebar should have the "open" class
+    const sidebar = document.querySelector(".sidebar-panel");
+    expect(sidebar?.className).toContain("open");
+  }, 10000);
+
+  it("sidebar overlay closes sidebar when clicked", async () => {
+    renderDashboardPage();
+    // Open sidebar first
+    const toggleButton = screen.getByRole("button", { name: /toggle sidebar/i });
+    await userEvent.click(toggleButton);
+    const sidebar = document.querySelector(".sidebar-panel");
+    expect(sidebar?.className).toContain("open");
+
+    // Click overlay to close
+    const overlay = document.querySelector(".sidebar-overlay");
+    expect(overlay).toBeTruthy();
+    await userEvent.click(overlay!);
+    expect(sidebar?.className).not.toContain("open");
+  }, 10000);
+
+  it("navigates to Tools when Tools quick action is clicked", async () => {
+    renderDashboardPage();
+    const toolsButtons = screen.getAllByText("Tools");
+    // Find the quick action button (not sidebar)
+    const quickActionTools = toolsButtons.find((el) => {
+      const parent = el.closest("button");
+      return parent && parent.textContent?.includes("Launch security tools");
+    });
+    expect(quickActionTools).toBeTruthy();
+    await userEvent.click(quickActionTools!.closest("button")!);
+    expect(mockNavigate).toHaveBeenCalledWith("/tools");
+  }, 10000);
+
+  it("navigates to Learn when Learn quick action is clicked", async () => {
+    renderDashboardPage();
+    const learnButtons = screen.getAllByText("Learn");
+    const quickActionLearn = learnButtons.find((el) => {
+      const parent = el.closest("button");
+      return parent && parent.textContent?.includes("Continue coursework");
+    });
+    expect(quickActionLearn).toBeTruthy();
+    await userEvent.click(quickActionLearn!.closest("button")!);
+    expect(mockNavigate).toHaveBeenCalledWith("/learn");
+  }, 10000);
+
+  it("navigates to Profile when Profile sidebar item is clicked", async () => {
+    renderDashboardPage();
+    const profileItems = screen.getAllByText("Profile");
+    await userEvent.click(profileItems[0]);
+    expect(mockNavigate).toHaveBeenCalledWith("/profile");
+  }, 10000);
 });
