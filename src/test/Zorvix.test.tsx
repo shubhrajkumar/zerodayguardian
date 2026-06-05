@@ -693,6 +693,139 @@ describe("Zorvix", () => {
     expect(textarea.value).toBe("Explain cross-site scripting");
   });
 
+  it("shows 'Mentor mode ready:' status hint when neurobot:topic fires with mentorMode true", async () => {
+    const mentorTopic = {
+      id: "mentor-topic",
+      title: "Cyber Defense Mentor",
+      query: "Guide me through incident response",
+      tags: ["mentor", "ir"],
+    };
+    const sessionMessages = [
+      { id: "msg-1", role: "user", content: "Hi", timestamp: Date.now() },
+      { id: "msg-2", role: "assistant", content: "Hello!", timestamp: Date.now() },
+    ];
+
+    mockApiGet.mockImplementation((url: string) => {
+      if (url === "/api/health/chatbot") return Promise.resolve(mockHealthResponse);
+      if (url === "/api/neurobot/session") {
+        return Promise.resolve({ data: { messages: sessionMessages, activeTopic: mentorTopic } });
+      }
+      if (url === "/api/neurobot/memory/summary") return Promise.resolve({ data: { snapshot: null, stats: {} } });
+      return Promise.resolve({ data: {} });
+    });
+
+    // Mock api.post for /api/neurobot/topic to return messages + topic
+    // so that loadSession (re-triggered when messages become empty) doesn't
+    // overwrite the status hint with "Workspace ready."
+    mockApiPost.mockImplementation((url: string) => {
+      if (url === "/api/neurobot/topic") {
+        return Promise.resolve({ data: { messages: sessionMessages, activeTopic: mentorTopic } });
+      }
+      return Promise.resolve({ data: {} });
+    });
+
+    await act(async () => {
+      renderZorvix(true);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Hi")).toBeTruthy();
+    });
+
+    // Dispatch neurobot:topic with mentorMode=true, autoSubmit=false
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent("neurobot:topic", {
+          detail: {
+            id: "mentor-topic",
+            title: "Cyber Defense Mentor",
+            query: "Guide me through incident response",
+            tags: ["mentor", "ir"],
+            mentorMode: true,
+            autoSubmit: false,
+          },
+        })
+      );
+    });
+
+    // Topic badge should appear
+    await waitFor(() => {
+      expect(screen.getByText("Cyber Defense Mentor")).toBeTruthy();
+    });
+
+    // Status hint should show 'Mentor mode ready:' (not 'Topic ready:')
+    await waitFor(() => {
+      expect(document.body.textContent).toContain("Mentor mode ready: Cyber Defense Mentor");
+    });
+
+    // Should NOT contain 'Topic ready:' when mentorMode is true
+    expect(document.body.textContent).not.toContain("Topic ready:");
+  });
+
+  it("shows 'Topic ready:' status hint when neurobot:topic fires without mentorMode", async () => {
+    const regularTopic = {
+      id: "regular-topic",
+      title: "SQL Injection",
+      query: "Explain SQLi",
+      tags: ["sqli"],
+    };
+    const sessionMessages = [
+      { id: "msg-1", role: "user", content: "Hi", timestamp: Date.now() },
+      { id: "msg-2", role: "assistant", content: "Hello!", timestamp: Date.now() },
+    ];
+
+    mockApiGet.mockImplementation((url: string) => {
+      if (url === "/api/health/chatbot") return Promise.resolve(mockHealthResponse);
+      if (url === "/api/neurobot/session") {
+        return Promise.resolve({ data: { messages: sessionMessages, activeTopic: regularTopic } });
+      }
+      if (url === "/api/neurobot/memory/summary") return Promise.resolve({ data: { snapshot: null, stats: {} } });
+      return Promise.resolve({ data: {} });
+    });
+
+    // Mock api.post for /api/neurobot/topic to return messages + topic
+    mockApiPost.mockImplementation((url: string) => {
+      if (url === "/api/neurobot/topic") {
+        return Promise.resolve({ data: { messages: sessionMessages, activeTopic: regularTopic } });
+      }
+      return Promise.resolve({ data: {} });
+    });
+
+    await act(async () => {
+      renderZorvix(true);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Hi")).toBeTruthy();
+    });
+
+    // Dispatch neurobot:topic WITHOUT mentorMode (defaults to falsy)
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent("neurobot:topic", {
+          detail: {
+            id: "regular-topic",
+            title: "SQL Injection",
+            query: "Explain SQLi",
+            tags: ["sqli"],
+            autoSubmit: false,
+          },
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("SQL Injection")).toBeTruthy();
+    });
+
+    // Status hint should show 'Topic ready:' (not 'Mentor mode ready:')
+    await waitFor(() => {
+      expect(document.body.textContent).toContain("Topic ready: SQL Injection");
+    });
+
+    expect(document.body.textContent).not.toContain("Mentor mode ready:");
+  });
+
   // ── Error Recovery ──
 
   it("shows session banner on failed session load", async () => {
