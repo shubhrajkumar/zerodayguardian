@@ -488,7 +488,7 @@ body {
 
   /* ── CLS prevention: contain layout reflows on route boundaries ── */
   .page-shell {
-    contain: layout style paint;
+    contain: layout style;
   }
 
   /* ── CLS prevention: fix navbar dimensions to prevent shift on paint ── */
