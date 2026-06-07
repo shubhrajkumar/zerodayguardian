@@ -6,9 +6,6 @@ on:
     types: [completed]
     branches: [main]
 
-# Only deploy if CI passed
-if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
 jobs:
   deploy-frontend:
     name: Deploy Frontend (Vercel)
