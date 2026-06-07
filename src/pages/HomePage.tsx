@@ -70,7 +70,7 @@ const HomePage = () => {
           <div className="mx-auto mb-8 max-w-4xl">
             <LandingIntro />
           </div>
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="mx-auto max-w-3xl text-center">
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="mx-auto max-w-3xl text-center" style={{ contain: 'layout style' }}>
             <motion.p
               className="terminal-font text-[11px] uppercase tracking-[0.5em] text-slate-300/62"
               initial={{ opacity: 0, y: 12 }}

@@ -132,7 +132,7 @@ const LandingIntro = () => {
           aria-label="Motivation speech"
         >
           {renderTypedSpeech()}
-          <span className="ml-1 inline-block h-5 w-[2px] bg-cyan-300 align-middle animate-pulse" aria-hidden="true" />
+          <span className="ml-1 inline-block h-5 w-[2px] bg-cyan-300 align-middle animate-cursor-blink" aria-hidden="true" />
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
