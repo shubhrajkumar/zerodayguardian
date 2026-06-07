@@ -23,9 +23,9 @@ import { resolve } from "path";
 // ── Budget thresholds ──
 // Calibrated against real Lighthouse report (2026-06-04) on localhost.
 // CLS relaxed from 0.1 → 0.7 because SPA dynamic loading causes layout
-// TODO: tighten CLS to 0.25 once containment changes are verified in CI
 // shifts during lazy chunk hydration. TTI relaxed from 5000 → 8000 because
 // heavy vendor bundles (motion, sentry, react) take ~3s to parse+execute.
+// TODO: tighten CLS to 0.25 once layout shifts are fixed (Lighthouse 'good' threshold)
 const BUDGET = {
   performanceScore: { min: 70, label: "Performance score" },
   "total-blocking-time": { max: 3000, unit: "ms", label: "Total Blocking Time" },
