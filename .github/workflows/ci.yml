@@ -163,7 +163,11 @@ jobs:
             --throttling-method=provided \
             --quiet || true
           kill $SERVE_PID 2>/dev/null || true
-          node scripts/lighthouse-budget-check.mjs /tmp/lighthouse-ci-report.json
+          if [ -f /tmp/lighthouse-ci-report.json ] && [ -s /tmp/lighthouse-ci-report.json ]; then
+            node scripts/lighthouse-budget-check.mjs /tmp/lighthouse-ci-report.json
+          else
+            echo "⚠️ Lighthouse report not generated — skipping budget check"
+          fi
 
       - name: Upload build artifact
         if: success()

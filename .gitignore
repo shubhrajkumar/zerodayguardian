@@ -45,6 +45,9 @@ playwright-report/
 test-results/
 e2e/screenshots/
 
+# Lighthouse CI artifacts
+lighthouse-report.json
+
 # Python cache
 __pycache__/
 *.pyc

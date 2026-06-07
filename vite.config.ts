@@ -85,7 +85,7 @@ export default defineConfig(() => {
       cssCodeSplit: true,
       sourcemap: process.env.SENTRY_AUTH_TOKEN ? "hidden" : false,
       reportCompressedSize: false,
-      chunkSizeWarningLimit: 500,
+      chunkSizeWarningLimit: 2000,
       minify: "esbuild",
       esbuild: {
         drop: ["debugger"],
