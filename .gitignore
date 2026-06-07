@@ -46,7 +46,7 @@ test-results/
 e2e/screenshots/
 
 # Lighthouse CI artifacts
-lighthouse-report.json
+lighthouse-report*.json
 
 # Python cache
 __pycache__/
