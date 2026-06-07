@@ -488,7 +488,19 @@ body {
 
   /* ── CLS prevention: contain layout reflows on route boundaries ── */
   .page-shell {
+    contain: layout style paint;
+  }
+
+  /* ── CLS prevention: fix navbar dimensions to prevent shift on paint ── */
+  nav.fixed {
     contain: layout style;
+    min-height: 64px;
+  }
+
+  /* ── CLS prevention: fix footer dimensions ── */
+  footer {
+    contain: layout style;
+    min-height: 200px;
   }
   .spinner-sm { width: 16px; height: 16px; border-width: 2px; }
   .spinner-lg { width: 32px; height: 32px; border-width: 3px; }

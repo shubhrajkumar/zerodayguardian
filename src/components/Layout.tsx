@@ -85,7 +85,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       <Navbar />
 
-      <main id="main-content" className="relative z-10 min-w-0 flex-1 pt-16" role="main" tabIndex={-1}>
+      <main id="main-content" className="relative z-10 min-w-0 flex-1 pt-16" role="main" tabIndex={-1} style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 800px' }}>
         {children}
       </main>
 
