@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  DocumentData,
-  Timestamp,
-  doc,
-  runTransaction,
-  serverTimestamp,
-} from "firebase/firestore";
+import type { DocumentData } from "firebase/firestore";
+
+// Firestore APIs are dynamically imported to keep firebase-firestore
+// out of the main bundle (~433 KB). Each consumer awaits the import.
+const loadFirestore = () => import("firebase/firestore");
 import { firebaseAuth, firestoreDb, isFirebaseConfigured } from "@/lib/firebase";
 import { toast } from "@/hooks/use-toast";
 
@@ -380,7 +378,10 @@ const buildWeeklyMissions = (weekKey: string): GamifiedMission[] =>
 const buildDailyQuiz = (dayKey: string): DailyQuizQuestion[] => seededOrder(QUIZ_BANK, dayKey).slice(0, 5);
 
 const asIso = (value: unknown) => {
-  if (value instanceof Timestamp) return value.toDate().toISOString();
+  // Duck-type check for Firestore Timestamp (avoids instanceof which needs the class)
+  if (value && typeof value === "object" && "toDate" in value && typeof (value as { toDate: () => Date }).toDate === "function") {
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
   if (value instanceof Date) return value.toISOString();
   const parsed = new Date(String(value || ""));
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
@@ -525,7 +526,7 @@ const getDb = () => {
   return firestoreDb;
 };
 
-const getRef = (userId: string) => doc(getDb(), STORAGE_COLLECTION, userId);
+// getRef is inlined at each call site since doc() is now dynamically imported
 
 const canUseFirestoreForUser = (userId: string) => {
   if (!isFirebaseConfigured || !firestoreDb) return false;
@@ -744,9 +745,10 @@ const submitLocalGamifiedQuizAnswer = async (
   };
 };
 
-const syncPersistedState = (userId: string, handle?: string): Promise<PersistedGamificationState> =>
-  runTransaction(getDb(), async (transaction) => {
-    const ref = getRef(userId);
+const syncPersistedState = async (userId: string, handle?: string): Promise<PersistedGamificationState> => {
+  const { runTransaction, doc, serverTimestamp } = await loadFirestore();
+  return runTransaction(getDb(), async (transaction) => {
+    const ref = doc(getDb(), STORAGE_COLLECTION, userId);
     const snapshot = await transaction.get(ref);
     let state = normalizeState(userId, snapshot.exists() ? snapshot.data() : null);
     const today = localDayKey();
@@ -788,6 +790,7 @@ const syncPersistedState = (userId: string, handle?: string): Promise<PersistedG
 
     return state;
   });
+};
 
 export const loadGamificationSnapshot = async (userId: string, handle?: string): Promise<GamificationSnapshot> => {
   if (permissionDeniedUsers.has(userId) || !canUseFirestoreForUser(userId)) {
@@ -815,8 +818,9 @@ export const completeGamifiedMission = async (
   }
 
   try {
+    const { runTransaction, doc, serverTimestamp } = await loadFirestore();
     return await runTransaction(getDb(), async (transaction) => {
-    const ref = getRef(userId);
+    const ref = doc(getDb(), STORAGE_COLLECTION, userId);
     const raw = await transaction.get(ref);
     let state = syncStateToCurrentWindow(normalizeState(userId, raw.exists() ? raw.data() : null), handle);
     const result = completeMissionInState(state, scope, missionId);
@@ -855,8 +859,9 @@ export const submitGamifiedQuizAnswer = async (
   }
 
   try {
+    const { runTransaction, doc, serverTimestamp } = await loadFirestore();
     return await runTransaction(getDb(), async (transaction) => {
-    const ref = getRef(userId);
+    const ref = doc(getDb(), STORAGE_COLLECTION, userId);
     const raw = await transaction.get(ref);
     let state = syncStateToCurrentWindow(normalizeState(userId, raw.exists() ? raw.data() : null), handle);
     const result = submitQuizAnswerInState(state, questionId, optionId);

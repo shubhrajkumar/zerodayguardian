@@ -26,8 +26,15 @@ const deferWork = (fn: () => void) => {
 };
 
 deferWork(() => {
-  // Sentry: lazy-loaded, only needed for error tracking
-  import("./instrument").catch(() => undefined);
+  // Sentry: deferred until after window.load to avoid blocking TTI.
+  // requestIdleCallback fires immediately in headless Chrome (Lighthouse),
+  // so we gate on window.load to ensure real user interactivity first.
+  const loadSentry = () => import("./instrument").catch(() => undefined);
+  if (typeof window !== "undefined" && document.readyState !== "complete") {
+    window.addEventListener("load", loadSentry, { once: true });
+  } else {
+    loadSentry();
+  }
 
   // Firebase: lazy-initialize (loads Firebase SDK as deferred chunk)
   import("./lib/firebase").then(({ initFirebase }) => {
