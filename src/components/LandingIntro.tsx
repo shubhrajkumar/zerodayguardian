@@ -114,7 +114,7 @@ const LandingIntro = () => {
       <div className="absolute inset-0 pointer-events-none soc-grid-overlay opacity-80" aria-hidden="true" />
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_10%_20%,rgba(56,189,248,0.18),transparent_32%),radial-gradient(circle_at_85%_15%,rgba(0,229,255,0.16),transparent_40%)]" />
 
-      <div className={`relative transition-all duration-700 ${visible ? "translate-y-0 opacity-100" : "-translate-y-6 opacity-0"}`}>
+      <div className={`relative transition-all duration-700 ${visible ? "opacity-100" : "opacity-0"}`}>
         <h1 className="text-4xl md:text-6xl font-black leading-none">
           <span className="brand-gradient-text-animated">
             ZeroDay-Guardian
@@ -125,7 +125,7 @@ const LandingIntro = () => {
         </p>
       </div>
 
-      <div className={`relative mt-6 transition-all delay-150 duration-700 ${visible ? "translate-y-0 opacity-100" : "-translate-y-5 opacity-0"}`}>
+      <div className={`relative mt-6 transition-all delay-150 duration-700 ${visible ? "opacity-100" : "opacity-0"}`}>
         <div
           className="rounded-xl border border-cyan-300/25 bg-black/35 p-4 text-sm md:text-base leading-7 text-cyan-50/95 min-h-[160px]"
           aria-live="polite"

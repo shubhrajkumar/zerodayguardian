@@ -70,19 +70,19 @@ const HomePage = () => {
           <div className="mx-auto mb-8 max-w-4xl">
             <LandingIntro />
           </div>
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="mx-auto max-w-3xl text-center" style={{ contain: 'layout style' }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="mx-auto max-w-3xl text-center" style={{ contain: 'layout style' }}>
             <motion.p
               className="terminal-font text-[11px] uppercase tracking-[0.5em] text-slate-300/62"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.55, delay: 0.08 }}
             >
               ZeroDay Guardian
             </motion.p>
             <motion.h1
               className="mt-4 text-balance text-4xl font-extrabold tracking-[-0.06em] text-white drop-shadow-[0_0_24px_rgba(0,255,136,0.14)] md:text-6xl"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.7, delay: 0.12 }}
             >
               <span className="bg-[linear-gradient(90deg,#e2f7ff_0%,#7dd3fc_36%,#86efac_100%)] bg-clip-text text-transparent">
@@ -92,8 +92,8 @@ const HomePage = () => {
             </motion.h1>
             <motion.p
               className="mt-4 text-sm font-medium uppercase tracking-[0.42em] text-slate-300/68 md:text-[0.95rem]"
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               ZORVIX AI
@@ -101,8 +101,8 @@ const HomePage = () => {
           </motion.div>
 
           <motion.section
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.75, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="cyber-card relative mx-auto mt-10 max-w-3xl rounded-xl p-5 shadow-[0_24px_72px_rgba(0,0,0,0.34)] md:p-7"
           >
@@ -174,8 +174,8 @@ const HomePage = () => {
 
           <motion.div
             className="mx-auto mt-8 flex max-w-3xl justify-center"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.65, delay: 0.3 }}
           >
             <motion.button
@@ -191,9 +191,9 @@ const HomePage = () => {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.38 }}
+            initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.38 }}
             className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-3"
           >
             <div className="group rounded-xl border border-white/8 bg-white/[0.03] p-5 transition-all duration-300 hover:border-[#00d4ff]/40 hover:shadow-[0_0_20px_rgba(0,212,255,0.12)]" style={{borderColor: 'var(--zdg-border)', backgroundColor: 'var(--zdg-card)'}}>
