@@ -128,7 +128,7 @@ describe("Zorvix", () => {
     expect(screen.getByText("ZORVIX AI")).toBeTruthy();
   });
 
-  it("returns null in non-fullScreen mode", () => {
+  it("returns null in non-fullScreen mode when not open", () => {
     const { container } = renderZorvix(false);
     expect(container.innerHTML).toBe("");
   });
@@ -824,6 +824,230 @@ describe("Zorvix", () => {
     });
 
     expect(document.body.textContent).not.toContain("Mentor mode ready:");
+  });
+
+  // ── Non-Fullscreen Overlay ──
+
+  it("opens overlay when neurobot:open event fires in non-fullScreen mode", async () => {
+    await act(async () => {
+      renderZorvix(false);
+    });
+
+    // Should not render anything initially
+    expect(screen.queryByText("Ask ZORVIX")).toBeNull();
+
+    await act(async () => {
+      window.dispatchEvent(new Event("neurobot:open"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+    });
+  });
+
+  it("renders overlay backdrop and close button when open in non-fullScreen mode", async () => {
+    await act(async () => {
+      renderZorvix(false);
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("neurobot:open"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+    });
+
+    // Close button should be present
+    expect(screen.getByLabelText("Close ZORVIX")).toBeTruthy();
+  });
+
+  it("closes overlay when close button is clicked in non-fullScreen mode", async () => {
+    await act(async () => {
+      renderZorvix(false);
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("neurobot:open"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+    });
+
+    const closeBtn = screen.getByLabelText("Close ZORVIX");
+    await act(async () => {
+      fireEvent.click(closeBtn);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Ask ZORVIX")).toBeNull();
+    });
+  });
+
+  it("closes overlay when backdrop is clicked in non-fullScreen mode", async () => {
+    await act(async () => {
+      renderZorvix(false);
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("neurobot:open"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+    });
+
+    // Find the backdrop using the data-testid we added
+    const backdropEl = screen.getByTestId("zorvix-overlay-backdrop");
+    expect(backdropEl).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(backdropEl!);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Ask ZORVIX")).toBeNull();
+    });
+  });
+
+  it("closes overlay when Escape is pressed in non-fullScreen mode", async () => {
+    await act(async () => {
+      renderZorvix(false);
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("neurobot:open"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+    });
+
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "Escape" });
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Ask ZORVIX")).toBeNull();
+    });
+  });
+
+  it("renders TelemetryBar in overlay when assistant response contains telemetry", async () => {
+    mockApiGet.mockImplementation((url: string) => {
+      if (url === "/api/health/chatbot") return Promise.resolve(mockHealthResponse);
+      if (url === "/api/neurobot/session") {
+        return Promise.resolve({
+          data: {
+            messages: [
+              { id: "msg-1", role: "user", content: "What is recon?", timestamp: Date.now() },
+              {
+                id: "msg-2",
+                role: "assistant",
+                content: '```json\n{"telemetry":{"roadmapDay":3,"difficulty":"2_STARS","vectorTrack":"RECON","sessionXpReward":15,"zorvixThemeHex":"#00F0FF"}}\n```\n\nRecon is the first phase of any cyber operation.',
+                timestamp: Date.now(),
+              },
+            ],
+            activeTopic: null,
+          },
+        });
+      }
+      if (url === "/api/neurobot/memory/summary") return Promise.resolve({ data: { snapshot: null, stats: {} } });
+      return Promise.resolve({ data: {} });
+    });
+
+    await act(async () => {
+      renderZorvix(false);
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("neurobot:open"));
+    });
+
+    await waitFor(() => {
+      // TelemetryBar compact mode shows D3 and RECON in the overlay
+      expect(screen.getByText("D3")).toBeTruthy();
+      expect(screen.getByText("RECON")).toBeTruthy();
+    });
+  });
+
+  it("renders TelemetryBar in overlay with XP badge when sessionXpReward > 0", async () => {
+    mockApiGet.mockImplementation((url: string) => {
+      if (url === "/api/health/chatbot") return Promise.resolve(mockHealthResponse);
+      if (url === "/api/neurobot/session") {
+        return Promise.resolve({
+          data: {
+            messages: [
+              { id: "msg-1", role: "user", content: "Help", timestamp: Date.now() },
+              {
+                id: "msg-2",
+                role: "assistant",
+                content: '```json\n{"telemetry":{"roadmapDay":5,"difficulty":"3_STARS","vectorTrack":"APPSEC","sessionXpReward":25,"zorvixThemeHex":"#00F0FF"}}\n```\n\nHere is your answer.',
+                timestamp: Date.now(),
+              },
+            ],
+            activeTopic: null,
+          },
+        });
+      }
+      if (url === "/api/neurobot/memory/summary") return Promise.resolve({ data: { snapshot: null, stats: {} } });
+      return Promise.resolve({ data: {} });
+    });
+
+    await act(async () => {
+      renderZorvix(false);
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("neurobot:open"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("+25 XP")).toBeTruthy();
+      expect(screen.getByText("APP")).toBeTruthy();
+    });
+  });
+
+  it("strips telemetry JSON from rendered message text in overlay", async () => {
+    mockApiGet.mockImplementation((url: string) => {
+      if (url === "/api/health/chatbot") return Promise.resolve(mockHealthResponse);
+      if (url === "/api/neurobot/session") {
+        return Promise.resolve({
+          data: {
+            messages: [
+              { id: "msg-1", role: "user", content: "Tell me about binaries", timestamp: Date.now() },
+              {
+                id: "msg-2",
+                role: "assistant",
+                content: '```json\n{"telemetry":{"roadmapDay":45,"difficulty":"4_STARS","vectorTrack":"BINARY_PWN","sessionXpReward":50,"zorvixThemeHex":"#A124FF"}}\n```\n\nBinary exploitation starts with memory layout.',
+                timestamp: Date.now(),
+              },
+            ],
+            activeTopic: null,
+          },
+        });
+      }
+      if (url === "/api/neurobot/memory/summary") return Promise.resolve({ data: { snapshot: null, stats: {} } });
+      return Promise.resolve({ data: {} });
+    });
+
+    await act(async () => {
+      renderZorvix(false);
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("neurobot:open"));
+    });
+
+    await waitFor(() => {
+      // The actual content should be visible
+      expect(screen.getByText(/Binary exploitation starts with memory layout/)).toBeTruthy();
+      // The telemetry block should NOT appear as raw JSON text
+      expect(screen.queryByText(/"roadmapDay"/)).toBeNull();
+      // But the TelemetryBar compact metadata should be rendered
+      expect(screen.getByText("D45")).toBeTruthy();
+      expect(screen.getByText("PWN")).toBeTruthy();
+    });
   });
 
   // ── Error Recovery ──

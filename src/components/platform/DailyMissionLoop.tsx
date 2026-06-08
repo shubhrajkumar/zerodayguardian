@@ -58,8 +58,8 @@ const DailyMissionLoop = ({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-emerald-200/70">Mission Briefing 🕵️</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#e2e8f0]">Deploy three clean wins before midnight</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300/82">
+              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">Deploy three clean wins before midnight</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
                 Port scan. CVE read. CTF breach drill. No filler loops. Just visible progress, XP, and one elite direction.
               </p>
             </div>
@@ -87,9 +87,9 @@ const DailyMissionLoop = ({
             ].map((item) => (
               <div key={item.label} className="gamification-panel rounded-[24px] p-4">
                 <item.icon className="h-5 w-5 text-emerald-300" />
-                <p className="mt-4 text-[11px] uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                <p className="mt-2 text-2xl font-semibold text-[#e2e8f0]">{item.value}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300/78">{item.detail || ''}</p>
+                <p className="mt-4 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{item.label}</p>
+                <p className="mt-2 text-2xl font-semibold text-foreground">{item.value}</p>
+                <p className="mt-2 text-sm leading-6 text-secondary">{item.detail || ''}</p>
               </div>
             ))}
           </div>
@@ -99,13 +99,13 @@ const DailyMissionLoop = ({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-emerald-200/70">Daily Loop</p>
-                  <p className="mt-2 text-lg font-semibold text-[#e2e8f0]">{dailyCompleted}/3 missions deployed</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{dailyCompleted}/3 missions deployed</p>
                 </div>
                 <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-emerald-100">
                   {dailyProgress}% complete
                 </span>
               </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/8">
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
                 <motion.div
                   className="h-full bg-[linear-gradient(90deg,#00ff88,#00c06a)]"
                   initial={false}
@@ -119,22 +119,22 @@ const DailyMissionLoop = ({
                     key={mission.id}
                     layout
                     transition={animation}
-                    className="rounded-[22px] border border-white/8 bg-black/18 p-4"
+                    className="rounded-[22px] border border-border bg-secondary p-4"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#e2e8f0]">
+                        <p className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
                           <Crosshair className="h-4 w-4 text-emerald-300" />
                           {mission.title}
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-300/78">{mission.briefing}</p>
+                        <p className="mt-2 text-sm leading-6 text-secondary">{mission.briefing}</p>
                       </div>
                       <span className="rounded-full border border-emerald-400/18 bg-emerald-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-emerald-100">
                         +{mission.xp} XP
                       </span>
                     </div>
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <span className="text-xs uppercase tracking-[0.18em] text-slate-500">{mission.completed ? "Breach complete" : mission.cta}</span>
+                      <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{mission.completed ? "Breach complete" : mission.cta}</span>
                       <button
                         type="button"
                         disabled={mission.completed || loading}
@@ -142,7 +142,7 @@ const DailyMissionLoop = ({
                         className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
                           mission.completed
                             ? "border border-emerald-400/20 bg-emerald-500/10 text-emerald-100"
-                            : "border border-emerald-400/24 bg-white/[0.03] text-[#e2e8f0] hover:border-emerald-400/40 hover:bg-emerald-500/12"
+                            : "border border-emerald-400/24 bg-card text-foreground hover:border-emerald-400/40 hover:bg-emerald-500/12"
                         }`}
                       >
                         {mission.completed ? "Intel Gathered" : mission.cta}
@@ -157,13 +157,13 @@ const DailyMissionLoop = ({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-blue-200/70">Weekly Missions</p>
-                  <p className="mt-2 text-lg font-semibold text-[#e2e8f0]">{weeklyCompleted}/5 elite clears</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{weeklyCompleted}/5 elite clears</p>
                 </div>
                 <span className="rounded-full border border-blue-400/18 bg-blue-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-blue-100">
                   {weeklyProgress}% complete
                 </span>
               </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/8">
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
                 <motion.div
                   className="h-full bg-[linear-gradient(90deg,#0066ff,#00ff88)]"
                   initial={false}
@@ -187,14 +187,14 @@ const DailyMissionLoop = ({
               ) : null}
               <div className="mt-4 grid gap-3">
                 {weeklyMissions.map((mission) => (
-                  <div key={mission.id} className="rounded-[22px] border border-white/8 bg-black/18 p-4">
+                  <div key={mission.id} className="rounded-[22px] border border-border bg-secondary p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#e2e8f0]">
+                        <p className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
                           <ShieldCheck className="h-4 w-4 text-blue-300" />
                           {mission.title}
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-300/78">{mission.briefing}</p>
+                        <p className="mt-2 text-sm leading-6 text-secondary">{mission.briefing}</p>
                       </div>
                       <span className="rounded-full border border-blue-400/18 bg-blue-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-blue-100">
                         +{mission.xp} XP
@@ -208,7 +208,7 @@ const DailyMissionLoop = ({
                         className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
                           mission.completed
                             ? "border border-blue-300/20 bg-blue-500/10 text-blue-100"
-                            : "border border-blue-300/24 bg-white/[0.03] text-[#e2e8f0] hover:border-blue-300/42 hover:bg-blue-500/12"
+                            : "border border-blue-300/24 bg-card text-foreground hover:border-blue-300/42 hover:bg-blue-500/12"
                         }`}
                       >
                         {mission.completed ? "Cleared" : mission.cta}
@@ -235,36 +235,36 @@ const DailyMissionLoop = ({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-emerald-100/72">Reward uplink</p>
-                  <p className="mt-2 text-lg font-semibold text-[#e2e8f0]">{latestReward.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-200/82">{latestReward.detail || ''}</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{latestReward.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-secondary">{latestReward.detail || ''}</p>
                 </div>
-                <button type="button" onClick={onDismissReward} className="text-xs uppercase tracking-[0.18em] text-slate-300">
+                <button type="button" onClick={onDismissReward} className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   close
                 </button>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-emerald-400/18 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-emerald-100">
+                <span className="rounded-full border border-emerald-400/18 bg-secondary px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-emerald-100">
                   {latestReward.xp ? `+${latestReward.xp} XP` : "Badge / Level unlocked"}
                 </span>
                 <motion.span
                   animate={{ y: [0, -5, 0] }}
                   transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="inline-flex rounded-full border border-white/8 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-200"
+                  className="inline-flex rounded-full border border-border bg-secondary px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-foreground"
                 >
                   floating reward
                 </motion.span>
               </div>
             </motion.div>
           ) : (
-            <div className="rounded-[24px] border border-white/8 bg-black/18 p-4">
+            <div className="rounded-[24px] border border-border bg-secondary p-4">
               <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/70">Reward stream</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300/78">
+              <p className="mt-2 text-sm leading-6 text-secondary">
                 Mission clears, quiz wins, and badge unlocks land here with confetti, float motion, and level reveals.
               </p>
             </div>
           )}
 
-          <div className="mt-4 rounded-[24px] border border-white/8 bg-black/18 p-4">
+          <div className="mt-4 rounded-[24px] border border-border bg-secondary p-4">
             <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/70">Badge Cabinet</p>
             <div className="mt-4 grid gap-3">
               {(snapshot?.badges ?? []).length ? (
@@ -274,7 +274,7 @@ const DailyMissionLoop = ({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={animation}
-                    className="flex items-center gap-3 rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-3"
+                    className="flex items-center gap-3 rounded-[20px] border border-border bg-secondary px-4 py-3"
                   >
                     <motion.span
                       animate={{ y: [0, -4, 0] }}
@@ -284,32 +284,32 @@ const DailyMissionLoop = ({
                       {badge.icon}
                     </motion.span>
                     <div>
-                      <p className="text-sm font-semibold text-[#e2e8f0]">{badge.title}</p>
-                      <p className="text-xs leading-5 text-slate-300/74">{badge.detail || ''}</p>
+                      <p className="text-sm font-semibold text-foreground">{badge.title}</p>
+                      <p className="text-xs leading-5 text-secondary">{badge.detail || ''}</p>
                     </div>
                   </motion.div>
                 ))
               ) : (
-                <p className="text-sm text-slate-400">Deploy missions and quiz wins to unlock the first cabinet item.</p>
+                <p className="text-sm text-muted-foreground">Deploy missions and quiz wins to unlock the first cabinet item.</p>
               )}
             </div>
           </div>
 
-          <div className="mt-4 rounded-[24px] border border-white/8 bg-black/18 p-4">
+          <div className="mt-4 rounded-[24px] border border-border bg-secondary p-4">
             <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/70">Recent Intel</p>
             <div className="mt-4 grid gap-3">
               {(snapshot?.recentRewards ?? []).length ? (
                 (snapshot?.recentRewards ?? []).slice(0, 5).map((reward) => (
-                  <div key={reward.id} className="rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-3">
-                    <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#e2e8f0]">
+                  <div key={reward.id} className="rounded-[20px] border border-border bg-secondary px-4 py-3">
+                    <p className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
                       <CheckCircle2 className="h-4 w-4 text-emerald-300" />
                       {reward.title}
                     </p>
-                    <p className="mt-1 text-sm text-slate-300/76">{reward.detail || ''}</p>
+                    <p className="mt-1 text-sm text-secondary">{reward.detail || ''}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-slate-400">The reward stream will populate after the first clean action.</p>
+                <p className="text-sm text-muted-foreground">The reward stream will populate after the first clean action.</p>
               )}
             </div>
           </div>

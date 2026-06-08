@@ -4,7 +4,7 @@ import { buildSystemPrompt } from "../core/prompt.mjs";
 const normalizeBaseUrl = (raw = "") => String(raw || "").replace(/\/+$/, "");
 
 const toMessages = (messages = [], topic, assistantProfile = null) => {
-  const system = buildSystemPrompt(topic, assistantProfile);
+  const system = buildSystemPrompt(topic, assistantProfile, topic?.roadmapDay ?? null);
   const next = [{ role: "system", content: system }];
   for (const message of messages) {
     const role = message?.role === "assistant" ? "assistant" : "user";

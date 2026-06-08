@@ -27,6 +27,7 @@ import { NeuroMessage, NeuroTopicContext } from "@/lib/neurobotEngine";
 import { useAuth } from "@/context/AuthContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import { safeArray } from "@/utils/safeData";
+import { parseTelemetryFromResponse, stripTelemetryBlock, vectorTrackLabel, RuntimeTelemetry } from "@/lib/telemetryTypes";
 
 const ZORVIX_NAME = "ZORVIX";
 const MAX_ATTACHMENT_BYTES = 2_000_000;
@@ -156,6 +157,7 @@ interface RetryState {
 interface NeuroTopicEvent extends NeuroTopicContext {
   mentorMode?: boolean;
   autoSubmit?: boolean;
+  roadmapDay?: number;
 }
 
 const normalizeTopicPayload = (topic: Partial<NeuroTopicEvent> | null | undefined): NeuroTopicEvent | null => {
@@ -180,6 +182,7 @@ const normalizeTopicPayload = (topic: Partial<NeuroTopicEvent> | null | undefine
     tags,
     mentorMode: Boolean(topic.mentorMode),
     autoSubmit: typeof topic.autoSubmit === "boolean" ? topic.autoSubmit : undefined,
+    roadmapDay: typeof topic.roadmapDay === "number" ? topic.roadmapDay : undefined,
   };
 };
 
@@ -650,6 +653,65 @@ const renderMarkdownLite = (raw: string): ReactNode => {
   return nodes;
 };
 
+const TelemetryBar = ({ telemetry, compact = false }: { telemetry: RuntimeTelemetry; compact?: boolean }) => {
+  if (compact) {
+    const trackShort = {
+      RECON: "RECON",
+      APPSEC: "APP",
+      BINARY_PWN: "PWN",
+      REV_ENG: "REV",
+    };
+    return (
+      <div className="mt-1.5 flex items-center gap-1 overflow-hidden">
+        <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/16 bg-cyan-500/6 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-cyan-100/70">
+          <span className="h-1 w-1 rounded-full bg-cyan-400" />
+          {telemetry.roadmapDay ? `D${telemetry.roadmapDay}` : "Sess"}
+        </span>
+        <span className="inline-flex items-center rounded-full border border-white/6 bg-white/[0.03] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-300/60">
+          {trackShort[telemetry.vectorTrack] || telemetry.vectorTrack}
+        </span>
+        <span className="inline-flex items-center rounded-full border border-white/6 bg-white/[0.03] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-300/60">
+          {telemetry.difficulty.replace("_", " ")}
+        </span>
+        {telemetry.sessionXpReward > 0 ? (
+          <span className="inline-flex items-center rounded-full border border-emerald-400/14 bg-emerald-500/8 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-emerald-100/70">
+            +{telemetry.sessionXpReward} XP
+          </span>
+        ) : null}
+        <span
+          className="h-1.5 w-1.5 shrink-0 rounded-full"
+          style={{ backgroundColor: telemetry.zorvixThemeHex }}
+          aria-hidden="true"
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/20 bg-cyan-500/8 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-cyan-100/80">
+        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+        {telemetry.roadmapDay ? `Day ${telemetry.roadmapDay}` : "Session"}
+      </span>
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-300/70">
+        {vectorTrackLabel(telemetry.vectorTrack)}
+      </span>
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-300/70">
+        {telemetry.difficulty.replace("_", " ")}
+      </span>
+      {telemetry.sessionXpReward > 0 ? (
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/18 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-100/80">
+          +{telemetry.sessionXpReward} XP
+        </span>
+      ) : null}
+      <span
+        className="h-2 w-2 rounded-full"
+        style={{ backgroundColor: telemetry.zorvixThemeHex }}
+        aria-hidden="true"
+      />
+    </div>
+  );
+};
+
 const TypingBubble = () => (
   <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-[var(--theme-surface)] px-4 py-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] fadeInUp">
     {[0, 1, 2].map((dot) => (
@@ -674,7 +736,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<NeuroMessage[]>([]);
   const [input, setInput] = useState("");
-  const [activeTopic, setActiveTopic] = useState<NeuroTopicContext | null>(null);
+  const [activeTopic, setActiveTopic] = useState<NeuroTopicEvent | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>(DEFAULT_SUGGESTIONS);
   const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const [isUtilityMenuOpen, setIsUtilityMenuOpen] = useState(false);
@@ -728,6 +790,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
   );
   const hasConversationStarted = visibleMessages.length > 0;
   const latestAssistantText = useMemo(() => getLatestAssistantText(visibleMessages), [visibleMessages]);
+  const activeTelemetry = useMemo(() => parseTelemetryFromResponse(latestAssistantText), [latestAssistantText]);
   const missionStarterSuggestions = useMemo(
     () =>
       [
@@ -1267,6 +1330,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
               title: activeTopic.title,
               query: activeTopic.query || "",
               tags: activeTopic.tags || [],
+              roadmapDay: activeTopic.roadmapDay,
             }
           : null,
       });
@@ -1359,6 +1423,28 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [abortStream, isOpen, loadSession, messages.length]);
+
+  // ── Global keyboard shortcut: Ctrl+/ (or Cmd+/) toggles the overlay ──
+  useEffect(() => {
+    if (fullScreen) return;
+
+    const handleToggleShortcut = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key !== "/") return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      event.preventDefault();
+
+      if (isOpen) {
+        abortStream("Workspace closed via shortcut.");
+        setIsOpen(false);
+      } else {
+        window.dispatchEvent(new Event("neurobot:open"));
+      }
+    };
+
+    window.addEventListener("keydown", handleToggleShortcut);
+    return () => window.removeEventListener("keydown", handleToggleShortcut);
+  }, [abortStream, fullScreen, isOpen]);
 
   useEffect(() => {
     const handler = () => {
@@ -1623,7 +1709,10 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
                             </div>
                           ) : (
                             <div className={`space-y-3 ${isAssistant ? "zorvix-assistant-copy" : "zorvix-user-copy"}`}>
-                              {isAssistant ? renderMarkdownLite(message.content) : <p className="whitespace-pre-wrap">{message.content}</p>}
+                              {isAssistant ? renderMarkdownLite(stripTelemetryBlock(message.content)) : <p className="whitespace-pre-wrap">{message.content}</p>}
+                              {isAssistant && activeTelemetry && message.id === visibleMessages[visibleMessages.length - 1]?.id && (
+                                <TelemetryBar telemetry={activeTelemetry} />
+                              )}
                             </div>
                           )}
                         </div>
@@ -1699,8 +1788,121 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
     );
   }
 
-  // Non-fullscreen mode: handled by Layout navigation to /assistant
-  return null;
+  // ── Non-fullscreen mode: floating overlay panel ──
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div
+        data-testid="zorvix-overlay-backdrop"
+        className="fixed inset-0 z-[1399] bg-black/40 backdrop-blur-sm"
+        onClick={() => { abortStream("Workspace closed."); setIsOpen(false); }}
+        aria-hidden="true"
+      />
+      <section
+        className="fixed bottom-0 right-0 z-[1400] flex h-[85vh] w-full max-w-[520px] flex-col rounded-t-[28px] border border-[var(--theme-border)] text-[var(--theme-text)] shadow-2xl sm:bottom-4 sm:right-4 sm:rounded-[28px]"
+        style={{ backgroundColor: "var(--theme-bg)" }}
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.12),transparent_28%),linear-gradient(180deg,transparent,rgba(4,10,18,0.12)_40%,rgba(2,5,10,0.22))]"
+        />
+        <header className="relative z-10 flex items-center justify-between gap-3 border-b border-[var(--theme-border)] bg-[var(--theme-bg)]/96 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] text-[var(--theme-text)]">
+              <Bot className="h-4 w-4" />
+            </span>
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${!online ? "bg-slate-500" : backendHealth?.status && backendHealth.status !== "ok" ? "bg-amber-500" : "bg-[#00ff88]"}`} />
+            <span className="text-sm font-semibold text-[var(--theme-text)]">{ZORVIX_NAME}</span>
+            {activeTopic ? (
+              <span className="max-w-[200px] truncate rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] px-2.5 py-1 text-[10px] font-medium text-[var(--theme-text-muted)]">
+                {activeTopic.title}
+              </span>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={() => { abortStream("Workspace closed."); setIsOpen(false); }}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] text-[var(--theme-text-muted)] transition hover:text-[var(--theme-text)]"
+            aria-label="Close ZORVIX"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+          <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            {isLoadingSession && !visibleMessages.length ? (
+              <div className="mx-auto flex min-h-full w-full items-center justify-center py-10">
+                <div className="inline-flex items-center gap-3 rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] px-4 py-3 text-sm font-medium text-[var(--theme-text)]">
+                  <Loader2 className="h-4 w-4 animate-spin text-cyan-300" />
+                  Loading...
+                </div>
+              </div>
+            ) : !visibleMessages.length ? (
+              <div className="mx-auto flex min-h-full w-full max-w-[420px] flex-col justify-center gap-4 px-4 py-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold tracking-tight text-[var(--theme-text)]">Ask ZORVIX</h3>
+                  <p className="text-sm leading-6 text-[var(--theme-text-muted)]">Clear guidance and focused answers.</p>
+                </div>
+                <div className="grid gap-2">
+                  {(missionStarterSuggestions.length ? missionStarterSuggestions : DEFAULT_SUGGESTIONS).slice(0, 3).map((suggestion) => (
+                    <button key={suggestion} type="button" onClick={() => void runAssistant(suggestion)} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] px-3 py-2.5 text-left text-sm font-medium text-[var(--theme-text)] transition hover:border-[var(--theme-accent-blue)]/30">
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="mx-auto flex w-full max-w-[460px] flex-col gap-3 px-4 py-4">
+                {visibleMessages.map((message) => {
+                  const isAssistant = message.role === "assistant";
+                  const isPendingAssistant = isAssistant && isStreaming && !message.content.trim();
+                  return (
+                    <article key={message.id} className={`flex w-full ${isAssistant ? "justify-start" : "justify-end"}`}>
+                      <div className={`min-w-0 max-w-[92%] rounded-[20px] px-3.5 py-2.5 text-[14px] leading-6 text-[var(--theme-text)] sm:max-w-[82%] ${isAssistant ? "border-l-[3px] border-[#00ff88] bg-[var(--theme-surface)]" : "bg-[var(--theme-card)]"}`}>
+                        {isPendingAssistant ? (
+                          <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-[var(--theme-surface)] px-3 py-1.5 text-xs text-[var(--theme-text-dim)]">
+                            <Loader2 className="h-3 w-3 animate-spin text-cyan-300" />
+                            Thinking...
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {isAssistant ? renderMarkdownLite(stripTelemetryBlock(message.content)) : <p className="whitespace-pre-wrap text-[14px]">{message.content}</p>}
+                            {isAssistant && activeTelemetry && message.id === visibleMessages[visibleMessages.length - 1]?.id && (
+                              <TelemetryBar telemetry={activeTelemetry} compact />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+                <div ref={bottomRef} />
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-[var(--theme-border)] bg-[var(--theme-bg)]/98 px-3 py-2.5 backdrop-blur">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+              <div className="flex items-end gap-2">
+                <div className="min-w-0 flex-1 rounded-[22px] border border-[var(--theme-border)] bg-[var(--theme-card)] px-3 py-2">
+                  <textarea ref={textareaRef} rows={1} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={handleComposerKeyDown} placeholder="Ask anything..." className="min-h-[40px] w-full resize-none border-0 bg-transparent text-[14px] leading-5 text-[var(--theme-text)] outline-none placeholder:text-[var(--theme-text-dim)]" aria-label={`Message ${ZORVIX_NAME}`} />
+                </div>
+                <button type="submit" disabled={(!input.trim() && !attachment) || isStreaming || isLoadingSession} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--theme-accent-green)] text-[var(--theme-bg)] transition hover:shadow-[0_0_0_1px_rgba(0,255,136,0.18),0_14px_32px_rgba(0,255,136,0.18)] disabled:cursor-not-allowed disabled:opacity-50">
+                  {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="flex items-center justify-end px-1 text-[10px] text-[var(--theme-text-dim)]">
+                <span className="max-w-full truncate">{statusTone}{statusHint ? ` \u2022 ${statusHint}` : ""}</span>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+      <input ref={fileInputRef} type="file" accept={ATTACHMENT_ACCEPT} className="hidden" onChange={handleAttachmentPick} />
+    </>
+  );
 };
 
 export default Zorvix;

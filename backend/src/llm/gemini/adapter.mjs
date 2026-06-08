@@ -6,7 +6,7 @@ const normalizeBaseUrl = (raw = "") => String(raw || "").replace(/\/+$/, "");
 const toGeminiRole = (role = "") => (role === "assistant" ? "model" : "user");
 
 const buildRequestBody = (request = {}) => {
-  const system = buildSystemPrompt(request.topic, request.assistantProfile);
+  const system = buildSystemPrompt(request.topic, request.assistantProfile, request.topic?.roadmapDay ?? null);
   const contents = (request.messages || [])
     .map((message) => ({
       role: toGeminiRole(message?.role),

@@ -71,23 +71,23 @@ const RewardExperience = () => {
               </motion.div>
               <div>
                 <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/62">Breach Complete</p>
-                <h3 className="mt-2 text-xl font-semibold text-white">{activeReward.title}</h3>
-                <p className="mt-1 text-sm text-slate-300/82">{activeReward.detail || ''}</p>
+                <h3 className="mt-2 text-xl font-semibold text-foreground">{activeReward.title}</h3>
+                <p className="mt-1 text-sm text-secondary">{activeReward.detail || ''}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={dismissReward}
-              className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-200 transition hover:bg-white/[0.08]"
+              className="rounded-full border border-border bg-card px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-foreground transition hover:bg-secondary"
             >
               Close
             </button>
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/16 bg-black/25 px-4 py-3">
+          <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/16 bg-secondary px-4 py-3">
             <div>
               <p className="text-xs text-cyan-100/62">XP injected</p>
-              <p className="mission-reward-xp text-2xl font-semibold text-white">+{activeReward.xp}</p>
+              <p className="mission-reward-xp text-2xl font-semibold text-foreground">+{activeReward.xp}</p>
             </div>
             <div className="mission-reward-orbs" aria-hidden="true">
               <span />

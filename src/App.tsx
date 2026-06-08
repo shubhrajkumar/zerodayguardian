@@ -13,6 +13,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense, lazy } from "react";
 import { HelmetProvider } from "react-helmet-async";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -85,6 +86,7 @@ export default function App() {
           </AuthProvider>
         </ErrorBoundary>
       </HelmetProvider>
+      <SpeedInsights />
     </QueryClientProvider>
   );
 }

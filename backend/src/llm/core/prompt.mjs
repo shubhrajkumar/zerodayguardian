@@ -1,8 +1,10 @@
+import { buildExecutiveContextBlock } from "./executiveContext.mjs";
+
 const MAX_CACHE_ITEMS = 120;
-const PROMPT_SCHEMA_VERSION = "zorvix-v12";
+const PROMPT_SCHEMA_VERSION = "zorvix-v14";
 const promptCache = new Map();
 
-const toKey = (topic, profile) =>
+const toKey = (topic, profile, roadmapDay) =>
   JSON.stringify({
     version: PROMPT_SCHEMA_VERSION,
     topic: {
@@ -15,6 +17,7 @@ const toKey = (topic, profile) =>
       audience: profile?.audience || "general",
       expressiveness: Number.isFinite(Number(profile?.expressiveness)) ? Number(profile?.expressiveness) : 1,
     },
+    roadmapDay: Number(roadmapDay) || null,
   });
 
 const setCache = (key, value) => {
@@ -26,8 +29,8 @@ const setCache = (key, value) => {
   }
 };
 
-export const buildSystemPrompt = (topic, assistantProfile = null) => {
-  const cacheKey = toKey(topic, assistantProfile);
+export const buildSystemPrompt = (topic, assistantProfile = null, roadmapDay = null) => {
+  const cacheKey = toKey(topic, assistantProfile, roadmapDay);
   const cached = promptCache.get(cacheKey);
   if (cached) return cached;
 
@@ -79,6 +82,7 @@ export const buildSystemPrompt = (topic, assistantProfile = null) => {
     `Expressiveness level: ${expressiveness}. Keep output warm and focused.`,
     "Maintain natural conversational flow and multi-turn context.",
     context,
+    buildExecutiveContextBlock(roadmapDay),
   ].join(" ");
 
   setCache(cacheKey, prompt);

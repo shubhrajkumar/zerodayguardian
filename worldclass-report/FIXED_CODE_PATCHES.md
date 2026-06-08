@@ -1,44 +1,54 @@
-# Fixed Code Patches — June 3, 2026
+# Fixed Code Patches — ZeroDay Guardian
 
-## Patch: CSP frame-ancestors Meta Tag Warning Resolution
+## Patch 1: Self-Hosted Font Files
+
+**File:** `public/fonts/` (directory — 4 files)
 
 ### Problem
-The browser console showed:
+The `src/index.css` file contains `@font-face` declarations referencing self-hosted font files at `/fonts/*.woff2`, but the `public/fonts/` directory was never created or committed. This caused:
+- `Failed to decode downloaded font: /fonts/jetbrains-mono-latin.woff2`
+- `OTS parsing error: invalid sfntVersion: 1986359923`
+
+The corrupted file (1.7K) contained HTML/text data instead of valid WOFF2 binary data.
+
+### Fix
+Downloaded 4 valid WOFF2 font files from jsDelivr Fontsource CDN:
+
 ```
-The Content Security Policy directive 'frame-ancestors' is ignored when delivered via a <meta> element.
-```
-
-Per the CSP specification (https://w3c.github.io/webappsec-csp/#frame-ancestors-and-frame-options), `frame-ancestors` is only enforceable via HTTP headers, never via `<meta http-equiv="Content-Security-Policy">`. The meta tag contained `frame-ancestors 'self'` which browsers silently ignore.
-
-### Root Cause
-The `index.html` had a full CSP string in a `<meta>` tag that included `frame-ancestors 'self'`. While the HTTP-level CSP (from `vercel.json` and `api/index.mjs`) correctly enforces `frame-ancestors` via headers, the meta tag was triggering a console warning because browsers reject `frame-ancestors` in meta elements.
-
-### Fix Applied
-
-**File:** `index.html`
-
-**Before:**
-```html
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ...; frame-ancestors 'self';" />
+public/fonts/
+├── inter-latin.woff2          (48K) — Inter regular, Latin subset
+├── inter-latin-ext.woff2      (84K) — Inter regular, Latin Extended subset
+├── jetbrains-mono-latin.woff2 (21K) — JetBrains Mono regular, Latin subset
+└── jetbrains-mono-latin-ext.woff2 (7.2K) — JetBrains Mono regular, Latin Extended subset
 ```
 
-**After:**
-```html
-<!-- CSP is enforced via HTTP header (vercel.json + api/index.mjs nonce). frame-ancestors is ignored in meta tags per spec; handled by HTTP header only. -->
+### CSS References (Already Exist in `src/index.css`)
+```css
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, ...;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, ...;
+}
 ```
 
-### Why This Is Correct
+### Verification
+- All 4 files confirmed as valid WOFF2 via `file` command
+- TypeScript typecheck: 0 errors
+- Test suite: 557/557 passing
+- Production build: Clean (1m 26s)
+- Vite copies `public/` directory to `dist/` during build
 
-1. **HTTP headers are authoritative.** Both `vercel.json` and `api/index.mjs` already enforce CSP via HTTP headers, which is the only way `frame-ancestors` can be enforced.
-
-2. **The meta tag was redundant.** The `api/index.mjs` serverless function already strips the CSP `<meta>` tag from the HTML response and replaces it with a nonce-based CSP HTTP header.
-
-3. **No security regression.** The `frame-ancestors 'self'` directive remains enforced via:
-   - `vercel.json` → `"frame-ancestors 'self'"` in the `Content-Security-Policy` header
-   - `api/index.mjs` → `["frame-ancestors", ["'self'"]]` in the `CSP_DIRECTIVES` array
-   - `helmet` → `frameguard: { action: "deny" }` (backend, sends `X-Frame-Options: DENY`)
-
-4. **Browser warning eliminated.** The console will no longer show the `frame-ancestors` ignored warning.
-
-### Files Changed
-- `index.html` — Replaced full CSP meta tag with a comment explaining the HTTP header enforcement
+### Font Licensing
+Both Inter and JetBrains Mono use the **SIL Open Font License 1.1**, permitting free commercial use and self-hosting.

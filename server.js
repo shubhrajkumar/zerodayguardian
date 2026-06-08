@@ -12,6 +12,7 @@ const MONGO_CONNECT_TIMEOUT_MS = Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 
 
 let serverStarted = false;
 let mongooseReconnectTimer = null;
+let keepAliveTimer = null;
 
 const clearReconnectTimer = () => {
   if (!mongooseReconnectTimer) return;
@@ -32,6 +33,17 @@ const startHttpServer = () => {
     } else {
       console.warn("[MongoDB] Continuing without active Atlas connection");
     }
+
+    // Keep-alive: ping /api/health every 14 minutes to prevent Render cold starts
+    const BACKEND_URL = process.env.BACKEND_PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://127.0.0.1:${PORT}`;
+    const KEEPALIVE_INTERVAL_MS = 14 * 60 * 1000;
+    keepAliveTimer = setInterval(() => {
+      fetch(`${BACKEND_URL}/api/health`)
+        .then((res) => {
+          if (!res.ok) console.warn(`[KeepAlive] /api/health responded ${res.status}`);
+        })
+        .catch(() => {});
+    }, KEEPALIVE_INTERVAL_MS);
   });
 
   server.on("error", (error) => {
@@ -114,6 +126,7 @@ const connectNativeDbBestEffort = async () => {
 process.on("SIGINT", async () => {
   console.log("\n[Server] SIGINT received, shutting down...");
   clearReconnectTimer();
+  if (keepAliveTimer) { clearInterval(keepAliveTimer); keepAliveTimer = null; }
   await mongoose.connection.close().catch(() => undefined);
   await closeDb().catch(() => undefined);
   console.log("[MongoDB] Connection closed");
@@ -123,6 +136,7 @@ process.on("SIGINT", async () => {
 process.on("SIGTERM", async () => {
   console.log("\n[Server] SIGTERM received, shutting down...");
   clearReconnectTimer();
+  if (keepAliveTimer) { clearInterval(keepAliveTimer); keepAliveTimer = null; }
   await mongoose.connection.close().catch(() => undefined);
   await closeDb().catch(() => undefined);
   console.log("[MongoDB] Connection closed");
