@@ -536,6 +536,40 @@ body {
     contain: layout style;
     min-height: 200px;
   }
+
+  /* ── CLS prevention: reserve space for dynamic content containers ── */
+  .route-skeleton-shell {
+    contain: layout style paint;
+    contain-intrinsic-size: auto 600px;
+  }
+
+  /* ── CLS prevention: fix hero and above-the-fold sections ── */
+  [class*="hero"],
+  [class*="landing"],
+  section:first-of-type {
+    contain: layout style;
+  }
+
+  /* ── CLS prevention: stable image dimensions ── */
+  img:not([width]):not([height]) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ── CLS prevention: prevent content shift from lazy-loaded routes ── */
+  .page-shell {
+    contain: layout style paint;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 800px;
+  }
+
+  /* ── CLS prevention: prevent sidebar/dropdown shift ── */
+  [role="dialog"],
+  [role="menu"],
+  [role="listbox"] {
+    contain: layout style;
+  }
+
   .spinner-sm { width: 16px; height: 16px; border-width: 2px; }
   .spinner-lg { width: 32px; height: 32px; border-width: 3px; }
 }
