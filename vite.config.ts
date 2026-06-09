@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import viteCompression from "vite-plugin-compression";
+import type { HtmlTagDescriptor } from "vite";
 
 const trimTrailingSlash = (value = "") => String(value || "").replace(/\/+$/, "");
 
@@ -51,6 +53,11 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
+
+      // ── Brotli + Gzip pre-compression for static assets ──
+      // Prevents CPU-intensive on-the-fly compression at the CDN edge; assets arrive pre-compressed.
+      viteCompression({ algorithm: "brotliCompress", ext: ".br", filter: /\.(js|css|html|svg|json|woff2?)$/ }),
+      viteCompression({ algorithm: "gzip", ext: ".gz", filter: /\.(js|css|html|svg|json|woff2?)$/ }),
       // Block Sentry (and other heavy non-critical chunks) from modulepreload.
       // Vite injects <link rel="modulepreload"> for all chunks in the module graph,
       // but Sentry is loaded lazily after window.onload — preloading it defeats the purpose.
@@ -68,6 +75,23 @@ export default defineConfig(() => {
               /<link[^>]*href=["'][^"']*sentry[^"']*["'][^>]*rel=["']modulepreload["'][^>]*>/gi,
               "",
             );
+        },
+      },
+
+      // ── Inject <link rel="preload"> for critical above-the-fold resources ──
+      // Preloads the hero OG image so the browser starts fetching it during HTML parse,
+      // shaving ~200-400ms off LCP for first-load visitors.
+      {
+        name: "inject-critical-preloads",
+        transformIndexHtml(html) {
+          const tags: HtmlTagDescriptor[] = [
+            {
+              tag: "link",
+              attrs: { rel: "preload", href: "/og-image.png", as: "image", type: "image/png" },
+              injectTo: "head",
+            },
+          ];
+          return { html, tags };
         },
       },
       // Sentry source map upload (opt-in via SENTRY_AUTH_TOKEN env var)
@@ -101,6 +125,7 @@ export default defineConfig(() => {
     build: {
       target: "es2020",
       modulePreload: { polyfill: false },
+
       cssCodeSplit: true,
       sourcemap: process.env.SENTRY_AUTH_TOKEN ? "hidden" : false,
       reportCompressedSize: false,

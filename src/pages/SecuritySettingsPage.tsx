@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import Seo from "@/components/Seo";
 import { useReferralRecord } from "@/hooks/useGrowthFeatures";
 import { useUserProgress } from "@/context/UserProgressContext";
 
@@ -28,11 +27,7 @@ const SecuritySettingsPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <Seo
-        title="Security Settings | ZeroDay Guardian"
-        description="Manage account security, growth profile visibility, and referral progress."
-        path="/security"
-      />
+
       <div className="mx-auto max-w-3xl rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-6">
         <h1 className="text-2xl font-bold text-[var(--theme-text)]">Security Settings</h1>
         <p className="mt-2 text-sm text-[var(--theme-text-muted)]">Your account uses the app's secure email and password session system.</p>

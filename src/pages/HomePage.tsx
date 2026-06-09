@@ -1,17 +1,12 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { ArrowRight, Radar, ShieldCheck, TerminalSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
-import Seo from "@/components/Seo";
 import LandingIntro from "@/components/LandingIntro";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { nextMissionHook, totalPoints, streak, completedDays, completedSandboxLabs } = useMissionSystem();
-
-  useEffect(() => {
-    document.title = "ZeroDay Guardian – The One Line of Defense";
-  }, []);
 
   const entryRoute = nextMissionHook?.route || "/program";
 
@@ -37,11 +32,7 @@ const HomePage = () => {
 
   return (
     <div className="ui-shell relative min-h-[calc(100vh-4rem)] overflow-hidden" style={{ backgroundColor: "var(--theme-bg)" }}>
-      <Seo
-        title="ZeroDay Guardian | The One Line of Defense"
-        description="AI-guided cybersecurity platform with real progress, referrals, public profiles, mission streaks, and ZORVIX assistance."
-        path="/"
-      />
+
       <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: "radial-gradient(circle at top, color-mix(in srgb, var(--theme-accent-blue) 14%, transparent), transparent 22%), radial-gradient(circle at 80% 18%, color-mix(in srgb, var(--theme-accent-green) 8%, transparent), transparent 20%), linear-gradient(180deg, var(--theme-bg) 0%, color-mix(in srgb, var(--theme-bg) 80%, var(--theme-accent-blue) 10%) 100%)" }} />
       <div className="pointer-events-none absolute inset-0 opacity-[0.12]" style={{ background: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)", backgroundSize: "44px 44px" }} />
 

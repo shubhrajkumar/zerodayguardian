@@ -1428,7 +1428,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
   useEffect(() => {
     if (fullScreen) return;
 
-    const handleToggleShortcut = (event: KeyboardEvent) => {
+    const handleToggleShortcut = (event: globalThis.KeyboardEvent) => {
       if (!(event.metaKey || event.ctrlKey) || event.key !== "/") return;
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;

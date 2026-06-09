@@ -7,8 +7,8 @@
  */
 import { ComponentType, lazy, LazyExoticComponent, ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { BrowserRouter, matchPath, Route, Routes, useLocation } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import ErrorBoundary from "./components/ErrorBoundary";
+import SEOManager, { type JsonLdEntry } from "./components/SEOManager";
 import Layout from "./components/Layout";
 import RequireAuth from "./components/RequireAuth";
 import WakeUpLoader from "./components/ui/WakeUpLoader";
@@ -93,10 +93,10 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const MissionsPage = lazy(() => import("./pages/MissionsPage"));
+const ComingSoonLabsPage = lazy(() => import("./components/ComingSoonLabs"));
 
 // ── Site config ──
 const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "").replace(/\/+$/, "");
-const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-image.png`;
 const SUPPORT_EMAIL = "ksubhraj28@gmail.com";
 
 // ── SEO Config ──
@@ -105,7 +105,7 @@ type RouteSeoConfig = {
   title: string;
   description: string;
   keywords: string;
-  buildJsonLd?: (canonical: string) => Record<string, unknown>[];
+  buildJsonLd?: (canonical: string) => JsonLdEntry[];
 };
 
 const buildOrganizationJsonLd = () => ({
@@ -169,6 +169,12 @@ const routeSeoConfig: RouteSeoConfig[] = [
     title: "Labs | ZeroDay Guardian",
     description: "Deploy hands-on cybersecurity labs, progress loops, and mission-driven practice with resilient training telemetry.",
     keywords: "cyber labs, security sandbox, penetration testing labs, blue team labs",
+  },
+  {
+    patterns: ["/labs"],
+    title: "Coming Soon: Interactive OSINT & SQLi Labs | ZeroDay Guardian",
+    description: "Master Reconnaissance, craft SQL Injection Payloads, and validate Parameterized Queries in ZeroDay Guardian's upcoming interactive labs.",
+    keywords: "OSINT labs, SQL injection labs, Reconnaissance, Payload, Parameterized Queries, cybersecurity labs coming soon",
   },
   {
     patterns: ["/tools", "/tools/:id"],
@@ -243,36 +249,24 @@ const resolveSeo = (pathname: string) =>
   routeSeoConfig.find((entry) => entry.patterns.some((pattern) => Boolean(matchPath(pattern, pathname)))) || routeSeoConfig[0];
 
 // ── Route SEO Component ──
+// Cyber Rationale: Centralized SEO via SEOManager prevents duplicate/conflicting
+// meta tags and ensures consistent OpenGraph rendering across all routes.
 const RouteSeo = () => {
   const location = useLocation();
   const seo = resolveSeo(location.pathname);
-  const canonical = `${resolveSiteOrigin()}${location.pathname === "/" ? "" : location.pathname}`;
-  const jsonLd = seo.buildJsonLd?.(canonical) || [];
+  const canonicalPath = location.pathname === "/" ? "/" : location.pathname;
+  const jsonLd = seo.buildJsonLd?.(
+    `${resolveSiteOrigin()}${canonicalPath === "/" ? "" : canonicalPath}`,
+  ) || [];
 
   return (
-    <Helmet prioritizeSeoTags>
-      <title>{seo.title}</title>
-      <meta name="description" content={seo.description} />
-      <meta name="keywords" content={seo.keywords} />
-      <meta name="robots" content="index, follow, max-image-preview:large" />
-      <meta property="og:title" content={seo.title} />
-      <meta property="og:description" content={seo.description} />
-      <meta property="og:type" content="website" />
-      <meta property="og:site_name" content="ZeroDay Guardian" />
-      <meta property="og:url" content={canonical} />
-      <meta property="og:image" content={DEFAULT_OG_IMAGE} />
-      <meta property="og:image:alt" content="ZeroDay Guardian - AI Cybersecurity Platform" />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={seo.title} />
-      <meta name="twitter:description" content={seo.description} />
-      <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
-      <link rel="canonical" href={canonical} />
-      {jsonLd.map((entry, index) => (
-        <script key={`${location.pathname}-schema-${index}`} type="application/ld+json">
-          {JSON.stringify(entry)}
-        </script>
-      ))}
-    </Helmet>
+    <SEOManager
+      title={seo.title}
+      description={seo.description}
+      path={canonicalPath}
+      keywords={seo.keywords}
+      jsonLd={jsonLd}
+    />
   );
 };
 
@@ -392,6 +386,7 @@ const appRoutes: AppRouteDefinition[] = [
   { path: "/assistant", component: AssistantPage, requiresAuth: true },
   { path: "/program/day/:day", component: ProgramLabPage, requiresAuth: true },
   { path: "/lab", component: LabPage, requiresAuth: true },
+  { path: "/labs", component: ComingSoonLabsPage },
   { path: "/blog", component: BlogPage, requiresAuth: true },
   { path: "/blog/:slug", component: BlogDetail, requiresAuth: true },
   { path: "/resources", component: ResourcesPage, requiresAuth: true },

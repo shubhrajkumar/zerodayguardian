@@ -1,12 +1,44 @@
 /* Mobile-First Responsive Design System */
 
 /* Touch-friendly utilities */
+/* Cyber Rationale: WCAG 2.2 SC 2.5.8 requires minimum 48×48px interactive
+   targets to prevent Fat-Finger tap errors on mobile gamification controls. */
 .touch-target {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 48px;
+  min-width: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Gamification button touch override — ensures XP bars, badge buttons,
+   streak counters, and mission launchers never fall below 48×48px. */
+.gamification-touch {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 12px 16px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile bottom nav touch targets — 48px minimum for each nav item */
+.mobile-nav-item {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+/* Prevent accidental double-tap zoom on interactive elements */
+button,
+a,
+[role="button"],
+.mobile-nav-item,
+.gamification-touch {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .touch-padding {
@@ -127,7 +159,7 @@
   background: var(--card);
   color: var(--foreground);
   font-size: 16px;
-  min-height: 44px;
+  min-height: 48px;
 }
 
 .textarea-responsive {
@@ -147,7 +179,7 @@
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
-  min-height: 44px;
+  min-height: 48px;
   width: 100%;
 }
 

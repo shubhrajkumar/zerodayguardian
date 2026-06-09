@@ -1,6 +1,6 @@
 import { Award, Flame, Shield, Trophy } from "lucide-react";
 import { useParams } from "react-router-dom";
-import Seo from "@/components/Seo";
+import SEOManager from "@/components/SEOManager";
 import { useMonthlyReferralLeaderboard, usePublicProfile } from "@/hooks/useGrowthFeatures";
 
 const PublicProfilePage = () => {
@@ -36,11 +36,11 @@ const PublicProfilePage = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <Seo
+      <SEOManager
         title={`${profile.name} | ZeroDay Guardian Profile`}
         description={`${profile.name} has ${profile.xp} XP, ${profile.badges.length} badges, and a ${profile.streak}-day streak on ZeroDay Guardian.`}
         path={`/u/${profile.handle}`}
-        jsonLd={{
+        jsonLd={[{
           "@context": "https://schema.org",
           "@type": "ProfilePage",
           name: profile.name,
@@ -50,7 +50,7 @@ const PublicProfilePage = () => {
             name: profile.name,
             description: profile.headline,
           },
-        }}
+        }]}
       />
       <div className="mx-auto max-w-5xl space-y-6">
         <section className="rounded-[36px] border border-cyan-300/16 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_30%),linear-gradient(180deg,#050910,#0a111d)] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.32)]">
