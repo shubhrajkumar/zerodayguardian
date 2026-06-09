@@ -33,6 +33,8 @@ export default class ErrorBoundary extends Component<Props, State> {
       stack: error.stack,
       componentStack: info.componentStack,
     });
+    // Fire-and-forget: log to Firestore without blocking render.
+    // If Firestore is down or CSP-blocked, the .catch prevents a crash loop.
     logFrontendErrorToFirestore({
       source: "ErrorBoundary",
       message: error.message,

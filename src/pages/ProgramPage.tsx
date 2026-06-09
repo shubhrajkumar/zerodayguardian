@@ -58,7 +58,21 @@ const ProgramPage = () => {
         try {
           const expressPayload = await apiGetJson<{ items?: unknown[]; recommended_day?: number; streak_message?: string }>('/api/labs/overview');
           if (expressPayload && Array.isArray(expressPayload.items) && expressPayload.items.length > 0) {
-            payload = expressPayload as unknown as DayOverviewResponse;
+            const items: DayOverviewItem[] = expressPayload.items.map((item: unknown) => {
+              if (!item || typeof item !== 'object') return null;
+              const raw = item as Record<string, unknown>;
+              return {
+                day: Number(raw.day) || 1,
+                title: String(raw.title || ''),
+                focus: String(raw.focus || ''),
+                difficulty: String(raw.difficulty || 'Beginner'),
+                unlocked: Boolean(raw.unlocked),
+                completed: Boolean(raw.completed),
+              };
+            }).filter(Boolean) as DayOverviewItem[];
+            if (items.length > 0) {
+              payload = { items, recommended_day: Number(expressPayload.recommended_day) || 1, streak_message: String(expressPayload.streak_message || '') };
+            }
           }
         } catch { /* Express fallback failed */ }
 
