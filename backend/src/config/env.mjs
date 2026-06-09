@@ -340,6 +340,9 @@ export const env = {
   ollamaBackupBaseUrl: normalizeOllamaBaseUrl(process.env.OLLAMA_BACKUP_BASE_URL || process.env.OLLAMA_BASE_URL),
   ollamaBackupModel: process.env.OLLAMA_BACKUP_MODEL || "",
   ollamaBackupNumPredict: clamp(process.env.OLLAMA_BACKUP_NUM_PREDICT, 32, 1024, 96),
+  // ── Groq (Zorvix AI dedicated endpoint) ──
+  groqApiKey: firstSet("GROQ_API_KEY"),
+  pythonBackendUrl: process.env.PYTHON_BACKEND_URL || "",
   mongoUri: normalizeMongoUriEnv(firstSet(...MONGO_URI_KEYS)) || buildMongoUriFromParts(),
   redisUrl: process.env.REDIS_URL || "",
   sessionSecret: process.env.SESSION_SECRET || "",
@@ -551,6 +554,16 @@ const buildStartupEnvValidation = () => {
       issues,
       "GOOGLE_OAUTH",
       `Google OAuth is disabled because optional configuration is incomplete. Missing: ${missingGoogleKeys.join(", ")}`,
+      "warn"
+    );
+  }
+
+  // Groq (Zorvix AI) — warn in production when key is missing
+  if (isProduction && !String(env.groqApiKey || "").trim()) {
+    addIssue(
+      issues,
+      "GROQ_API_KEY",
+      "Zorvix AI fast path (Groq) is disabled because GROQ_API_KEY is not set. Short queries will fall through to the full neurobot pipeline.",
       "warn"
     );
   }

@@ -36,6 +36,12 @@ const WELCOME_PATTERN = /^##\s*zorvi/i;
 const STREAM_ERROR_TEXT = "The live stream was interrupted. ZORVIX kept the workspace stable, but please retry for a complete answer.";
 const SERVICE_UNAVAILABLE_TEXT =
   "ZORVIX could not reach the AI service right now. Your message was received, but the response path is temporarily unavailable. Please retry in a moment.";
+const GROQ_DIRECT_MAX_LENGTH = 500;
+const GROQ_DIRECT_TIMEOUT_MS = 15_000;
+
+/** Heuristic: short, attachment-free messages route through the fast Groq endpoint. */
+const isQuickQuery = (prompt: string, attachment: ChatAttachmentPayload | null) =>
+  !attachment && prompt.length > 0 && prompt.length <= GROQ_DIRECT_MAX_LENGTH;
 const DEFAULT_SUGGESTIONS = [
   "Tell me the highest-value next cyber mission and why it matters.",
   "Debrief my current security learning state and expose my blind spots.",
@@ -1232,6 +1238,48 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
     [assistantProfile, flushAssistantBuffer, queueAssistantDelta]
   );
 
+  // ── Fast Groq direct path (bypasses neurobot stream for quick queries) ──
+  const queryZorvixDirect = useCallback(
+    async ({ prompt, assistantId }: { prompt: string; assistantId: string }) => {
+      const controller = new AbortController();
+      streamAbortRef.current = controller;
+      const timeout = window.setTimeout(() => controller.abort(), GROQ_DIRECT_TIMEOUT_MS);
+
+      try {
+        const response = await apiFetch("/api/ai/zorvix", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: prompt }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => ({}));
+          const error = new Error(String(errorBody.message || "groq_direct_failed")) as Error & {
+            llmError?: LlmErrorState | null;
+          };
+          if (response.status === 429) {
+            error.llmError = normalizeLlmErrorState({ code: "rate_limit", retryAfterSec: 30 });
+          }
+          throw error;
+        }
+
+        const data = (await response.json()) as { reply?: string; timestamp?: string };
+        const reply = String(data.reply || "").trim();
+        if (!reply) throw new Error("empty_groq_response");
+
+        replaceAssistantMessage(assistantId, reply);
+        setStatusHint("Fast reply ready (Groq).");
+        return { assistantText: reply, llmError: null as LlmErrorState | null };
+      } finally {
+        window.clearTimeout(timeout);
+        // Note: streamAbortRef and currentAssistantIdRef cleanup is handled by runAssistant.finally
+        // Do NOT clear them here — the stream fallback path needs them intact.
+      }
+    },
+    [replaceAssistantMessage]
+  );
+
   const runAssistant = useCallback(
     async (
       promptOverride?: string,
@@ -1266,23 +1314,52 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
       setIsSuggestionOpen(false);
       setIsUtilityMenuOpen(false);
       setIsStreaming(true);
-      setStatusHint(`${ZORVIX_NAME} is reasoning across tools and knowledge modules...`);
+
+      // ── Fast path: short, attachment-free queries go through Groq directly ──
+      const useFastPath = isQuickQuery(prompt, attachmentPayload);
+      if (useFastPath) {
+        setStatusHint(`${ZORVIX_NAME} routing through fast Groq path...`);
+      } else {
+        setStatusHint(`${ZORVIX_NAME} is reasoning across tools and knowledge modules...`);
+      }
       scrollToBottom();
 
       let result = { assistantText: "", llmError: null as LlmErrorState | null };
-      try {
-        result = await streamPrompt({ prompt, attachmentPayload });
-        if (!result.assistantText.trim()) throw new Error("empty_stream");
-        setStatusHint(result.llmError ? statusHintFromLlmError(result.llmError) : "Live answer ready.");
-      } catch {
-        result = await recoverWithSync({ prompt, assistantId, attachmentPayload, topic });
-      } finally {
-        flushAssistantBuffer();
-        currentAssistantIdRef.current = "";
-        currentStreamIdRef.current = "";
-        streamAbortRef.current = null;
-        setIsStreaming(false);
+
+      // ── Step 1: Try fast Groq path for quick queries ──
+      if (useFastPath) {
+        try {
+          result = await queryZorvixDirect({ prompt, assistantId });
+          if (!result.assistantText.trim()) throw new Error("empty_groq_response");
+        } catch (groqError) {
+          // Fast path failed — fall through to neurobot stream below
+          const llmErr = (groqError as Error & { llmError?: LlmErrorState | null }).llmError;
+          if (llmErr?.code === "rate_limit") {
+            // Rate limited on Groq — retry via neurobot stream (which has its own provider rotation)
+            setStatusHint("Fast path rate-limited. Switching to full pipeline...");
+          }
+          // Reset the assistant bubble for the stream path
+          replaceAssistantMessage(assistantId, "");
+          queuedDeltaRef.current = "";
+        }
       }
+
+      // ── Step 2: Full neurobot stream path (or fallback from fast path) ──
+      if (!result.assistantText.trim()) {
+        try {
+          result = await streamPrompt({ prompt, attachmentPayload });
+          if (!result.assistantText.trim()) throw new Error("empty_stream");
+          setStatusHint(result.llmError ? statusHintFromLlmError(result.llmError) : "Live answer ready.");
+        } catch {
+          result = await recoverWithSync({ prompt, assistantId, attachmentPayload, topic });
+        }
+      }
+
+      flushAssistantBuffer();
+      currentAssistantIdRef.current = "";
+      currentStreamIdRef.current = "";
+      streamAbortRef.current = null;
+      setIsStreaming(false);
 
       if (result.llmError) {
         setLastFailure({
@@ -1304,7 +1381,9 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
       input,
       isPreparingAttachment,
       isStreaming,
+      queryZorvixDirect,
       recoverWithSync,
+      replaceAssistantMessage,
       resetAttachment,
       scrollToBottom,
       streamPrompt,

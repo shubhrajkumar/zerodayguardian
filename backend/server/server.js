@@ -9,6 +9,7 @@ import { connectMongoose, disconnectMongoose } from "../src/config/mongoose.mjs"
 import { connectRedis, closeRedis } from "../src/config/redis.mjs";
 import { validateLlmStartupConfig, verifyLlmConnection } from "../src/services/llmService.mjs";
 import { startNewsIngestionScheduler, stopNewsIngestionScheduler } from "../src/services/newsService.mjs";
+import { startKeepAliveScheduler, stopKeepAliveScheduler } from "../src/services/keepAlive.service.js";
 import { seedDefaults } from "../src/seed/seedDefaults.mjs";
 
 const HOST = process.env.HOST || "0.0.0.0";
@@ -114,6 +115,7 @@ const bootstrap = async () => {
   }
 
   startNewsIngestionScheduler({ intervalMs: env.newsRefreshIntervalMs });
+  startKeepAliveScheduler();
 
   // Keep-alive ping every 14 minutes to prevent Render free tier from sleeping
   const BACKEND_URL = env.backendPublicUrl || process.env.BACKEND_PUBLIC_URL || '';
@@ -141,6 +143,7 @@ const bootstrap = async () => {
     logInfo("Shutting down backend", { signal });
     server.close(async () => {
       stopNewsIngestionScheduler();
+      stopKeepAliveScheduler();
       await Promise.allSettled([closeDb(), disconnectMongoose(), closeRedis(), shutdownTelemetry()]);
       process.exit(0);
     });
