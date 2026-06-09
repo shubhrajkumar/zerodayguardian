@@ -67,7 +67,8 @@ const defaultNotificationPreferences = (): NotificationPreference => ({
 
 let firestoreGrowthBlocked = false;
 let firestoreGrowthBlockedAt = 0;
-const FIRESTORE_BLOCK_RECOVERY_MS = 60_000;
+const FIRESTORE_BLOCK_RECOVERY_MS = 30_000;
+const FIRESTORE_MAX_BLOCK_RECOVERY_MS = 120_000;
 
 const isFirebaseRecoverableError = (error: unknown) => {
   const code = typeof error === "object" && error !== null && "code" in error ? String((error as { code?: string }).code || "") : "";
@@ -99,6 +100,11 @@ const logGrowthFallback = (message: string, error: unknown) => {
 };
 
 const requireDb = async () => {
+  // Force-recover after extended block (CSP fixes, config changes, etc.)
+  if (firestoreGrowthBlocked && Date.now() - firestoreGrowthBlockedAt > FIRESTORE_MAX_BLOCK_RECOVERY_MS) {
+    firestoreGrowthBlocked = false;
+    firestoreGrowthBlockedAt = 0;
+  }
   maybeRecoverFirestore();
   if (firestoreGrowthBlocked) {
     throw new Error("Firestore-backed growth features are temporarily disabled for this session.");
@@ -127,6 +133,8 @@ const maybeRecoverFirestore = () => {
     firestoreGrowthBlocked = false;
   }
 };
+
+
 
 const slugifyHandle = (value: string) =>
   String(value || "")

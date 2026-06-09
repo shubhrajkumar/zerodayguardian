@@ -19,14 +19,16 @@ import crypto from "crypto";
 const CSP_DIRECTIVES = [
   ["default-src", ["'self'"]],
   // 'unsafe-eval' required by Sentry & Firebase for dynamic code evaluation
-  ["script-src", ["'self'", "'unsafe-eval'", "'nonce-{nonce}'", "https://*.sentry.io", "https://*.firebaseio.com", "https://*.googleapis.com", "https://apis.google.com", "https://accounts.google.com"]],
+  // 'www.gstatic.com' required by Firebase SDK for loading modules at runtime
+  ["script-src", ["'self'", "'unsafe-eval'", "'nonce-{nonce}'", "https://*.sentry.io", "https://*.firebaseio.com", "https://*.googleapis.com", "https://www.gstatic.com", "https://apis.google.com", "https://accounts.google.com"]],
   // 'unsafe-inline' omitted — nonces are injected into all inline <style> tags by this handler
   ["style-src", ["'self'", "'nonce-{nonce}'", "https://fonts.googleapis.com"]],
   ["img-src", ["'self'", "data:", "blob:", "https:"]],
   ["font-src", ["'self'", "data:", "https://fonts.gstatic.com"]],
   // connect-src: explicit allowlist for Firebase, Sentry, Google APIs, backend, and Vercel preview domains
-  ["connect-src", ["'self'", "https://*.firebaseio.com", "https://identitytoolkit.googleapis.com", "https://*.googleapis.com", "https://*.ingest.sentry.io", "https://*.vercel.app", "https://*.onrender.com", "https://accounts.google.com", "wss:", "ws:"]],
-  ["worker-src", ["'self'", "blob:"]],
+  ["connect-src", ["'self'", "https://*.firebaseio.com", "https://identitytoolkit.googleapis.com", "https://*.googleapis.com", "https://*.ingest.sentry.io", "https://*.sentry.io", "https://www.gstatic.com", "https://*.vercel.app", "https://*.onrender.com", "https://accounts.google.com", "wss:", "ws:"]],
+  // worker-src: Firebase and Sentry create blob workers at runtime
+  ["worker-src", ["'self'", "blob:", "https://*.sentry.io", "https://*.firebaseio.com", "https://*.google.com"]],
   ["frame-src", ["'self'", "https://*.firebaseapp.com", "https://accounts.google.com"]],
   ["object-src", ["'none'"]],
   ["base-uri", ["'self'"]],

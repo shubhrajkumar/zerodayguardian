@@ -113,6 +113,7 @@ const ProgramPage = () => {
       }
     };
 
+    ensurePyUser();
     load().catch(() => undefined);
     return () => {
       active = false;

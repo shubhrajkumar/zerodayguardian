@@ -149,17 +149,20 @@ const TELEMETRY_MAX_BATCH = 10;
 let telemetryBatch: Array<{ type: string; query?: string; tool?: string; durationMs?: number; depth?: number; success?: boolean; metadata?: Record<string, unknown> }> = [];
 let telemetryTimer: ReturnType<typeof setTimeout> | null = null;
 
-let telemetry403Received = false;
+let telemetry403ReceivedUntil = 0;
+const TELEMETRY_403_COOLDOWN_MS = 300_000; // 5 minutes
+const TELEMETRY_BATCH_HARD_CAP = 100;
 
 const flushTelemetryBatch = async () => {
   if (telemetryBatch.length === 0) return;
-  // If we received a 403, stop sending telemetry entirely
-  if (telemetry403Received) {
-    telemetryBatch = [];
+  // If we received a 403 recently, pause telemetry temporarily (not permanently)
+  if (telemetry403ReceivedUntil > Date.now()) {
+    // Cap batch size during cooldown to prevent unbounded growth
+    if (telemetryBatch.length > TELEMETRY_BATCH_HARD_CAP) telemetryBatch = telemetryBatch.slice(-TELEMETRY_BATCH_HARD_CAP);
     return;
   }
+  telemetry403ReceivedUntil = 0;
   const batch = telemetryBatch.splice(0, TELEMETRY_MAX_BATCH);
-  telemetryBatch = telemetryBatch.slice(TELEMETRY_MAX_BATCH);
   try {
     const token = localStorage.getItem('zdg_token');
     if (!token) return;
@@ -169,10 +172,10 @@ const flushTelemetryBatch = async () => {
       body: JSON.stringify({ batch, events: batch.length, timestamp: Date.now() }),
     });
     if (response.status === 403) {
-      telemetry403Received = true;
-      telemetryBatch = [];
+      telemetry403ReceivedUntil = Date.now() + TELEMETRY_403_COOLDOWN_MS;
+      // Don't discard the batch — it will be retried after cooldown
       if (typeof window !== 'undefined') {
-        console.warn('[Telemetry] 403 received — stopping telemetry events');
+        console.warn('[Telemetry] 403 received — pausing telemetry for 5 minutes');
       }
     }
   } catch {
@@ -280,6 +283,10 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
     
     // Queue into batch instead of sending immediately
     telemetryBatch.push(payload);
+    // Hard cap: prevent unbounded growth during 403 cooldown or long idle periods
+    if (telemetryBatch.length > TELEMETRY_BATCH_HARD_CAP) {
+      telemetryBatch = telemetryBatch.slice(-TELEMETRY_BATCH_HARD_CAP);
+    }
     if (telemetryBatch.length >= TELEMETRY_MAX_BATCH) {
       flushTelemetryBatch();
     } else if (!telemetryTimer) {

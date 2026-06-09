@@ -288,7 +288,7 @@ const LabPage = () => {
           setLabLoadError("Live labs are temporarily unavailable right now. Please retry in a moment.");
           return;
         }
-        const nextActive = normalized.find((lab) => lab.id === activeLabId)?.id || normalized[0].id;
+        const nextActive = normalized.find((lab) => lab.id === activeLabId)?.id || normalized[0]?.id || "";
         setActiveLabId(nextActive);
         const nextScores: Record<string, number> = {};
         const nextObjectives: Record<string, string[]> = {};
