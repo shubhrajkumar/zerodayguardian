@@ -539,7 +539,7 @@ body {
 
   /* ── CLS prevention: reserve space for dynamic content containers ── */
   .route-skeleton-shell {
-    contain: layout style paint;
+    contain: layout style;
     contain-intrinsic-size: auto 600px;
   }
 
