@@ -51,6 +51,25 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
+      // Block Sentry (and other heavy non-critical chunks) from modulepreload.
+      // Vite injects <link rel="modulepreload"> for all chunks in the module graph,
+      // but Sentry is loaded lazily after window.onload — preloading it defeats the purpose.
+      {
+        name: "strip-deferred-modulepreload",
+        transformIndexHtml(html) {
+          // Match modulepreload links where the href points to a sentry chunk.
+          // Two patterns cover both possible attribute orderings (rel before href, or href before rel).
+          return html
+            .replace(
+              /<link[^>]*rel=["']modulepreload["'][^>]*href=["'][^"']*sentry[^"']*["'][^>]*>/gi,
+              "",
+            )
+            .replace(
+              /<link[^>]*href=["'][^"']*sentry[^"']*["'][^>]*rel=["']modulepreload["'][^>]*>/gi,
+              "",
+            );
+        },
+      },
       // Sentry source map upload (opt-in via SENTRY_AUTH_TOKEN env var)
       ...(process.env.SENTRY_AUTH_TOKEN
         ? [
@@ -115,19 +134,10 @@ export default defineConfig(() => {
             if (id.includes("@radix-ui")) return "ui-vendor";
             // Icons: deferred
             if (id.includes("lucide-react")) return "icons-vendor";
-            // Toast/notifications: deferred
-            if (id.includes("react-hot-toast") || id.includes("sonner")) return "toast-vendor";
-            // Helmet: deferred
-            if (id.includes("react-helmet-async")) return "helmet-vendor";
-            // Query: deferred
-            if (id.includes("@tanstack") || id.includes("react-query")) return "query-vendor";
-            // Forms: deferred
-            if (id.includes("react-hook-form") || id.includes("@hookform")) return "forms-vendor";
-            // Date: deferred
-            if (id.includes("date-fns") || id.includes("react-day-picker")) return "date-vendor";
-            // Misc: split heavy deferrable packages into separate chunks
-            if (id.includes("canvas-confetti")) return "confetti-vendor";
-            if (id.includes("html2canvas")) return "html2canvas-vendor";
+            // Notifications: merge small toast/helmet/query chunks
+            if (id.includes("react-hot-toast") || id.includes("sonner") || id.includes("react-helmet-async") || id.includes("@tanstack") || id.includes("react-query")) return "notifications-vendor";
+            // Forms + Date + Confetti + Canvas: merge small deferrable packages
+            if (id.includes("react-hook-form") || id.includes("@hookform") || id.includes("date-fns") || id.includes("react-day-picker") || id.includes("canvas-confetti") || id.includes("html2canvas")) return "extras-vendor";
             // Remaining small vendors: bundle together
             if (id.includes("zod") || id.includes("cmdk") || id.includes("embla-carousel") || id.includes("react-window")) return "misc-vendor";
           },

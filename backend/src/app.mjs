@@ -376,6 +376,22 @@ export const createApp = () => {
   app.use(sanitizeInput);
   app.use(requestGuard);
 
+  // ── Explicit CORS preflight catch-all ──
+  // Ensures every OPTIONS request receives a 204 + CORS headers
+  // immediately, preventing preflights from reaching rate-limit,
+  // CSRF, or auth middleware that would reject them.
+  app.options("*", (req, res) => {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+    }
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,X-CSRF-Token,Cookie,Last-Event-ID,X-Request-Id,baggage,sentry-trace");
+    res.setHeader("Access-Control-Max-Age", "600");
+    res.status(204).end();
+  });
+
   app.use((req, res, next) => {
     const encrypted = req.cookies[COOKIE_NAME];
     const decrypted = encrypted ? decryptSessionToken(encrypted) : null;

@@ -1,10 +1,3 @@
-// simple HTML-escaping utility; although React escapes by default, this
-// can be used when dealing with raw strings or third-party data.
-export function sanitize(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+// Re-export from consolidated location to maintain backward compatibility.
+// The actual implementation now lives in src/lib/utils.ts to reduce chunk count.
+export { sanitize } from "@/lib/utils";

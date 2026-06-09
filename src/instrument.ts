@@ -20,9 +20,16 @@ import {
 } from "react-router-dom";
 import React from "react";
 
-// Sentry SDK silently no-ops when DSN is undefined — no guard needed.
+// Guard against placeholder/example DSNs that cause 400 Bad Request errors.
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
+const isPlaceholderDsn = (dsn?: string) => {
+  if (!dsn) return false;
+  const lower = dsn.toLowerCase();
+  return lower.includes("examplepublickey") || lower.includes("your-dsn") || lower.includes("placeholder") || lower.includes("xxx");
+};
+if (sentryDsn && !isPlaceholderDsn(sentryDsn)) {
 Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN as string | undefined,
+  dsn: sentryDsn,
   environment: import.meta.env.MODE || "production",
   release: import.meta.env.VITE_APP_VERSION as string | undefined,
 
@@ -50,7 +57,7 @@ Sentry.init({
   ],
 
   // ── Tracing ──
-  tracesSampleRate: 1.0, // Full tracing for maximum visibility
+  tracesSampleRate: 0.2, // 20% sampling — reduces CPU/network overhead in production
   tracePropagationTargets: [
     "localhost",
     /^https?:\/\/(zerodayguardian|zeroday-guardian)(-[a-z0-9-]+)?\.(vercel\.app|onrender\.com)/,
@@ -66,3 +73,6 @@ Sentry.init({
   // ── Debug (set debug: true temporarily to troubleshoot missing events) ──
   // debug: import.meta.env.MODE === "development",
 });
+} else if (isPlaceholderDsn(sentryDsn)) {
+  console.warn("[Sentry] DSN is a placeholder (examplePublicKey) — Sentry disabled. Set VITE_SENTRY_DSN to a real DSN.");
+}

@@ -127,7 +127,7 @@ const LandingIntro = () => {
 
       <div className={`relative mt-6 transition-all delay-150 duration-700 ${visible ? "opacity-100" : "opacity-0"}`}>
         <div
-          className="rounded-xl border border-cyan-300/25 bg-black/35 p-4 text-sm md:text-base leading-7 text-cyan-50/95 min-h-[160px]"
+          className="rounded-xl border border-cyan-300/25 bg-black/35 p-4 text-sm md:text-base leading-7 text-cyan-50/95 h-[260px] overflow-hidden"
           aria-live="polite"
           aria-label="Motivation speech"
         >
