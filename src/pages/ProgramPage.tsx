@@ -22,6 +22,22 @@ type DayOverviewResponse = {
   streak_message: string;
 };
 
+const generateFallbackOverview = (): DayOverviewResponse => {
+  const generatedItems: DayOverviewItem[] = Array.from({ length: 60 }, (_, index) => ({
+    day: index + 1,
+    title: `Day ${index + 1} Lab`,
+    focus: "Cyber skills",
+    difficulty: index < 20 ? "Beginner" : index < 40 ? "Intermediate" : "Advanced",
+    unlocked: index === 0,
+    completed: false,
+  }));
+  return {
+    items: generatedItems,
+    recommended_day: 1,
+    streak_message: "Start with Day 1 to begin your 60-day journey.",
+  };
+};
+
 const ProgramPage = () => {
   const navigate = useNavigate();
   const { authState, isAuthenticated, user } = useAuth();
@@ -53,7 +69,7 @@ const ProgramPage = () => {
         return;
       }
       try {
-        // Try Express backend first, then fall back to Python API
+        // Try Express backend first, then fall back to local generation
         let payload: DayOverviewResponse | null = null;
         try {
           const expressPayload = await apiGetJson<{ items?: unknown[]; recommended_day?: number; streak_message?: string }>('/api/labs/overview');
@@ -74,41 +90,24 @@ const ProgramPage = () => {
               payload = { items, recommended_day: Number(expressPayload.recommended_day) || 1, streak_message: String(expressPayload.streak_message || '') };
             }
           }
-        } catch { /* Express fallback failed */ }
+        } catch { /* Express endpoint failed */ }
 
         if (!payload) {
-          // Fallback: build overview from Express labs endpoint
-          try {
-            const labsPayload = await apiGetJson<{ total?: number; categories?: Array<{ name: string; count: number }> }>('/api/labs/overview');
-            const totalLabs = labsPayload.total || 0;
-            const generatedItems: DayOverviewItem[] = Array.from({ length: Math.min(60, Math.max(1, totalLabs || 60)) }, (_, index) => ({
-              day: index + 1,
-              title: `Day ${index + 1} Lab`,
-              focus: "Cyber skills",
-              difficulty: index < 20 ? "Beginner" : index < 40 ? "Intermediate" : "Advanced",
-              unlocked: index === 0,
-              completed: false,
-            }));
-            payload = {
-              items: generatedItems,
-              recommended_day: 1,
-              streak_message: "Start with Day 1 to begin your 60-day journey.",
-            };
-          } catch { /* fallback also failed */ }
-        }
-
-        if (!payload) {
-          throw new Error('overview_unavailable');
+          // Fallback: generate overview locally instead of retrying same endpoint
+          payload = generateFallbackOverview();
         }
 
         if (!active) return;
         setOverview(payload);
         setSelectedDay(payload.recommended_day || 1);
         setError("");
-      } catch (err) {
+      } catch {
         if (!active) return;
-        setOverview(null);
-        setError("The program data is syncing with the backend. Please try again in a moment.");
+        // Last resort: generate locally and inform user
+        const fallback = generateFallbackOverview();
+        setOverview(fallback);
+        setSelectedDay(1);
+        setError("Backend unavailable. Showing default program data.");
       } finally {
         if (active) setLoading(false);
       }

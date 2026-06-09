@@ -13,6 +13,7 @@ const CommunityPage = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [threads, setThreads] = useState<Thread[]>([]);
+  const [loadError, setLoadError] = useState("");
   const [sort, setSort] = useState<"trending" | "new" | "unanswered">("trending");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -23,22 +24,36 @@ const CommunityPage = () => {
   const [latestSeenThreadId, setLatestSeenThreadId] = useState("");
 
   const load = useCallback(async (sortBy: "trending" | "new" | "unanswered" = sort) => {
-    const [board, weekly, threadData] = await Promise.all([
-      (await api.get<{ leaderboard: LeaderboardRow[] }>("/api/intelligence/progression/leaderboard?period=alltime&limit=20")).data,
-      (await api.get<{ challenges: Mission[] }>("/api/intelligence/progression/weekly-challenges")).data,
-      (await api.get<{ threads: Thread[] }>(`/api/intelligence/community/threads?sort=${sortBy}&limit=80`)).data,
+    const [boardResult, weeklyResult, threadResult] = await Promise.allSettled([
+      api.get<{ leaderboard: LeaderboardRow[] }>("/api/intelligence/progression/leaderboard?period=alltime&limit=20").then((r) => r.data),
+      api.get<{ challenges: Mission[] }>("/api/intelligence/progression/weekly-challenges").then((r) => r.data),
+      api.get<{ threads: Thread[] }>(`/api/intelligence/community/threads?sort=${sortBy}&limit=80`).then((r) => r.data),
     ]);
-    setLeaderboard(board.leaderboard || []);
-    setMissions(weekly.challenges || []);
-    const nextThreads = threadData.threads || [];
-    if (latestSeenThreadId && nextThreads[0]?.id && nextThreads[0].id !== latestSeenThreadId) {
-      const seenIndex = nextThreads.findIndex((item) => item.id === latestSeenThreadId);
-      setNewThreadCount(seenIndex > 0 ? seenIndex : 1);
+    const errors: string[] = [];
+    if (boardResult.status === "fulfilled") {
+      setLeaderboard(boardResult.value.leaderboard || []);
+    } else {
+      errors.push("leaderboard");
     }
-    if (!latestSeenThreadId && nextThreads[0]?.id) {
-      setLatestSeenThreadId(nextThreads[0].id);
+    if (weeklyResult.status === "fulfilled") {
+      setMissions(weeklyResult.value.challenges || []);
+    } else {
+      errors.push("challenges");
     }
-    setThreads(nextThreads);
+    if (threadResult.status === "fulfilled") {
+      const nextThreads = threadResult.value.threads || [];
+      if (latestSeenThreadId && nextThreads[0]?.id && nextThreads[0].id !== latestSeenThreadId) {
+        const seenIndex = nextThreads.findIndex((item) => item.id === latestSeenThreadId);
+        setNewThreadCount(seenIndex > 0 ? seenIndex : 1);
+      }
+      if (!latestSeenThreadId && nextThreads[0]?.id) {
+        setLatestSeenThreadId(nextThreads[0].id);
+      }
+      setThreads(nextThreads);
+    } else {
+      errors.push("threads");
+    }
+    setLoadError(errors.length ? `Some data failed to load (${errors.join(", ")}). Retry or reload.` : "");
   }, [latestSeenThreadId, sort]);
 
   useEffect(() => {
@@ -98,6 +113,13 @@ const CommunityPage = () => {
           <div className="cyber-divider mt-4" />
           <p className="mt-2 text-sm font-semibold text-cyan-100">Train. Compete. Dominate.</p>
         </section>
+
+        {loadError ? (
+          <div className="rounded-2xl border border-amber-300/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            {loadError}
+            <button type="button" className="ml-3 underline transition hover:text-white" onClick={() => load().catch(() => undefined)}>Retry</button>
+          </div>
+        ) : null}
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <article className="glass-card rounded-lg p-5">
