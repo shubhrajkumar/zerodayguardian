@@ -3,7 +3,7 @@ import { ArrowRight, CheckCircle2, Lock, PlayCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PlatformHero from "@/components/platform/PlatformHero";
 import { apiGetJson } from "@/lib/apiClient";
-import { getPyApiUserMessage, pyPostJson } from "@/lib/pyApiClient";
+import { pyPostJson } from "@/lib/pyApiClient";
 import { useAuth } from "@/context/AuthContext";
 import { safeArray } from "@/utils/safeData";
 
