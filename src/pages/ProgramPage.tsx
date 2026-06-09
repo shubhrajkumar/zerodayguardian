@@ -48,13 +48,21 @@ const ProgramPage = () => {
 
   useEffect(() => {
     let active = true;
+    let pyUserWarned = false;
     const ensurePyUser = async () => {
       if (!user?.email) return;
-      await pyPostJson("/users", {
-        email: user.email,
-        name: user.name || user.email,
-        external_id: user.id,
-      }).catch(() => undefined);
+      try {
+        await pyPostJson("/users", {
+          email: user.email,
+          name: user.name || user.email,
+          external_id: user.id,
+        });
+      } catch (err) {
+        if (!pyUserWarned) {
+          pyUserWarned = true;
+          console.warn("[ProgramPage] Python backend user registration failed:", err);
+        }
+      }
     };
 
     const load = async () => {
