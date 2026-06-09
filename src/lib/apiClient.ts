@@ -669,6 +669,15 @@ export const apiGetJson = async <T,>(url: string): Promise<T> => {
         responsePayload?.requestId
       );
     }
+    // 403 Forbidden — provide actionable guidance
+    if (response.status === 403) {
+      const message = detail || "Access denied. This may be a CORS, CSRF, or permission issue."
+        + (code === "cors_blocked" ? " The backend is blocking requests from this origin." : "")
+        + (code === "rbac_forbidden" ? " You do not have permission to access this resource." : "")
+        + (code === "csrf_failed" ? " Session expired — please reload the page." : "");
+      emitAssistantSignal({ kind: "api_failure", url, method: "GET", status: 403, code });
+      throw new ApiError(message, 403, code, { url, response: responsePayload }, undefined, responsePayload?.requestId);
+    }
     emitAssistantSignal({ kind: "api_failure", url, method: "GET", status: response.status, code });
     throw new ApiError(
       detail || `Request failed ${response.status}`,
@@ -724,6 +733,14 @@ export const apiPostJson = async <T,>(url: string, body: unknown): Promise<T> =>
         retryAfterSec || undefined,
         responsePayload?.requestId
       );
+    }
+    if (response.status === 403) {
+      const message = detail || "Access denied. This may be a CORS, CSRF, or permission issue."
+        + (code === "cors_blocked" ? " The backend is blocking requests from this origin." : "")
+        + (code === "rbac_forbidden" ? " You do not have permission to access this resource." : "")
+        + (code === "csrf_failed" ? " Session expired — please reload the page." : "");
+      emitAssistantSignal({ kind: "api_failure", url, method: "POST", status: 403, code });
+      throw new ApiError(message, 403, code, { url, body, response: responsePayload }, undefined, responsePayload?.requestId);
     }
     emitAssistantSignal({ kind: "api_failure", url, method: "POST", status: response.status, code });
     throw new ApiError(
@@ -781,6 +798,14 @@ export const apiPutJson = async <T,>(url: string, body: unknown): Promise<T> => 
         responsePayload?.requestId
       );
     }
+    if (response.status === 403) {
+      const message = detail || "Access denied. This may be a CORS, CSRF, or permission issue."
+        + (code === "cors_blocked" ? " The backend is blocking requests from this origin." : "")
+        + (code === "rbac_forbidden" ? " You do not have permission to access this resource." : "")
+        + (code === "csrf_failed" ? " Session expired — please reload the page." : "");
+      emitAssistantSignal({ kind: "api_failure", url, method: "PUT", status: 403, code });
+      throw new ApiError(message, 403, code, { url, body, response: responsePayload }, undefined, responsePayload?.requestId);
+    }
     emitAssistantSignal({ kind: "api_failure", url, method: "PUT", status: response.status, code });
     throw new ApiError(
       detail || `Request failed ${response.status}`,
@@ -834,6 +859,14 @@ export const apiDeleteJson = async <T,>(url: string): Promise<T> => {
         retryAfterSec || undefined,
         responsePayload?.requestId
       );
+    }
+    if (response.status === 403) {
+      const message = detail || "Access denied. This may be a CORS, CSRF, or permission issue."
+        + (code === "cors_blocked" ? " The backend is blocking requests from this origin." : "")
+        + (code === "rbac_forbidden" ? " You do not have permission to access this resource." : "")
+        + (code === "csrf_failed" ? " Session expired — please reload the page." : "");
+      emitAssistantSignal({ kind: "api_failure", url, method: "DELETE", status: 403, code });
+      throw new ApiError(message, 403, code, { url, response: responsePayload }, undefined, responsePayload?.requestId);
     }
     emitAssistantSignal({ kind: "api_failure", url, method: "DELETE", status: response.status, code });
     throw new ApiError(

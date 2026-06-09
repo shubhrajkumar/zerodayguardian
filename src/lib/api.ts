@@ -189,6 +189,20 @@ api.interceptors.response.use(
       }
     }
     
+    // 403 Forbidden — provide actionable error message
+    if (error.response?.status === 403) {
+      const code = error.response?.data?.code || '';
+      const message =
+        code === 'cors_blocked'
+          ? 'Access denied: the backend is blocking requests from this origin. Check CORS_ORIGIN on the server.'
+          : code === 'rbac_forbidden'
+            ? 'Access denied: you do not have permission to access this resource.'
+            : code === 'csrf_failed'
+              ? 'Session expired — please reload the page.'
+              : 'Access denied (403 Forbidden). This may be a CORS, CSRF, or permission issue.';
+      toast.error(message, { duration: 5000, id: 'forbidden-error' });
+    }
+
     // 500s are logged at debug level only to avoid noisy console output
     // (Render cold starts and backend crashes are expected during development)
     
