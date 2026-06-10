@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useUserProgress } from "@/context/UserProgressContext";
+import { useGamificationSystem, getLevelLabel } from "@/lib/gamificationSystem";
 import AnimatedCyberBackground from "@/components/AnimatedCyberBackground";
 import LiveClock, { formatRelativeTime } from "@/components/ui/LiveClock";
 import SentryTestPanel from "@/components/SentryTestPanel";
+import XPBar from "@/components/gamification/XPBar";
+import StreakCounter from "@/components/gamification/StreakCounter";
+import BadgeDisplay from "@/components/gamification/BadgeDisplay";
+import LeaderboardCard from "@/components/gamification/LeaderboardCard";
 
 type SidebarItem = {
   label: string;
@@ -27,7 +31,7 @@ export default function DashboardPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { progress } = useUserProgress();
+  const { snapshot } = useGamificationSystem(user?.id, user?.name || undefined);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [greeting, setGreeting] = useState("Welcome");
 
@@ -39,10 +43,10 @@ export default function DashboardPage() {
   }, []);
 
   const displayName = user?.name || user?.email?.split("@")[0] || "Guardian";
-  const xp = progress?.xp ?? 1280;
-  const streak = progress?.streak ?? 7;
-  const badges = Array.isArray(progress?.badges) ? progress.badges.length : progress?.badges ?? 12;
-  const rank = progress?.rank ?? "Cyber Sentinel";
+  const xp = snapshot.totalXp;
+  const streak = snapshot.streakDays;
+  const badges = snapshot.badges.length;
+  const rank = getLevelLabel(snapshot.level);
 
   const stats = [
     { label: "XP", value: xp.toLocaleString(), icon: "⚡", color: "from-[#00d4ff] to-[#0099cc]" },
@@ -205,6 +209,19 @@ export default function DashboardPage() {
           </div>
 
           <SentryTestPanel />
+
+          {/* Gamification Section */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--theme-text)" }}>Your Progress</h2>
+            <div className="grid gap-4 sm:grid-cols-2 mb-4">
+              <XPBar snapshot={snapshot} />
+              <StreakCounter snapshot={snapshot} />
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <BadgeDisplay badges={snapshot.badges} />
+              <LeaderboardCard />
+            </div>
+          </div>
 
           {/* Recent Activity */}
           <div className="glass-card p-5 animate-fade-in-up">

@@ -1,13 +1,9 @@
 import { useMemo } from "react";
-import type { GamificationSnapshot } from "@/lib/gamificationSystem";
+import { getLevelLabel, type GamificationSnapshot } from "@/lib/gamificationSystem";
 
 interface XPBarProps {
   snapshot: GamificationSnapshot;
 }
-
-const levelLabels = ["", "Rookie", "Novice", "Initiate", "Apprentice", "Operative", "Specialist", "Elite", "Expert", "Master", "Legend"];
-
-const getLevelLabel = (level: number) => levelLabels[Math.min(level, levelLabels.length - 1)] || `Level ${level}`;
 
 export default function XPBar({ snapshot }: XPBarProps) {
   const { level, xpIntoLevel, xpToNextLevel, totalXp } = snapshot;

@@ -19,6 +19,7 @@ import { useAuth } from "./context/AuthContext";
 import { LearningModeProvider } from "./context/LearningModeContext";
 import { MissionSystemProvider } from "./context/MissionSystemApiContext";
 import { AdaptiveMentorProvider } from "./context/AdaptiveMentorContext";
+import { GamificationProvider } from "./context/GamificationContext";
 import { warmHighIntentRoutes } from "./lib/routeWarmup";
 import { useScrollReveal } from "./hooks/useScrollReveal";
 import { useGrowthProfileSync } from "./hooks/useGrowthFeatures";
@@ -417,7 +418,7 @@ const renderRouteElement = (PageComponent: AppPageComponent, requiresAuth = fals
 
 // ── AppShell: the main app shell (lazy-loaded) ──
 export default function AppShell() {
-  const { authState, isAuthenticated } = useAuth();
+  const { authState, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     if (authState === "loading" || isAuthenticated) return;
@@ -431,6 +432,7 @@ export default function AppShell() {
       <MissionSystemProvider>
         <LearningModeProvider>
           <AdaptiveMentorProvider>
+            <GamificationProvider userId={user?.id} handle={user?.name}>
             <BrowserRouter
               future={{
                 v7_startTransition: true,
@@ -463,6 +465,7 @@ export default function AppShell() {
               <Suspense fallback={null}><LazyToasters /></Suspense>
               <ToastContainer />
             </BrowserRouter>
+            </GamificationProvider>
           </AdaptiveMentorProvider>
         </LearningModeProvider>
       </MissionSystemProvider>

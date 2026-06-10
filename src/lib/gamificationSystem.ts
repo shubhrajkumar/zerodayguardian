@@ -105,6 +105,10 @@ type GamificationHook = {
 const DAILY_XP_PER_QUIZ_CORRECT = 50;
 const STORAGE_COLLECTION = "gamification_users";
 const LOCAL_STORAGE_PREFIX = "zdg:gamification";
+const LEVEL_LABELS = ["", "Rookie", "Novice", "Initiate", "Apprentice", "Operative", "Specialist", "Elite", "Expert", "Master", "Legend"];
+
+export const getLevelLabel = (level: number): string => LEVEL_LABELS[Math.min(level, LEVEL_LABELS.length - 1)] || `Level ${level}`;
+
 const MOTTO_READY = "Deploy the next move. Intel is live.";
 const MOTTO_DEGRADED = "Intel uplink is unstable. Mission data is protected.";
 
