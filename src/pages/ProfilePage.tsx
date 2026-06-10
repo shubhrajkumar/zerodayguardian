@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Award, BookOpen, Flame, Zap, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useUserProgress } from "@/context/UserProgressContext";
-import { useGamificationSystem } from "@/lib/gamificationSystem";
+import { useGamificationSystem, getLevelLabel } from "@/lib/gamificationSystem";
 import XPBar from "@/components/gamification/XPBar";
 import StreakCounter from "@/components/gamification/StreakCounter";
 import BadgeDisplay from "@/components/gamification/BadgeDisplay";
@@ -36,7 +36,7 @@ export default function ProfilePage() {
   const handle = profile?.handle || displayName.toLowerCase().replace(/\s+/g, ".");
   const xp = progress?.xp ?? snapshot.totalXp;
   const streak = progress?.streak ?? snapshot.streakDays;
-  const rank = progress?.rank || (snapshot.level >= 7 ? "Expert" : snapshot.level >= 5 ? "Specialist" : "Operative");
+  const rank = progress?.rank || getLevelLabel(snapshot.level);
   const labsCompleted = progress?.completedLabs ?? 0;
 
   useEffect(() => {

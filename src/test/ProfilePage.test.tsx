@@ -27,6 +27,10 @@ vi.mock("@/context/UserProgressContext", () => ({
 
 vi.mock("@/lib/gamificationSystem", () => ({
   useGamificationSystem: (...args: unknown[]) => mockUseGamificationSystem(...args),
+  getLevelLabel: (level: number) => {
+    const labels = ["", "Rookie", "Novice", "Initiate", "Apprentice", "Operative", "Specialist", "Elite", "Expert", "Master", "Legend"];
+    return labels[Math.min(level, labels.length - 1)] || `Level ${level}`;
+  },
 }));
 
 vi.mock("@/lib/api", () => ({

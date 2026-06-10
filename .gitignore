@@ -67,3 +67,6 @@ backend/python/osint-monitor.log
 .local/
 .lovable/
 .tools/
+
+*storybook.log
+storybook-static

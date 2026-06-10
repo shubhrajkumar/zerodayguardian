@@ -27,7 +27,9 @@
     "test": "vitest run --config vitest.config.mjs",
     "test:watch": "vitest --config vitest.config.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.9.0",
@@ -155,7 +157,14 @@
     "vite": "^5.4.19",
     "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-compression": "^0.5.1",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "storybook": "^10.4.3",
+    "@storybook/react-webpack5": "^10.4.3",
+    "@storybook/addon-webpack5-compiler-swc": "^4.0.3",
+    "@storybook/addon-a11y": "^10.4.3",
+    "@storybook/addon-docs": "^10.4.3",
+    "@storybook/addon-onboarding": "^10.4.3",
+    "eslint-plugin-storybook": "^10.4.3"
   },
   "description": "ZeroDay Guardian production cybersecurity SaaS with ZORVIX AI",
   "keywords": [],
