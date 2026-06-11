@@ -33,6 +33,8 @@ const VARIANT_STYLES: Record<ToastVariant, { borderColor: string; icon: string; 
 
 let toastCounter = 0;
 
+// Cyber Rationale: showToast is a global event dispatcher used by AuthPage and other components.
+// eslint-disable-next-line react-refresh/only-export-components -- event dispatcher used across modules
 export function showToast(message: string, variant: ToastVariant = "info") {
   const id = `toast-${++toastCounter}`;
   const event = new CustomEvent<ToastItem>("zdg:toast", {

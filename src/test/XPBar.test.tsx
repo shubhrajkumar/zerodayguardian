@@ -1,8 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import XPBar from "@/components/gamification/XPBar";
 import type { GamificationSnapshot } from "@/lib/gamificationSystem";
+
+// Cyber Rationale: MemoryRouter wraps XPBar because EmptyStateCard uses
+// useNavigate() from react-router-dom — tests need Router context.
 
 // ── Helpers ──
 
@@ -97,9 +101,13 @@ describe("XPBar", () => {
   });
 
   it("handles zero XP gracefully", () => {
-    render(<XPBar snapshot={makeSnapshot({ totalXp: 0, xpIntoLevel: 0, xpToNextLevel: 0, level: 1 })} />);
-    expect(screen.getByText("0 total XP")).toBeTruthy();
-    expect(screen.getByText("0 / 0")).toBeTruthy();
-    expect(screen.getByText("0 XP to next level")).toBeTruthy();
+    render(
+      <MemoryRouter>
+        <XPBar snapshot={makeSnapshot({ totalXp: 0, xpIntoLevel: 0, xpToNextLevel: 0, level: 1 })} />
+      </MemoryRouter>
+    );
+    // Empty state shows progress ring with "0/0 XP to White Hat" and motivational quote
+    expect(screen.getByText(/XP to White Hat/)).toBeTruthy();
+    expect(screen.getByText(/Start Day 1 Lab/)).toBeTruthy();
   });
 });

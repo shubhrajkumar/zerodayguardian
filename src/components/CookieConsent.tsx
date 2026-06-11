@@ -203,5 +203,7 @@ const CookieConsent = () => {
 
 export default CookieConsent;
 
+// Cyber Rationale: These exports are used by other modules (e.g., AuthContext) to read/write consent state.
+// eslint-disable-next-line react-refresh/only-export-components -- non-component exports used across modules
 export { loadConsent, saveConsent };
 export type { ConsentPreferences };

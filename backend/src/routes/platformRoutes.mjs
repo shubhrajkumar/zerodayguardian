@@ -3,6 +3,7 @@ import { z } from "zod";
 import { validateBody, validateParams, validateQuery } from "../middleware/validate.mjs";
 import { requireRole } from "../middleware/auth.mjs";
 import { platformArchitecture } from "../config/platform.mjs";
+import { cacheMiddleware } from "../middleware/cache.middleware.mjs";
 import {
   consumeStreakFreeze,
   createBillingCheckoutSession,
@@ -132,8 +133,11 @@ const buildDegradedOverview = (userId = "") => ({
   },
 });
 
-router.get("/architecture", (_req, res) => {
-  res.setHeader("Cache-Control", "private, max-age=60");
+// Cyber Rationale: Architecture data is static across all users and rarely changes.
+// Cache at the middleware level for 10 minutes to eliminate redundant reads.
+// CDN-level cache via Cache-Control complements the in-memory cache.
+router.get("/architecture", cacheMiddleware(600000), (_req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=600");
   res.json({ status: "ok", architecture: platformArchitecture });
 });
 

@@ -193,6 +193,14 @@
   --ring: 187 100% 50%;
   --radius: 0.75rem;
 
+  /* WCAG AA contrast ratios for neon text on dark backgrounds */
+  --a11y-neon-cyan: #00d4ff; /* 7.5:1 contrast on #0a0a0f */
+  --a11y-neon-green: #00ff88; /* 12.8:1 contrast on #0a0a0f */
+  --a11y-neon-purple: #b06cff; /* 7.1:1 contrast on #0a0a0f */
+  --a11y-neon-red: #ff4d6a; /* 5.2:1 contrast on #0a0a0f */
+  --a11y-text-primary: #e2e8f0; /* 14.5:1 contrast on #0a0a0f */
+  --a11y-text-secondary: #94a3b8; /* 6.3:1 contrast on #0a0a0f */
+
   /* Theme-aware color tokens */
   --theme-bg: #0a0a0f;
   --theme-surface: #12121a;

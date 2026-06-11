@@ -49,7 +49,7 @@ pyapi.interceptors.request.use(async (config) => {
 
 // RESPONSE INTERCEPTOR
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: any) => void }> = [];
+let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: unknown) => void }> = [];
 
 pyapi.interceptors.response.use(
   (response: AxiosResponse) => response,

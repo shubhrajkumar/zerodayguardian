@@ -58,7 +58,7 @@ jobs:
         run: npm install --no-fund --no-audit --prefer-offline
 
       - name: ESLint
-        run: npx eslint . --max-warnings 50
+        run: npm run lint
 
   # ── Job 3: Unit tests ──
   test:
@@ -164,7 +164,7 @@ jobs:
             --quiet || true
           kill $SERVE_PID 2>/dev/null || true
           if [ -f /tmp/lighthouse-ci-report.json ] && [ -s /tmp/lighthouse-ci-report.json ]; then
-            node scripts/lighthouse-budget-check.mjs /tmp/lighthouse-ci-report.json || echo "⚠️ Lighthouse budget exceeded — non-blocking in CI"
+            node scripts/lighthouse-budget-check.mjs /tmp/lighthouse-ci-report.json
           else
             echo "⚠️ Lighthouse report not generated — skipping budget check"
           fi

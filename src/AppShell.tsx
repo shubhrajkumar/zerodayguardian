@@ -95,6 +95,8 @@ const ContactPage = lazy(() => import("./pages/ContactPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const MissionsPage = lazy(() => import("./pages/MissionsPage"));
 const ComingSoonLabsPage = lazy(() => import("./components/ComingSoonLabs"));
+const RoadmapPage = lazy(() => import("./pages/RoadmapPage"));
+const DemoNmapLab = lazy(() => import("./pages/Labs/DemoNmapLab"));
 
 // ── Site config ──
 const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "").replace(/\/+$/, "");
@@ -172,10 +174,16 @@ const routeSeoConfig: RouteSeoConfig[] = [
     keywords: "cyber labs, security sandbox, penetration testing labs, blue team labs",
   },
   {
-    patterns: ["/labs"],
-    title: "Coming Soon: Interactive OSINT & SQLi Labs | ZeroDay Guardian",
-    description: "Master Reconnaissance, craft SQL Injection Payloads, and validate Parameterized Queries in ZeroDay Guardian's upcoming interactive labs.",
-    keywords: "OSINT labs, SQL injection labs, Reconnaissance, Payload, Parameterized Queries, cybersecurity labs coming soon",
+    patterns: ["/labs", "/labs/demo-nmap"],
+    title: "Interactive Cyber Labs | ZeroDay Guardian",
+    description: "Explore hands-on cybersecurity labs including the free Nmap port scanner demo. Experience ZeroDay Guardian's interactive learning environment.",
+    keywords: "cyber labs, nmap demo, free scan lab, cybersecurity labs, hands-on security",
+  },
+  {
+    patterns: ["/roadmap"],
+    title: "60-Day Cyber Roadmap | ZeroDay Guardian",
+    description: "Follow a structured 60-day cybersecurity learning path — from recon fundamentals to binary exploitation. Track your progress and unlock each day.",
+    keywords: "cybersecurity roadmap, 60-day plan, ethical hacking path, cyber learning journey",
   },
   {
     patterns: ["/tools", "/tools/:id"],
@@ -388,6 +396,8 @@ const appRoutes: AppRouteDefinition[] = [
   { path: "/program/day/:day", component: ProgramLabPage, requiresAuth: true },
   { path: "/lab", component: LabPage, requiresAuth: true },
   { path: "/labs", component: ComingSoonLabsPage },
+  { path: "/labs/demo-nmap", component: DemoNmapLab },
+  { path: "/roadmap", component: RoadmapPage },
   { path: "/blog", component: BlogPage, requiresAuth: true },
   { path: "/blog/:slug", component: BlogDetail, requiresAuth: true },
   { path: "/resources", component: ResourcesPage, requiresAuth: true },

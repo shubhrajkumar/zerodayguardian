@@ -90,12 +90,13 @@ export default function AuthPage() {
        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
        showToast("Signed in with Google successfully", "success");
        navigate("/dashboard", { replace: true });
-    } catch (err: any) {
-      const message = err?.code === "auth/popup-closed-by-user"
+    } catch (err: unknown) {
+      const error = err as { code?: string } | undefined;
+      const message = error?.code === "auth/popup-closed-by-user"
         ? "Sign-in cancelled"
-        : err?.code === "auth/popup-blocked"
+        : error?.code === "auth/popup-blocked"
           ? "Pop-up was blocked by your browser. Please allow pop-ups and try again."
-          : err?.code === "auth/unauthorized-domain"
+          : error?.code === "auth/unauthorized-domain"
             ? "This domain is not authorized for sign-in. Try using email/password instead."
             : "Google sign-in failed. Please try again.";
       setError(message);
@@ -160,7 +161,8 @@ export default function AuthPage() {
         showToast("Welcome back!", "success");
         navigate("/dashboard", { replace: true });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string } | undefined;
       const map: Record<string, string> = {
         "auth/user-not-found": "No account with this email",
         "auth/wrong-password": "Incorrect password",
@@ -173,7 +175,7 @@ export default function AuthPage() {
         "auth/api-key-not-valid": "Firebase API key is invalid. Check your VITE_FIREBASE_* settings.",
         "auth/network-request-failed": "Network error while contacting Firebase. Please check your connection and try again.",
       };
-      setError(map[err?.code] || err?.message || "Authentication failed");
+      setError((error?.code && map[error.code]) || error?.message || "Authentication failed");
     } finally {
       setIsLoading(false);
     }

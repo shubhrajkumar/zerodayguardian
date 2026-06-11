@@ -22,6 +22,8 @@ function formatClock(date: Date): string {
 /**
  * Format a Date as a relative time string (e.g. "2 minutes ago", "3 hours ago").
  */
+// Cyber Rationale: formatRelativeTime is used by DashboardPage and other components for relative timestamps.
+// eslint-disable-next-line react-refresh/only-export-components -- utility function used across modules
 export function formatRelativeTime(date: Date): string {
   const now = Date.now();
   const diff = now - date.getTime();

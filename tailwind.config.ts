@@ -133,10 +133,18 @@ export default {
       },
     },
   },
-  plugins: [],
-
-  // ── Cyber Rationale: Enforce minimum 48×48px touch targets on all interactive
-  // elements to prevent "Fat-Finger" tap errors on mobile devices — critical
-  // for gamification buttons, nav links, and mission controls where mis-taps
-  // could trigger unintended actions. Meets WCAG 2.2 Success Criterion 2.5.8.
+  plugins: [
+    // Cyber Rationale: Enforce minimum 48×48px touch targets on mobile to prevent
+    // "Fat-Finger" tap errors. Meets WCAG 2.2 SC 2.5.8 (Target Size Minimum).
+    function touchTargetPlugin({ addUtilities }) {
+      addUtilities({
+        ".touch-target": {
+          "@media (max-width: 768px)": {
+            "min-height": "48px",
+            "min-width": "48px",
+          },
+        },
+      });
+    },
+  ],
 } satisfies Config;

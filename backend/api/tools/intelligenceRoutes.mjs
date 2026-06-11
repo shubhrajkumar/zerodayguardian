@@ -66,6 +66,7 @@ import { Scan } from "../../src/models/Scan.mjs";
 import { getCyberBrainSummary } from "../../src/services/cyberBrainService.mjs";
 import { buildAttackSurface } from "../../src/services/attackSurfaceService.mjs";
 import { TtlCache } from "../../src/utils/ttlCache.mjs";
+import { cacheMiddleware } from "../../src/middleware/cache.middleware.mjs";
 import { getAdaptiveExperience } from "../../src/services/adaptiveExperienceService.mjs";
 import { getAdaptiveAiSynthesis } from "../../src/services/adaptiveAiSynthesisService.mjs";
 
@@ -244,7 +245,9 @@ router.post("/telemetry/event", validateBody(telemetryEventSchema), async (req, 
   }
 });
 
-router.get("/tools/catalog", async (_req, res, next) => {
+// Cyber Rationale: Tool catalog is a read-heavy, infrequently-changed dataset.
+// CacheMiddleware (10-min TTL) complements the existing TtlCache for CDN/edge benefits.
+router.get("/tools/catalog", cacheMiddleware(600000), async (_req, res, next) => {
   try {
     const cached = toolsCatalogCache.get("tools:catalog");
     if (cached) {
@@ -400,7 +403,9 @@ router.get("/progression/me", async (req, res, next) => {
   }
 });
 
-router.get("/progression/leaderboard", validateQuery(leaderboardQuerySchema), async (req, res, next) => {
+// Cyber Rationale: Leaderboard data changes slowly (only when users complete missions)
+// and is read frequently by all users. Cache at middleware layer for 10 minutes.
+router.get("/progression/leaderboard", cacheMiddleware(600000), validateQuery(leaderboardQuerySchema), async (req, res, next) => {
   try {
     const leaderboard = await getProgressionLeaderboard({
       period: req.validatedQuery.period,

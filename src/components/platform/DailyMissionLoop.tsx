@@ -27,8 +27,10 @@ const DailyMissionLoop = ({
   onDismissReward,
   onRefresh,
 }: DailyMissionLoopProps) => {
-  const dailyMissions = snapshot?.dailyMissions ?? [];
-  const weeklyMissions = snapshot?.weeklyMissions ?? [];
+  // Cyber Rationale: Wrap fallback arrays in useMemo to stabilize references —
+  // without this, the ?? [] creates a new array each render, breaking downstream useMemo deps.
+  const dailyMissions = useMemo(() => snapshot?.dailyMissions ?? [], [snapshot?.dailyMissions]);
+  const weeklyMissions = useMemo(() => snapshot?.weeklyMissions ?? [], [snapshot?.weeklyMissions]);
   const dailyCompleted = useMemo(() => dailyMissions.filter((item) => item.completed).length, [dailyMissions]);
   const weeklyCompleted = useMemo(() => weeklyMissions.filter((item) => item.completed).length, [weeklyMissions]);
   const dailyProgress = progressPct(dailyCompleted, dailyMissions.length);

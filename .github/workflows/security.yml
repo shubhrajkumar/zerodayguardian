@@ -1,0 +1,66 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # Every Monday at 06:00 UTC
+
+env:
+  NODE_VERSION_FILE: .nvmrc
+
+jobs:
+  audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-fund --no-audit --prefer-offline
+
+      - name: npm audit (production only — high severity)
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+      - name: npm audit (all — critical only)
+        run: npm audit --audit-level=critical
+        continue-on-error: true
+
+      - name: Check for known vulnerabilities
+        run: |
+          echo "## 🔒 Security Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Audit Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          PROD_AUDIT=$(npm audit --omit=dev --audit-level=high 2>&1 || true)
+          if echo "$PROD_AUDIT" | grep -q "found 0 vulnerabilities"; then
+            echo "| Production (high+) | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Production (high+) | ⚠️  Found issues |" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$PROD_AUDIT" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+          ALL_AUDIT=$(npm audit --audit-level=critical 2>&1 || true)
+          if echo "$ALL_AUDIT" | grep -q "found 0 vulnerabilities"; then
+            echo "| All (critical) | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| All (critical) | ⚠️  Found issues |" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$ALL_AUDIT" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi

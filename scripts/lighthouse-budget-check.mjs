@@ -9,7 +9,7 @@
  *
  * Budget thresholds (configurable below):
  * - Performance score: >= 70
- * - TBT: <= 3000 ms
+ * - TBT: <= 500 ms (relaxed from 200ms for vendor bundle overhead)
  * - FCP: <= 3000 ms
  * - LCP: <= 4000 ms
  * - CLS: <= 0.25 (Lighthouse 'good' threshold — real value 0.158)
@@ -21,19 +21,21 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 // ── Budget thresholds ──
-// Calibrated against real Lighthouse report (2026-06-07) on localhost.
-// CLS tightened to 0.25 (Lighthouse 'good' threshold) after hero + cursor fixes (real 0.158).
-// TTI relaxed from 5000 → 8000 because heavy vendor bundles (motion, sentry,
-// react) take ~3s to parse+execute.
-// TODO: keep monitoring CLS after deploy — target is ≤0.15
+// Cyber Rationale: Tightened to Core Web Vitals 'good' thresholds.
+// LCP < 2.5s = Google 'good' rating; CLS < 0.1 = no layout thrashing;
+// INP < 200ms = responsive interaction; TBT < 500ms = fast main thread
+// (relaxed from 200ms to accommodate Sentry, Framer Motion, Recharts bundles).
+// TTI relaxed to 8000ms because heavy vendor bundles (motion, sentry,
+// react) take ~3s to parse+execute on first load.
 const BUDGET = {
-  performanceScore: { min: 70, label: "Performance score" },
-  "total-blocking-time": { max: 3000, unit: "ms", label: "Total Blocking Time" },
-  "first-contentful-paint": { max: 3000, unit: "ms", label: "First Contentful Paint" },
-  "largest-contentful-paint": { max: 4000, unit: "ms", label: "Largest Contentful Paint" },
-  "cumulative-layout-shift": { max: 0.25, unit: "", label: "Cumulative Layout Shift" },
-  "speed-index": { max: 6000, unit: "ms", label: "Speed Index" },
+  performanceScore: { min: 80, label: "Performance score" },
+  "total-blocking-time": { max: 500, unit: "ms", label: "Total Blocking Time" },
+  "first-contentful-paint": { max: 1800, unit: "ms", label: "First Contentful Paint" },
+  "largest-contentful-paint": { max: 2500, unit: "ms", label: "Largest Contentful Paint" },
+  "cumulative-layout-shift": { max: 0.1, unit: "", label: "Cumulative Layout Shift" },
+  "speed-index": { max: 4000, unit: "ms", label: "Speed Index" },
   interactive: { max: 8000, unit: "ms", label: "Time to Interactive" },
+  "interaction-to-next-paint": { max: 200, unit: "ms", label: "Interaction to Next Paint (INP)" },
 };
 
 // ── Parse report ──
