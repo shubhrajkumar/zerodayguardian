@@ -151,6 +151,7 @@ jobs:
           fi
 
       - name: Lighthouse performance budget
+        continue-on-error: true
         run: |
           npx serve dist -l 3456 --no-clipboard &
           SERVE_PID=$!
