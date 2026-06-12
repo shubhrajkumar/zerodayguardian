@@ -4,7 +4,6 @@ import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import viteCompression from "vite-plugin-compression";
-import type { HtmlTagDescriptor } from "vite";
 
 const trimTrailingSlash = (value = "") => String(value || "").replace(/\/+$/, "");
 
@@ -78,22 +77,7 @@ export default defineConfig(() => {
         },
       },
 
-      // ── Inject <link rel="preload"> for critical above-the-fold resources ──
-      // Preloads the hero OG image so the browser starts fetching it during HTML parse,
-      // shaving ~200-400ms off LCP for first-load visitors.
-      {
-        name: "inject-critical-preloads",
-        transformIndexHtml(html) {
-          const tags: HtmlTagDescriptor[] = [
-            {
-              tag: "link",
-              attrs: { rel: "preload", href: "/og-image.png", as: "image", type: "image/png" },
-              injectTo: "head",
-            },
-          ];
-          return { html, tags };
-        },
-      },
+
       // Sentry source map upload (opt-in via SENTRY_AUTH_TOKEN env var)
       ...(process.env.SENTRY_AUTH_TOKEN
         ? [
@@ -159,8 +143,10 @@ export default defineConfig(() => {
             if (id.includes("@radix-ui")) return "ui-vendor";
             // Icons: deferred
             if (id.includes("lucide-react")) return "icons-vendor";
-            // Notifications: merge small toast/helmet/query chunks
-            if (id.includes("react-hot-toast") || id.includes("sonner") || id.includes("react-helmet-async") || id.includes("@tanstack") || id.includes("react-query")) return "notifications-vendor";
+            // Notifications: merge small toast/query chunks (helmet-async excluded to prevent TDZ init errors)
+            if (id.includes("react-hot-toast") || id.includes("sonner") || id.includes("@tanstack") || id.includes("react-query")) return "notifications-vendor";
+            // Helmet: keep separate to avoid circular TDZ issues in merged chunks
+            if (id.includes("react-helmet-async")) return "helmet-vendor";
             // Forms + Date + Confetti + Canvas: merge small deferrable packages
             if (id.includes("react-hook-form") || id.includes("@hookform") || id.includes("date-fns") || id.includes("react-day-picker") || id.includes("canvas-confetti") || id.includes("html2canvas")) return "extras-vendor";
             // Remaining small vendors: bundle together
