@@ -124,8 +124,8 @@ export default defineConfig(() => {
         output: {
           manualChunks(id) {
             if (!id.includes("node_modules")) return;
-            // Core React: minimal critical chunk
-            if (id.includes("react") && !id.includes("react-router") && !id.includes("react-helmet") && !id.includes("react-hot-toast") && !id.includes("sonner") && !id.includes("react-hook-form") && !id.includes("react-day-picker") && !id.includes("react-window")) return "react-vendor";
+            // Core React + TanStack query core: single critical chunk (no circular deps)
+            if ((id.includes("react") && !id.includes("react-router") && !id.includes("react-helmet") && !id.includes("react-hot-toast") && !id.includes("sonner") && !id.includes("react-hook-form") && !id.includes("react-day-picker") && !id.includes("react-window")) || id.includes("@tanstack")) return "react-vendor";
             // Router: loaded with React but separated
             if (id.includes("react-router") || id.includes("@remix-run")) return "router-vendor";
             // Firebase: split core (app init) from individual services — each is dynamically imported
@@ -143,8 +143,8 @@ export default defineConfig(() => {
             if (id.includes("@radix-ui")) return "ui-vendor";
             // Icons: deferred
             if (id.includes("lucide-react")) return "icons-vendor";
-            // Notifications: merge small toast/query chunks (helmet-async excluded to prevent TDZ init errors)
-            if (id.includes("react-hot-toast") || id.includes("sonner") || id.includes("@tanstack") || id.includes("react-query")) return "notifications-vendor";
+            // Notifications: toast libraries only (no query packages — those live in react-vendor to avoid circular chunks)
+            if (id.includes("react-hot-toast") || id.includes("sonner")) return "notifications-vendor";
             // Helmet: keep separate to avoid circular TDZ issues in merged chunks
             if (id.includes("react-helmet-async")) return "helmet-vendor";
             // Forms + Date + Confetti + Canvas: merge small deferrable packages
