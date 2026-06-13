@@ -35,7 +35,7 @@ describe("LeaderboardCard", () => {
   it("renders header text", async () => {
     await act(async () => { render(<LeaderboardCard />); });
     expect(screen.getByText("Leaderboard")).toBeTruthy();
-    expect(screen.getByText("Top Operators")).toBeTruthy();
+    expect(screen.getByText("Top 10 Students")).toBeTruthy();
   });
 
   it("renders period tab buttons", async () => {
@@ -99,30 +99,29 @@ describe("LeaderboardCard", () => {
     expect(mockGet).toHaveBeenCalledTimes(1);
   });
 
-  it("shows loading indicator while fetching", async () => {
+  it("shows loading spinner while fetching", async () => {
     // Make the API call hang
     mockGet.mockReturnValue(new Promise(() => {}));
 
     await act(async () => { render(<LeaderboardCard />); });
 
-    expect(screen.getByText("Loading...")).toBeTruthy();
     expect(screen.getByText("Fetching weekly rankings...")).toBeTruthy();
   });
 
-  it("shows podium for top 3 entries", async () => {
+  it("shows top 3 entries with medal icons", async () => {
     await act(async () => { render(<LeaderboardCard />); });
     await waitFor(() => {
       expect(screen.getByText("Alice")).toBeTruthy();
       expect(screen.getByText("Bob")).toBeTruthy();
       expect(screen.getByText("Charlie")).toBeTruthy();
     });
-    // Podium medals
+    // Medal icons for top 3
     expect(screen.getByText("🥇")).toBeTruthy();
     expect(screen.getByText("🥈")).toBeTruthy();
     expect(screen.getByText("🥉")).toBeTruthy();
   });
 
-  it("shows rest of leaderboard below podium", async () => {
+  it("shows rest of leaderboard entries", async () => {
     // Use alltime which has 5 entries
     await act(async () => { render(<LeaderboardCard />); });
     await act(async () => {
@@ -132,9 +131,9 @@ describe("LeaderboardCard", () => {
       expect(screen.getByText("Ivy")).toBeTruthy();
       expect(screen.getByText("Jack")).toBeTruthy();
     });
-    // Their XP values
-    expect(screen.getByText("800")).toBeTruthy();
-    expect(screen.getByText("600")).toBeTruthy();
+    // Their XP values formatted with locale separator
+    expect(screen.getByText("800 XP")).toBeTruthy();
+    expect(screen.getByText("600 XP")).toBeTruthy();
   });
 
   it("shows empty state when no leaderboard data", async () => {
@@ -172,7 +171,6 @@ describe("LeaderboardCard", () => {
     await waitFor(() => {
       expect(screen.getByText("Dave")).toBeTruthy();
       expect(screen.getByText("Eve")).toBeTruthy();
-      // Old data should be gone
       expect(screen.queryByText("Alice")).toBeNull();
     });
 
@@ -186,20 +184,20 @@ describe("LeaderboardCard", () => {
     });
   });
 
-  it("sorts entries by position ascending", async () => {
+  it("sorts entries by XP descending", async () => {
     mockGet.mockResolvedValue({
-      data: { leaderboard: [makeRow(5, "Last", 100), makeRow(1, "First", 500), makeRow(3, "Middle", 300), makeRow(4, "Fourth", 150)] },
+      data: { leaderboard: [makeRow(5, "Last", 100), makeRow(1, "Top", 500), makeRow(3, "Middle", 300)] },
     });
     await act(async () => { render(<LeaderboardCard />); });
     await waitFor(() => {
-      expect(screen.getByText("First")).toBeTruthy();
+      expect(screen.getByText("Top")).toBeTruthy();
       expect(screen.getByText("Middle")).toBeTruthy();
       expect(screen.getByText("Last")).toBeTruthy();
     });
-    // First should be on podium (🥇), Last should be in the list below
+    // Top should be 🥇
     expect(screen.getByText("🥇")).toBeTruthy();
-    // Last (position 5) is in the rest list with plain "100" text (podium shows "100 XP")
-    expect(screen.getByText("100")).toBeTruthy();
+    expect(screen.getByText("500 XP")).toBeTruthy();
+    expect(screen.getByText("100 XP")).toBeTruthy();
   });
 
   it("limits display to 10 entries", async () => {
@@ -211,5 +209,22 @@ describe("LeaderboardCard", () => {
       expect(screen.getByText("Player10")).toBeTruthy();
       expect(screen.queryByText("Player11")).toBeNull();
     });
+  });
+
+  it("filters entries by search query", async () => {
+    mockGet.mockResolvedValue({
+      data: { leaderboard: [makeRow(1, "Alice", 500), makeRow(2, "Bob", 400), makeRow(3, "Charlie", 300), makeRow(4, "Alex", 200)] },
+    });
+    await act(async () => { render(<LeaderboardCard />); });
+    await waitFor(() => expect(screen.getByText("Alice")).toBeTruthy());
+
+    const searchInput = screen.getByPlaceholderText("Search students");
+    await act(async () => {
+      await userEvent.type(searchInput, "Ali");
+    });
+
+    expect(screen.getByText("Alice")).toBeTruthy();
+    expect(screen.queryByText("Bob")).toBeNull();
+    expect(screen.queryByText("Charlie")).toBeNull();
   });
 });

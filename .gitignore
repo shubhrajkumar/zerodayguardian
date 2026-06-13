@@ -70,3 +70,5 @@ backend/python/osint-monitor.log
 
 *storybook.log
 storybook-static
+
+.vercel

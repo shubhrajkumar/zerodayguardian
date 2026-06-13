@@ -1,13 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import api from "@/lib/api";
 
-interface LeaderboardRow {
-  position: number;
-  alias: string;
-  rank: string;
-  points: number;
+export interface LeaderboardEntry {
+  rank: number;
+  username: string;
+  xp: number;
   level: number;
+  avatar: string;
+  userId?: string;
+}
+
+interface ApiLeaderboardRow {
+  position?: number;
+  alias?: string;
+  rank?: string;
+  points?: number;
+  level?: number;
   streak?: number;
+  avatar?: string;
+  userId?: string;
+  user_id?: string;
+}
+
+export interface LeaderboardCardProps {
+  /** Optional static or websocket-fed leaderboard rows. */
+  leaderboard?: LeaderboardEntry[];
+  /** Current logged-in user id to highlight. */
+  currentUserId?: string;
 }
 
 type Period = "weekly" | "monthly" | "alltime";
@@ -18,144 +37,171 @@ const periods: { key: Period; label: string }[] = [
   { key: "alltime", label: "All-Time" },
 ];
 
-export default function LeaderboardCard() {
+const medals = ["🥇", "🥈", "🥉"];
+
+const toEntry = (row: ApiLeaderboardRow, index: number): LeaderboardEntry => ({
+  rank: Number(row.position || index + 1),
+  username: String(row.alias || `Operator ${index + 1}`),
+  xp: Number(row.points || 0),
+  level: Number(row.level || 1),
+  avatar: String(row.avatar || "ZG"),
+  userId: row.userId || row.user_id ? String(row.userId || row.user_id) : undefined,
+});
+
+const sortByXp = (rows: LeaderboardEntry[]) =>
+  [...rows]
+    .sort((a, b) => b.xp - a.xp || a.rank - b.rank || a.username.localeCompare(b.username))
+    .slice(0, 10)
+    .map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+/**
+ * Shows the top ZeroDay Guardian learners by XP.
+ *
+ * The component is websocket-ready through the `leaderboard` prop and a
+ * `zdg:leaderboard:update` browser event, while still fetching backend rankings
+ * when no external rows are provided.
+ */
+export default function LeaderboardCard({ leaderboard, currentUserId = "" }: LeaderboardCardProps) {
   const [activePeriod, setActivePeriod] = useState<Period>("weekly");
-  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
+  const [remoteRows, setRemoteRows] = useState<LeaderboardEntry[]>([]);
+  const [liveRows, setLiveRows] = useState<LeaderboardEntry[] | null>(null);
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchLeaderboard = useCallback(async (period: Period) => {
+    if (leaderboard) return;
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     setLoading(true);
     try {
-      const res = await api.get<{ leaderboard: LeaderboardRow[] }>(
+      const res = await api.get<{ leaderboard?: ApiLeaderboardRow[] }>(
         `/api/intelligence/progression/leaderboard?period=${period}&limit=10`,
         { signal: controller.signal }
       );
       if (!controller.signal.aborted) {
-        setLeaderboard(res.data.leaderboard || []);
+        setRemoteRows((res.data.leaderboard || []).map(toEntry));
       }
     } catch {
-      if (!controller.signal.aborted) {
-        setLeaderboard([]);
-      }
+      if (!controller.signal.aborted) setRemoteRows([]);
     } finally {
-      if (!controller.signal.aborted) {
-        setLoading(false);
-      }
+      if (!controller.signal.aborted) setLoading(false);
     }
-  }, []);
+  }, [leaderboard]);
 
   useEffect(() => {
     fetchLeaderboard(activePeriod);
-    return () => { abortRef.current?.abort(); };
+    return () => abortRef.current?.abort();
   }, [activePeriod, fetchLeaderboard]);
 
-  const handlePeriodChange = (period: Period) => {
-    if (period === activePeriod) return;
-    setActivePeriod(period);
-  };
+  useEffect(() => {
+    const handleLiveUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<{ leaderboard?: LeaderboardEntry[] }>).detail;
+      if (Array.isArray(detail?.leaderboard)) setLiveRows(detail.leaderboard);
+    };
+    window.addEventListener("zdg:leaderboard:update", handleLiveUpdate);
+    return () => window.removeEventListener("zdg:leaderboard:update", handleLiveUpdate);
+  }, []);
 
-  const sorted = [...leaderboard]
-    .sort((a, b) => a.position - b.position)
-    .slice(0, 10);
-
-  const topThree = sorted.slice(0, 3);
-  const rest = sorted.slice(3);
+  const sourceRows = leaderboard || liveRows || remoteRows;
+  const sorted = useMemo(() => sortByXp(sourceRows), [sourceRows]);
+  const filtered = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return sorted;
+    return sorted.filter((entry) => entry.username.toLowerCase().includes(normalized));
+  }, [query, sorted]);
 
   return (
-    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-4">
-      <div className="flex items-center justify-between mb-3">
+    <section
+      className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-4"
+      aria-labelledby="leaderboard-title"
+    >
+      <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.18em]" style={{ color: "var(--theme-text-dim)" }}>Leaderboard</p>
-          <p className="text-sm font-semibold" style={{ color: "var(--theme-text)" }}>Top Operators</p>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Leaderboard</p>
+          <h2 id="leaderboard-title" className="text-sm font-semibold text-[var(--theme-text)]">
+            Top 10 Students
+          </h2>
         </div>
-        {loading && (
-          <span className="text-[10px] font-medium" style={{ color: "var(--theme-text-dim)" }}>Loading...</span>
-        )}
+        {loading ? <span className="text-xs text-slate-400">Loading...</span> : null}
       </div>
 
-      <div className="flex gap-1 mb-4">
-        {periods.map((p) => (
+      <div className="mb-3 flex gap-1" role="tablist" aria-label="Leaderboard period">
+        {periods.map((period) => (
           <button
-            key={p.key}
-            onClick={() => handlePeriodChange(p.key)}
-            className="flex-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-all"
-            style={{
-              backgroundColor: activePeriod === p.key ? "var(--theme-accent-blue)" : "var(--theme-overlay)",
-              color: activePeriod === p.key ? "var(--theme-bg)" : "var(--theme-text-muted)",
+            key={period.key}
+            type="button"
+            role="tab"
+            aria-selected={activePeriod === period.key}
+            onClick={() => {
+              if (period.key !== activePeriod) setActivePeriod(period.key);
             }}
+            className={`flex-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition ${
+              activePeriod === period.key
+                ? "bg-blue-400 text-slate-950"
+                : "bg-[var(--theme-overlay)] text-slate-400 hover:text-slate-100"
+            }`}
           >
-            {p.label}
+            {period.label}
           </button>
         ))}
       </div>
 
-      {loading && sorted.length === 0 ? (
+      <label className="mb-3 block">
+        <span className="sr-only">Search leaderboard</span>
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          className="w-full rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-2 text-sm text-[var(--theme-text)] outline-none transition focus:border-blue-300"
+          placeholder="Search students"
+          type="search"
+        />
+      </label>
+
+      {loading && filtered.length === 0 ? (
         <div className="py-8 text-center">
-          <div className="spinner-cyber mx-auto mb-3" />
-          <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>Fetching {activePeriod} rankings...</p>
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-blue-300 border-t-transparent" />
+          <p className="text-xs text-slate-400">Fetching {activePeriod} rankings...</p>
         </div>
-      ) : sorted.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="py-8 text-center">
-          <span className="text-3xl">🏆</span>
-          <p className="mt-2 text-sm font-medium" style={{ color: "var(--theme-text)" }}>No rankings yet</p>
-          <p className="mt-1 text-xs" style={{ color: "var(--theme-text-dim)" }}>Complete labs to earn XP and rank up!</p>
+          <span className="text-3xl" aria-hidden="true">
+            🏆
+          </span>
+          <p className="mt-2 text-sm font-medium text-[var(--theme-text)]">No rankings yet</p>
+          <p className="mt-1 text-xs text-slate-400">Complete labs to earn XP and rank up!</p>
         </div>
       ) : (
-        <>
-          {topThree.length > 0 && (
-            <div className="flex items-end justify-center gap-3 mb-4">
-              {[1, 0, 2].map((podiumIndex) => {
-                const entry = topThree[podiumIndex];
-                if (!entry) return <div key={`podium-placeholder-${podiumIndex}`} className="w-20" />;
-                const isFirst = podiumIndex === 0;
-                return (
-                  <div key={`podium-${entry.alias}-${entry.position}`} className="flex flex-col items-center w-20">
-                    <div className="text-center mb-1">
-                      <p className="text-xs font-bold" style={{ color: "var(--theme-text)" }}>{entry.alias}</p>
-                      <p className="text-[10px]" style={{ color: "var(--theme-text-dim)" }}>{entry.points} XP</p>
-                    </div>
-                    <div
-                      className={`w-full ${isFirst ? "h-24" : podiumIndex === 1 ? "h-20" : "h-14"} flex items-center justify-center rounded-t-xl border border-b-0`}
-                      style={{
-                        backgroundColor: `var(--theme-accent-${isFirst ? "blue" : "purple"})`,
-                        opacity: 0.2 + (isFirst ? 0.15 : podiumIndex === 1 ? 0.1 : 0),
-                      }}
-                    >
-                      <span className="text-2xl">{["🥇", "🥈", "🥉"][podiumIndex]}</span>
-                    </div>
-                    <div className="w-full rounded-b-lg py-1 text-center text-[10px] font-bold" style={{ backgroundColor: "var(--theme-overlay)", color: "var(--theme-text-muted)" }}>
-                      #{entry.position}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            {rest.map((entry) => (
-              <div
-                key={`list-${entry.alias}-${entry.position}`}
-                className="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors"
-                style={{ backgroundColor: "var(--theme-overlay)" }}
+        <ol className="space-y-2" aria-label="Top students by XP">
+          {filtered.map((entry, index) => {
+            const highlighted = Boolean(currentUserId && entry.userId === currentUserId);
+            return (
+              <li
+                key={`${entry.userId || entry.username}-${entry.rank}`}
+                className={`flex items-center gap-3 rounded-xl border px-3 py-2 transition ${
+                  highlighted
+                    ? "border-emerald-300/45 bg-emerald-400/10"
+                    : "border-transparent bg-[var(--theme-overlay)]"
+                }`}
+                aria-current={highlighted ? "true" : undefined}
               >
-                <span className="w-6 text-center text-xs font-bold" style={{ color: "var(--theme-text-dim)" }}>
-                  {entry.position}
+                <span className="w-8 text-center text-lg font-bold text-slate-300">
+                  {index < 3 ? medals[index] : entry.rank}
                 </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium truncate" style={{ color: "var(--theme-text)" }}>{entry.alias}</p>
-                  <p className="text-[10px]" style={{ color: "var(--theme-text-dim)" }}>Lv.{entry.level} · {entry.rank}</p>
-                </div>
-                <span className="text-xs font-semibold" style={{ color: "var(--theme-accent-blue)" }}>{entry.points}</span>
-              </div>
-            ))}
-          </div>
-        </>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-xs font-bold text-blue-100">
+                  {entry.avatar || entry.username.slice(0, 2).toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-[var(--theme-text)]">{entry.username}</span>
+                  <span className="block text-xs text-slate-400">Level {entry.level}</span>
+                </span>
+                <span className="text-sm font-semibold text-blue-100">{entry.xp.toLocaleString()} XP</span>
+              </li>
+            );
+          })}
+        </ol>
       )}
-    </div>
+    </section>
   );
 }

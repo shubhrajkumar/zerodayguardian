@@ -2,123 +2,64 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import BadgeDisplay from "@/components/gamification/BadgeDisplay";
-import type { GamificationBadge } from "@/lib/gamificationSystem";
 
-// ── Helpers ──
-
-const makeBadge = (overrides: Partial<GamificationBadge> = {}): GamificationBadge => ({
-  id: "signal-hunter",
-  title: "Signal Hunter",
-  detail: "Completed the daily recon sweep.",
-  icon: "📡",
-  earnedAt: "2025-03-15T10:00:00.000Z",
-  ...overrides,
-});
+// The default CYBERSECURITY_BADGES catalog has 10 badges
+const CATALOG_COUNT = 10;
 
 // ── Tests ──
 
 describe("BadgeDisplay", () => {
   it("renders the achievements header", () => {
-    render(<BadgeDisplay badges={[]} />);
+    render(<BadgeDisplay />);
     expect(screen.getByText("Achievements")).toBeTruthy();
   });
 
   it("shows correct earned count with no badges", () => {
-    render(<BadgeDisplay badges={[]} />);
-    expect(screen.getByText("0 / 11 earned")).toBeTruthy();
+    render(<BadgeDisplay />);
+    expect(screen.getByText(`0 / ${CATALOG_COUNT} earned`)).toBeTruthy();
   });
 
-  it("shows correct earned count with badges", () => {
-    const badges = [
-      makeBadge({ id: "signal-hunter" }),
-      makeBadge({ id: "intel-scribe" }),
-    ];
-    render(<BadgeDisplay badges={badges} />);
-    expect(screen.getByText("2 / 11 earned")).toBeTruthy();
+  it("shows correct earned count with earnedBadges", () => {
+    render(<BadgeDisplay earnedBadges={["first-blood", "bug-hunter"]} />);
+    expect(screen.getByText(`2 / ${CATALOG_COUNT} earned`)).toBeTruthy();
   });
 
-  it("renders all category filter buttons", () => {
-    render(<BadgeDisplay badges={[]} />);
-    expect(screen.getByText("All")).toBeTruthy();
-    expect(screen.getByText("Learning")).toBeTruthy();
-    expect(screen.getByText("Labs")).toBeTruthy();
-    expect(screen.getByText("OSINT")).toBeTruthy();
-    expect(screen.getByText("Community")).toBeTruthy();
-  });
-
-  it("shows all 11 badges when 'All' category is selected", () => {
-    render(<BadgeDisplay badges={[]} />);
-    // All badges should be rendered with aria-label
-    expect(screen.getByLabelText("Signal Hunter badge - locked")).toBeTruthy();
-    expect(screen.getByLabelText("Intel Scribe badge - locked")).toBeTruthy();
-    expect(screen.getByLabelText("CTF Raider badge - locked")).toBeTruthy();
-    expect(screen.getByLabelText("Chain Builder badge - locked")).toBeTruthy();
-    expect(screen.getByLabelText("Cipher Ace badge - locked")).toBeTruthy();
+  it("renders all catalog badges by default", () => {
+    render(<BadgeDisplay />);
+    expect(screen.getByLabelText("First Blood badge - locked")).toBeTruthy();
+    expect(screen.getByLabelText("Bug Hunter badge - locked")).toBeTruthy();
+    expect(screen.getByLabelText("Code Warrior badge - locked")).toBeTruthy();
+    expect(screen.getByLabelText("Streak Master badge - locked")).toBeTruthy();
+    expect(screen.getByLabelText("XP Legend badge - locked")).toBeTruthy();
   });
 
   it("marks earned badges correctly in aria-label", () => {
-    const badges = [makeBadge({ id: "signal-hunter" })];
-    render(<BadgeDisplay badges={badges} />);
-    expect(screen.getByLabelText("Signal Hunter badge - earned")).toBeTruthy();
-    // Other badges should still be locked
-    expect(screen.getByLabelText("Intel Scribe badge - locked")).toBeTruthy();
+    render(<BadgeDisplay earnedBadges={["first-blood"]} />);
+    expect(screen.getByLabelText("First Blood badge - earned")).toBeTruthy();
+    expect(screen.getByLabelText("Bug Hunter badge - locked")).toBeTruthy();
   });
 
-  it("filters to Learning category badges", async () => {
-    render(<BadgeDisplay badges={[]} />);
-    await userEvent.click(screen.getByText("Learning"));
-    // Learning category has: intel-scribe, quiz-ace, intel-architect
-    expect(screen.getByLabelText("Intel Scribe badge - locked")).toBeTruthy();
-    expect(screen.getByLabelText("Cipher Ace badge - locked")).toBeTruthy();
-    expect(screen.getByLabelText("Intel Architect badge - locked")).toBeTruthy();
-    // Labs badges should NOT be visible
-    expect(screen.queryByLabelText("Signal Hunter badge - locked")).toBeNull();
-  });
-
-  it("filters to Labs category badges", async () => {
-    render(<BadgeDisplay badges={[]} />);
-    await userEvent.click(screen.getByText("Labs"));
-    expect(screen.getByLabelText("Signal Hunter badge - locked")).toBeTruthy();
-    expect(screen.getByLabelText("Chain Builder badge - locked")).toBeTruthy();
-    // Learning badge should NOT be visible
-    expect(screen.queryByLabelText("Intel Scribe badge - locked")).toBeNull();
-  });
-
-  it("filters to OSINT category badges", async () => {
-    render(<BadgeDisplay badges={[]} />);
-    await userEvent.click(screen.getByText("OSINT"));
-    expect(screen.getByLabelText("CTF Raider badge - locked")).toBeTruthy();
-    expect(screen.getByLabelText("Elite Raider badge - locked")).toBeTruthy();
-  });
-
-  it("filters to Community category badges", async () => {
-    render(<BadgeDisplay badges={[]} />);
-    await userEvent.click(screen.getByText("Community"));
-    expect(screen.getByLabelText("Mission Loop Cleared badge - locked")).toBeTruthy();
-    expect(screen.getByLabelText("Week Cleared Elite badge - locked")).toBeTruthy();
-  });
-
-  it("shows tooltip on hover with badge title and detail", async () => {
-    render(<BadgeDisplay badges={[]} />);
-    const badge = screen.getByLabelText("Signal Hunter badge - locked");
+  it("shows tooltip on hover with badge name and requirement", async () => {
+    render(<BadgeDisplay />);
+    const badge = screen.getByLabelText("First Blood badge - locked");
     await userEvent.hover(badge);
-    expect(screen.getByRole("tooltip")).toBeTruthy();
-    expect(screen.getByText("Signal Hunter")).toBeTruthy();
-    expect(screen.getByText("Completed the daily recon sweep.")).toBeTruthy();
+    const tooltip = screen.getByRole("tooltip");
+    expect(tooltip).toBeTruthy();
+    expect(tooltip.textContent).toContain("First Blood");
+    expect(tooltip.textContent).toContain("Complete first lab");
   });
 
   it("tooltip shows 'Locked' for unearned badges", async () => {
-    render(<BadgeDisplay badges={[]} />);
-    const badge = screen.getByLabelText("Signal Hunter badge - locked");
+    render(<BadgeDisplay />);
+    const badge = screen.getByLabelText("First Blood badge - locked");
     await userEvent.hover(badge);
     const tooltip = screen.getByRole("tooltip");
     expect(tooltip.textContent).toContain("Locked");
   });
 
-  it("tooltip shows earned date for earned badges", async () => {
-    const badges = [makeBadge({ id: "signal-hunter", earnedAt: "2025-06-01T12:00:00.000Z" })];
-    render(<BadgeDisplay badges={badges} />);
-    const badge = screen.getByLabelText("Signal Hunter badge - earned");
+  it("tooltip shows 'Earned' for earned badges", async () => {
+    render(<BadgeDisplay earnedBadges={["first-blood"]} />);
+    const badge = screen.getByLabelText("First Blood badge - earned");
     await userEvent.hover(badge);
     const tooltip = screen.getByRole("tooltip");
     expect(tooltip.textContent).toContain("Earned");
@@ -126,16 +67,25 @@ describe("BadgeDisplay", () => {
   });
 
   it("hides tooltip on mouse leave", async () => {
-    render(<BadgeDisplay badges={[]} />);
-    const badge = screen.getByLabelText("Signal Hunter badge - locked");
+    render(<BadgeDisplay />);
+    const badge = screen.getByLabelText("First Blood badge - locked");
     await userEvent.hover(badge);
     expect(screen.getByRole("tooltip")).toBeTruthy();
     await userEvent.unhover(badge);
     expect(screen.queryByRole("tooltip")).toBeNull();
   });
 
-  it("renders empty badges array without crashing", () => {
-    render(<BadgeDisplay badges={[]} />);
-    expect(screen.getByText("0 / 11 earned")).toBeTruthy();
+  it("renders without crashing with no props", () => {
+    render(<BadgeDisplay />);
+    expect(screen.getByText(`0 / ${CATALOG_COUNT} earned`)).toBeTruthy();
+  });
+
+  it("accepts custom badge catalog via badges prop", () => {
+    const customBadges = [
+      { id: "custom-1", name: "Custom Badge", description: "A custom badge", icon: "🏅", requirement: "Do something" },
+    ];
+    render(<BadgeDisplay badges={customBadges} />);
+    expect(screen.getByText(`0 / 1 earned`)).toBeTruthy();
+    expect(screen.getByLabelText("Custom Badge badge - locked")).toBeTruthy();
   });
 });

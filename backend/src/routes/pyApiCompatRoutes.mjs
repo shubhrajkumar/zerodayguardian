@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 import net from "node:net";
 import { z } from "zod";
 import { getDb } from "../config/db.mjs";
-import { User } from "../models/User.mjs";
 import { Scan } from "../models/Scan.mjs";
 import { OsintQuery } from "../models/OsintQuery.mjs";
 import { requireAuth } from "../middleware/auth.mjs";
@@ -1415,6 +1414,59 @@ const getDayLabCollection = () => getDb().collection(DAY_LAB_COLLECTION);
 const getDailyProgressCollection = () => getDb().collection(DAILY_PROGRESS_COLLECTION);
 const getUserEventsCollection = () => getDb().collection(USER_EVENTS_COLLECTION);
 
+const pyUserBridgeResponse = (row) => ({
+  id: String(row?._id || ""),
+  email: String(row?.email || ""),
+  name: String(row?.name || row?.email || ""),
+  external_id: row?.externalId ? String(row.externalId) : null,
+});
+
+const ensurePyUserBridge = async (req, payload = {}) => {
+  const authSub = String(req.user?.sub || "").trim();
+  if (!authSub) {
+    throw createHttpError(401, "auth_required", "Authentication required");
+  }
+
+  const authEmail = String(req.user?.email || "").trim().toLowerCase();
+  const payloadEmail = String(payload?.email || "").trim().toLowerCase();
+  const email = authEmail || payloadEmail;
+  if (!email) {
+    throw createHttpError(400, "email_required", "A user email is required for this request");
+  }
+  if (authEmail && payloadEmail && authEmail !== payloadEmail) {
+    throw createHttpError(403, "email_mismatch", "Email mismatch");
+  }
+
+  const payloadExternalId = String(payload?.external_id || payload?.externalId || "").trim();
+  if (payloadExternalId && payloadExternalId !== authSub) {
+    throw createHttpError(403, "external_id_mismatch", "External id mismatch");
+  }
+
+  const name = String(payload?.name || req.user?.name || req.user?.preferred_username || email).trim() || email;
+  let row = await PyUserBridge.findOne({
+    $or: [{ externalId: authSub }, { email }],
+  });
+  if (!row) {
+    row = await PyUserBridge.create({ email, name, externalId: authSub });
+    return row;
+  }
+
+  let changed = false;
+  if (row.email !== email) {
+    row.email = email;
+    changed = true;
+  }
+  if (authSub && row.externalId !== authSub) {
+    row.externalId = authSub;
+    changed = true;
+  }
+  if (name && row.name !== name) {
+    row.name = name;
+    changed = true;
+  }
+  return changed ? row.save() : row;
+};
+
 const buildEventResponse = (row) => ({
   id: String(row?._id || ""),
   user_id: row?.userId ? String(row.userId) : null,
@@ -1882,35 +1934,17 @@ router.use(requireAuth);
 
 router.post("/users", validateBody(userBridgeSchema), async (req, res, next) => {
   try {
-    const email = String(req.validatedBody?.email || "").trim().toLowerCase();
-    const name = req.validatedBody?.name ? String(req.validatedBody.name).trim() : null;
-    const externalId = req.validatedBody?.external_id ? String(req.validatedBody.external_id).trim() : null;
+    const row = await ensurePyUserBridge(req, req.validatedBody);
+    respondOk(res, pyUserBridgeResponse(row));
+  } catch (error) {
+    next(error);
+  }
+});
 
-    const authUser =
-      (externalId && (await User.findById(externalId).lean())) ||
-      (await User.findOne({ email }).lean());
-    if (authUser) {
-      res.json({
-        id: String(authUser._id),
-        external_id: externalId || String(authUser._id),
-        email: authUser.email,
-        name: authUser.name || null,
-      });
-      return;
-    }
-
-    const bridge = await PyUserBridge.findOneAndUpdate(
-      { email },
-      { $set: { name, externalId } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    ).lean();
-
-    res.json({
-      id: String(bridge._id),
-      external_id: bridge.externalId || null,
-      email: bridge.email,
-      name: bridge.name || null,
-    });
+router.get("/users/me", async (req, res, next) => {
+  try {
+    const row = await ensurePyUserBridge(req);
+    respondOk(res, pyUserBridgeResponse(row));
   } catch (error) {
     next(error);
   }
@@ -2315,6 +2349,7 @@ router.get("/labs/sandbox/status", async (req, res, next) => {
 router.get("/labs/overview", async (req, res, next) => {
   try {
     const userId = requireOwnedUserId(req, String(req.user?.sub || ""), { allowEmpty: false });
+    await ensurePyUserBridge(req);
     const payload = await buildLabsOverviewPayload(userId);
     respondOk(res, payload);
   } catch (error) {
@@ -2422,6 +2457,7 @@ router.get("/labs/day/:dayNumber", validateParams(dayLabParamsSchema), async (re
   try {
     const dayNumber = Number(req.validatedParams?.dayNumber || 1);
     const userId = requireOwnedUserId(req, String(req.user?.sub || ""), { allowEmpty: false });
+    await ensurePyUserBridge(req);
     const module = buildDayLabModule(dayNumber);
     const row = await ensureDayLabState(userId, dayNumber);
     if (dayNumber > 1) {
@@ -2464,6 +2500,7 @@ router.post("/labs/day/:dayNumber/submit", validateParams(dayLabParamsSchema), v
   try {
     const dayNumber = Number(req.validatedParams?.dayNumber || 1);
     const userId = requireOwnedUserId(req, String(req.user?.sub || ""), { allowEmpty: false });
+    await ensurePyUserBridge(req);
     const collection = getDayLabCollection();
     const row = await ensureDayLabState(userId, dayNumber);
     const module = buildDayLabModule(dayNumber);

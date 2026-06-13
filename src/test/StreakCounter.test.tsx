@@ -88,6 +88,6 @@ describe("StreakCounter", () => {
   it("renders zero streak correctly", () => {
     render(<StreakCounter snapshot={makeSnapshot({ streakDays: 0, completedDays: 0 })} />);
     expect(screen.getByText("0 days")).toBeTruthy();
-    expect(screen.getByText("Daily streak")).toBeTruthy();
+    expect(screen.getByText("Streak paused")).toBeTruthy();
   });
 });

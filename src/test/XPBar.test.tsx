@@ -1,12 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
 import XPBar from "@/components/gamification/XPBar";
 import type { GamificationSnapshot } from "@/lib/gamificationSystem";
-
-// Cyber Rationale: MemoryRouter wraps XPBar because EmptyStateCard uses
-// useNavigate() from react-router-dom — tests need Router context.
 
 // ── Helpers ──
 
@@ -70,7 +65,7 @@ describe("XPBar", () => {
     expect(screen.getByText("800 XP to next level")).toBeTruthy();
   });
 
-  it("progress bar has non-zero width when xpIntoLevel > 0", () => {
+  it("progress bar has correct width when xpIntoLevel > 0", () => {
     const { container } = render(<XPBar snapshot={makeSnapshot({ xpIntoLevel: 600, xpToNextLevel: 600 })} />);
     const progressBar = container.querySelector("[style*='width: 50%']");
     expect(progressBar).toBeTruthy();
@@ -94,20 +89,18 @@ describe("XPBar", () => {
     expect(shimmer).toBeNull();
   });
 
-  it("renders correct progress width at 50%", () => {
-    const { container } = render(<XPBar snapshot={makeSnapshot({ xpIntoLevel: 500, xpToNextLevel: 500 })} />);
-    const progressBar = container.querySelector("[style*='width: 50%']");
-    expect(progressBar).toBeTruthy();
+  it("handles zero XP gracefully", () => {
+    render(<XPBar snapshot={makeSnapshot({ totalXp: 0, xpIntoLevel: 0, xpToNextLevel: 0, level: 1 })} />);
+    expect(screen.getByText("Rookie")).toBeTruthy();
+    expect(screen.getByText("0 total XP")).toBeTruthy();
   });
 
-  it("handles zero XP gracefully", () => {
-    render(
-      <MemoryRouter>
-        <XPBar snapshot={makeSnapshot({ totalXp: 0, xpIntoLevel: 0, xpToNextLevel: 0, level: 1 })} />
-      </MemoryRouter>
-    );
-    // Empty state shows progress ring with "0/0 XP to White Hat" and motivational quote
-    expect(screen.getByText(/XP to White Hat/)).toBeTruthy();
-    expect(screen.getByText(/Start Day 1 Lab/)).toBeTruthy();
+  it("renders with direct props instead of snapshot", () => {
+    render(<XPBar currentXP={450} level={5} xpToNextLevel={1000} />);
+    expect(screen.getByText("5")).toBeTruthy();
+    expect(screen.getByText("Operative")).toBeTruthy();
+    // The component displays currentXP / (currentXP + xpToNextLevel)
+    expect(screen.getByText("450 / 1,450")).toBeTruthy();
+    expect(screen.getByText("1,000 XP to next level")).toBeTruthy();
   });
 });

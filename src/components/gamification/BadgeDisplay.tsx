@@ -1,131 +1,202 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { GamificationBadge } from "@/lib/gamificationSystem";
 
-interface BadgeDisplayProps {
-  badges: GamificationBadge[];
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  requirement: string;
 }
 
-const defaultBadgeCatalog = [
-  { id: "signal-hunter", title: "Signal Hunter", icon: "📡", detail: "Completed the daily recon sweep." },
-  { id: "intel-scribe", title: "Intel Scribe", icon: "📚", detail: "Converted a live CVE into actionable notes." },
-  { id: "ctf-raider", title: "CTF Raider", icon: "🏴‍☠️", detail: "Cleared the daily breach drill." },
-  { id: "daily-loop-cleared", title: "Mission Loop Cleared", icon: "🕵️", detail: "All daily ops deployed before midnight." },
-  { id: "weekly-elite", title: "Week Cleared Elite", icon: "👑", detail: "Every weekly challenge closed cleanly." },
-  { id: "quiz-ace", title: "Cipher Ace", icon: "🧠", detail: "Five correct answers in one briefing." },
-  { id: "chain-builder", title: "Chain Builder", icon: "⚔️", detail: "Built a disciplined exploit chain." },
-  { id: "intel-architect", title: "Intel Architect", icon: "🛰️", detail: "Turned raw signals into direction." },
-  { id: "surface-cartographer", title: "Surface Cartographer", icon: "🗺️", detail: "Mapped the attack surface with precision." },
-  { id: "elite-raider", title: "Elite Raider", icon: "💀", detail: "Closed a high-pressure weekly CTF sprint." },
-  { id: "blue-team-forge", title: "Blue Team Forge", icon: "🛡️", detail: "Translated offense into defense." },
+export interface BadgeDisplayProps {
+  /** Badge catalog to render. Defaults to the ZeroDay Guardian cybersecurity catalog. */
+  badges?: Badge[] | GamificationBadge[];
+  /** Earned badge ids. If omitted, legacy `GamificationBadge[]` entries are treated as earned badges. */
+  earnedBadges?: string[];
+}
+
+export const CYBERSECURITY_BADGES: Badge[] = [
+  {
+    id: "first-blood",
+    name: "First Blood",
+    description: "Completed your first hands-on lab.",
+    icon: "🩸",
+    requirement: "Complete first lab",
+  },
+  {
+    id: "bug-hunter",
+    name: "Bug Hunter",
+    description: "Found five validated vulnerabilities.",
+    icon: "🎯",
+    requirement: "Find 5 vulnerabilities",
+  },
+  {
+    id: "code-warrior",
+    name: "Code Warrior",
+    description: "Completed ten guided cybersecurity missions.",
+    icon: "⚔️",
+    requirement: "Complete 10 missions",
+  },
+  {
+    id: "streak-master",
+    name: "Streak Master",
+    description: "Kept a seven-day learning streak alive.",
+    icon: "🔥",
+    requirement: "7-day learning streak",
+  },
+  {
+    id: "xp-legend",
+    name: "XP Legend",
+    description: "Reached level 10 through consistent practice.",
+    icon: "⭐",
+    requirement: "Reach level 10",
+  },
+  {
+    id: "defense-expert",
+    name: "Defense Expert",
+    description: "Cleared five blue-team defense labs.",
+    icon: "🛡️",
+    requirement: "Complete 5 defense labs",
+  },
+  {
+    id: "offense-master",
+    name: "Offense Master",
+    description: "Cleared five ethical offense labs.",
+    icon: "⚡",
+    requirement: "Complete 5 offense labs",
+  },
+  {
+    id: "community-hero",
+    name: "Community Hero",
+    description: "Helped ten other students move forward.",
+    icon: "🤝",
+    requirement: "Help 10 students",
+  },
+  {
+    id: "speed-demon",
+    name: "Speed Demon",
+    description: "Finished a lab in under five minutes.",
+    icon: "⏱️",
+    requirement: "Complete lab in under 5 mins",
+  },
+  {
+    id: "perfectionist",
+    name: "Perfectionist",
+    description: "Scored 100% on five separate labs.",
+    icon: "💎",
+    requirement: "100% score on 5 labs",
+  },
 ];
 
-const categories = [
-  { key: "all", label: "All" },
-  { key: "learning", label: "Learning" },
-  { key: "labs", label: "Labs" },
-  { key: "osint", label: "OSINT" },
-  { key: "community", label: "Community" },
-];
-
-const categoryMap: Record<string, string[]> = {
-  learning: ["intel-scribe", "quiz-ace", "intel-architect"],
-  labs: ["signal-hunter", "chain-builder", "surface-cartographer", "blue-team-forge"],
-  osint: ["ctf-raider", "elite-raider"],
-  community: ["daily-loop-cleared", "weekly-elite"],
+const legacyBadgeMap: Record<string, string> = {
+  "signal-hunter": "first-blood",
+  "intel-scribe": "bug-hunter",
+  "ctf-raider": "offense-master",
+  "daily-loop-cleared": "streak-master",
+  "weekly-elite": "xp-legend",
+  "quiz-ace": "perfectionist",
+  "chain-builder": "code-warrior",
+  "intel-architect": "bug-hunter",
+  "surface-cartographer": "defense-expert",
+  "elite-raider": "speed-demon",
+  "blue-team-forge": "defense-expert",
 };
 
-export default function BadgeDisplay({ badges }: BadgeDisplayProps) {
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [hoveredBadge, setHoveredBadge] = useState<string | null>(null);
+const isCatalogBadge = (badge: Badge | GamificationBadge): badge is Badge =>
+  "name" in badge && "description" in badge && "requirement" in badge;
 
-  const earnedIds = new Set(badges.map((b) => b.id));
+const normalizeCatalog = (badges?: Badge[] | GamificationBadge[]): Badge[] => {
+  if (!badges?.length) return CYBERSECURITY_BADGES;
+  if (badges.every(isCatalogBadge)) return badges;
+  return CYBERSECURITY_BADGES;
+};
 
-  const filteredCatalog = defaultBadgeCatalog.filter((b) => {
-    if (activeCategory === "all") return true;
-    return categoryMap[activeCategory]?.includes(b.id) ?? false;
-  });
+const normalizeEarned = (badges?: Badge[] | GamificationBadge[], earnedBadges?: string[]) => {
+  if (earnedBadges) return new Set(earnedBadges);
+  const earned = new Set<string>();
+  for (const badge of badges || []) {
+    if (isCatalogBadge(badge)) continue;
+    earned.add(legacyBadgeMap[badge.id] || badge.id);
+  }
+  return earned;
+};
+
+/**
+ * Renders earned and locked cybersecurity badges in a responsive grid.
+ *
+ * Locked badges are dimmed; hover and focus reveal the badge description and
+ * unlock requirement.
+ */
+export default function BadgeDisplay({ badges, earnedBadges }: BadgeDisplayProps) {
+  const [activeBadgeId, setActiveBadgeId] = useState<string | null>(null);
+  const catalog = useMemo(() => normalizeCatalog(badges), [badges]);
+  const earned = useMemo(() => normalizeEarned(badges, earnedBadges), [badges, earnedBadges]);
 
   return (
-    <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-4">
-      <div className="flex items-center justify-between mb-3">
+    <section
+      className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-4"
+      aria-labelledby="badges-title"
+    >
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-medium" style={{ color: "var(--theme-text-muted)" }}>Achievements</p>
-          <p className="text-sm font-semibold" style={{ color: "var(--theme-text)" }}>
-            {badges.length} / {defaultBadgeCatalog.length} earned
+          <p id="badges-title" className="text-sm font-semibold text-[var(--theme-text)]">
+            Achievements
+          </p>
+          <p className="text-xs text-slate-400">
+            {earned.size} / {catalog.length} earned
           </p>
         </div>
       </div>
 
-      <div className="flex gap-1.5 mb-3 overflow-x-auto">
-        {categories.map((cat) => (
-          <button
-            key={cat.key}
-            onClick={() => setActiveCategory(cat.key)}
-            className="shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition-all"
-            style={{
-              backgroundColor: activeCategory === cat.key ? "var(--theme-accent-blue)" : "var(--theme-overlay)",
-              color: activeCategory === cat.key ? "var(--theme-bg)" : "var(--theme-text-muted)",
-              border: `1px solid ${activeCategory === cat.key ? "var(--theme-accent-blue)" : "var(--theme-border)"}`,
-            }}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-        {filteredCatalog.map((template) => {
-          const earned = earnedIds.has(template.id);
-          const badge = badges.find((b) => b.id === template.id);
-          return (              <div
-                key={template.id}
-                className="relative"
-                onMouseEnter={() => setHoveredBadge(template.id)}
-                onMouseLeave={() => setHoveredBadge(null)}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {catalog.map((badge) => {
+          const isEarned = earned.has(badge.id);
+          const tooltipId = `badge-${badge.id}-tooltip`;
+          const active = activeBadgeId === badge.id;
+          return (
+            <div
+              key={badge.id}
+              className="relative"
+              onMouseEnter={() => setActiveBadgeId(badge.id)}
+              onMouseLeave={() => setActiveBadgeId(null)}
+              onFocus={() => setActiveBadgeId(badge.id)}
+              onBlur={() => setActiveBadgeId(null)}
+            >
+              <button
+                type="button"
+                className={`flex min-h-[6.25rem] w-full flex-col items-center justify-center gap-2 rounded-xl border p-3 text-center transition duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                  isEarned
+                    ? "border-blue-400/35 bg-blue-500/10 text-blue-50"
+                    : "border-[var(--theme-border)] bg-[var(--theme-overlay)] text-slate-400 opacity-30"
+                }`}
+                aria-label={`${badge.name} badge - ${isEarned ? "earned" : "locked"}`}
+                aria-describedby={active ? tooltipId : undefined}
               >
-                <div
-                  className="flex h-16 w-full items-center justify-center rounded-xl border transition-all duration-200"
-                  role="img"
-                  aria-label={`${template.title} badge - ${earned ? "earned" : "locked"}`}
-                style={{
-                  borderColor: earned ? "var(--theme-accent-blue)" : "var(--theme-border)",
-                  backgroundColor: earned ? "var(--theme-accent-blue-dim, color-mix(in srgb, var(--theme-accent-blue) 10%, transparent))" : "var(--theme-overlay)",
-                  opacity: earned ? 1 : 0.4,
-                  transform: hoveredBadge === template.id ? "scale(1.1)" : "scale(1)",
-                  boxShadow: earned && hoveredBadge === template.id ? "0 0 16px var(--theme-glow)" : "none",
-                }}
-              >
-                <span className="text-2xl" style={{ filter: earned ? "none" : "grayscale(100%)" }}>
-                  {template.icon}
+                <span className="text-2xl" aria-hidden="true">
+                  {badge.icon}
                 </span>
-              </div>
+                <span className="text-xs font-semibold">{badge.name}</span>
+              </button>
 
-              {hoveredBadge === template.id && (
+              {active ? (
                 <div
-                  className="absolute bottom-full left-1/2 z-50 mb-2 w-40 -translate-x-1/2 rounded-xl border p-3 shadow-lg"
+                  id={tooltipId}
                   role="tooltip"
-                  style={{
-                    backgroundColor: "var(--theme-card)",
-                    borderColor: "var(--theme-border)",
-                    backdropFilter: "blur(16px)",
-                  }}
+                  className="absolute bottom-full left-1/2 z-20 mb-2 w-52 -translate-x-1/2 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-card)] p-3 text-left shadow-xl"
                 >
-                  <p className="text-xs font-semibold" style={{ color: "var(--theme-text)" }}>{template.title}</p>
-                  <p className="mt-1 text-[10px] leading-relaxed" style={{ color: "var(--theme-text-muted)" }}>{template.detail}</p>
-                  {badge && (
-                    <p className="mt-1 text-[10px]" style={{ color: "var(--theme-accent-green)" }}>
-                      Earned {new Date(badge.earnedAt).toLocaleDateString()}
-                    </p>
-                  )}
-                  {!earned && (
-                    <p className="mt-1 text-[10px] italic" style={{ color: "var(--theme-text-dim)" }}>Locked</p>
-                  )}
+                  <p className="text-xs font-semibold text-[var(--theme-text)]">{badge.name}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-300">{badge.description}</p>
+                  <p className="mt-2 text-[11px] text-slate-400">Requirement: {badge.requirement}</p>
+                  <p className={isEarned ? "mt-1 text-[11px] text-emerald-300" : "mt-1 text-[11px] text-slate-500"}>
+                    {isEarned ? "Earned" : "Locked"}
+                  </p>
                 </div>
-              )}
+              ) : null}
             </div>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
