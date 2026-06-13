@@ -11,6 +11,7 @@
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
     { "source": "/sw.js", "destination": "/sw.js" },
     { "source": "/downloads/(.*)", "destination": "/downloads/$1" },
+    { "source": "/fonts/(.*)", "destination": "/fonts/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
@@ -39,7 +40,7 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), browsing-topics=(), interest-cohort=(), Attribution-Reporting=(), Private-State-Token-Issuance=(), Private-State-Token-Redemption=()"
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), interest-cohort=(), attribution-reporting=(), private-state-token-issuance=(), private-state-token-redemption=()"
         },
         {
           "key": "X-DNS-Prefetch-Control",
