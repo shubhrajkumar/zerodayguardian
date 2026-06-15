@@ -500,7 +500,7 @@ env.authOtpPreviewEnabled = isExplicitTrue(process.env.AUTH_OTP_PREVIEW_ENABLED)
   ? true
   : isExplicitFalse(process.env.AUTH_OTP_PREVIEW_ENABLED)
     ? false
-      : env.nodeEnv !== "production" || localLikeAppHost;
+    : env.nodeEnv !== "production" || localLikeAppHost || (isManagedDeploy && !authEmailEnabled);
 
 const createIssue = (key, message, severity = "error") => ({ key, message, severity });
 const createErrorFromValidation = (report) => {

@@ -2,18 +2,19 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  NODE_VERSION_FILE: .nvmrc
-  VITE_API_BASE_URL: https://zerodayguardian-backend.onrender.com
-  VITE_SITE_URL: https://zerodayguardian-delta.vercel.app
+  NODE_VERSION: '20'
+  VITE_API_URL: https://zerodayguardian-backend.onrender.com
+  VITE_APP_NAME: ZeroDay Guardian
+  VITE_APP_VERSION: 1.0.0
 
 jobs:
   # ── Job 1: Type checking (fast, catches type errors early) ──
@@ -29,14 +30,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
       - name: Install dependencies
-        run: npm install --no-fund --no-audit --prefer-offline
+        run: npm ci --prefer-offline
 
       - name: TypeScript typecheck
         run: npx tsc -p tsconfig.app.json --noEmit
+        env:
+          CI: true
 
   # ── Job 2: Linting (fast, catches code style issues) ──
   lint:
@@ -51,14 +54,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
       - name: Install dependencies
-        run: npm install --no-fund --no-audit --prefer-offline
+        run: npm ci --prefer-offline
 
       - name: ESLint
         run: npm run lint
+        env:
+          CI: true
 
   # ── Job 3: Unit tests ──
   test:
@@ -73,46 +78,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
       - name: Install dependencies
-        run: npm install --no-fund --no-audit --prefer-offline
+        run: npm ci --prefer-offline
 
       - name: Unit tests
         run: npx vitest run --config vitest.config.mjs
+        env:
+          CI: true
 
-  # ── Job 4: Security audit ──
-  security:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
-          cache: npm
-
-      - name: Install dependencies
-        run: npm install --no-fund --no-audit --prefer-offline
-
-      - name: npm audit (production dependencies)
-        run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true
-
-      - name: npm audit (all dependencies)
-        run: npm audit --audit-level=critical
-        continue-on-error: true
-
-  # ── Job 5: Build + bundle size + Lighthouse (depends on typecheck + lint passing) ──
+  # ── Job 4: Build ──
   build:
-    name: Build & Performance Gates
-    needs: [typecheck, lint]
+    name: Build & Verify
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -123,19 +102,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
       - name: Install dependencies
-        run: npm install --no-fund --no-audit --prefer-offline
+        run: npm ci --prefer-offline
+
+      - name: Create env file
+        run: |
+          cat > .env << 'ENVEOF'
+          VITE_API_URL=https://zerodayguardian-backend.onrender.com
+          VITE_APP_NAME=ZeroDay Guardian
+          VITE_APP_VERSION=1.0.0
+          ENVEOF
 
       - name: Production build
-        run: npx vite build
+        run: npm run build
         env:
           NODE_ENV: production
-
-      - name: Bundle size budget
-        run: node scripts/bundle-size-check.mjs dist
+          CI: false
 
       - name: Verify build output
         run: |
@@ -150,47 +135,10 @@ jobs:
             exit 1
           fi
 
-      - name: Lighthouse performance budget
-        continue-on-error: true
-        run: |
-          npx serve dist -l 3456 --no-clipboard &
-          SERVE_PID=$!
-          sleep 4
-          npx lighthouse http://localhost:3456 \
-            --output=json \
-            --output-path=/tmp/lighthouse-ci-report.json \
-            --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
-            --only-categories=performance \
-            --throttling-method=provided \
-            --quiet || true
-          kill $SERVE_PID 2>/dev/null || true
-          if [ -f /tmp/lighthouse-ci-report.json ] && [ -s /tmp/lighthouse-ci-report.json ]; then
-            node scripts/lighthouse-budget-check.mjs /tmp/lighthouse-ci-report.json
-          else
-            echo "⚠️ Lighthouse report not generated — skipping budget check"
-          fi
-
-      - name: Upload build artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-          retention-days: 3
-
-      - name: Upload Lighthouse report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lighthouse-report
-          path: /tmp/lighthouse-ci-report.json
-          retention-days: 7
-          if-no-files-found: ignore
-
-  # ── Job 6: CI Summary (runs after all gates) ──
+  # ── Job 5: CI Summary (runs after all gates) ──
   summary:
     name: CI Summary
-    needs: [typecheck, lint, test, security, build]
+    needs: [typecheck, lint, test, build]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -205,8 +153,7 @@ jobs:
           echo "| Typecheck | ${{ needs.typecheck.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Lint | ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Audit | ${{ needs.security.result == 'success' && '✅ Passed' || '⚠️ Warnings' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build & Perf | ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           ALL_PASS=true

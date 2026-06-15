@@ -75,11 +75,12 @@ const bootstrap = async () => {
       } catch (mongooseError) {
         logWarn("Mongoose connection failed (non-blocking)", { error: String(mongooseError?.message || mongooseError) });
       }
-      // Auto-seed default admin user if it doesn't exist.
+      // Auto-seed default admin (and test user in non-production) if they don't exist.
       // Safe to call every startup — skips existing users.
       // Set SEED_SKIP=true env var to disable auto-seeding.
       if (process.env.SEED_SKIP !== "true") {
-        await seedDefaults({ adminOnly: true }).catch((seedErr) => {
+        const adminOnly = env.nodeEnv === "production";
+        await seedDefaults({ adminOnly }).catch((seedErr) => {
           logWarn("Auto-seed failed (non-blocking)", { error: String(seedErr?.message || seedErr) });
         });
       }

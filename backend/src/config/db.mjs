@@ -6,6 +6,19 @@ let client;
 let db;
 let indexesEnsured = false;
 
+/**
+ * Set an external DB instance (e.g., from Mongoose's native connection).
+ * This allows the native driver layer to share Mongoose's connection when
+ * connectDb() fails but Mongoose succeeds — preventing the auth service
+ * from falling back to the ephemeral in-memory store.
+ */
+export const setExternalDb = (dbInstance, clientInstance) => {
+  if (!db && dbInstance) {
+    db = dbInstance;
+    client = clientInstance || null;
+  }
+};
+
 const createDbUnavailableError = (message = "Database not initialized. Call connectDb first.") => {
   const error = new Error(message);
   error.status = 500;

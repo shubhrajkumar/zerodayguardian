@@ -1,7 +1,7 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import { createApp } from "./backend/src/app.mjs";
-import { connectDb, closeDb } from "./backend/src/config/db.mjs";
+import { closeDb, connectDb, setExternalDb } from "./backend/src/config/db.mjs";
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || process.env.NEUROBOT_PORT || 8787);
@@ -120,6 +120,17 @@ const connectNativeDbBestEffort = async () => {
     await connectDb();
   } catch (error) {
     console.warn("[Mongo Native] Shared pool connect skipped:", error instanceof Error ? error.message : String(error));
+    // Fallback: Share Mongoose's native connection with the native driver layer.
+    // This prevents the auth service from falling back to the in-memory store
+    // (which loses data on every cold start/deploy).
+    if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+      try {
+        setExternalDb(mongoose.connection.db, mongoose.connection.getClient());
+        console.log("[MongoDB] Shared Mongoose Atlas connection with native driver layer");
+      } catch (shareError) {
+        console.warn("[MongoDB] Could not share Mongoose connection:", shareError instanceof Error ? shareError.message : String(shareError));
+      }
+    }
   }
 };
 

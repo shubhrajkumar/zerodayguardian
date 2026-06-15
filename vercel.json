@@ -1,8 +1,20 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run build",
+  "buildCommand": "CI=false npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install --no-fund --no-audit --prefer-offline",
+  "installCommand": "npm ci --prefer-offline",
+  "env": {
+    "VITE_API_URL": "https://zerodayguardian-backend.onrender.com",
+    "VITE_APP_NAME": "ZeroDay Guardian",
+    "VITE_APP_VERSION": "1.0.0",
+    "VITE_FIREBASE_API_KEY": "AIzaSyBNV3z4iVqqHuvoWZratlOON7KThAU6Jek",
+    "VITE_FIREBASE_AUTH_DOMAIN": "zerodayguardian-3f0ea.firebaseapp.com",
+    "VITE_FIREBASE_PROJECT_ID": "zerodayguardian-3f0ea",
+    "VITE_FIREBASE_APP_ID": "1:754043289403:web:9a2db1e126911caddd411e",
+    "VITE_FIREBASE_MESSAGING_SENDER_ID": "754043289403",
+    "VITE_ENABLE_FIREBASE_AUTH": "true"
+  },
+  "nodeVersion": "20.x",
   "rewrites": [
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/favicon.ico", "destination": "/favicon.ico" },
@@ -66,6 +78,15 @@
     },
     {
       "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/fonts/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
