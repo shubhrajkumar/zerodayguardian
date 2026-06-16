@@ -472,7 +472,6 @@ export const env = {
   stripePremiumPriceId: process.env.STRIPE_PREMIUM_PRICE_ID || "",
   stripeTeamPriceId: process.env.STRIPE_TEAM_PRICE_ID || "",
   stripePortalReturnUrl: process.env.STRIPE_PORTAL_RETURN_URL || "",
-  sendgridApiKey: firstSet("SENDGRID_API_KEY"),
   smtpHost: process.env.SMTP_HOST || "smtp.gmail.com",
   smtpPort: Number(process.env.SMTP_PORT || 587),
   smtpSecure: process.env.SMTP_SECURE === "true",
