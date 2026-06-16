@@ -14,7 +14,6 @@
     "VITE_FIREBASE_MESSAGING_SENDER_ID": "754043289403",
     "VITE_ENABLE_FIREBASE_AUTH": "true"
   },
-  "nodeVersion": "20.x",
   "rewrites": [
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/favicon.ico", "destination": "/favicon.ico" },

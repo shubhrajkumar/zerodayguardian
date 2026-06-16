@@ -118,7 +118,9 @@ const bootstrap = async () => {
   startNewsIngestionScheduler({ intervalMs: env.newsRefreshIntervalMs });
   startKeepAliveScheduler();
 
-  // Keep-alive ping every 14 minutes to prevent Render free tier from sleeping
+  // Keep-alive ping every 10 minutes to prevent Render free tier from sleeping
+  // Render free service spins down after 15 minutes of inactivity.
+  // Using 10 minutes gives a 5-minute safety margin against missed pings.
   const BACKEND_URL = env.backendPublicUrl || process.env.BACKEND_PUBLIC_URL || '';
   if (env.nodeEnv === 'production' && BACKEND_URL) {
     const keepAliveInterval = setInterval(async () => {
@@ -133,7 +135,7 @@ const bootstrap = async () => {
       } catch (err) {
         logWarn('Keep-alive ping failed', { error: String(err?.message || err) });
       }
-    }, 14 * 60 * 1000); // 14 minutes
+    }, 10 * 60 * 1000); // 10 minutes
     if (keepAliveInterval.unref) keepAliveInterval.unref();
   }
 
