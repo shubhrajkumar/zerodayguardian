@@ -159,7 +159,10 @@ const verifyJwt = (token, { allowRefresh = false } = {}) => {
   return payload;
 };
 
-const mailConfigured = () => Boolean(env.authEmailEnabled && env.authEmailUser && env.authEmailAppPassword && env.authEmailFrom);
+const mailConfigured = () => Boolean(
+  env.sendgridApiKey ||
+  (env.authEmailEnabled && env.authEmailUser && env.authEmailAppPassword && env.authEmailFrom)
+);
 const maskEmail = (value = "") => {
   const [local, domain] = String(value || "").split("@");
   if (!local || !domain) return value;
@@ -205,29 +208,52 @@ const brandedFromField = () => {
 };
 
 let transporterPromise = null;
+let sendgridClient = null;
 
-const getMailTransporter = async () => {
-  if (!mailConfigured()) {
-    throw createError("Email service is not configured", 500, "mail_not_configured");
-  }
-  if (!transporterPromise) {
-    transporterPromise = Promise.resolve(
-      nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
-        auth: {
-          user: env.authEmailUser,
-          pass: env.authEmailAppPassword,
-        },
-        requireTLS: true,
-      })
-    ).then(async (transporter) => {
-      await transporter.verify();
-      return transporter;
+const sendEmail = async ({ to, subject, text, html }) => {
+  if (env.sendgridApiKey) {
+    // Use SendGrid API
+    if (!sendgridClient) {
+      const sgMail = await import("@sendgrid/mail").then((m) => m.default || m);
+      sgMail.setApiKey(env.sendgridApiKey);
+      sendgridClient = sgMail;
+    }
+    await sendgridClient.send({
+      to,
+      from: brandedFromField(),
+      subject,
+      text,
+      html,
+    });
+  } else {
+    // Use Nodemailer SMTP with configurable host/port
+    let transporter;
+    if (!transporterPromise) {
+      transporterPromise = Promise.resolve(
+        nodemailer.createTransport({
+          host: env.smtpHost,
+          port: env.smtpPort,
+          secure: env.smtpSecure,
+          auth: {
+            user: env.authEmailUser,
+            pass: env.authEmailAppPassword,
+          },
+          requireTLS: env.smtpRequireTls,
+        })
+      ).then(async (t) => {
+        await t.verify();
+        return t;
+      });
+    }
+    transporter = await transporterPromise;
+    await transporter.sendMail({
+      from: brandedFromField(),
+      to,
+      subject,
+      text,
+      html,
     });
   }
-  return transporterPromise;
 };
 
 const AUTH_DB_MAX_TIME_MS = 8_000;
@@ -648,9 +674,7 @@ export const sendResetOtp = async ({ email }) => {
   }
 
   try {
-    const transporter = await getMailTransporter();
-    await transporter.sendMail({
-      from: brandedFromField(),
+    await sendEmail({
       to: safeEmail,
       subject: "ZeroDay Guardian Security | Password Reset Verification Code",
       text: [
