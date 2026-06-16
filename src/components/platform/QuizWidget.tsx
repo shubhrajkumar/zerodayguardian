@@ -37,7 +37,7 @@ const QuizWidget = ({ snapshot, loading, error, onAnswer }: QuizWidgetProps) => 
       <div className="relative z-[1]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-blue-100/72">Daily Cipher Quiz</p>
+            <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-blue-100/85">Daily Cipher Quiz</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#e2e8f0]">Five questions. Fast judgment. No dead air.</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300/80">
               Every correct answer injects <strong className="text-[#e2e8f0]">+50 XP</strong>. Wrong answers explain the miss immediately so learning still compounds.

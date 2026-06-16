@@ -1,4 +1,4 @@
-import { FormEvent, startTransition, useEffect, useMemo, useState } from "react";
+import { FormEvent, startTransition, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Bot, Fingerprint, Flag, Globe, PlayCircle, Radar, Search, Shield } from "lucide-react";
 import api from "@/lib/api";
@@ -6,6 +6,7 @@ import { apiGetJson } from "@/lib/apiClient";
 import { getPyApiUserMessage, pyPostJson } from "@/lib/pyApiClient";
 import PlatformHero from "@/components/platform/PlatformHero";
 import LabExecutionModal from "@/components/LabExecutionModal";
+import UnlockAnimation from "@/components/gamification/UnlockAnimation";
 import { useLearningMode } from "@/context/LearningModeContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import { useAuth } from "@/context/AuthContext";
@@ -237,6 +238,11 @@ const LabPage = () => {
   const [recentRewards, setRecentRewards] = useState<MissionReward[]>(() => {
     try { return JSON.parse(localStorage.getItem("lab:recent-rewards") || "[]") as MissionReward[]; } catch { return []; }
   });
+  const [unlockTrigger, setUnlockTrigger] = useState(0);
+
+  const handleUnlockDone = useCallback(() => {
+    setUnlockTrigger(0);
+  }, []);
 
   useScrollReveal([activeLabId, activeCategory, missionMode]);
 
@@ -446,6 +452,9 @@ const LabPage = () => {
         setRecentRewards((prev) => [...normalizedRewards, ...prev].slice(0, 6));
       }
       const completed = Boolean(result.state?.completed || result.code === "completed");
+      if (completed) {
+        setUnlockTrigger((prev) => prev + 1);
+      }
       setMissionPulse({ tone: completed ? "success" : result.ok ? "info" : "warning", title: completed ? "Mission complete" : result.ok ? "Mission updated" : "Command blocked", detail: completed ? `${activeLab.title} validated successfully. Reward flow updated and next progression unlocked.` : result.explanation || result.output || "The mission state has been updated." });
       await api.post("/api/intelligence/labs/progress", { labId: activeLab.id, status: completed ? "completed" : "active" }).catch(() => undefined);
       if (completed) await recordAction("sandbox_mission_complete", { target: activeLab.id, metadata: { mode: missionMode } }).catch(() => undefined);
@@ -549,6 +558,9 @@ const LabPage = () => {
       {mentorOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm"><div className="w-full max-w-xl rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-5"><div className="mb-3 flex items-center justify-between"><h3 className="text-lg font-semibold text-[var(--theme-text)]">Ask ZORVIX Mentor</h3><button type="button" className="rounded-lg border border-[var(--theme-border)] px-3 py-1 text-xs text-slate-300 transition hover:text-[var(--theme-text)]" onClick={() => setMentorOpen(false)}>Close</button></div>{mentorAutoReason ? <div className="mb-3 rounded-xl border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">{mentorAutoReason}</div> : null}<p className="mb-2 text-xs text-slate-400">Mission-aware prompt</p><textarea value={mentorPrompt} onChange={(event) => setMentorPrompt(event.target.value)} className="h-28 w-full rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3 text-sm text-[var(--theme-text)] outline-none" /><div className="mt-3 flex justify-end gap-2"><button type="button" className="rounded-lg border border-[var(--theme-border)] px-3 py-2 text-xs text-slate-300 transition hover:text-[var(--theme-text)]" onClick={() => setMentorOpen(false)}>Minimize</button><button type="button" className="rounded-lg border border-blue-400/16 bg-blue-500/10 px-3 py-2 text-xs text-blue-100 transition hover:bg-blue-500/16" onClick={openMentorWithPrompt}>Open in Assistant</button></div></div></div>
       ) : null}
+
+      {/* Confetti on lab completion */}
+      <UnlockAnimation trigger={unlockTrigger > 0} onDone={handleUnlockDone} />
 
       {labs.length ? (
         <LabExecutionModal open={labModalOpen} activeLab={activeLab} command={command} running={running} consoleLines={consoleLines} missionFeedback={missionFeedback} missionState={missionState} missionMode={missionMode} timerLabel={timerLabel} onCommandChange={setCommand} onClose={() => setLabModalOpen(false)} onSubmit={runCommand} onPickAllowedCommand={setCommand} />

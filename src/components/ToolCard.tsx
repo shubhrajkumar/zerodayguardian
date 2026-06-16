@@ -51,7 +51,7 @@ const ToolCard = ({ tool }: ToolCardProps) => {
 
       <div className="mt-5 space-y-3">
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200/70">{sanitize(tool.category)}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200/85">{sanitize(tool.category)}</p>
           <h3 className="text-xl font-semibold tracking-tight text-slate-50">{sanitize(tool.name)}</h3>
         </div>
         <p className="text-sm leading-6 text-slate-300/82">{sanitize(tool.description)}</p>

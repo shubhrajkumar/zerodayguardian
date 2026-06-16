@@ -373,11 +373,11 @@ describe("DashboardPage", () => {
     renderDashboardPage();
     const toolsButtons = screen.getAllByText("Tools");
     const quickActionTools = toolsButtons.find((el) => {
-      const parent = el.closest("button");
+      const parent = el.closest('[role="button"]');
       return parent && parent.textContent?.includes("Launch security tools");
     });
     expect(quickActionTools).toBeTruthy();
-    await userEvent.click(quickActionTools!.closest("button")!);
+    await userEvent.click(quickActionTools!.closest('[role="button"]')!);
     expect(mockNavigate).toHaveBeenCalledWith("/tools");
   }, 10000);
 
@@ -385,11 +385,11 @@ describe("DashboardPage", () => {
     renderDashboardPage();
     const learnButtons = screen.getAllByText("Learn");
     const quickActionLearn = learnButtons.find((el) => {
-      const parent = el.closest("button");
+      const parent = el.closest('[role="button"]');
       return parent && parent.textContent?.includes("Continue coursework");
     });
     expect(quickActionLearn).toBeTruthy();
-    await userEvent.click(quickActionLearn!.closest("button")!);
+    await userEvent.click(quickActionLearn!.closest('[role="button"]')!);
     expect(mockNavigate).toHaveBeenCalledWith("/learn");
   }, 10000);
 

@@ -265,12 +265,12 @@ const ToolsPage = () => {
                 <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Visible Tools</p>
                   <p className="mt-3 text-4xl font-semibold text-slate-50">{activeCount}</p>
-                  <p className="mt-2 text-sm text-slate-300/75">Filtered command set currently visible in the dashboard.</p>
+                  <p className="mt-2 text-sm text-slate-300/85">Filtered command set currently visible in the dashboard.</p>
                 </div>
                 <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Workspace Mode</p>
                   <p className="mt-3 text-2xl font-semibold text-slate-50">Trusted + Separated</p>
-                  <p className="mt-2 text-sm text-slate-300/75">Live verified workflows and guided range exercises are clearly labeled and routed separately.</p>
+                  <p className="mt-2 text-sm text-slate-300/85">Live verified workflows and guided range exercises are clearly labeled and routed separately.</p>
                 </div>
                 {categoryMetrics.map((metric) => {
                   const Icon = getToolIcon(
@@ -320,7 +320,7 @@ const ToolsPage = () => {
 
           {toolsReady && recentTools.length ? (
             <section data-reveal className="app-smooth-enter flex flex-wrap items-center gap-3 rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-4">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-100/72">Recent Workspaces</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-100/85">Recent Workspaces</span>
               {recentTools.map((tool) => (
                 <button
                   key={tool.id}
@@ -351,7 +351,7 @@ const ToolsPage = () => {
                 <span className="text-[11px] uppercase tracking-[0.24em]">Verified Live Tools</span>
               </div>
               <p className="mt-3 text-3xl font-semibold text-slate-50">{verifiedCount}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300/78">Operational workspaces for verified scans, trusted AI analysis, and evidence-based outputs.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300/85">Operational workspaces for verified scans, trusted AI analysis, and evidence-based outputs.</p>
             </article>
             <article className="rounded-[26px] border border-cyan-300/15 bg-[linear-gradient(180deg,rgba(8,12,25,0.96),rgba(5,9,19,0.96))] p-5">
               <div className="inline-flex items-center gap-2 text-cyan-100">
@@ -359,7 +359,7 @@ const ToolsPage = () => {
                 <span className="text-[11px] uppercase tracking-[0.24em]">Learning Labs</span>
               </div>
               <p className="mt-3 text-3xl font-semibold text-slate-50">{learningCount}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300/78">Practice flows stay separate from live security operations to avoid mixed signals.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300/85">Practice flows stay separate from live security operations to avoid mixed signals.</p>
             </article>
             <article className="rounded-[26px] border border-cyan-300/15 bg-[linear-gradient(180deg,rgba(8,12,25,0.96),rgba(5,9,19,0.96))] p-5">
               <div className="inline-flex items-center gap-2 text-cyan-100">
@@ -367,13 +367,13 @@ const ToolsPage = () => {
                 <span className="text-[11px] uppercase tracking-[0.24em]">Trust Policy</span>
               </div>
               <p className="mt-3 text-lg font-semibold text-slate-50">No fabricated scan output</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300/78">When verified evidence is unavailable, the hub should show `No verified data.` instead of fabricated findings.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300/85">When verified evidence is unavailable, the hub should show `No verified data.` instead of fabricated findings.</p>
             </article>
           </section>
 
           <section data-reveal className="grid gap-4 lg:grid-cols-[1fr_1fr]">
             <article className="rounded-[26px] border border-cyan-300/15 bg-[linear-gradient(180deg,rgba(8,12,25,0.96),rgba(5,9,19,0.96))] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/72">Access Control</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Access Control</p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-50">Progressive unlock matrix</h2>
               <div className="mt-4 grid gap-3">
                 <div className={`rounded-2xl border p-4 ${unlockedGates.intel_tools ? "border-emerald-300/25 bg-emerald-500/10 text-emerald-100" : "border-white/10 bg-white/[0.03] text-slate-300"}`}>
@@ -388,9 +388,9 @@ const ToolsPage = () => {
             </article>
 
             <article className="rounded-[26px] border border-cyan-300/15 bg-[linear-gradient(180deg,rgba(8,12,25,0.96),rgba(5,9,19,0.96))] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/72">Hidden Operator Challenge</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Hidden Operator Challenge</p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-50">{operatorOverride?.discovered ? operatorOverride.title : "Unknown mission"}</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300/78">
+              <p className="mt-3 text-sm leading-6 text-slate-300/85">
                 {operatorOverride?.discovered
                   ? (operatorOverride?.detail || '')
                   : "There is a hidden access path in the tools hub. Layered progress and mission completion will expose it."}
@@ -450,18 +450,18 @@ const ToolsPage = () => {
                 >
                   <div className="flex flex-col gap-4 border-b border-white/6 px-5 py-5 md:flex-row md:items-center md:justify-between md:px-6">
                     <div className="space-y-2">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/10 bg-cyan-400/8 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-cyan-100/75">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/10 bg-cyan-400/8 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">
                         <Shield className="h-3.5 w-3.5" />
                         {groupMeta.eyebrow}
                       </div>
                       <div>
                         <h2 className="text-2xl font-semibold tracking-tight text-slate-50">{group}</h2>
-                        <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-300/75">{groupMeta.description}</p>
+                        <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-300/85">{groupMeta.description}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-300">
-                        <Grid2x2 className="h-3.5 w-3.5 text-cyan-200/70" />
+                        <Grid2x2 className="h-3.5 w-3.5 text-cyan-200/85" />
                         {tools.length} workspaces
                       </div>
                       <button

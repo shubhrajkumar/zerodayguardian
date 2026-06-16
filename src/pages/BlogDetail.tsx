@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import Comments from "@/components/Comments";
 import { sanitize } from "@/utils/sanitize";
+import GlassCard from "@/components/ui/GlassCard";
 
 // derive type
 type BlogPost = (typeof blogData)[number];
@@ -54,12 +55,12 @@ const BlogDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {related.map((r) => (
                 <Link key={r.slug} to={`/blog/${r.slug}`}>
-                  <div className="glass-card rounded-lg p-4 hover:shadow-lg transition-shadow">
+                  <GlassCard className="rounded-lg p-4 hover:shadow-lg transition-shadow">
                     <h3 className="font-mono font-semibold mb-1">{r.title}</h3>
                     <p className="text-sm text-muted-foreground truncate">
                       {r.excerpt}
                     </p>
-                  </div>
+                  </GlassCard>
                 </Link>
               ))}
             </div>

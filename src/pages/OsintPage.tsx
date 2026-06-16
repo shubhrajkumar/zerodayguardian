@@ -3,6 +3,7 @@ import { getStoredAccessToken, apiGetJson } from "@/lib/apiClient";
 import api from "@/lib/api";
 import { getPyApiUserMessage, pyPostJson, resolvePublicPyApiUrl } from "@/lib/pyApiClient";
 import { useToast } from "@/hooks/use-toast";
+import GlassCard from "@/components/ui/GlassCard";
 
 const MODULES = [
   { id: "whois", label: "WHOIS" },
@@ -597,7 +598,7 @@ const OsintPage = () => {
 
             <div className="grid gap-6 lg:grid-cols-2">
               {MODULES.map((module) => (
-                <div key={module.id} className="glass-card rounded-2xl p-5">
+                <GlassCard key={module.id} className="rounded-2xl p-5">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-white">{module.label}</h3>
                     <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-400">
@@ -607,7 +608,7 @@ const OsintPage = () => {
                   <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-black/40 p-3 text-[11px] text-slate-200/80">
                     {formatValue(result?.results?.[module.id]?.data)}
                   </pre>
-                </div>
+                </GlassCard>
               ))}
             </div>
           </div>

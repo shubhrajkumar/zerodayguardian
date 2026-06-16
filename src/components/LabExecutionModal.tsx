@@ -194,7 +194,7 @@ const LabExecutionModal = ({
                   <div>
                     <p className="mb-1 text-xs text-cyan-200">Mission Panel</p>
                     <p className="text-lg font-semibold text-cyan-50">{safeCurrentObjective}</p>
-                    <p className="mt-2 text-xs text-cyan-100/78">{safeExpectedOutcome}</p>
+                    <p className="mt-2 text-xs text-cyan-100/85">{safeExpectedOutcome}</p>
                   </div>
                   <div className="rounded-lg border border-cyan-300/25 bg-black/50 px-3 py-2 text-xs text-cyan-100/85">
                     Step {stepLabel}
@@ -314,7 +314,7 @@ const LabExecutionModal = ({
                 {missionFeedback?.branchOutcome ? (
                   <div className="mt-3 rounded-lg border border-cyan-300/20 bg-black/50 px-3 py-2 text-[11px] text-cyan-100/80">
                     <strong>Branch Outcome:</strong> {missionFeedback.branchOutcome.title}
-                    <div className="mt-1 text-cyan-100/70">{missionFeedback.branchOutcome.condition}</div>
+                    <div className="mt-1 text-cyan-100/85">{missionFeedback.branchOutcome.condition}</div>
                     <div className="mt-1 text-cyan-100/60">Reward: {missionFeedback.branchOutcome.reward}</div>
                   </div>
                 ) : null}
@@ -350,7 +350,7 @@ const LabExecutionModal = ({
               </section>
             </div>
 
-            <footer className="border-t border-cyan-300/25 px-4 py-3 text-xs text-cyan-100/75 md:px-6">
+            <footer className="border-t border-cyan-300/25 px-4 py-3 text-xs text-cyan-100/85 md:px-6">
               {activeLab.separationNotice || "This lab uses realistic simulated outputs for learning. Use live Dashboard and OSINT modules for verified scans."}
             </footer>
           </div>

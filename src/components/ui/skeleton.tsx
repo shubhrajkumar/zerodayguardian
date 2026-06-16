@@ -6,6 +6,8 @@
  *   <Skeleton w="120px" h="12px" /> // custom size
  *   <Skeleton w="100%" h="200px" r="16px" /> // large card placeholder
  */
+import GlassCard from "@/components/ui/GlassCard";
+
 type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
   /** Shorthand width (default: 100%) */
   w?: string;
@@ -43,12 +45,12 @@ export default Skeleton;
 /** Compound skeleton for common layouts */
 export function SkeletonCard({ className = "" }: { className?: string }) {
   return (
-    <div className={`glass-card p-5 space-y-3 ${className}`} aria-busy="true" aria-label="Loading...">
+    <GlassCard className={`p-5 space-y-3 ${className}`} aria-busy="true" aria-label="Loading...">
       <Skeleton w="40%" h="14px" />
       <Skeleton w="100%" h="10px" />
       <Skeleton w="75%" h="10px" />
       <Skeleton w="60%" h="10px" />
-    </div>
+    </GlassCard>
   );
 }
 

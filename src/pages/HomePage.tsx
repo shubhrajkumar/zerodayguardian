@@ -46,7 +46,7 @@ const HomePage = () => {
       {orbitSignals.map((signal) => (
         <div
           key={signal.id}
-          className="animate-orbit-pulse pointer-events-none absolute hidden rounded-full border border-sky-300/12 bg-slate-900/70 px-3 py-1 terminal-font text-[10px] uppercase tracking-[0.22em] text-slate-300/78 md:block"
+          className="animate-orbit-pulse pointer-events-none absolute hidden rounded-full border border-sky-300/12 bg-slate-900/70 px-3 py-1 terminal-font text-[10px] uppercase tracking-[0.22em] text-slate-300/85 md:block"
           style={{ left: signal.x, top: signal.y, animationDelay: `${signal.delay}s` }}
         >
           {signal.label}
@@ -62,7 +62,7 @@ const HomePage = () => {
           {/* Hero text block — CSS fade-in */}
           <div className="animate-hero-fade-in mx-auto max-w-3xl text-center" style={{ contain: 'layout style' }}>
             <p
-              className="animate-hero-fade-in terminal-font text-[11px] uppercase tracking-[0.5em] text-slate-300/62"
+              className="animate-hero-fade-in terminal-font text-[11px] uppercase tracking-[0.5em] text-slate-300/85"
               style={{ animationDelay: '0.08s' }}
             >
               ZeroDay Guardian
@@ -77,7 +77,7 @@ const HomePage = () => {
               <span className="block text-white/92">The One Line of Defense</span>
             </h1>
             <p
-              className="animate-hero-fade-in mt-4 text-sm font-medium uppercase tracking-[0.42em] text-slate-300/68 md:text-[0.95rem]"
+              className="animate-hero-fade-in mt-4 text-sm font-medium uppercase tracking-[0.42em] text-slate-300/85 md:text-[0.95rem]"
               style={{ animationDelay: '0.2s' }}
             >
               ZORVIX AI
@@ -118,7 +118,7 @@ const HomePage = () => {
                       <div key={item.label} className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
                         <item.icon className="h-4 w-4 text-[#00ff88]" />
                         <p className="mt-3 text-sm font-semibold text-white">{item.label}</p>
-                        <p className="mt-2 text-sm text-slate-300/70">{item?.detail || ''}</p>
+                        <p className="mt-2 text-sm text-slate-300/85">{item?.detail || ''}</p>
                       </div>
                     ))}
                   </div>
@@ -139,7 +139,7 @@ const HomePage = () => {
                     ))}
                   </div>
                   <div className="mt-4 rounded-xl border border-white/8 bg-slate-900/72 p-4">
-                    <p className="terminal-font text-[10px] uppercase tracking-[0.2em] text-slate-300/70">Active Stack</p>
+                    <p className="terminal-font text-[10px] uppercase tracking-[0.2em] text-slate-300/85">Active Stack</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {["Recon", "Labs", "Defense", "ZORVIX"].map((item) => (
                         <span key={item} className="rounded-xl border border-white/8 bg-black/28 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/82">

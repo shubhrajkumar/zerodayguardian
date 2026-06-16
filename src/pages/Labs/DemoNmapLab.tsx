@@ -277,7 +277,7 @@ export default function DemoNmapLab() {
                 initial={{ opacity: 0, x: -4 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.2 }}
-                className={line.startsWith("$ ERROR") ? "text-red-400" : "text-cyan-300/70"}
+                className={line.startsWith("$ ERROR") ? "text-red-400" : "text-cyan-300/85"}
               >
                 {sanitize(line)}
               </motion.p>

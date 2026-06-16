@@ -341,11 +341,11 @@ const LearnPage = () => {
           <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr] xl:items-end">
             <div className="space-y-4">
               <div>
-                <p className="terminal-font text-[11px] uppercase tracking-[0.26em] text-slate-300/64">ZeroDay_Guardian Learning</p>
+                <p className="terminal-font text-[11px] uppercase tracking-[0.26em] text-slate-300/85">ZeroDay_Guardian Learning</p>
                 <h1 className="mt-3 max-w-3xl text-3xl font-black tracking-[-0.05em] text-white md:text-5xl">
                   <span className="glow-text">Start Your Cyber Journey</span>
                 </h1>
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300/78 md:text-base">
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300/85 md:text-base">
                   Explore guided tracks, filter by your level, and move into practical cyber learning without noise or confusion.
                 </p>
               </div>
@@ -395,19 +395,19 @@ const LearnPage = () => {
               <div className="cyber-card rounded-[24px] p-4">
                 <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-slate-500">Learning Tracks</p>
                 <p className="mt-3 text-2xl font-semibold text-white">{livePaths.length}</p>
-                <p className="mt-2 text-sm text-slate-300/72">Structured routes you can search and start quickly.</p>
+                <p className="mt-2 text-sm text-slate-300/85">Structured routes you can search and start quickly.</p>
               </div>
               <div className="cyber-card rounded-[24px] p-4">
                 <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-slate-500">Completed Labs</p>
                 <p className="mt-3 text-2xl font-semibold text-white">{stats?.completedLabs || 0} labs</p>
-                <p className="mt-2 text-sm text-slate-300/72">Validated learning signals feed your momentum.</p>
+                <p className="mt-2 text-sm text-slate-300/85">Validated learning signals feed your momentum.</p>
               </div>
               <div className="cyber-card rounded-[24px] p-4 sm:col-span-3 xl:col-span-2">
                 <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-slate-400">AI Recommendation</p>
                 <p className="mt-3 text-base font-semibold text-white">
                   {highlightedRecommendation?.title || (learningReady ? "The platform will adapt as you complete more labs." : "Syncing your live learning feed...")}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-300/76">
+                <p className="mt-2 text-sm leading-6 text-slate-300/85">
                   {highlightedRecommendation?.reason || (learningReady ? "Search a track, enroll, and move straight into guided practice with less friction." : "We are pulling your active learning paths, mission map, and course catalog from the backend.")}
                 </p>
               </div>
@@ -420,7 +420,7 @@ const LearnPage = () => {
             <div>
               <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-slate-400">Learning Tracks</p>
               <h2 className="glow-text mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">Choose the right learning track</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-300/76">
+              <p className="mt-2 text-sm leading-6 text-slate-300/85">
                 Each track shows what you will learn, how many modules it includes, and where your progress stands right now.
               </p>
             </div>
@@ -452,7 +452,7 @@ const LearnPage = () => {
                   </div>
 
                   <h3 className="mt-5 text-xl font-semibold text-white">{track.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-300/76">{track.description}</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-300/85">{track.description}</p>
 
                   <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
                     <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-3 py-3">
@@ -499,7 +499,7 @@ const LearnPage = () => {
             <div>
               <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-slate-400">Featured Courses</p>
               <h2 className="glow-text mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">Featured courses to build momentum fast</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-300/76">
+              <p className="mt-2 text-sm leading-6 text-slate-300/85">
                 Browse clean course cards, see the category at a glance, and enroll straight into guided learning.
               </p>
             </div>
@@ -529,7 +529,7 @@ const LearnPage = () => {
                 <div className="p-5">
                   <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-slate-400">Course</p>
                   <h3 className="text-xl font-semibold text-white">{course.title}</h3>
-                  <p className="mt-3 min-h-[3.25rem] text-sm leading-6 text-slate-300/76">{trimDescription(course.description)}</p>
+                  <p className="mt-3 min-h-[3.25rem] text-sm leading-6 text-slate-300/85">{trimDescription(course.description)}</p>
 
                   <div className="mt-5 flex flex-wrap gap-2 text-xs uppercase tracking-[0.16em] text-slate-400">
                     <span className="inline-flex items-center gap-1 rounded-full border border-white/8 bg-white/[0.03] px-3 py-1">
@@ -560,11 +560,11 @@ const LearnPage = () => {
         >
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div>
-              <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-slate-300/70">60-Day Program</p>
+              <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-slate-300/85">60-Day Program</p>
               <h2 className="glow-text mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
                 A guided 60-day roadmap that turns scattered learning into daily forward motion
               </h2>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300/78 md:text-base">
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300/85 md:text-base">
                 Follow a daily mission path across foundations, appsec, defense, cloud, hunting, and capstone work with one clean next step every day.
               </p>
 
@@ -595,12 +595,12 @@ const LearnPage = () => {
                 <div key={item.label} className="cyber-card rounded-[24px] p-4 transition duration-200">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-300/70">{item.label}</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-300/85">{item.label}</p>
                       <p className="mt-2 text-sm font-semibold text-white">{item.dayRange}</p>
                     </div>
                     <Target className="h-4 w-4 text-sky-200/90" />
                   </div>
-                  <p className="mt-3 text-sm text-slate-300/76">
+                  <p className="mt-3 text-sm text-slate-300/85">
                     Start with <span className="text-white">{item.mission}</span>
                   </p>
                   <p className="mt-2 text-sm text-slate-400">Finish this phase by proving: {item.challenge}</p>

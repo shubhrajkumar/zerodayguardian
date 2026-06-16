@@ -49,7 +49,8 @@ export default function GlassCard({
   onClick,
   ariaLabel,
   role,
-}: GlassCardProps) {
+  ...rest
+}: GlassCardProps & Record<string, unknown>) {
   const isInteractive = Boolean(onClick);
 
   return (
@@ -77,6 +78,7 @@ export default function GlassCard({
       tabIndex={isInteractive ? 0 : undefined}
       role={role || (isInteractive ? "button" : undefined)}
       aria-label={ariaLabel}
+      {...rest}
     >
       {children}
     </div>

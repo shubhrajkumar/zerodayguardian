@@ -602,12 +602,7 @@ describe("Zorvix", () => {
       );
     });
 
-    // Topic badge should appear
-    await waitFor(() => {
-      expect(screen.getByText("SQLi Lab")).toBeTruthy();
-    });
-
-    // Input should initially be populated with the query
+    // Input should be populated immediately after dispatch (before 140ms timeout)
     const textarea = screen.getByLabelText("Message ZORVIX") as HTMLTextAreaElement;
     expect(textarea.value).toBe("Walk me through SQL injection basics");
 
@@ -621,6 +616,11 @@ describe("Zorvix", () => {
       const ta = screen.getByLabelText("Message ZORVIX") as HTMLTextAreaElement;
       expect(ta.value).toBe("");
     }, { timeout: 3000 });
+
+    // Topic badge should also appear
+    await waitFor(() => {
+      expect(screen.getByText("SQLi Lab")).toBeTruthy();
+    });
   });
 
   it("does not auto-submit when neurobot:topic fires with autoSubmit false", async () => {

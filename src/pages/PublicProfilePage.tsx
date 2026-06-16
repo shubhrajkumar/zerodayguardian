@@ -28,7 +28,7 @@ const PublicProfilePage = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="mx-auto max-w-2xl rounded-[28px] border border-white/10 bg-black/25 p-8 text-center">
           <h1 className="text-3xl font-semibold text-[var(--theme-text)]">Profile not found</h1>
-          <p className="mt-3 text-slate-300/78">That operator profile is not public or does not exist.</p>
+          <p className="mt-3 text-slate-300/85">That operator profile is not public or does not exist.</p>
         </div>
       </div>
     );
@@ -54,9 +54,9 @@ const PublicProfilePage = () => {
       />
       <div className="mx-auto max-w-5xl space-y-6">
         <section className="rounded-[36px] border border-cyan-300/16 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_30%),linear-gradient(180deg,#050910,#0a111d)] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.32)]">
-          <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Public Operator Profile</p>
+          <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Public Operator Profile</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-[var(--theme-text)]">{profile.name}</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300/78">{profile.headline}</p>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300/85">{profile.headline}</p>
           <div className="mt-6 grid gap-4 md:grid-cols-4">
             {[
               { icon: Trophy, label: "XP", value: `${profile.xp}` },

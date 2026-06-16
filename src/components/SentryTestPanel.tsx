@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Sentry from "@sentry/react";
+import GlassCard from "@/components/ui/GlassCard";
 
 type TestResult = {
   type: "success" | "error" | "info";
@@ -162,8 +163,8 @@ export default function SentryTestPanel() {
     "hover:scale-[1.03] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100";
 
   return (
-    <div
-      className="glass-card rounded-2xl border p-5 md:p-6 animate-fade-in-up"
+    <GlassCard
+      className="rounded-2xl border p-5 md:p-6 animate-fade-in-up"
       style={{ borderColor: "color-mix(in srgb, var(--theme-accent-purple) 15%, transparent)" }}
     >
       {/* Header */}
@@ -323,6 +324,6 @@ export default function SentryTestPanel() {
           <code className="font-mono text-[10px]">.env</code> file for local testing.
         </p>
       )}
-    </div>
+    </GlassCard>
   );
 }

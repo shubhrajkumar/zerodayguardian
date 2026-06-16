@@ -84,6 +84,10 @@ export default {
           "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "slide-up": {
+          "0%": { opacity: "0", transform: "translateY(30px) scale(0.98)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
         "slide-in-right": {
           "0%": { opacity: "0", transform: "translateX(20px)" },
           "100%": { opacity: "1", transform: "translateX(0)" },
@@ -116,12 +120,25 @@ export default {
           "0%": { transform: "translateX(0)", opacity: "1" },
           "100%": { transform: "translateX(100%)", opacity: "0" },
         },
+        "path-draw": {
+          "0%": { strokeDashoffset: "100%" },
+          "100%": { strokeDashoffset: "0%" },
+        },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.92)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "bounce-glow": {
+          "0%, 100%": { transform: "scale(1)", opacity: "0.8" },
+          "50%": { transform: "scale(1.08)", opacity: "1" },
+        },
       },
       animation: {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "pulse-green": "pulse-green 2s ease-in-out infinite",
         "fade-in": "fade-in 0.5s ease-out",
         "fade-in-up": "fade-in-up 0.6s ease-out",
+        "slide-up": "slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
         "slide-in-right": "slide-in-right 0.4s ease-out",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "scan-line": "scan-line 8s linear infinite",
@@ -130,6 +147,9 @@ export default {
         "typing-dot": "typing-dot 1.4s ease-in-out infinite",
         "toast-in": "toast-in 0.3s ease-out",
         "toast-out": "toast-out 0.3s ease-in forwards",
+        "path-draw": "path-draw 2s ease-out forwards",
+        "scale-in": "scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "bounce-glow": "bounce-glow 2s ease-in-out infinite",
       },
     },
   },
@@ -143,6 +163,42 @@ export default {
             "min-height": "48px",
             "min-width": "48px",
           },
+        },
+      });
+    },
+    // Cyber Rationale: Glassmorphism utility for premium depth effect.
+    function glassPlugin({ addUtilities }) {
+      addUtilities({
+        ".glass-cyber": {
+          background: "var(--theme-surface)",
+          "backdrop-filter": "blur(24px)",
+          "-webkit-backdrop-filter": "blur(24px)",
+          border: "1px solid var(--theme-border)",
+        },
+        ".glass-cyber-hover": {
+          background: "var(--theme-surface)",
+          "backdrop-filter": "blur(24px)",
+          "-webkit-backdrop-filter": "blur(24px)",
+          border: "1px solid var(--theme-border)",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        },
+        ".glass-cyber-hover:hover": {
+          "border-color": "var(--theme-accent-blue)",
+          "box-shadow": "0 0 24px var(--theme-glow)",
+          transform: "translateY(-2px)",
+        },
+      });
+    },
+    // Cyber Rationale: Text glow utility for neon cyber headings.
+    function textGlowPlugin({ addUtilities }) {
+      addUtilities({
+        ".text-neon": {
+          color: "var(--theme-accent-blue)",
+          "text-shadow": "0 0 7px var(--theme-glow), 0 0 14px var(--theme-glow)",
+        },
+        ".text-neon-green": {
+          color: "var(--theme-accent-green)",
+          "text-shadow": "0 0 7px rgba(0, 255, 136, 0.3), 0 0 14px rgba(0, 255, 136, 0.15)",
         },
       });
     },

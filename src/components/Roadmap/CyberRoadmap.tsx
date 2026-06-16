@@ -10,6 +10,7 @@ import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, CheckCircle2, PlayCircle, Bell, ChevronRight } from "lucide-react";
 import { SYLLABUS_PHASES, TOTAL_DAYS, resolvePhase, ZORVIX_UI } from "@/lib/syllabusShared";
+import ProgressRing from "@/components/progress/ProgressRing";
 
 // ── Module-level constant for default empty set (avoids new Set() per render) ──
 const EMPTY_SET = new Set<number>();
@@ -63,51 +64,6 @@ const TRACK_STYLES: Record<string, { borderColor: string; bgColor: string; textC
 };
 
 const getTrackStyle = (track: string) => TRACK_STYLES[track] ?? TRACK_STYLES.RECON;
-
-// ── Progress Ring (SVG) ──
-function ProgressRing({ completed, total }: { completed: number; total: number }) {
-  const size = 80;
-  const strokeWidth = 6;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const pct = total > 0 ? completed / total : 0;
-  const offset = circumference - pct * circumference;
-
-  return (
-    <div className="relative inline-flex items-center justify-center" role="img" aria-label={`${completed} of ${total} days completed`}>
-      <svg width={size} height={size} className="-rotate-90">
-        {/* Background track */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.06)"
-          strokeWidth={strokeWidth}
-        />
-        {/* Progress arc */}
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={ZORVIX_UI.cyberCyan}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        />
-      </svg>
-      {/* Center text */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-lg font-bold text-white">{completed}</span>
-        <span className="text-[10px] text-slate-400">/{total}</span>
-      </div>
-    </div>
-  );
-}
 
 // ── Single Day Node ──
 function DayNode({
@@ -296,13 +252,13 @@ export default function CyberRoadmap({
       {/* Header */}
       <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
         <div className="space-y-3">
-          <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-cyan-300/70">
+          <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-cyan-300/85">
             60-Day Roadmap
           </p>
           <h2 className="glow-text text-2xl font-bold tracking-tight text-white md:text-3xl">
             Your Cybersecurity Journey
           </h2>
-          <p className="max-w-xl text-sm leading-6 text-slate-300/76">
+          <p className="max-w-xl text-sm leading-6 text-slate-300/85">
             Follow a structured path across 3 phases — from recon fundamentals to binary exploitation.
             Each day unlocks the next with validated progress.
           </p>
@@ -320,7 +276,7 @@ export default function CyberRoadmap({
           </div>
         </div>
 
-        <ProgressRing completed={completedCount} total={TOTAL_DAYS} />
+        <ProgressRing current={completedCount} total={TOTAL_DAYS} label={`${completedCount}/${TOTAL_DAYS} days`} />
       </div>
 
       {/* Phase sections */}

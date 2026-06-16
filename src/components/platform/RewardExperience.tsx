@@ -70,7 +70,7 @@ const RewardExperience = () => {
                 <PulseIcon className="h-5 w-5" />
               </motion.div>
               <div>
-                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/62">Breach Complete</p>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Breach Complete</p>
                 <h3 className="mt-2 text-xl font-semibold text-foreground">{activeReward.title}</h3>
                 <p className="mt-1 text-sm text-secondary">{activeReward.detail || ''}</p>
               </div>
@@ -86,7 +86,7 @@ const RewardExperience = () => {
 
           <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/16 bg-secondary px-4 py-3">
             <div>
-              <p className="text-xs text-cyan-100/62">XP injected</p>
+              <p className="text-xs text-cyan-100/85">XP injected</p>
               <p className="mission-reward-xp text-2xl font-semibold text-foreground">+{activeReward.xp}</p>
             </div>
             <div className="mission-reward-orbs" aria-hidden="true">
@@ -106,7 +106,7 @@ const RewardExperience = () => {
 
           {badges.length ? (
             <div className="mt-4">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/62">Latest badges</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Latest badges</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {badges.slice(0, 3).map((badge) => {
                   const BadgeIcon = badgeIconMap[badge.icon];

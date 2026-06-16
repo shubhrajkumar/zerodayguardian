@@ -46,7 +46,7 @@ const Index = () => {
       {orbitSignals.map((signal) => (
         <motion.div
           key={signal.id}
-          className="pointer-events-none absolute hidden rounded-full border border-sky-300/12 bg-slate-900/70 px-3 py-1 terminal-font text-[10px] uppercase tracking-[0.22em] text-slate-300/78 md:block"
+          className="pointer-events-none absolute hidden rounded-full border border-sky-300/12 bg-slate-900/70 px-3 py-1 terminal-font text-[10px] uppercase tracking-[0.22em] text-slate-300/85 md:block"
           style={{ left: signal.x, top: signal.y }}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: [0.22, 0.62, 0.22], y: [0, -8, 0] }}
@@ -63,7 +63,7 @@ const Index = () => {
           </div>
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="mx-auto max-w-3xl text-center" style={{ contain: 'layout style' }}>
             <motion.p
-              className="terminal-font text-[11px] uppercase tracking-[0.5em] text-slate-300/62"
+              className="terminal-font text-[11px] uppercase tracking-[0.5em] text-slate-300/85"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.08 }}
@@ -82,7 +82,7 @@ const Index = () => {
               <span className="block text-white/92">The One Line of Defense</span>
             </motion.h1>
             <motion.p
-              className="mt-4 text-sm font-medium uppercase tracking-[0.42em] text-slate-300/68 md:text-[0.95rem]"
+              className="mt-4 text-sm font-medium uppercase tracking-[0.42em] text-slate-300/85 md:text-[0.95rem]"
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -126,7 +126,7 @@ const Index = () => {
                       <div key={item.label} className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
                         <item.icon className="h-4 w-4 text-[#00ff88]" />
                         <p className="mt-3 text-sm font-semibold text-white">{item.label}</p>
-                        <p className="mt-2 text-sm text-slate-300/70">{item?.detail || ''}</p>
+                        <p className="mt-2 text-sm text-slate-300/85">{item?.detail || ''}</p>
                       </div>
                     ))}
                   </div>
@@ -149,7 +149,7 @@ const Index = () => {
                     ))}
                   </div>
                   <div className="mt-4 rounded-xl border border-white/8 bg-slate-900/72 p-4">
-                    <p className="terminal-font text-[10px] uppercase tracking-[0.2em] text-slate-300/70">Active Stack</p>
+                    <p className="terminal-font text-[10px] uppercase tracking-[0.2em] text-slate-300/85">Active Stack</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {["Recon", "Labs", "Defense", "ZORVIX"].map((item) => (
                         <span key={item} className="rounded-xl border border-white/8 bg-black/28 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/82">

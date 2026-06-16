@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Award, BookOpen, Flame, Zap, Settings, LogOut } from "lucide-react";
+import GlassCard from "@/components/ui/GlassCard";
 import { useAuth } from "@/context/AuthContext";
 import { useUserProgress } from "@/context/UserProgressContext";
 import { useGamificationSystem, getLevelLabel } from "@/lib/gamificationSystem";
@@ -87,7 +88,7 @@ export default function ProfilePage() {
         </button>
 
         {/* Profile Header */}
-        <div className="glass-card p-6 md:p-8 animate-fade-in-up">
+        <GlassCard className="p-6 md:p-8 animate-fade-in-up">
           <div className="flex flex-col sm:flex-row items-start gap-5">
             {/* Avatar */}
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold border-2 border-[var(--theme-accent-blue)]/30"
@@ -155,7 +156,7 @@ export default function ProfilePage() {
               </button>
             </div>
           </div>
-        </div>
+        </GlassCard>
 
         {/* XP & Streak */}
         <div className="grid gap-4 sm:grid-cols-2 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
@@ -174,7 +175,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="glass-card p-5 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
+        <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
           <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--theme-text)" }}>Recent Activity</h2>
           <div className="space-y-3" role="list" aria-label="Recent activity">
             {recentActivity.map((activity, i) => (
@@ -194,7 +195,7 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
-        </div>
+        </GlassCard>
       </div>
     </div>
   );

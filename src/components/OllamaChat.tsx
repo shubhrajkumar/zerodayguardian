@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { safeArray } from "@/utils/safeData";
+import GlassCard from "@/components/ui/GlassCard";
 
 type Message = {
   id: string;
@@ -127,7 +128,7 @@ export default function OllamaChat({
           className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 ${
             isUser
               ? "bg-gradient-to-br from-[#00d4ff]/20 to-[#0099cc]/10 border border-[#00d4ff]/20 rounded-br-md"
-              : "glass-card rounded-bl-md"
+              : "glass-card rounded-bl-md" // Keep glass-card for inline message styling (can't replace with component in mapped render)
           }`}
           style={isUser ? {} : { borderColor: "var(--theme-border)" }}
         >
@@ -265,7 +266,7 @@ export default function OllamaChat({
 
         {isTyping && (
           <div className="flex justify-start animate-fade-in">
-            <div className="glass-card rounded-2xl rounded-bl-md p-4" style={{ borderColor: "var(--theme-border)" }}>
+            <GlassCard className="rounded-2xl rounded-bl-md p-4" style={{ borderColor: "var(--theme-border)" }}>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#00d4ff] to-[#7b2ff7] flex items-center justify-center text-[#0a0a0f] text-xs font-bold">
                   Z
@@ -277,7 +278,7 @@ export default function OllamaChat({
                 <span className="w-2 h-2 rounded-full bg-[#00d4ff] animate-typing-dot" style={{ animationDelay: "0.2s" }} />
                 <span className="w-2 h-2 rounded-full bg-[#00d4ff] animate-typing-dot" style={{ animationDelay: "0.4s" }} />
               </div>
-            </div>
+            </GlassCard>
           </div>
         )}
         <div ref={messagesEndRef} />

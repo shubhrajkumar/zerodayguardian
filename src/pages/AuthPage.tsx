@@ -1,17 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  sendPasswordResetEmail,
-  sendEmailVerification,
-} from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
+import GlassCard from "@/components/ui/GlassCard";
 import { AuthUser, useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import PasswordInput from "@/components/ui/PasswordInput";
 
-type AuthMode = "login" | "register" | "reset";
+type AuthMode = "login" | "register" | "reset" | "reset-otp";
 
 type BackendAuthResponse = {
   user?: AuthUser;
@@ -42,6 +38,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -110,7 +107,7 @@ export default function AuthPage() {
     setError(null);
     setSuccess(null);
 
-    if (!email.trim() || (mode !== "reset" && !password.trim())) {
+    if (!email.trim() || (mode !== "reset" && mode !== "reset-otp" && !password.trim())) {
       setError("Please fill in all fields");
       return;
     }
@@ -121,6 +118,10 @@ export default function AuthPage() {
     const passwordValidationError = mode === "register" ? getPasswordValidationError(password) : "";
     if (mode === "login" && password.length < 1) {
       setError("Please fill in all fields");
+      return;
+    }
+    if (mode === "reset-otp" && !otp.trim()) {
+      setError("Please enter the verification code");
       return;
     }
     if (passwordValidationError) {
@@ -137,20 +138,39 @@ export default function AuthPage() {
           password,
         });
         login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
-        try {
-          if (firebaseAuth!.currentUser) await sendEmailVerification(firebaseAuth!.currentUser);
-          setSuccess("Account created. Welcome to your dashboard.");
-          showToast("Account created successfully.", "success");
-        } catch {
-          setSuccess("Account created. Welcome to your dashboard.");
-          showToast("Account created successfully.", "success");
-        }
+        setSuccess("Account created. Welcome to your dashboard.");
+        showToast("Account created successfully.", "success");
         navigate("/dashboard", { replace: true });
       } else if (mode === "reset") {
-        await sendPasswordResetEmail(firebaseAuth!, email);
-        setSuccess("Password reset email sent! Check your inbox.");
-        showToast("Reset email sent!", "success");
-        setTimeout(() => setMode("login"), 3000);
+        // Step 1: Send OTP via backend
+        const otpResult = await api.post<{ sent: boolean; delivery: string; destination?: string; expiresInMinutes?: number; otpPreview?: string }>("/api/auth/send-otp", { email });
+        const delivery = otpResult.data.delivery || "email";
+        setSuccess(
+          delivery === "preview"
+            ? `Reset OTP: ${otpResult.data.otpPreview || "(check console)"} — expires in ${otpResult.data.expiresInMinutes || 10} min`
+            : `Verification code sent to ${otpResult.data.destination || email}. Check your inbox.`
+        );
+        showToast("Verification code sent!", "success");
+        setMode("reset-otp");
+      } else if (mode === "reset-otp") {
+        // Step 2: Verify OTP and reset password
+        if (!otp.trim()) {
+          setError("Please enter the verification code");
+          return;
+        }
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          return;
+        }
+        const passwordError = getPasswordValidationError(password);
+        if (passwordError) {
+          setError(passwordError);
+          return;
+        }
+        await api.post("/api/auth/reset-password", { email, otp, password });
+        setSuccess("Password reset successful! You can now sign in.");
+        showToast("Password reset successful!", "success");
+        setTimeout(() => { setMode("login"); setOtp(""); setPassword(""); setConfirmPassword(""); }, 2000);
       } else {
         const payload = await api.post<BackendAuthResponse>("/api/auth/login", {
           email,
@@ -162,10 +182,33 @@ export default function AuthPage() {
         navigate("/dashboard", { replace: true });
       }
     } catch (err: unknown) {
-      const error = err as { code?: string; message?: string } | undefined;
+      // Extract backend error from Axios response (error.response?.data?.code)
+      // vs Firebase error (error.code) vs network error (error.message)
+      const axiosErr = err as { response?: { data?: { code?: string; message?: string } }; code?: string; message?: string } | undefined;
+      const backendCode = axiosErr?.response?.data?.code;
+      const backendMessage = axiosErr?.response?.data?.message;
+      const firebaseCode = axiosErr?.code;
+      const genericMessage = axiosErr?.message;
+
       const map: Record<string, string> = {
+        // Backend error codes (from POST /api/auth/login, /api/auth/signup)
+        "user_not_found": "No account with this email address",
+        "wrong_password": "Incorrect email or password",
+        "password_not_set": "This account uses Google sign-in. Please sign in with Google.",
+        "user_exists": "An account with this email already exists",
+        "mail_not_configured": "Email service is not configured on the server.",
+        "mail_delivery_failed": "Failed to send email. Please try again later.",
+        "invalid_otp": "Invalid verification code. Please try again.",
+        "otp_expired": "Verification code has expired. Please request a new one.",
+        "otp_not_requested": "Please request a verification code first.",
+        "google_auth_not_configured": "Google sign-in is not configured on the backend.",
+        "google_identity_invalid": "Google sign-in failed — identity could not be verified.",
+        "google_email_not_verified": "Your Google email is not verified.",
+        "rate_limited": "Too many attempts. Please wait and try again.",
+        "db_unavailable_auth": "Authentication service is temporarily unavailable. Please retry.",
+        // Firebase error codes (from Firebase Auth)
         "auth/user-not-found": "No account with this email",
-        "auth/wrong-password": "Incorrect password",
+        "auth/wrong-password": "Incorrect email or password",
         "auth/invalid-credential": "Invalid email or password",
         "auth/email-already-in-use": "An account with this email already exists",
         "auth/too-many-requests": "Too many attempts. Please try again later",
@@ -175,7 +218,14 @@ export default function AuthPage() {
         "auth/api-key-not-valid": "Firebase API key is invalid. Check your VITE_FIREBASE_* settings.",
         "auth/network-request-failed": "Network error while contacting Firebase. Please check your connection and try again.",
       };
-      setError((error?.code && map[error.code]) || error?.message || "Authentication failed");
+
+      // Priority: 1. Backend response code, 2. Backend response message, 3. Firebase code, 4. Axios message
+      const matchedMessage = (backendCode && map[backendCode])
+        || (firebaseCode && map[firebaseCode])
+        || backendMessage
+        || genericMessage
+        || "Authentication failed";
+      setError(matchedMessage);
     } finally {
       setIsLoading(false);
     }
@@ -192,13 +242,13 @@ export default function AuthPage() {
     return (
       <div className="auth-screen relative min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center animate-fade-in-up">
-          <div className="glass-card p-8 cyber-glow">
+          <GlassCard className="p-8 cyber-glow">
             <div className="text-red-400 text-4xl mb-4">⚠️</div>
             <h2 className="text-xl font-bold mb-2" style={{ color: "var(--theme-text)" }}>Authentication Unavailable</h2>
             <p className="text-sm mb-4" style={{ color: "var(--theme-text-muted)" }}>
               Authentication service is not configured. Please contact your administrator.
             </p>
-          </div>
+          </GlassCard>
         </div>
       </div>
     );
@@ -235,7 +285,7 @@ export default function AuthPage() {
         {/* Auth Card */}
         <div className="auth-card p-6 md:p-12">
           {/* Google Login Button */}
-          {mode !== "reset" && (
+          {mode !== "reset" && mode !== "reset-otp" && (
             <>
               <button
                 onClick={handleGoogleLogin}
@@ -292,13 +342,46 @@ export default function AuthPage() {
 
             {mode !== "reset" && (
               <PasswordInput
-                label="Password"
+                label={mode === "reset-otp" ? "New password" : "Password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                autoComplete={mode === "register" ? "new-password" : "current-password"}
+                autoComplete={mode === "register" || mode === "reset-otp" ? "new-password" : "current-password"}
                 disabled={isLoading}
-                showStrength={mode === "register"}
+                showStrength={mode === "register" || mode === "reset-otp"}
+              />
+            )}
+
+            {mode === "reset-otp" && (
+              <div>
+                <label htmlFor="otp" className="block text-sm font-medium mb-1.5" style={{ color: "var(--theme-text-muted)" }}>
+                  Verification code
+                </label>
+                <input
+                  id="otp"
+                  type="text"
+                  inputMode="numeric"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+                  placeholder="Enter 6-digit code"
+                  className="input-cyber text-center text-xl tracking-[0.5em] font-mono"
+                  autoComplete="one-time-code"
+                  disabled={isLoading}
+                  maxLength={6}
+                />
+              </div>
+            )}
+
+            {mode === "reset-otp" && (
+              <PasswordInput
+                label="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                name="confirmPassword"
+                id="confirmPassword"
+                autoComplete="new-password"
+                disabled={isLoading}
               />
             )}
 
@@ -336,10 +419,10 @@ export default function AuthPage() {
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <div className="spinner-cyber spinner-sm" />
-                  {mode === "login" ? "Signing in..." : mode === "register" ? "Creating account..." : "Sending..."}
+                  {mode === "login" ? "Signing in..." : mode === "register" ? "Creating account..." : mode === "reset-otp" ? "Resetting password..." : "Sending..."}
                 </span>
               ) : (
-                mode === "login" ? "Sign In" : mode === "register" ? "Create Account" : "Send Reset Email"
+                mode === "login" ? "Sign In" : mode === "register" ? "Create Account" : mode === "reset-otp" ? "Reset Password" : "Send Reset Email"
               )}
             </button>
           </form>
@@ -359,8 +442,8 @@ export default function AuthPage() {
             )}
 
             <div style={{ color: "var(--theme-text-dim)" }}>
-              {mode === "reset" ? (
-                <button onClick={() => { setMode("login"); setError(null); setSuccess(null); }}
+              {mode === "reset" || mode === "reset-otp" ? (
+                <button onClick={() => { setMode("login"); setOtp(""); setError(null); setSuccess(null); }}
                   className="transition-colors ml-1"
                   style={{ color: "var(--theme-accent-blue)" }}>
                   Back to sign in

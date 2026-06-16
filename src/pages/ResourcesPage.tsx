@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, BookOpen, Radar, ShieldCheck, TerminalSquare } from "lucide-react";
+import GlassCard from "@/components/ui/GlassCard";
 import { Link } from "react-router-dom";
 import PlatformHero from "@/components/platform/PlatformHero";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
@@ -200,16 +201,16 @@ const ResourcesPage = () => {
           ]}
           aside={
             <div className="space-y-3 text-sm text-slate-200">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/62">Resource standard</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Resource standard</p>
               <p>Every entry should answer what it is for, why it matters, and where to practice the skill next.</p>
-              <p className="text-cyan-100/70">The goal is faster operator judgment, not a long bookmark list.</p>
+              <p className="text-cyan-100/85">The goal is faster operator judgment, not a long bookmark list.</p>
             </div>
           }
         />
 
         <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className="glass-card rounded-[28px] p-6">
-            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">High-value collection</p>
+          <GlassCard className="rounded-[28px] p-6">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">High-value collection</p>
             <h2 className="mt-2 text-2xl font-black text-[var(--theme-text)]">Curated by live workflow state</h2>
             <div className="mt-5 grid gap-5">
               {loading ? (
@@ -249,7 +250,7 @@ const ResourcesPage = () => {
                         <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/60">{category}</p>
                         <h3 className="mt-2 text-lg font-bold text-[var(--theme-text)]">{items.length} operator-ready resource{items.length === 1 ? "" : "s"}</h3>
                       </div>
-                      <span className="rounded-full border border-cyan-300/16 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-cyan-100/72">
+                      <span className="rounded-full border border-cyan-300/16 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-cyan-100/85">
                         Live library
                       </span>
                     </div>
@@ -266,7 +267,7 @@ const ResourcesPage = () => {
                               <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/60">{resource.track}</p>
                               <h4 className="mt-2 text-xl font-bold text-[var(--theme-text)]">{resource.title}</h4>
                             </div>
-                            <span className="rounded-full border border-cyan-300/16 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-cyan-100/72">
+                            <span className="rounded-full border border-cyan-300/16 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-cyan-100/85">
                               {resource.format}
                             </span>
                           </div>
@@ -298,10 +299,10 @@ const ResourcesPage = () => {
                 </div>
               ) : null}
             </div>
-          </section>
+          </GlassCard>
 
-          <section className="glass-card rounded-[28px] p-6">
-            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">How to use this library</p>
+          <GlassCard className="rounded-[28px] p-6">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">How to use this library</p>
             <h2 className="mt-2 text-2xl font-black text-[var(--theme-text)]">A tighter operator loop</h2>
 
             <div className="mt-5 grid gap-4">
@@ -337,7 +338,7 @@ const ResourcesPage = () => {
                 <p className="mt-2 text-sm text-slate-300/82">Return to Dashboard to review streak, progress, and what skill should be reinforced next.</p>
               </div>
             </div>
-          </section>
+          </GlassCard>
         </div>
       </div>
     </div>

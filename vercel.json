@@ -2,7 +2,7 @@
   "framework": "vite",
   "buildCommand": "CI=false npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm ci --prefer-offline",
+  "installCommand": "npm install --prefer-offline --no-fund --no-audit",
   "env": {
     "VITE_API_URL": "https://zerodayguardian-backend.onrender.com",
     "VITE_APP_NAME": "ZeroDay Guardian",

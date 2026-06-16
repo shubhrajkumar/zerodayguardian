@@ -125,8 +125,6 @@ services:
         value: "ollama"
       - key: ROUTING_MODE
         value: "failover"
-      - key: AUTH_OTP_PREVIEW_ENABLED
-        value: "false"
       - key: SEED_ADMIN_EMAIL
         sync: false
       - key: SEED_ADMIN_PASSWORD

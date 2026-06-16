@@ -7,6 +7,7 @@
  * Parameterized Queries, SQL Injection, OSINT, and related technical keywords.
  */
 import { Shield, Eye, Database, Terminal, Lock, Zap } from "lucide-react";
+import GlassCard from "@/components/ui/GlassCard";
 
 const features = [
   {
@@ -62,9 +63,9 @@ const ComingSoonLabs = () => {
       {/* Feature Grid */}
       <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2">
         {features.map(({ icon: Icon, title, description }) => (
-          <div
+          <GlassCard
             key={title}
-            className="glass-card group p-6 transition-all duration-300 hover:border-[var(--theme-accent-blue)] hover:shadow-[0_0_24px_var(--theme-glow)]"
+            className="group p-6 transition-all duration-300 hover:border-[var(--theme-accent-blue)] hover:shadow-[0_0_24px_var(--theme-glow)]"
           >
             <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--theme-accent-blue)_12%,transparent)]">
               <Icon className="h-5 w-5 text-[var(--theme-accent-blue)]" />
@@ -75,13 +76,13 @@ const ComingSoonLabs = () => {
             <p className="text-sm leading-relaxed text-[var(--theme-text-muted)]">
               {description}
             </p>
-          </div>
+          </GlassCard>
         ))}
       </div>
 
       {/* CTA */}
       <div className="mt-12 text-center">
-        <div className="glass-card mx-auto inline-flex items-center gap-3 rounded-xl px-6 py-4">
+        <GlassCard className="mx-auto inline-flex items-center gap-3 rounded-xl px-6 py-4">
           <Shield className="h-5 w-5 text-[var(--theme-accent-green)]" />
           <div className="text-left">
             <p className="text-sm font-medium text-[var(--theme-text)]">
@@ -92,7 +93,7 @@ const ComingSoonLabs = () => {
               invites.
             </p>
           </div>
-        </div>
+        </GlassCard>
       </div>
     </div>
   );

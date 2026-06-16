@@ -1,4 +1,5 @@
 import { Eye, Flame, Shield, Target, Users } from "lucide-react";
+import GlassCard from "@/components/ui/GlassCard";
 
 const pillars = [
   {
@@ -38,15 +39,15 @@ const AboutPage = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-16">
           {pillars.map((value) => (
-            <div key={value.title} className="glass-card rounded-lg p-6">
+            <GlassCard key={value.title} className="rounded-lg p-6">
               <value.icon className="h-7 w-7 text-primary mb-3" aria-hidden="true" />
               <h2 className="font-mono text-lg font-semibold mb-2">{value.title}</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">{value.desc}</p>
-            </div>
+            </GlassCard>
           ))}
         </div>
 
-        <div className="glass-card rounded-lg p-8 text-center">
+        <GlassCard className="rounded-lg p-8 text-center">
           <h2 className="font-mono text-xl font-semibold mb-3 inline-flex items-center gap-2">
             <Flame className="h-5 w-5 text-accent" />
             Discipline Over Hype
@@ -55,7 +56,7 @@ const AboutPage = () => {
             Never give up when labs get hard. Elite progress is built through repetition, reflection, and ethical execution.
           </p>
           <p className="text-xs text-muted-foreground font-mono">"Train with integrity. Defend with precision. Improve every day."</p>
-        </div>
+        </GlassCard>
       </div>
     </div>
   );

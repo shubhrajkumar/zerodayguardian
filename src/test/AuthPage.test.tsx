@@ -312,15 +312,39 @@ describe("AuthPage", () => {
 
   // ── Reset Password Flow ──
 
-  it("sends password reset email", async () => {
-    mockSendPasswordResetEmail.mockResolvedValue(undefined);
+  it("sends password reset OTP via backend", async () => {
+    mockApiPost.mockImplementation((url: string) => {
+      if (url === "/api/auth/send-otp") {
+        return Promise.resolve({
+          data: {
+            sent: true,
+            delivery: "email",
+            destination: "test@example.com",
+            expiresInMinutes: 10,
+            message: "OTP sent successfully",
+          },
+        });
+      }
+      return Promise.resolve({
+        data: {
+          user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
+          accessToken: "test-access-token",
+          refreshToken: "test-refresh-token",
+        },
+      });
+    });
     renderAuthPage();
     await userEvent.click(screen.getByText("Forgot your password?"));
     await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
     await userEvent.click(screen.getByText("Send Reset Email"));
     await waitFor(() => {
-      expect(mockSendPasswordResetEmail).toHaveBeenCalledWith(expect.any(Object), "test@example.com");
-      expect(screen.getByText(/Password reset email sent/)).toBeTruthy();
+      expect(mockApiPost).toHaveBeenCalledWith("/api/auth/send-otp", {
+        email: "test@example.com",
+      });
+      // Success message appears in the inline success banner (role="status")
+      const statusBanners = screen.getAllByRole("status");
+      const otpSuccess = statusBanners.find((el) => /Verification code sent/.test(el.textContent || ""));
+      expect(otpSuccess).toBeTruthy();
     });
   });
 
@@ -373,14 +397,34 @@ describe("AuthPage", () => {
   });
 
   it("displays success message in a styled success box", async () => {
-    mockSendPasswordResetEmail.mockResolvedValue(undefined);
+    mockApiPost.mockImplementation((url: string) => {
+      if (url === "/api/auth/send-otp") {
+        return Promise.resolve({
+          data: {
+            sent: true,
+            delivery: "email",
+            destination: "test@example.com",
+            expiresInMinutes: 10,
+            message: "OTP sent successfully",
+          },
+        });
+      }
+      return Promise.resolve({
+        data: {
+          user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
+          accessToken: "test-access-token",
+          refreshToken: "test-refresh-token",
+        },
+      });
+    });
     renderAuthPage();
     await userEvent.click(screen.getByText("Forgot your password?"));
     await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
     await userEvent.click(screen.getByText("Send Reset Email"));
     await waitFor(() => {
-      const successMsg = screen.getByText(/Password reset email sent/);
-      expect(successMsg).toBeTruthy();
+      const statusBanners = screen.getAllByRole("status");
+      const otpSuccess = statusBanners.find((el) => /Verification code sent/.test(el.textContent || ""));
+      expect(otpSuccess).toBeTruthy();
     });
   });
 

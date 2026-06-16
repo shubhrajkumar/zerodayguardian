@@ -1,5 +1,6 @@
 import { startTransition, useMemo } from "react";
 import { Brain, Flame, Radar, Rocket, Shield, Sparkles, Swords, Target, Trophy } from "lucide-react";
+import GlassCard from "@/components/ui/GlassCard";
 import { useNavigate } from "react-router-dom";
 import { useAdaptiveMentor } from "@/context/AdaptiveMentorContext";
 import { useLearningMode } from "@/context/LearningModeContext";
@@ -45,10 +46,10 @@ const AdaptiveSaaSCommandCenter = () => {
 
   return (
     <section data-reveal className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-      <article className="glass-card premium-fade-up premium-sheen rounded-[30px] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.3)]">
+      <GlassCard className="premium-fade-up premium-sheen rounded-[30px] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.3)]" role="article">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/62">Global SaaS Control Layer</p>
+            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Global SaaS Control Layer</p>
             <h2 className="mt-2 text-2xl font-semibold text-white">One AI system driving learning, simulations, and real security work</h2>
             <p className="mt-2 max-w-3xl text-sm text-slate-300/80">
               Adaptive mentor guidance, real verified workflows, and engagement loops now operate as one premium product system instead of disconnected screens.
@@ -66,45 +67,45 @@ const AdaptiveSaaSCommandCenter = () => {
 
         <div className="mt-5 grid gap-3 md:grid-cols-3">
           <div className="rounded-2xl border border-cyan-300/16 bg-black/20 p-4">
-            <p className="text-xs text-cyan-100/62">Adaptive edge</p>
+            <p className="text-xs text-cyan-100/85">Adaptive edge</p>
             <p className="mt-2 text-lg font-semibold text-white">{mentor.pathTitle}</p>
-            <p className="mt-2 text-sm text-slate-300/78">{mentor.summary}</p>
+            <p className="mt-2 text-sm text-slate-300/85">{mentor.summary}</p>
           </div>
           <div className="rounded-2xl border border-cyan-300/16 bg-black/20 p-4">
-            <p className="text-xs text-cyan-100/62">Growth loop</p>
+            <p className="text-xs text-cyan-100/85">Growth loop</p>
             <p className="mt-2 inline-flex items-center gap-2 text-lg font-semibold text-white">
               <Flame className="h-4 w-4 text-amber-300" />
               {streak} day streak
             </p>
-            <p className="mt-2 text-sm text-slate-300/78">{streakReminder}</p>
+            <p className="mt-2 text-sm text-slate-300/85">{streakReminder}</p>
           </div>
           <div className="rounded-2xl border border-cyan-300/16 bg-black/20 p-4">
-            <p className="text-xs text-cyan-100/62">Platform maturity</p>
+            <p className="text-xs text-cyan-100/85">Platform maturity</p>
             <p className="mt-2 inline-flex items-center gap-2 text-lg font-semibold text-white">
               <Trophy className="h-4 w-4 text-cyan-300" />
               {progress.rank}
             </p>
-            <p className="mt-2 text-sm text-slate-300/78">{totalPoints} mission XP banked across the SaaS loop.</p>
+            <p className="mt-2 text-sm text-slate-300/85">{totalPoints} mission XP banked across the SaaS loop.</p>
           </div>
         </div>
 
         <div className="mt-5 rounded-2xl border border-cyan-300/16 bg-black/20 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Next-Mission Intelligence</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Next-Mission Intelligence</p>
               <p className="mt-2 text-lg font-semibold text-white">{nextMissionHook?.title ?? "Mission intel loading"}</p>
             </div>
-            <span className="rounded-full border border-cyan-300/18 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100/75">
+            <span className="rounded-full border border-cyan-300/18 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">
               {nextMissionHook?.ctaLabel ?? "Deploy"}
             </span>
           </div>
           <p className="mt-3 text-sm text-slate-300/80">{nextMissionHook?.detail ?? "Next mission details will appear here."}</p>
-          <p className="mt-2 text-sm text-cyan-100/78">{curiosityTrigger}</p>
+          <p className="mt-2 text-sm text-cyan-100/85">{curiosityTrigger}</p>
         </div>
-      </article>
+      </GlassCard>
 
-      <article className="glass-card premium-fade-up premium-sheen rounded-[30px] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.3)]">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/62">Competitive Execution Grid</p>
+      <GlassCard className="premium-fade-up premium-sheen rounded-[30px] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.3)]" role="article">
+        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Competitive Execution Grid</p>
         <div className="mt-4 grid gap-3">
           {actionCards.map((action) => {
             const Icon = action.icon;
@@ -130,9 +131,9 @@ const AdaptiveSaaSCommandCenter = () => {
                       <Icon className="h-4 w-4 text-cyan-300" />
                       {action.title}
                     </p>
-                    <p className="mt-2 text-sm text-slate-300/78">{action?.detail || ''}</p>
+                    <p className="mt-2 text-sm text-slate-300/85">{action?.detail || ''}</p>
                   </div>
-                  <span className="rounded-full border border-cyan-300/18 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100/75">
+                  <span className="rounded-full border border-cyan-300/18 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">
                     {action.status === "completed" ? "Completed" : action.cta}
                   </span>
                 </div>
@@ -143,14 +144,14 @@ const AdaptiveSaaSCommandCenter = () => {
 
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           <div className="rounded-2xl border border-cyan-300/16 bg-black/20 p-4">
-            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Strongest zone</p>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Strongest zone</p>
             <p className="mt-2 text-base font-semibold text-white">{strongest}</p>
-            <p className="mt-2 text-sm text-slate-300/76">Use this capability to accelerate confidence before pushing difficulty higher.</p>
+            <p className="mt-2 text-sm text-slate-300/85">Use this capability to accelerate confidence before pushing difficulty higher.</p>
           </div>
           <div className="rounded-2xl border border-cyan-300/16 bg-black/20 p-4">
-            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Weakest zone</p>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Weakest zone</p>
             <p className="mt-2 text-base font-semibold text-white">{weakest}</p>
-            <p className="mt-2 text-sm text-slate-300/76">The ZORVIX mentor and simulations should keep targeting this until it stops slowing operator judgment.</p>
+            <p className="mt-2 text-sm text-slate-300/85">The ZORVIX mentor and simulations should keep targeting this until it stops slowing operator judgment.</p>
           </div>
         </div>
 
@@ -162,12 +163,12 @@ const AdaptiveSaaSCommandCenter = () => {
           <p className="mt-2 text-sm text-slate-300/80">
             Learn with AI, pressure-test in simulations, validate in verified tools, then return to the dashboard with a stronger profile and clearer next move.
           </p>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-cyan-300/18 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100/75">
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-cyan-300/18 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">
             <Rocket className="h-3.5 w-3.5" />
             Global-ready product flow
           </div>
         </div>
-      </article>
+      </GlassCard>
     </section>
   );
 };

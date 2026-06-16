@@ -42,7 +42,7 @@ const PlatformHero = ({ eyebrow, title, description, pills, actions, aside }: Pl
                 <ArrowRight className="h-4 w-4" />
                 Platform architecture active
               </p>
-              <p className="text-slate-300/76">
+              <p className="text-slate-300/85">
                 This platform is structured as one connected cyber academy: verify, learn, simulate, improve, repeat.
               </p>
             </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PlayCircle, CheckCircle, Lock, Clock, Zap, Trophy } from "lucide-react";
+import GlassCard from "@/components/ui/GlassCard";
 import { useAuth } from "@/context/AuthContext";
 import { useGamificationSystem, type GamifiedMission, type MissionScope } from "@/lib/gamificationSystem";
 
@@ -86,7 +87,7 @@ export default function MissionsPage() {
         </div>
 
         {/* Countdown + Progress */}
-        <div className="glass-card p-4 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+        <GlassCard className="p-4 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" style={{ color: "var(--theme-accent-blue)" }} />
@@ -110,27 +111,27 @@ export default function MissionsPage() {
               }}
             />
           </div>
-        </div>
+        </GlassCard>
 
         {/* Mission Cards */}
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="glass-card p-5 animate-pulse">
+              <GlassCard key={i} className="p-5 animate-pulse">
                 <div className="h-5 w-48 rounded" style={{ backgroundColor: "var(--theme-overlay)" }} />
                 <div className="h-3 w-full rounded mt-3" style={{ backgroundColor: "var(--theme-overlay)" }} />
                 <div className="h-3 w-2/3 rounded mt-2" style={{ backgroundColor: "var(--theme-overlay)" }} />
-              </div>
+              </GlassCard>
             ))}
           </div>
         ) : missions.length === 0 ? (
-          <div className="glass-card p-10 text-center animate-fade-in-up">
+          <GlassCard className="p-10 text-center animate-fade-in-up">
             <span className="text-4xl">🎯</span>
             <h2 className="mt-3 text-lg font-semibold" style={{ color: "var(--theme-text)" }}>No missions available</h2>
             <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted)" }}>
               Check back soon for new {activeTab} missions!
             </p>
-          </div>
+          </GlassCard>
         ) : (
           <div className="space-y-3">
             {missions.map((mission, i) => (
@@ -147,7 +148,7 @@ export default function MissionsPage() {
         )}
 
         {/* XP Summary */}
-        <div className="glass-card p-4 animate-fade-in-up" style={{ animationDelay: `${(missions.length + 1) * 80}ms` }}>
+        <GlassCard className="p-4 animate-fade-in-up" style={{ animationDelay: `${(missions.length + 1) * 80}ms` }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Trophy className="h-4 w-4" style={{ color: "var(--theme-accent-purple)" }} />
@@ -164,7 +165,7 @@ export default function MissionsPage() {
             </div>
             <span className="text-lg font-bold" style={{ color: "var(--theme-accent-green)" }}>{snapshot.level}</span>
           </div>
-        </div>
+        </GlassCard>
       </div>
     </div>
   );
@@ -202,8 +203,8 @@ function MissionCard({
   };
 
   return (
-    <div
-      className="glass-card p-5 transition-all duration-300 animate-fade-in-up"
+    <GlassCard
+      className="p-5 transition-all duration-300 animate-fade-in-up"
       style={{
         animationDelay: `${index * 80}ms`,
         borderColor: mission.completed
@@ -278,6 +279,6 @@ function MissionCard({
           </button>
         </div>
       </div>
-    </div>
+    </GlassCard>
   );
 }

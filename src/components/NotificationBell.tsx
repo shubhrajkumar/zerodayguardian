@@ -28,7 +28,7 @@ const NotificationRow = ({
         <p className="text-sm font-semibold text-white">{item.title}</p>
         {!item.read ? <span className="h-2.5 w-2.5 rounded-full bg-cyan-300" /> : null}
       </div>
-      <p className="mt-2 text-xs leading-5 text-slate-300/78">{item.message}</p>
+      <p className="mt-2 text-xs leading-5 text-slate-300/85">{item.message}</p>
     </button>
   );
 };

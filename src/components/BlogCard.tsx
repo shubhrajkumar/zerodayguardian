@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import React, { useState } from "react";
 import { sanitize } from "@/utils/sanitize";
+import GlassCard from "@/components/ui/GlassCard";
 
 type BlogPost = {
   title: string;
@@ -27,7 +28,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
       overflow: "hidden",
     } as React.CSSProperties);
   const card = (
-    <article className="glass-card rounded-lg p-6 group">
+    <GlassCard className="rounded-lg p-6 group">
       <div className="flex items-center justify-between mb-3">
         <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-primary/20 text-primary">{sanitize(post.category)}</span>
         <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
@@ -66,7 +67,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
           Open Article
         </Link>
       )}
-    </article>
+    </GlassCard>
   );
   return card;
 };

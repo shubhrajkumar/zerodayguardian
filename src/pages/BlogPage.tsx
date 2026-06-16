@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { Activity, Newspaper, RefreshCw, ShieldAlert, Sparkles } from "lucide-react";
+import GlassCard from "@/components/ui/GlassCard";
 import { safeArray } from "@/utils/safeData";
 import { debounce } from "@/utils/debounce";
 import api from "@/lib/api";
@@ -107,18 +108,18 @@ await (await api.get(`/api/intelligence/news?category=${categoryToApi(selectedCa
           </div>
         </section>
 
-        <section className="glass-card rounded-xl p-5 flex items-center justify-between gap-3 flex-wrap">
+        <GlassCard className="rounded-xl p-5 flex items-center justify-between gap-3 flex-wrap">
           <h2 className="font-semibold inline-flex items-center gap-2"><Newspaper className="h-4 w-4 text-cyan-300" /> Latest Cybersecurity News Feed</h2>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
               Updated: {lastUpdated ? new Date(lastUpdated).toLocaleString() : "unknown"}
             </span>
-            <span className="text-[11px] text-cyan-100/70">Auto refresh: 60s</span>
+            <span className="text-[11px] text-cyan-100/85">Auto refresh: 60s</span>
             <button onClick={refreshNow} className="text-xs border border-cyan-300/30 rounded px-2 py-1 hover:bg-cyan-500/10 inline-flex items-center gap-1" disabled={loading}>
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
             </button>
           </div>
-        </section>
+        </GlassCard>
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 max-w-md">

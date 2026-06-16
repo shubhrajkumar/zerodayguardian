@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useGamificationSystem, getLevelLabel } from "@/lib/gamificationSystem";
+import GlassCard from "@/components/ui/GlassCard";
 import AnimatedCyberBackground from "@/components/AnimatedCyberBackground";
 import LiveClock, { formatRelativeTime } from "@/components/ui/LiveClock";
 import SentryTestPanel from "@/components/SentryTestPanel";
@@ -148,7 +149,7 @@ export default function DashboardPage() {
 
         <main className="page-container py-6 md:py-8">
           {/* Welcome Section */}
-          <div className="glass-card p-6 md:p-8 mb-6 animate-fade-in-up">
+          <GlassCard className="p-6 md:p-8 mb-6 animate-fade-in-up">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold mb-1" style={{ color: "var(--theme-text)" }}>
@@ -166,14 +167,14 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </GlassCard>
 
           {/* Stats Grid */}
           <div className="stats-grid grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {stats.map((stat, i) => (
-              <div
+              <GlassCard
                 key={stat.label}
-                className="glass-card p-4 md:p-5 animate-fade-in-up"
+                className="p-4 md:p-5 animate-fade-in-up"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 <div className="flex items-center gap-3 mb-3">
@@ -183,7 +184,7 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-2xl md:text-3xl font-bold mb-0.5" style={{ color: "var(--theme-text)" }}>{stat.value}</p>
                 <p className="text-xs font-medium" style={{ color: "var(--theme-text-dim)" }}>{stat.label}</p>
-              </div>
+              </GlassCard>
             ))}
           </div>
 
@@ -192,18 +193,18 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--theme-text)" }}>Quick Actions</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {quickActions.map((action, i) => (
-                <button
+                <GlassCard
                   key={action.label}
-                  onClick={() => navigate(action.path)}
-                  className="glass-card p-4 text-left transition-all duration-300 animate-fade-in-up group"
+                  className="p-4 text-left transition-all duration-300 animate-fade-in-up group"
                   style={{ animationDelay: `${(i + 4) * 100}ms` }}
+                  onClick={() => navigate(action.path)}
                 >
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg mb-3 transition-colors" style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent-blue) 10%, transparent)" }}>
                     {action.icon}
                   </div>
                   <h3 className="text-sm font-semibold mb-0.5" style={{ color: "var(--theme-text)" }}>{action.label}</h3>
                   <p className="text-xs" style={{ color: "var(--theme-text-dim)" }}>{action.desc}</p>
-                </button>
+                </GlassCard>
               ))}
             </div>
           </div>
@@ -224,7 +225,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Activity */}
-          <div className="glass-card p-5 animate-fade-in-up">
+          <GlassCard className="p-5 animate-fade-in-up">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--theme-text)" }}>Recent Activity</h2>
             <div className="space-y-3" role="list" aria-label="Recent activity">
               {[
@@ -244,7 +245,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
         </main>
       </div>
     </div>

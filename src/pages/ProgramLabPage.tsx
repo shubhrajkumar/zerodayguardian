@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import { useUserProgress } from "@/context/UserProgressContext";
 import { safeArray } from "@/utils/safeData";
+import UnlockAnimation from "@/components/gamification/UnlockAnimation";
 
 type LabTask = {
   id: string;
@@ -221,6 +222,10 @@ const ProgramLabPage = () => {
   const [battleHintedTasks, setBattleHintedTasks] = useState<string[]>([]);
   const flowStorageKey = `day-lab-flow:${user?.id || "anon"}:day-${day}`;
   const submitGuardRef = useRef("");
+  const [unlockTrigger, setUnlockTrigger] = useState(0);
+  const handleUnlockDone = useCallback(() => {
+    setUnlockTrigger(0);
+  }, []);
 
   const resolveFlowStage = (stage?: string | null, completed = false, completedTasks = 0): FlowStage => {
     if (completed) return "completed";
@@ -833,6 +838,9 @@ const ProgramLabPage = () => {
       setHint(payload.hint || "");
       setCelebration(payload.celebration || "");
       setFlowStage(payload.lab_completed ? "completed" : "validate");
+      if (payload.lab_completed) {
+        setUnlockTrigger((prev) => prev + 1);
+      }
       const validationState = {
         accepted: payload.accepted,
         title: payload.accepted ? "Validation passed" : "Validation blocked",
@@ -965,7 +973,7 @@ const ProgramLabPage = () => {
           }
         />
 
-        {loading ? <div className="glass-card rounded-2xl p-5 text-sm text-cyan-100/72">Loading lab…</div> : null}
+        {loading ? <div className="glass-card rounded-2xl p-5 text-sm text-cyan-100/85">Loading lab…</div> : null}
         {error && !detail ? (() => {
           const fallback = getFallbackDayInfo(day);
           return (
@@ -988,10 +996,10 @@ const ProgramLabPage = () => {
               </div>
 
               <section className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Day {day} Lab — Degraded Preview</p>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Day {day} Lab — Degraded Preview</p>
                 <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">{fallback.title}</h2>
-                <p className="mt-2 text-sm text-cyan-100/72">{fallback.scenarioTagline}</p>
-                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
+                <p className="mt-2 text-sm text-cyan-100/85">{fallback.scenarioTagline}</p>
+                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/85">
                   {fallback.scenario}
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -1007,8 +1015,8 @@ const ProgramLabPage = () => {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Objective</p>
+                <div className="mt-4 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/85">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Objective</p>
                   <p className="mt-2 text-sm text-slate-300/82">{fallback.objective}</p>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -1043,7 +1051,7 @@ const ProgramLabPage = () => {
           <>
             <section className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
               <div className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Progress</p>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Progress</p>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--theme-overlay)]">
                   <div
                     className="h-full rounded-full bg-[linear-gradient(90deg,rgba(94,234,212,0.9),rgba(56,189,248,0.95))] transition-all duration-500"
@@ -1062,15 +1070,15 @@ const ProgramLabPage = () => {
                       <span />
                       <span />
                     </div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">XP reward</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">XP reward</p>
                     <div className="mt-2 flex items-end justify-between gap-4">
                       <div>
                         <p className="text-lg font-semibold text-[var(--theme-text)]">{rewardPulse.label}</p>
-                        <p className="mt-1 text-sm text-slate-300/76">Validated operator step recorded in backend state.</p>
+                        <p className="mt-1 text-sm text-slate-300/85">Validated operator step recorded in backend state.</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xl font-semibold text-cyan-100">+{rewardPulse.xp} XP</p>
-                        <p className="text-xs text-cyan-100/68">+{rewardPulse.score} score</p>
+                        <p className="text-xs text-cyan-100/85">+{rewardPulse.score} score</p>
                       </div>
                     </div>
                   </div>
@@ -1083,7 +1091,7 @@ const ProgramLabPage = () => {
               </div>
 
               <div className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Lab stack</p>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Lab stack</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {kaliTools.map((tool) => (
                     <span key={tool} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-slate-200/82">
@@ -1091,12 +1099,12 @@ const ProgramLabPage = () => {
                     </span>
                   ))}
                 </div>
-                <p className="mt-4 text-sm text-slate-300/78">Current flow is strict: only the next unlocked task can be submitted. Correct validation updates score, XP, terminal log, and unlock state immediately.</p>
+                <p className="mt-4 text-sm text-slate-300/85">Current flow is strict: only the next unlocked task can be submitted. Correct validation updates score, XP, terminal log, and unlock state immediately.</p>
               </div>
             </section>
 
             <section className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Mission Flow</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Mission Flow</p>
               <div className="mt-4 grid gap-3 md:grid-cols-5">
                 {flowSteps.map((step, index) => {
                   const active = flowStage === step.id;
@@ -1146,7 +1154,7 @@ const ProgramLabPage = () => {
                 <div className="day-one-intro-shell mb-5">
                   <div className="day-one-intro-shell__pulse" />
                   <div className="day-one-intro-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Animated intro</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Animated intro</p>
                     <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">Public page defaced. Trust is broken. Your thinking has to be cleaner than the attacker’s.</h2>
                     <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300/82">
                       Imagine a customer opening a page that still loads perfectly, but the information on it was changed by someone unauthorized. That is the feeling we want you to notice here: trust can break before a system goes down. ZORBIX will guide you, but the unlock is earned only if your classification, command choice, and evidence chain all validate cleanly.
@@ -1167,7 +1175,7 @@ const ProgramLabPage = () => {
               ) : null}
               {isDayTwo ? (
                 <div className="day-two-recon-shell mb-5">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Recon board</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Recon board</p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">Good recon feels quiet, fast, and believable.</h2>
                   <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300/82">
                     Before an attacker scans loudly, they often gather simple facts first: who owns the domain, where the nameservers point, and whether subdomains like <span className="text-cyan-100">api</span> or <span className="text-cyan-100">staging</span> exist. Day 2 teaches that habit in a clean order so every command has a reason behind it.
@@ -1179,7 +1187,7 @@ const ProgramLabPage = () => {
                       { label: "Brief", detail: "Turn one verified signal into a clean next recon move." },
                     ].map((item) => (
                       <div key={item.label} className="rounded-2xl border border-cyan-300/14 bg-cyan-500/8 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{item.label}</p>                           <p className="mt-3 text-sm text-slate-200">{item.detail || ''}</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{item.label}</p>                           <p className="mt-3 text-sm text-slate-200">{item.detail || ''}</p>
                       </div>
                     ))}
                   </div>
@@ -1187,7 +1195,7 @@ const ProgramLabPage = () => {
               ) : null}
               {isDayThree ? (
                 <div className="day-three-surface-shell mb-5">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Surface map</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Surface map</p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">Attack surface discovery is really door-finding with context.</h2>
                   <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300/82">
                     Imagine walking around a building. The front door is obvious, but the risky doors are often side entries, maintenance doors, staff entrances, or unlabeled rooms. Websites work the same way. Pages like <span className="text-cyan-100">/login</span>, <span className="text-cyan-100">/admin</span>, and hidden API endpoints tell you where the important functionality actually lives.
@@ -1206,7 +1214,7 @@ const ProgramLabPage = () => {
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {["Observe", "Enumerate", "Prioritize", "Validate"].map((item) => (
-                      <span key={item} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/78">
+                      <span key={item} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/85">
                         {item}
                       </span>
                     ))}
@@ -1215,7 +1223,7 @@ const ProgramLabPage = () => {
               ) : null}
               {isDayFour ? (
                 <div className="day-four-vuln-shell mb-5">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Vulnerability triage board</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Vulnerability triage board</p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">A vulnerability is usually just trust breaking in a specific place.</h2>
                   <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300/82">
                     Think of a building again: one door opens with a default key, one receptionist repeats anything you whisper, and one maintenance room was left unlocked. Web apps fail in similar ways. Day 4 trains you to see whether the app is trusting the wrong user, the wrong input, or the wrong configuration.
@@ -1227,13 +1235,13 @@ const ProgramLabPage = () => {
                       { label: "Misconfig", detail: "Debug routes and missing headers leave hidden doors open." },
                     ].map((item) => (
                       <div key={item.label} className="rounded-2xl border border-cyan-300/14 bg-cyan-500/8 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{item.label}</p>                           <p className="mt-3 text-sm text-slate-200">{item.detail || ''}</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{item.label}</p>                           <p className="mt-3 text-sm text-slate-200">{item.detail || ''}</p>
                       </div>
                     ))}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {["Observe", "Classify", "Validate", "Remediate"].map((item) => (
-                      <span key={item} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/78">
+                      <span key={item} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/85">
                         {item}
                       </span>
                     ))}
@@ -1244,7 +1252,7 @@ const ProgramLabPage = () => {
                 <div className="day-five-breach-shell mb-5">
                   <div className="day-five-breach-shell__glow" />
                   <div className="day-five-breach-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-amber-100/72">Controlled exploitation sim</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-amber-100/85">Controlled exploitation sim</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       {[
                         { label: "Entry", detail: "Weak admin auth is the shortest path to meaningful impact." },
@@ -1252,7 +1260,7 @@ const ProgramLabPage = () => {
                         { label: "Consequence", detail: "Name attacker gain, tension level, and first containment move." },
                       ].map((item) => (
                         <div key={item.label} className="rounded-2xl border border-amber-300/16 bg-amber-500/10 p-4">
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/72">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/85">{item.label}</p>
                           <p className="mt-3 text-sm text-slate-200">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1271,7 +1279,7 @@ const ProgramLabPage = () => {
                 <div className="day-six-defense-shell mb-5">
                   <div className="day-six-defense-shell__scan" />
                   <div className="day-six-defense-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/72">Live security dashboard</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Live security dashboard</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-4">
                       {[
                         { label: "Auth Failures", detail: "11 spikes in 4 min", tone: "alert" },
@@ -1280,7 +1288,7 @@ const ProgramLabPage = () => {
                         { label: "ZORVIX", detail: "Senior analyst assist live", tone: "info" },
                       ].map((item) => (
                         <div key={item.label} className={`day-six-defense-card ${item.tone === "critical" ? "day-six-defense-card--critical" : item.tone === "alert" ? "day-six-defense-card--alert" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1299,7 +1307,7 @@ const ProgramLabPage = () => {
                 <div className="day-seven-chain-shell mb-5">
                   <div className="day-seven-chain-shell__beam" />
                   <div className="day-seven-chain-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-fuchsia-100/72">Cinematic mission chain</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-fuchsia-100/85">Cinematic mission chain</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       {[
                         { label: "Recon", detail: "High-value route identified", tone: "ready" },
@@ -1307,7 +1315,7 @@ const ProgramLabPage = () => {
                         { label: "Exploit", detail: "Impact path waiting for proof", tone: "pending" },
                       ].map((item) => (
                         <div key={item.label} className={`day-seven-chain-card ${item.tone === "active" ? "day-seven-chain-card--active" : item.tone === "ready" ? "day-seven-chain-card--ready" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-fuchsia-100/70">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-fuchsia-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1326,7 +1334,7 @@ const ProgramLabPage = () => {
                 <div className="day-eight-decision-shell mb-5">
                   <div className="day-eight-decision-shell__pulse" />
                   <div className="day-eight-decision-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-100/72">Decision matrix</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-100/85">Decision matrix</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       {[
                         { label: "Exploit Path", detail: "High leverage, higher detection risk", tone: "alert" },
@@ -1334,7 +1342,7 @@ const ProgramLabPage = () => {
                         { label: "Evidence Path", detail: "Richer story, slower action", tone: "neutral" },
                       ].map((item) => (
                         <div key={item.label} className={`day-eight-decision-card ${item.tone === "alert" ? "day-eight-decision-card--alert" : item.tone === "ready" ? "day-eight-decision-card--ready" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/70">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1353,7 +1361,7 @@ const ProgramLabPage = () => {
                 <div className="day-nine-ir-shell mb-5">
                   <div className="day-nine-ir-shell__sweep" />
                   <div className="day-nine-ir-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-rose-100/72">Live incident dashboard</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-rose-100/85">Live incident dashboard</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-4">
                       {[
                         { label: "09:09", detail: "Auth failures spike", tone: "alert" },
@@ -1362,7 +1370,7 @@ const ProgramLabPage = () => {
                         { label: "ZORVIX", detail: "Commander assist live", tone: "info" },
                       ].map((item) => (
                         <div key={item.label} className={`day-nine-ir-card ${item.tone === "critical" ? "day-nine-ir-card--critical" : item.tone === "alert" ? "day-nine-ir-card--alert" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-rose-100/70">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-rose-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1381,7 +1389,7 @@ const ProgramLabPage = () => {
                 <div className="day-eleven-threat-shell mb-5">
                   <div className="day-eleven-threat-shell__drift" />
                   <div className="day-eleven-threat-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/72">Active threat simulation</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Active threat simulation</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       {[
                         { label: "Scenario A", detail: "Workstation beaconing", tone: "alert" },
@@ -1389,7 +1397,7 @@ const ProgramLabPage = () => {
                         { label: "Scenario C", detail: "Cloud action out of pattern", tone: "neutral" },
                       ].map((item) => (
                         <div key={item.label} className={`day-eleven-threat-card ${item.tone === "critical" ? "day-eleven-threat-card--critical" : item.tone === "alert" ? "day-eleven-threat-card--alert" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1408,7 +1416,7 @@ const ProgramLabPage = () => {
                 <div className="day-twelve-lateral-shell mb-5">
                   <div className="day-twelve-lateral-shell__mesh" />
                   <div className="day-twelve-lateral-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/72">Lateral movement map</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Lateral movement map</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-4">
                       {[
                         { label: "WKSTN-04", detail: "Compromised foothold", tone: "alert" },
@@ -1417,7 +1425,7 @@ const ProgramLabPage = () => {
                         { label: "DC-CORE", detail: "High-value privilege objective", tone: "critical" },
                       ].map((item) => (
                         <div key={item.label} className={`day-twelve-lateral-card ${item.tone === "critical" ? "day-twelve-lateral-card--critical" : item.tone === "active" ? "day-twelve-lateral-card--active" : item.tone === "alert" ? "day-twelve-lateral-card--alert" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1436,7 +1444,7 @@ const ProgramLabPage = () => {
                 <div className="day-thirteen-exfil-shell mb-5">
                   <div className="day-thirteen-exfil-shell__mesh" />
                   <div className="day-thirteen-exfil-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/72">Exfiltration pressure board</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Exfiltration pressure board</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-4">
                       {[
                         { label: "/srv/finance/exports", detail: "High-value CSV export path", tone: "critical" },
@@ -1445,7 +1453,7 @@ const ProgramLabPage = () => {
                         { label: "DLP-GATE", detail: "Containment window still open", tone: "success" },
                       ].map((item) => (
                         <div key={item.label} className={`day-thirteen-exfil-card ${item.tone === "critical" ? "day-thirteen-exfil-card--critical" : item.tone === "active" ? "day-thirteen-exfil-card--active" : item.tone === "alert" ? "day-thirteen-exfil-card--alert" : item.tone === "success" ? "day-thirteen-exfil-card--success" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1464,7 +1472,7 @@ const ProgramLabPage = () => {
                 <div className="day-fourteen-vector-shell mb-5">
                   <div className="day-fourteen-vector-shell__mesh" />
                   <div className="day-fourteen-vector-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/72">Multi-vector pressure board</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Multi-vector pressure board</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-4">
                       {[
                         { label: "/partner/login", detail: "Session-trust opening", tone: "active" },
@@ -1473,7 +1481,7 @@ const ProgramLabPage = () => {
                         { label: "Exploit chain", detail: "Shortest credible path wins", tone: "success" },
                       ].map((item) => (
                         <div key={item.label} className={`day-fourteen-vector-card ${item.tone === "critical" ? "day-fourteen-vector-card--critical" : item.tone === "active" ? "day-fourteen-vector-card--active" : item.tone === "alert" ? "day-fourteen-vector-card--alert" : item.tone === "success" ? "day-fourteen-vector-card--success" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1492,7 +1500,7 @@ const ProgramLabPage = () => {
                 <div className="day-fifteen-battle-shell mb-5">
                   <div className="day-fifteen-battle-shell__mesh" />
                   <div className="day-fifteen-battle-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/72">Strategic battle board</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Strategic battle board</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-4">
                       {[
                         { label: "Attack pressure", detail: "Partner-session leverage live", tone: "active" },
@@ -1501,7 +1509,7 @@ const ProgramLabPage = () => {
                         { label: "Reserve", detail: "Spend carefully or lose tempo", tone: "alert" },
                       ].map((item) => (
                         <div key={item.label} className={`day-fifteen-battle-card ${item.tone === "critical" ? "day-fifteen-battle-card--critical" : item.tone === "active" ? "day-fifteen-battle-card--active" : item.tone === "alert" ? "day-fifteen-battle-card--alert" : item.tone === "success" ? "day-fifteen-battle-card--success" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1520,7 +1528,7 @@ const ProgramLabPage = () => {
                 <div className="day-ten-arena-shell mb-5">
                   <div className="day-ten-arena-shell__flare" />
                   <div className="day-ten-arena-shell__content">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-amber-100/72">Elite challenge arena</p>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-amber-100/85">Elite challenge arena</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       {[
                         { label: "SIGMA", detail: "06:00 limit | opening move", tone: "ready" },
@@ -1528,7 +1536,7 @@ const ProgramLabPage = () => {
                         { label: "OMEGA", detail: "04:00 limit | final verdict", tone: "critical" },
                       ].map((item) => (
                         <div key={item.label} className={`day-ten-arena-card ${item.tone === "active" ? "day-ten-arena-card--active" : item.tone === "critical" ? "day-ten-arena-card--critical" : ""}`}>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/70">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/85">{item.label}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.detail || ''}</p>
                         </div>
                       ))}
@@ -1545,28 +1553,28 @@ const ProgramLabPage = () => {
               ) : null}
               <div className="mentor-brief-grid mb-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
                 <div className="mentor-brief-card">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Intro</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Intro</p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">Learn this like a guided mission, not a lecture.</h2>
                   <p className="mt-3 text-sm leading-6 text-slate-300/82">{detail.module.mentor_intro}</p>
                 </div>
                 <div className="mentor-brief-card mentor-brief-card--example">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-100/66">Example</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-100/85">Example</p>
                   <p className="mt-3 text-sm leading-6 text-slate-200/86">{detail.module.example_story}</p>
                 </div>
               </div>
               <div className="mentor-sequence-grid mb-5 grid gap-3 md:grid-cols-3">
                 {guidedSequence.map((item, index) => (
                   <div key={`${item.label}-${index}`} className="mentor-sequence-card">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">0{index + 1}</p>
-                    <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.label}</p>                     <p className="mt-2 text-sm leading-6 text-slate-300/78">{item.detail || ''}</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">0{index + 1}</p>
+                    <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{item.label}</p>                     <p className="mt-2 text-sm leading-6 text-slate-300/85">{item.detail || ''}</p>
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Mission briefing</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Mission briefing</p>
               <h2 className="mt-2 text-2xl font-semibold text-[var(--theme-text)]">{detail.module.title}</h2>
-              <p className="mt-2 text-sm text-cyan-100/72">{detail.module.scenario_tagline}</p>
+              <p className="mt-2 text-sm text-cyan-100/85">{detail.module.scenario_tagline}</p>
               <p className="mt-2 text-sm text-slate-300/82">{detail.module.scenario}</p>
-              <div className="mt-4 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
+              <div className="mt-4 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/85">
                 {detail.module.mission_brief}
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -1609,18 +1617,18 @@ const ProgramLabPage = () => {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{card.eyebrow}</p>
-                      <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300/72">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{card.eyebrow}</p>
+                      <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300/85">
                         0{index + 1}
                       </span>
                     </div>
                     <p className="mt-4 text-lg font-semibold text-[var(--theme-text)]">{card.title}</p>
                     <p className="mt-3 text-sm leading-6 text-slate-300/82">{card?.detail ?? ''}</p>
                     <div className="mt-4 rounded-2xl border border-cyan-300/14 bg-[var(--theme-overlay)] p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Proof point</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Proof point</p>
                       <p className="mt-2 text-sm text-cyan-50/84">{card.proof_point}</p>
                     </div>
-                    <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-emerald-200/68">{card.action_label}</p>
+                    <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-emerald-200/85">{card.action_label}</p>
                   </div>
                 ))}
               </div>
@@ -1628,7 +1636,7 @@ const ProgramLabPage = () => {
                 <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Success criteria</p>
                 <div className="mt-3 grid gap-2">
                   {successCriteria.map((item) => (
-                    <p key={item} className="text-sm text-slate-300/78">{item}</p>
+                    <p key={item} className="text-sm text-slate-300/85">{item}</p>
                   ))}
                 </div>
               </div>
@@ -1668,7 +1676,7 @@ const ProgramLabPage = () => {
                 </div>
               ) : null}
 
-              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">{isDayEleven && flowStage !== "validate" && flowStage !== "completed" ? "Thinking phase" : "What should I do next?"}</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">{isDayEleven && flowStage !== "validate" && flowStage !== "completed" ? "Thinking phase" : "What should I do next?"}</p>
               <div className="mt-3 rounded-xl border border-cyan-300/16 bg-[var(--theme-overlay)] p-4">
                 <p className="text-sm text-slate-300/82">
                   {isDayEleven && flowStage !== "validate" && flowStage !== "completed"
@@ -1687,19 +1695,19 @@ const ProgramLabPage = () => {
 
               <div className="mentor-sequence-grid mt-4 grid gap-3 md:grid-cols-3">
                 <div className="mentor-sequence-card">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Task</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Task</p>
                   <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">Understand the objective</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300/78">Read the active step closely and decide what kind of proof the validator will actually accept.</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300/85">Read the active step closely and decide what kind of proof the validator will actually accept.</p>
                 </div>
                 <div className="mentor-sequence-card">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{currentActionLabel}</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{currentActionLabel}</p>
                   <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">Make one clean move</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300/78">Choose the smallest command, answer, or note that changes confidence for a real reason.</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300/85">Choose the smallest command, answer, or note that changes confidence for a real reason.</p>
                 </div>
                 <div className="mentor-sequence-card">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Validate</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Validate</p>
                   <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">Let the backend score it</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300/78">Progress only advances when the evidence, logic, and wording hold up together.</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300/85">Progress only advances when the evidence, logic, and wording hold up together.</p>
                 </div>
               </div>
 
@@ -1718,20 +1726,20 @@ const ProgramLabPage = () => {
                       <p className="mt-1 text-sm font-semibold text-[var(--theme-text)]">{task.title}</p>
                       <p className="mt-2 text-sm text-slate-300/82">{task.instruction}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300/72">
+                        <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300/85">
                           {task.interaction_type === "single-select" ? "Validated Quiz" : task.expected_type === "terminal" ? "Terminal Task" : "Operator Response"}
                         </span>
-                        <span className="rounded-full border border-emerald-300/14 bg-emerald-500/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-emerald-100/72">
+                        <span className="rounded-full border border-emerald-300/14 bg-emerald-500/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-emerald-100/85">
                           +{task.xp} XP
                         </span>
-                        <span className="rounded-full border border-cyan-300/14 bg-cyan-500/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-cyan-100/72">
+                        <span className="rounded-full border border-cyan-300/14 bg-cyan-500/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-cyan-100/85">
                           +{task.score} score
                         </span>
                       </div>
                       {task.validation_focus?.length ? (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {task.validation_focus.map((focus) => (
-                            <span key={focus} className="rounded-full border border-cyan-300/14 bg-cyan-500/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-cyan-100/72">
+                            <span key={focus} className="rounded-full border border-cyan-300/14 bg-cyan-500/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-cyan-100/85">
                               {focus}
                             </span>
                           ))}
@@ -1744,7 +1752,7 @@ const ProgramLabPage = () => {
               </div>
               {currentTask ? (
                 <div className="mt-5 rounded-2xl border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(6,182,212,0.08),rgba(2,6,23,0.36))] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Active mission</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Active mission</p>
                   <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                       <p className="text-lg font-semibold text-[var(--theme-text)]">{currentTask.title}</p>
@@ -1776,16 +1784,16 @@ const ProgramLabPage = () => {
 
             {currentTask && !detail.state.completed && flowStage === "execute" ? (
               <section className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Submit your answer</p>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Submit your answer</p>
                 <div className="mentor-execution-shell mt-3 rounded-2xl p-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Mentor checkpoint</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Mentor checkpoint</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300/82">
                     Keep it simple: spot the signal, make the smallest safe move that proves it, then explain the result like you would to a teammate on shift.
                   </p>
                 </div>
                 {isDayOne ? (
                   <div className="day-one-task-shell mt-3 rounded-2xl border border-cyan-300/16 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">{"Learn -> task -> command -> quiz -> validate"}</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{"Learn -> task -> command -> quiz -> validate"}</p>
                     <p className="mt-2 text-sm text-slate-300/80">
                       Move like an analyst under pressure: answer the current step, read the feedback, and let ZORBIX help only when needed.
                     </p>
@@ -1793,7 +1801,7 @@ const ProgramLabPage = () => {
                 ) : null}
                 {isDayFive ? (
                   <div className="day-five-pressure-shell mt-3 rounded-2xl border border-amber-300/18 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/72">Live pressure state</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/85">Live pressure state</p>
                     <p className="mt-2 text-sm text-slate-300/82">
                       ZORVIX is watching the chain logic in real time. Use the smallest safe command that proves impact, then let the validator decide whether the breach path is credible.
                     </p>
@@ -1801,7 +1809,7 @@ const ProgramLabPage = () => {
                 ) : null}
                 {isDaySix ? (
                   <div className="day-six-response-shell mt-3 rounded-2xl border border-cyan-300/16 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/72">SOC response state</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">SOC response state</p>
                     <p className="mt-2 text-sm text-slate-300/82">
                       Read the dashboard like an on-shift defender: prove the timeline, call the incident, and choose the first containment move without destroying evidence.
                     </p>
@@ -1809,7 +1817,7 @@ const ProgramLabPage = () => {
                 ) : null}
                 {isDaySeven ? (
                   <div className="day-seven-intensity-shell mt-3 rounded-2xl border border-fuchsia-300/16 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-fuchsia-100/72">Mission intensity</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-fuchsia-100/85">Mission intensity</p>
                     <p className="mt-2 text-sm text-slate-300/82">
                       Each validated move deepens the chain. Choose clean signals, prove the foothold, and let ZORVIX pressure-test whether the exploit outcome really follows.
                     </p>
@@ -1817,7 +1825,7 @@ const ProgramLabPage = () => {
                 ) : null}
                 {isDayEight ? (
                   <div className="day-eight-feedback-shell mt-3 rounded-2xl border border-emerald-300/16 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/72">Choice pressure</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/85">Choice pressure</p>
                     <p className="mt-2 text-sm text-slate-300/82">
                       Your selected branch changes the outcome logic. Pick a path, support it with evidence, and let ZORVIX tell you whether the tradeoff actually holds up.
                     </p>
@@ -1827,7 +1835,7 @@ const ProgramLabPage = () => {
                   <div className="day-nine-response-shell mt-3 rounded-2xl border border-rose-300/16 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-rose-100/72">Incident urgency</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-rose-100/85">Incident urgency</p>
                         <p className="mt-2 text-sm text-slate-300/82">
                           Investigate the timeline, choose the first control, and only then move toward recovery. ZORVIX is grading response quality under live pressure.
                         </p>
@@ -1840,7 +1848,7 @@ const ProgramLabPage = () => {
                 ) : null}
                 {isDayEleven ? (
                   <div className="day-eleven-silence-shell mt-3 rounded-2xl border border-cyan-300/16 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/72">ZORVIX status</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">ZORVIX status</p>
                     <p className="mt-2 text-sm text-slate-300/82">
                       Silent during thinking phase. Your choice is permanent. The response comes only after you commit.
                     </p>
@@ -1848,7 +1856,7 @@ const ProgramLabPage = () => {
                 ) : null}
                 {isDayTwelve ? (
                   <div className="day-twelve-execution-shell mt-3 rounded-2xl border border-cyan-300/16 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/72">Privilege path state</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Privilege path state</p>
                     <p className="mt-2 text-sm text-slate-300/82">
                       Think in sequence: compromised source, best pivot, credential or share proof, then the privilege gain that makes the move worth it.
                     </p>
@@ -1858,7 +1866,7 @@ const ProgramLabPage = () => {
                   <div className="day-thirteen-execution-shell mt-3 rounded-2xl border border-cyan-300/16 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/72">Exfiltration window</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Exfiltration window</p>
                         <p className="mt-2 text-sm text-slate-300/82">
                           Pick the role, prove the sensitive path, and act before the transfer or containment window closes. Hint requests cost performance score.
                         </p>
@@ -1878,7 +1886,7 @@ const ProgramLabPage = () => {
                   <div className="day-fourteen-execution-shell mt-3 rounded-2xl border border-cyan-300/16 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/72">Multi-vector clock</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Multi-vector clock</p>
                         <p className="mt-2 text-sm text-slate-300/82">
                           No soft guidance. Prove the shortest web-to-network-to-logic chain before the timer kills the path. Hints cost score immediately.
                         </p>
@@ -1898,7 +1906,7 @@ const ProgramLabPage = () => {
                   <div className="day-fifteen-execution-shell mt-3 rounded-2xl border border-cyan-300/16 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/72">Battle clock</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Battle clock</p>
                         <p className="mt-2 text-sm text-slate-300/82">
                           ZORVIX stays silent here. Validate the board, spend the right resource, and finish the sequence before tempo collapses.
                         </p>
@@ -1918,7 +1926,7 @@ const ProgramLabPage = () => {
                   <div className="day-ten-pressure-shell mt-3 rounded-2xl border border-amber-300/16 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/72">Arena clock</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/85">Arena clock</p>
                         <p className="mt-2 text-sm text-slate-300/82">
                           No coaching. No filler. Mission fails if the clock hits zero before validation.
                         </p>
@@ -1931,7 +1939,7 @@ const ProgramLabPage = () => {
                 ) : null}
                 <div className="mt-3 rounded-2xl border border-cyan-300/16 bg-cyan-500/8 p-4">
                   <p className="text-sm font-semibold text-[var(--theme-text)]">{currentTask.title}</p>
-                  <p className="mt-2 text-sm text-slate-300/78">{currentTask.instruction}</p>
+                  <p className="mt-2 text-sm text-slate-300/85">{currentTask.instruction}</p>
                 </div>
                 {currentTask.interaction_type === "single-select" && currentTask.options?.length ? (
                   <div className="mt-3 grid gap-3">
@@ -1958,7 +1966,7 @@ const ProgramLabPage = () => {
                   </div>
                 ) : currentTask.expected_type === "terminal" ? (
                   <div className="mt-3 rounded-2xl border border-cyan-300/16 bg-[#050816] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Terminal-style execution</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Terminal-style execution</p>
                     <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-3">
                       <span className="text-sm text-cyan-300">$</span>
                       <input
@@ -2021,7 +2029,7 @@ const ProgramLabPage = () => {
 
             {(flowStage === "validate" || flowStage === "completed") ? (
             <section className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Validation result</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Validation result</p>
               {lastValidation ? (
                 <div
                   className={`mt-3 rounded-2xl border p-4 ${
@@ -2085,12 +2093,12 @@ const ProgramLabPage = () => {
                 </div>
               ) : null}
               <p className="mt-3 text-sm text-slate-300/82">{feedback}</p>
-              <div className="mt-3 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-3 text-xs text-cyan-100/70">
+              <div className="mt-3 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-3 text-xs text-cyan-100/85">
                 Difficulty band: {detail.state.difficulty_band} | Attempts: {detail.state.attempts} | Score: {detail.state.score} | XP: {detail.state.xp_earned}
               </div>
               {lastValidation?.terminalOutput?.length ? (
                 <div className="mt-4 rounded-2xl border border-cyan-300/16 bg-[#040915] p-4 font-mono text-xs text-cyan-100/82">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Execution response</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Execution response</p>
                   <div className="mt-3 space-y-2">
                     {lastValidation.terminalOutput.map((line, index) => (
                       <p key={`${line}-${index}`} className="break-words leading-6">
@@ -2101,7 +2109,7 @@ const ProgramLabPage = () => {
                 </div>
               ) : null}
               {mentorGuidance ? (
-                <div className="mt-4 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4 text-sm text-slate-300/78">
+                <div className="mt-4 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4 text-sm text-slate-300/85">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">ZORVIX guidance</p>
                   <p className="mt-2">{mentorGuidance}</p>
                 </div>
@@ -2184,8 +2192,8 @@ const ProgramLabPage = () => {
                 </div>
               ) : null}
               {isDayThirteen ? (
-                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Performance scoring</p>
+                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/85">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Performance scoring</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-4">
                     <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Base score</p>
@@ -2200,15 +2208,15 @@ const ProgramLabPage = () => {
                       <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">-{exfilSpeedPenalty}</p>
                     </div>
                     <div className="rounded-2xl border border-emerald-300/18 bg-emerald-500/10 p-3">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-100/70">Rank</p>
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-100/85">Rank</p>
                       <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">{exfilRank} | {exfilPerformanceScore}</p>
                     </div>
                   </div>
                 </div>
               ) : null}
               {isDayFourteen ? (
-                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Tactical scoring</p>
+                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/85">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Tactical scoring</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-4">
                     <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Base score</p>
@@ -2223,15 +2231,15 @@ const ProgramLabPage = () => {
                       <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">-{vectorSpeedPenalty}</p>
                     </div>
                     <div className="rounded-2xl border border-emerald-300/18 bg-emerald-500/10 p-3">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-100/70">Rank</p>
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-100/85">Rank</p>
                       <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">{vectorRank} | {vectorPerformanceScore}</p>
                     </div>
                   </div>
                 </div>
               ) : null}
               {isDayFifteen ? (
-                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/78">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Battle scoring</p>
+                <div className="mt-4 rounded-xl border border-cyan-300/12 bg-[var(--theme-overlay)] p-4 text-sm text-cyan-100/85">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Battle scoring</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-4">
                     <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-3">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Base score</p>
@@ -2246,7 +2254,7 @@ const ProgramLabPage = () => {
                       <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">-{battleSpeedPenalty}</p>
                     </div>
                     <div className="rounded-2xl border border-emerald-300/18 bg-emerald-500/10 p-3">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-100/70">Rank</p>
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-100/85">Rank</p>
                       <p className="mt-2 text-lg font-semibold text-[var(--theme-text)]">{battleRank} | {battlePerformanceScore}</p>
                     </div>
                   </div>
@@ -2267,7 +2275,7 @@ const ProgramLabPage = () => {
             ) : null}
 
             <section className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/62">Live Lab Console</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/85">Live Lab Console</p>
               <div className="mt-4 rounded-2xl border border-cyan-300/16 bg-[#040915] p-4 font-mono text-xs text-cyan-100/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                 <div className="space-y-2">
                   {(terminalLog.length ? terminalLog : consoleBootLines.length ? consoleBootLines : ["[console] Waiting for the first validated action."]).slice(-12).map((line, index) => (
@@ -2281,7 +2289,7 @@ const ProgramLabPage = () => {
 
             {detail.state.completed ? (
               <section className="glass-card premium-fade-up premium-sheen rounded-2xl p-6">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200/70">Complete</p>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200/85">Complete</p>
                 <p className="mt-2 text-sm text-emerald-100/90">Day {day} validated. You can now unlock the next day.</p>
                 <div className="mission-celebration-shell mission-celebration-shell--burst mt-4 rounded-2xl border border-emerald-300/16 bg-emerald-500/10 p-4">
                   {isDayOne ? <div className="mission-complete-ribbon">Day 1 cleared</div> : null}
@@ -2291,7 +2299,7 @@ const ProgramLabPage = () => {
                     <span />
                     <span />
                   </div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/72">Mission badge</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/85">Mission badge</p>
                   <div className="mt-3 flex items-center justify-between gap-4">
                     <div>
                       <p className="text-lg font-semibold text-[var(--theme-text)]">{detail.module.completion_badge || `Day ${day} Cleared`}</p>
@@ -2309,7 +2317,7 @@ const ProgramLabPage = () => {
                 </div>
                 {isDayTen ? (
                   <div className="day-ten-debrief-shell mt-4 rounded-2xl p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/72">ZORVIX evaluator mode</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/85">ZORVIX evaluator mode</p>
                     <p className="mt-3 font-mono text-sm leading-6 text-amber-50/90">{arenaDebriefText || "Preparing evaluator debrief..."}</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       {[
@@ -2318,13 +2326,13 @@ const ProgramLabPage = () => {
                         { label: "Final Score", value: `${arenaAdjustedScore}` },
                       ].map((item) => (
                         <div key={item.label} className="rounded-2xl border border-amber-300/14 bg-amber-500/8 p-4">
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/72">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/85">{item.label}</p>
                           <p className="mt-3 text-lg font-semibold text-[var(--theme-text)]">{item.value}</p>
                         </div>
                       ))}
                     </div>
                     <div className="mt-4 rounded-2xl border border-amber-300/14 bg-[var(--theme-overlay)] p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/72">Rank</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/85">Rank</p>
                       <p className="mt-3 text-2xl font-semibold text-[var(--theme-text)]">{arenaRank}</p>
                     </div>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -2332,8 +2340,8 @@ const ProgramLabPage = () => {
                         <div key={task.id} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
                           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{task.title}</p>
                           <p className="mt-3 text-sm font-semibold text-[var(--theme-text)]">{task.completed ? "Pass" : "Fail"}</p>
-                          <p className="mt-2 text-xs text-slate-300/74">Score: {task.score}</p>
-                          <p className="mt-1 text-xs text-slate-300/74">Hint used: {arenaHintedTasks.includes(task.id) ? "Yes" : "No"}</p>
+                          <p className="mt-2 text-xs text-slate-300/85">Score: {task.score}</p>
+                          <p className="mt-1 text-xs text-slate-300/85">Hint used: {arenaHintedTasks.includes(task.id) ? "Yes" : "No"}</p>
                         </div>
                       ))}
                     </div>
@@ -2349,7 +2357,7 @@ const ProgramLabPage = () => {
                 ) : null}
                 {isDayEleven ? (
                   <div className="day-eleven-result-shell mt-4 rounded-2xl p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/72">ZORVIX final judgment</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">ZORVIX final judgment</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       {[
                         { label: "Judgment Rank", value: dayElevenRank },
@@ -2357,7 +2365,7 @@ const ProgramLabPage = () => {
                         { label: "Profile", value: "How you think under uncertainty" },
                       ].map((item) => (
                         <div key={item.label} className="rounded-2xl border border-cyan-300/14 bg-cyan-500/8 p-4">
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/72">{item.label}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">{item.label}</p>
                           <p className="mt-3 text-lg font-semibold text-[var(--theme-text)]">{item.value}</p>
                         </div>
                       ))}
@@ -2366,7 +2374,7 @@ const ProgramLabPage = () => {
                 ) : null}
                 {debriefPoints.length ? (
                   <div className="mt-4 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/72">Debrief prompts</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/85">Debrief prompts</p>
                     <div className="mt-3 grid gap-2">
                       {debriefPoints.map((point) => (
                         <p key={point} className="text-sm text-slate-300/82">
@@ -2383,7 +2391,7 @@ const ProgramLabPage = () => {
                     { label: "XP Earned", value: `${detail.state.xp_earned}` },
                   ].map((item) => (
                     <div key={item.label} className="rounded-2xl border border-emerald-300/16 bg-emerald-500/10 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/72">{item.label}</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-100/85">{item.label}</p>
                       <p className="mt-3 text-lg font-semibold text-[var(--theme-text)]">{item.value}</p>
                     </div>
                   ))}
@@ -2405,7 +2413,9 @@ const ProgramLabPage = () => {
             ) : null}
           </>
         ) : null}
-      </div>
+
+        {/* Confetti on day lab completion */}
+        <UnlockAnimation trigger={unlockTrigger > 0} onDone={handleUnlockDone} />      </div>
     </div>
   );
 };

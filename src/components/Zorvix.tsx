@@ -669,7 +669,7 @@ const TelemetryBar = ({ telemetry, compact = false }: { telemetry: RuntimeTeleme
     };
     return (
       <div className="mt-1.5 flex items-center gap-1 overflow-hidden">
-        <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/16 bg-cyan-500/6 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-cyan-100/70">
+        <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/16 bg-cyan-500/6 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-cyan-100/85">
           <span className="h-1 w-1 rounded-full bg-cyan-400" />
           {telemetry.roadmapDay ? `D${telemetry.roadmapDay}` : "Sess"}
         </span>
@@ -680,7 +680,7 @@ const TelemetryBar = ({ telemetry, compact = false }: { telemetry: RuntimeTeleme
           {telemetry.difficulty.replace("_", " ")}
         </span>
         {telemetry.sessionXpReward > 0 ? (
-          <span className="inline-flex items-center rounded-full border border-emerald-400/14 bg-emerald-500/8 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-emerald-100/70">
+          <span className="inline-flex items-center rounded-full border border-emerald-400/14 bg-emerald-500/8 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-emerald-100/85">
             +{telemetry.sessionXpReward} XP
           </span>
         ) : null}
@@ -698,10 +698,10 @@ const TelemetryBar = ({ telemetry, compact = false }: { telemetry: RuntimeTeleme
         <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
         {telemetry.roadmapDay ? `Day ${telemetry.roadmapDay}` : "Session"}
       </span>
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-300/70">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-300/85">
         {vectorTrackLabel(telemetry.vectorTrack)}
       </span>
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-300/70">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-300/85">
         {telemetry.difficulty.replace("_", " ")}
       </span>
       {telemetry.sessionXpReward > 0 ? (

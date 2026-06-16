@@ -177,9 +177,9 @@ const WorkspaceShell = ({
 }) => (
   <section className="rounded-[28px] border border-cyan-400/15 bg-[var(--theme-surface)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)] md:p-6">
     <div className="mb-5 space-y-2">
-      <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Dedicated Workspace</p>
+      <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Dedicated Workspace</p>
       <h2 className="text-2xl font-semibold tracking-tight text-[var(--theme-text)]">{title}</h2>
-      <p className="max-w-3xl text-sm leading-6 text-slate-300/78">{description}</p>
+      <p className="max-w-3xl text-sm leading-6 text-slate-300/85">{description}</p>
     </div>
     {children}
   </section>
@@ -247,7 +247,7 @@ const ResearchWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           {result ? (
             <div className="space-y-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Recommended Prompt</p>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Recommended Prompt</p>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-100">{result.prompt}</p>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
@@ -308,8 +308,8 @@ const KnowledgeWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             <article key={`${resource.source}-${resource.title}`} className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4">
               <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{resource.source}</p>
               <h3 className="mt-2 text-base font-medium text-slate-100">{resource.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-300/78">{resource.usage}</p>
-              {resource.kind ? <p className="mt-3 text-xs text-cyan-100/70">Kind: {resource.kind}</p> : null}
+              <p className="mt-2 text-sm leading-6 text-slate-300/85">{resource.usage}</p>
+              {resource.kind ? <p className="mt-3 text-xs text-cyan-100/85">Kind: {resource.kind}</p> : null}
             </article>
           ))}
         </div>
@@ -388,12 +388,12 @@ const DorkWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         </div>
         {result ? (
           <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Generated Query</p>
+            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Generated Query</p>
             <code className="mt-3 block break-all rounded-2xl border border-cyan-300/10 bg-[var(--theme-overlay)] px-4 py-3 text-sm text-cyan-100">
               {result.query}
             </code>
             <p className="mt-4 text-sm leading-6 text-slate-300/82">{result.explanation}</p>
-            {result.defensiveAdvice ? <p className="mt-3 text-sm text-cyan-100/75">Defensive advice: {result.defensiveAdvice}</p> : null}
+            {result.defensiveAdvice ? <p className="mt-3 text-sm text-cyan-100/85">Defensive advice: {result.defensiveAdvice}</p> : null}
           </div>
         ) : null}
       </div>
@@ -441,7 +441,7 @@ const DomainWorkspace = ({ tool }: { tool: ToolDefinition }) => {
 
         <div className="grid gap-4 xl:grid-cols-2">
           <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Header Analysis</p>
+            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Header Analysis</p>
             {headerResult ? (
               <div className="mt-4 space-y-3 text-sm text-slate-300/82">
                 <p>Target: {headerResult.url}</p>
@@ -460,11 +460,11 @@ const DomainWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           </div>
 
           <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Surface Review</p>
+            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Surface Review</p>
             <div className="mt-4 space-y-3 text-sm text-slate-300/82">
               <p>Verified exposure review is limited to live DNS, headers, TLS, and website scan evidence.</p>
               <p className="text-slate-400">Unverified subdomain discovery has been removed from this workspace.</p>
-              <p className="text-cyan-100/75">Use the web scan and OSINT modules for verified signals only.</p>
+              <p className="text-cyan-100/85">Use the web scan and OSINT modules for verified signals only.</p>
             </div>
           </div>
         </div>
@@ -690,7 +690,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           <div className="absolute bottom-2 left-10 h-16 w-16 rounded-full bg-rose-400/10 blur-2xl animate-pulse" />
           <div className="relative flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Website URL</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Website URL</p>
               <p className="mt-2 text-sm text-slate-300/80">Scan your site for HTTPS enforcement, SSL health, security headers, and server signals.</p>
             </div>
             <div className="flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">
@@ -698,7 +698,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               Professional scan
             </div>
           </div>
-          <div className="relative mt-4 flex flex-wrap gap-2 text-xs text-cyan-100/70">
+          <div className="relative mt-4 flex flex-wrap gap-2 text-xs text-cyan-100/85">
             <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1">HTTPS + SSL</span>
             <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1">Security headers</span>
             <span className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1">Redirects + status</span>
@@ -766,12 +766,12 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
           <p className="mt-3 text-xs text-slate-400">
             Tip: use a website you own or have explicit permission to test.
           </p>
-          {lastScanAt ? <p className="mt-2 text-[11px] text-cyan-100/70">Last scan: {formatDate(lastScanAt)}</p> : null}
+          {lastScanAt ? <p className="mt-2 text-[11px] text-cyan-100/85">Last scan: {formatDate(lastScanAt)}</p> : null}
           {error ? <p className="mt-3 text-sm text-rose-200">{error}</p> : null}
           {reportError ? <p className="mt-3 text-sm text-rose-200">{reportError}</p> : null}
           <div className="mt-4 grid gap-3 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-4 text-xs text-slate-300/90 md:grid-cols-3">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Report Template</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Report Template</p>
               <select
                 value={reportTemplate}
                 onChange={(event) => setReportTemplate(event.target.value as "classic" | "dark" | "neon")}
@@ -783,7 +783,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               </select>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Brand Name</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Brand Name</p>
               <input
                 value={reportBrandName}
                 onChange={(event) => setReportBrandName(event.target.value)}
@@ -792,7 +792,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               />
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Tagline</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Tagline</p>
               <input
                 value={reportTagline}
                 onChange={(event) => setReportTagline(event.target.value)}
@@ -801,14 +801,14 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               />
             </div>
           </div>
-          <div className="mt-3 text-[11px] text-cyan-100/70">Prefer print-ready report? Use "Print Report" below.</div>
+          <div className="mt-3 text-[11px] text-cyan-100/85">Prefer print-ready report? Use "Print Report" below.</div>
         </div>
 
         {result ? (
           <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr,0.9fr]">
             <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Security Checks</p>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Security Checks</p>
                 <div
                   className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs ${
                     score.grade === "A"
@@ -860,7 +860,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             </div>
 
             <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Quick Summary</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Quick Summary</p>
               <div className="mt-4 grid gap-3">
                 <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <div className="flex items-center gap-2 text-sm text-slate-200">
@@ -911,7 +911,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             </div>
 
             <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Protocol & Redirects</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Protocol & Redirects</p>
               <div className="mt-4 grid gap-3 text-sm text-slate-300/82">
                 <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
                   <span>HTTP status</span>
@@ -937,7 +937,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         {result ? (
           <div className="grid gap-4 xl:grid-cols-2">
             <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Missing Headers</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Missing Headers</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {(result.missingHeaders?.length ? result.missingHeaders : ["None detected"]).map((item) => (
                   <span key={item} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-xs text-slate-200">
@@ -947,7 +947,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
               </div>
             </div>
             <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Open Ports (basic)</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Open Ports (basic)</p>
               <div className="mt-4 grid gap-2 text-sm text-slate-300/82">
                 {(result.openPorts?.length ? result.openPorts : [{ port: 0, status: "No common ports responded" }]).map((entry) => (
                   <div key={`${entry.port}-${entry.status}`} className="flex items-center justify-between rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
@@ -962,7 +962,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
 
         {result ? (
           <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Recommended Fixes</p>
+            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Recommended Fixes</p>
             <div className="mt-4 grid gap-2 text-sm text-slate-300/82">
               {(actionItems.length ? actionItems : ["No critical fixes found. Maintain current hardening."]).map((item) => (
                 <label key={item} className="flex items-center gap-3 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3">
@@ -982,7 +982,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
         {result ? (
           <div className="grid gap-4 xl:grid-cols-4">
             <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">SSL Status</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">SSL Status</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
                 <p>Status: {result.sslStatus}</p>
                 <p>Valid from: {formatDate(result.ssl?.validFrom)}</p>
@@ -996,7 +996,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             </div>
 
             <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Domain Info</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Domain Info</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
                 <p>Host: {result.domain?.hostname}</p>
                 <p>IPv4: {formatList(result.domain?.ipv4)}</p>
@@ -1006,7 +1006,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             </div>
 
             <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Server Info</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Server Info</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
                 <p>Powered by: {result.headers?.poweredBy}</p>
                 <p>Content type: {result.headers?.contentType}</p>
@@ -1017,7 +1017,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
             </div>
 
             <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Security Headers</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Security Headers</p>
               <div className="mt-4 space-y-2 text-sm text-slate-300/82">
                 {headerChecks.map((item) => (
                   <div key={item.label} className="flex items-center justify-between">
@@ -1032,7 +1032,7 @@ const WebScanWorkspace = ({ tool }: { tool: ToolDefinition }) => {
 
         {history.length ? (
           <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Recent Scans</p>
+            <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Recent Scans</p>
             <div className="mt-4 grid gap-3">
               {history.map((item) => (
                 <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-4 py-3 text-sm text-slate-300/82">
@@ -1061,7 +1061,7 @@ const GuidedWorkspace = ({ tool }: { tool: ToolDefinition }) => (
   <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
     <div className="grid gap-4 xl:grid-cols-[1.15fr,0.85fr]">
       <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Guided Prompt</p>
+        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Guided Prompt</p>
         <p className="mt-3 text-sm leading-7 text-slate-100">{tool.prompt}</p>
         <div className="mt-5 flex flex-wrap gap-3">
           <button
@@ -1083,7 +1083,7 @@ const GuidedWorkspace = ({ tool }: { tool: ToolDefinition }) => (
         </div>
       </div>
       <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Workflow</p>
+        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Workflow</p>
         <ol className="mt-4 space-y-3 text-sm text-slate-300/82">
           <li>1. Scope the asset, symptom, or code path before expanding the investigation.</li>
           <li>2. Use ZORVIX for a guided analysis and keep the prompt tied to verified evidence.</li>
@@ -1105,7 +1105,7 @@ const LabWorkspace = ({ tool }: { tool: ToolDefinition }) => (
   <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
     <div className="grid gap-4 xl:grid-cols-[1.15fr,0.85fr]">
       <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Lab Launch</p>
+        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Lab Launch</p>
         <p className="mt-3 text-sm leading-7 text-slate-300/82">
           Move into a dedicated practice flow to review the concept, rehearse the response, and keep your learning path organized.
         </p>
@@ -1128,7 +1128,7 @@ const LabWorkspace = ({ tool }: { tool: ToolDefinition }) => (
         </div>
       </div>
       <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">What This Workspace Delivers</p>
+        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">What This Workspace Delivers</p>
         <ul className="mt-4 space-y-2 text-sm text-slate-300/82">
           {(tool.capabilities || []).map((capability) => (
             <li key={capability}>- {capability}</li>
@@ -1143,7 +1143,7 @@ const LearningWorkspace = ({ tool }: { tool: ToolDefinition }) => (
   <WorkspaceShell title={tool.name} description={tool?.detail ?? ''}>
     <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
       <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Learning Prompt</p>
+        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Learning Prompt</p>
         <p className="mt-3 text-sm leading-7 text-slate-100">{tool.prompt}</p>
         <div className="mt-5 flex flex-wrap gap-3">
           <button
@@ -1164,7 +1164,7 @@ const LearningWorkspace = ({ tool }: { tool: ToolDefinition }) => (
         </div>
       </div>
       <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Recommended Sequence</p>
+        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Recommended Sequence</p>
         <ol className="mt-4 space-y-3 text-sm text-slate-300/82">
           <li>1. Ask for a concept-first explanation and one practical example.</li>
           <li>2. Move into a lab or practice scenario to reinforce the concept.</li>
@@ -1266,7 +1266,7 @@ const ToolDetail = () => {
                   <Icon className="h-7 w-7" />
                 </div>
                 <div className="space-y-3">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/72">{tool.category}</p>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">{tool.category}</p>
                   <h1 className="text-3xl font-semibold tracking-tight text-slate-50 md:text-5xl">{sanitize(tool.name)}</h1>
                   <p className="max-w-3xl text-base leading-7 text-slate-300/82">{sanitize(tool.description)}</p>
                 </div>
@@ -1297,20 +1297,20 @@ const ToolDetail = () => {
                 <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Mission Group</p>
                   <p className="mt-3 text-xl font-semibold text-[var(--theme-text)]">{tool.group}</p>
-                  <p className="mt-2 text-sm text-slate-300/75">{tool?.detail ?? ''}</p>
+                  <p className="mt-2 text-sm text-slate-300/85">{tool?.detail ?? ''}</p>
                 </div>
                 <div className="rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-overlay)] p-5">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Capabilities</p>
-                  <ul className="mt-3 space-y-2 text-sm text-slate-300/78">
+                  <ul className="mt-3 space-y-2 text-sm text-slate-300/85">
                     {(tool.capabilities || []).map((capability) => (
                       <li key={capability}>- {capability}</li>
                     ))}
                   </ul>
                 </div>
                 <div className="rounded-[24px] border border-cyan-300/15 bg-cyan-400/[0.04] p-5 sm:col-span-2">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/72">Trust Profile</p>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Trust Profile</p>
                   <p className="mt-3 text-base font-medium text-[var(--theme-text)]">{trustMeta.headline}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300/78">{trustMeta?.detail ?? ''}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300/85">{trustMeta?.detail ?? ''}</p>
                 </div>
               </div>
             </div>
@@ -1321,8 +1321,8 @@ const ToolDetail = () => {
 
             <aside className="space-y-5">
               <section className="rounded-[28px] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Operational Notes</p>
-                <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-300/78">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Operational Notes</p>
+                <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-300/85">
                   <li>Use this workspace only on systems you own or are explicitly authorized to assess.</li>
                   <li>Keep prompts grounded in observable facts before escalating analysis or remediation.</li>
                   <li>Move into lab mode when you need hands-on verification or repeatable practice.</li>
@@ -1331,7 +1331,7 @@ const ToolDetail = () => {
 
               {related.length ? (
                 <section className="rounded-[28px] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Related Workspaces</p>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Related Workspaces</p>
                   <div className="mt-4 space-y-3">
                     {related.map((item) => (
                       <Link
@@ -1344,9 +1344,9 @@ const ToolDetail = () => {
                             <p className="text-sm font-medium text-slate-100">{item.name}</p>
                             <p className="mt-1 text-xs text-slate-400">{item.category}</p>
                           </div>
-                          <ExternalLink className="mt-0.5 h-4 w-4 text-cyan-200/70" />
+                          <ExternalLink className="mt-0.5 h-4 w-4 text-cyan-200/85" />
                         </div>
-                        <p className="mt-3 text-sm leading-6 text-slate-300/74">{item.description}</p>
+                        <p className="mt-3 text-sm leading-6 text-slate-300/85">{item.description}</p>
                       </Link>
                     ))}
                   </div>
@@ -1354,7 +1354,7 @@ const ToolDetail = () => {
               ) : null}
 
               <section className="rounded-[28px] border border-[var(--theme-border)] bg-[var(--theme-surface)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">Tags</p>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">Tags</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {(tool.tags || []).map((tag) => (
                     <span key={tag} className="rounded-full border border-[var(--theme-border)] bg-[var(--theme-overlay)] px-3 py-1 text-xs text-slate-300/82">

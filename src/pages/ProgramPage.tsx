@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, Lock, PlayCircle } from "lucide-react";
+import { ArrowRight, PlayCircle } from "lucide-react";
+import GlassCard from "@/components/ui/GlassCard";
+import CyberPathMap from "@/components/path/CyberPathMap";
 import { useNavigate } from "react-router-dom";
 import PlatformHero from "@/components/platform/PlatformHero";
 import { apiGetJson } from "@/lib/apiClient";
@@ -161,8 +163,8 @@ const ProgramPage = () => {
           />
         </div>
 
-        {loading ? <div className="glass-card cyber-card rounded-2xl p-5 text-sm text-cyan-100/72 terminal-font">Loading your program...</div> : null}
-        {error ? <div className="glass-card cyber-card rounded-2xl p-5 text-sm text-rose-300">{error}</div> : null}
+        {loading ? <GlassCard className="cyber-card rounded-2xl p-5 text-sm text-cyan-100/85 terminal-font">Loading your program...</GlassCard> : null}
+        {error ? <GlassCard className="cyber-card rounded-2xl p-5 text-sm text-rose-300">{error}</GlassCard> : null}
 
         {overview ? (
           <section className="grid gap-4 md:grid-cols-4">
@@ -199,7 +201,7 @@ const ProgramPage = () => {
                 ))}
               </div>
               <div className="cyber-card mt-5 rounded-2xl p-4">
-                <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-cyan-100/62">Validation loop</p>
+                <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-cyan-100/85">Validation loop</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {["Read scenario", "Submit answer", "Validate", "Unlock next"].map((item) => (
                     <span key={item} className="cyber-badge">
@@ -223,37 +225,22 @@ const ProgramPage = () => {
 
             <section className="premium-section-card cyber-card">
               <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-slate-500">Program map</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {items.map((item) => (
-                  <button
-                    key={item.day}
-                    type="button"
-                    onClick={() => setSelectedDay(item.day)}
-                    className={`premium-card-lift cyber-card rounded-2xl p-4 text-left transition ${
-                      selectedDay === item.day
-                        ? "border-cyan-300/34 bg-cyan-500/10"
-                        : item.unlocked
-                          ? "border-white/8 bg-white/[0.03] hover:border-cyan-300/18"
-                          : "border-white/8 bg-white/[0.02] opacity-70"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Day {item.day}</p>
-                      {item.completed ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                      ) : item.unlocked ? (
-                        <PlayCircle className="h-4 w-4 text-cyan-300" />
-                      ) : (
-                        <Lock className="h-4 w-4 text-slate-400" />
-                      )}
-                    </div>
-                    <p className="mt-3 text-sm text-[var(--theme-text)]">{item.title}</p>
-                  </button>
-                ))}
+              <div className="mt-4">
+                <CyberPathMap
+                  nodes={items.map((item) => ({
+                    day: item.day,
+                    title: item.title,
+                    topic: item.focus,
+                    difficulty: item.difficulty.toLowerCase() === "beginner" ? "beginner" as const : item.difficulty.toLowerCase() === "intermediate" ? "intermediate" as const : "advanced" as const,
+                    status: item.completed ? "completed" as const : item.day === selectedDay ? "active" as const : item.unlocked ? "unlocked" as const : "locked" as const,
+                  }))}
+                  onNodeClick={(node) => setSelectedDay(node.day)}
+                  columns={3}
+                />
               </div>
               <div className="cyber-card mt-5 rounded-2xl p-4">
                 <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-slate-500">System behavior</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300/76">
+                <p className="mt-2 text-sm leading-6 text-slate-300/85">
                   Locked days stay unavailable until the previous day is validated. The UI mirrors backend unlock state directly, so there is no fake progression path.
                 </p>
                 <button type="button" className="premium-nav-row cyber-card mt-4 rounded-3xl" onClick={() => navigate(`/program/day/${overview.recommended_day || 1}`)}>

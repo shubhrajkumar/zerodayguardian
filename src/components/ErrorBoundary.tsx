@@ -53,13 +53,13 @@ export default class ErrorBoundary extends Component<Props, State> {
     return (
       <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-16">
         <div className="max-w-xl rounded-[28px] border border-rose-400/20 bg-[linear-gradient(180deg,rgba(62,10,18,0.92),rgba(22,8,12,0.98))] p-8 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
-          <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-rose-100/72">Runtime fault isolated</p>
+          <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-rose-100/85">Runtime fault isolated</p>
           <h1 className="mt-3 text-3xl font-semibold">Something went wrong</h1>
           <p className="mt-3 text-sm leading-6 text-rose-50/84">
             We captured the fault automatically and isolated the failure path. Reloading usually restores the workspace
             without losing server-side progress.
           </p>
-          <p className="mt-3 text-sm leading-6 text-rose-100/70">{this.state.message}</p>
+          <p className="mt-3 text-sm leading-6 text-rose-100/85">{this.state.message}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button onClick={this.handleReload} className="cyber-btn">
               Retry
@@ -68,7 +68,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               Contact Support
             </a>
           </div>
-          <div className="mt-4 rounded-2xl border border-rose-400/12 bg-white/[0.03] p-4 text-left text-sm text-rose-100/72">
+          <div className="mt-4 rounded-2xl border border-rose-400/12 bg-white/[0.03] p-4 text-left text-sm text-rose-100/85">
             Fallback mode is active. Blank screen prevented.
           </div>
         </div>

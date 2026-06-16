@@ -1,5 +1,6 @@
 import React from "react";
 import { sanitize } from "@/utils/sanitize";
+import GlassCard from "@/components/ui/GlassCard";
 
 type Course = {
   id: number;
@@ -15,7 +16,7 @@ interface CourseCardProps {
 
 const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   return (
-    <div className="glass-card rounded-lg p-6">
+    <GlassCard className="rounded-lg p-6">
       <h3 className="font-mono text-lg font-semibold mb-2">{sanitize(course.title)}</h3>
       <span className="px-2 py-1 rounded text-xs font-mono bg-primary/20 text-primary mb-2 inline-block">
         {sanitize(course.difficulty)}
@@ -29,7 +30,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           />
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 };
 

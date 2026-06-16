@@ -7,7 +7,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 100 900;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -15,7 +15,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 100 900;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -23,7 +23,7 @@
   font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 100 800;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/jetbrains-mono-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -31,7 +31,7 @@
   font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 100 800;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/jetbrains-mono-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
@@ -528,6 +528,32 @@ body {
     animation: spin 0.6s linear infinite;
   }
 
+  /* ── Focus-visible ring for keyboard navigation (WCAG SC 2.4.7) ── */
+  .focus-visible-ring:focus-visible {
+    outline: 2px solid var(--theme-accent-blue);
+    outline-offset: 2px;
+    border-radius: var(--radius);
+  }
+
+  /* ── Reduced motion fallback: disable all animations when user prefers reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ── Border glow utility for cards and interactive elements ── */
+  .border-glow {
+    border-color: var(--theme-glow);
+  }
+  .border-glow-accent {
+    border-color: var(--theme-accent-blue);
+    border-opacity: 0.4;
+  }
+
   /* ── CLS prevention: contain layout reflows on route boundaries ── */
   .page-shell {
     contain: layout style;
@@ -637,6 +663,47 @@ body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+/* ── Shake animation for validation error feedback ── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}  /* ── Link-in-text-block: ensure inline text links are visually distinguishable via underline (WCAG SC 1.4.1) ── */
+  /* Covers links inside <p>, <div>, <li>, <span>, <section>, <article> in content/card contexts */
+  .content-area a,
+  .content-area .link,
+  article a,
+  p a,
+  .description a,
+  .text-block a,
+  li a:not([class*="btn"]):not([class*="cyber"]),
+  .card a:not([class*="btn"]),
+  [class*="content"] a:not([class*="nav"]):not([class*="btn"]) {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+  }
+  .content-area a:hover,
+  article a:hover,
+  p a:hover,
+  .description a:hover,
+  .text-block a:hover,
+  li a:not([class*="btn"]):not([class*="cyber"]):hover,
+  .card a:not([class*="btn"]):hover,
+  [class*="content"] a:not([class*="nav"]):not([class*="btn"]):hover {
+    text-decoration-thickness: 2px;
+  }
+
+  /* ── Reduced motion: disable shake when user prefers reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shake {
+      animation: none;
+    }
+  }
 
 /* ── CLS-safe cursor blink (opacity-only, no layout reflow) ── */
 @keyframes cursor-blink {

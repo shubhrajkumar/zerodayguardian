@@ -59,7 +59,7 @@ const DailyMissionLoop = ({
         <div className="relative z-[1]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-emerald-200/70">Mission Briefing 🕵️</p>
+              <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-emerald-200/85">Mission Briefing 🕵️</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">Deploy three clean wins before midnight</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
                 Port scan. CVE read. CTF breach drill. No filler loops. Just visible progress, XP, and one elite direction.
@@ -100,7 +100,7 @@ const DailyMissionLoop = ({
             <div className="gamification-panel rounded-[24px] p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-emerald-200/70">Daily Loop</p>
+                  <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-emerald-200/85">Daily Loop</p>
                   <p className="mt-2 text-lg font-semibold text-foreground">{dailyCompleted}/3 missions deployed</p>
                 </div>
                 <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-emerald-100">
@@ -158,7 +158,7 @@ const DailyMissionLoop = ({
             <div className="gamification-panel rounded-[24px] p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-blue-200/70">Weekly Missions</p>
+                  <p className="terminal-font text-[11px] uppercase tracking-[0.18em] text-blue-200/85">Weekly Missions</p>
                   <p className="mt-2 text-lg font-semibold text-foreground">{weeklyCompleted}/5 elite clears</p>
                 </div>
                 <span className="rounded-full border border-blue-400/18 bg-blue-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-blue-100">
@@ -236,7 +236,7 @@ const DailyMissionLoop = ({
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-emerald-100/72">Reward uplink</p>
+                  <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-emerald-100/85">Reward uplink</p>
                   <p className="mt-2 text-lg font-semibold text-foreground">{latestReward.title}</p>
                   <p className="mt-2 text-sm leading-6 text-secondary">{latestReward.detail || ''}</p>
                 </div>
@@ -259,7 +259,7 @@ const DailyMissionLoop = ({
             </motion.div>
           ) : (
             <div className="rounded-[24px] border border-border bg-secondary p-4">
-              <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/70">Reward stream</p>
+              <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/85">Reward stream</p>
               <p className="mt-2 text-sm leading-6 text-secondary">
                 Mission clears, quiz wins, and badge unlocks land here with confetti, float motion, and level reveals.
               </p>
@@ -267,7 +267,7 @@ const DailyMissionLoop = ({
           )}
 
           <div className="mt-4 rounded-[24px] border border-border bg-secondary p-4">
-            <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/70">Badge Cabinet</p>
+            <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/85">Badge Cabinet</p>
             <div className="mt-4 grid gap-3">
               {(snapshot?.badges ?? []).length ? (
                 (snapshot?.badges ?? []).slice(0, 6).map((badge) => (
@@ -298,7 +298,7 @@ const DailyMissionLoop = ({
           </div>
 
           <div className="mt-4 rounded-[24px] border border-border bg-secondary p-4">
-            <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/70">Recent Intel</p>
+            <p className="terminal-font text-[11px] uppercase tracking-[0.2em] text-blue-100/85">Recent Intel</p>
             <div className="mt-4 grid gap-3">
               {(snapshot?.recentRewards ?? []).length ? (
                 (snapshot?.recentRewards ?? []).slice(0, 5).map((reward) => (

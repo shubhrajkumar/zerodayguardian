@@ -54,7 +54,7 @@ const AchievementShareCard = ({ userName, achievement, detail, shareUrl }: Props
         ref={cardRef}
         className="rounded-[28px] border border-cyan-300/20 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_32%),linear-gradient(180deg,#04070e,#08111d)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.34)]"
       >
-        <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">ZeroDay Guardian</p>
+        <p className="terminal-font text-[11px] uppercase tracking-[0.24em] text-cyan-100/85">ZeroDay Guardian</p>
         <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-white">{achievement}</h3>
         <p className="mt-3 text-sm text-slate-300/82">{detail}</p>
         <div className="mt-8 flex items-end justify-between gap-4">
