@@ -165,7 +165,7 @@ function DayNode({
               {node.phase.name} • {node.phase.vectorTrack}
             </p>
             {!node.isUnlocked && (
-              <p className="mt-1 text-[10px] text-amber-400/80">🔒 Complete Day {node.day - 1} to unlock</p>
+              <p className="mt-1 text-[10px] text-amber-400/80">🔒 Complete Mission {String(node.day - 1).padStart(2, '0')} to unlock</p>
             )}
           </motion.div>
         )}
@@ -355,8 +355,8 @@ export default function CyberRoadmap({
       <div className="mt-8 text-center">
         <p className="text-sm text-slate-400">
           {completedCount === TOTAL_DAYS
-            ? "🎉 You completed the entire 60-day program! You are a certified ZeroDay Guardian."
-            : `Complete Day ${clampedDay} to unlock the next step in your journey.`}
+            ? "🎉 You completed all 60 missions! You are a certified ZeroDay Guardian."
+            : `Complete Mission ${String(clampedDay).padStart(2, '0')} to unlock the next step in your journey.`}
         </p>
       </div>
     </section>

@@ -101,11 +101,11 @@ export default function StreakCounter({ snapshot, currentStreak, longestStreak }
 
   return (
     <section
-      className={`rounded-2xl border p-4 ${
+      className={`rounded-xl border p-4 ${
         active
-          ? "border-emerald-400/25 bg-emerald-400/5"
-          : "border-[var(--theme-border)] bg-[var(--theme-surface)]"
-      }`}
+          ? "border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-emerald-900/5"
+          : "border-slate-800/50 bg-slate-900/40"
+      } hologram-card`}
       aria-labelledby="streak-title"
     >
       <div className="flex items-center gap-3">
@@ -114,29 +114,29 @@ export default function StreakCounter({ snapshot, currentStreak, longestStreak }
             className="block text-3xl"
             style={{
               animation: active ? "float 2s ease-in-out infinite" : undefined,
-              filter: active ? "drop-shadow(0 0 10px rgba(34,197,94,0.35))" : "grayscale(1)",
+              filter: active ? "drop-shadow(0 0 10px rgba(52,211,153,0.4))" : "grayscale(0.6)",
             }}
           >
             🔥
           </span>
           {isOnFire ? (
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 text-[8px] font-bold text-black animate-pulse">
+            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 text-[8px] font-bold text-black animate-bounce-glow">
               !
             </span>
           ) : null}
         </div>
 
         <div className="min-w-0 flex-1">
-          <p id="streak-title" className="text-2xl font-bold text-[var(--theme-text)]">
-            {current} {current === 1 ? "day" : "days"}
+          <p id="streak-title" className="text-2xl font-bold text-slate-100">
+            {current} <span className="text-sm font-normal text-slate-400">{current === 1 ? "day" : "days"}</span>
           </p>
-          <p className={active ? "text-xs text-emerald-200" : "text-xs text-slate-400"}>{status}</p>
+          <p className={active ? "text-xs text-emerald-300 font-mono" : "text-xs text-slate-500 font-mono"}>{status}</p>
         </div>
 
         <button
           type="button"
-          className="rounded-full border border-[var(--theme-border)] px-2 py-1 text-xs text-slate-300"
-          title="Complete at least one learning action per calendar day to keep your streak active."
+          className="rounded-full border border-slate-700/50 px-2.5 py-1 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-colors"
+          title="Complete at least one operation per day to maintain your streak."
           aria-label="How streaks work"
         >
           ?
@@ -144,13 +144,13 @@ export default function StreakCounter({ snapshot, currentStreak, longestStreak }
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-[var(--theme-overlay)] px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500">Total Days</p>
-          <p className="mt-0.5 text-sm font-semibold text-[var(--theme-text)]">{snapshot?.completedDays ?? current}</p>
+        <div className="rounded-lg border border-slate-800/40 bg-slate-800/20 px-3 py-2">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-slate-500">Total Days</p>
+          <p className="mt-0.5 text-sm font-semibold text-slate-100">{snapshot?.completedDays ?? current}</p>
         </div>
-        <div className="rounded-xl bg-[var(--theme-overlay)] px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500">Best Streak</p>
-          <p className="mt-0.5 text-sm font-semibold text-[var(--theme-text)]">{best}</p>
+        <div className="rounded-lg border border-slate-800/40 bg-slate-800/20 px-3 py-2">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-slate-500">Best Streak</p>
+          <p className="mt-0.5 text-sm font-semibold text-slate-100">{best}</p>
         </div>
       </div>
     </section>

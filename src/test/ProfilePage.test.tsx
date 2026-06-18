@@ -28,9 +28,15 @@ vi.mock("@/context/UserProgressContext", () => ({
 vi.mock("@/lib/gamificationSystem", () => ({
   useGamificationSystem: (...args: unknown[]) => mockUseGamificationSystem(...args),
   getLevelLabel: (level: number) => {
-    const labels = ["", "Rookie", "Novice", "Initiate", "Apprentice", "Operative", "Specialist", "Elite", "Expert", "Master", "Legend"];
-    return labels[Math.min(level, labels.length - 1)] || `Level ${level}`;
+    if (level >= 16) return "Elite Guardian";
+    if (level >= 10) return "Guardian";
+    if (level >= 8) return "Specialist";
+    if (level >= 6) return "Hunter";
+    if (level >= 4) return "Analyst";
+    if (level >= 2) return "Operator";
+    return "Recruit";
   },
+  getRankIcon: () => "🪖",
 }));
 
 vi.mock("@/lib/api", () => ({

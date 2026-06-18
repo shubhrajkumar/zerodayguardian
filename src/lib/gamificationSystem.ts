@@ -105,9 +105,110 @@ type GamificationHook = {
 const DAILY_XP_PER_QUIZ_CORRECT = 50;
 const STORAGE_COLLECTION = "gamification_users";
 const LOCAL_STORAGE_PREFIX = "zdg:gamification";
-const LEVEL_LABELS = ["", "Rookie", "Novice", "Initiate", "Apprentice", "Operative", "Specialist", "Elite", "Expert", "Master", "Legend"];
+/** Rank progression — Recruit through Elite Guardian */
+export type Rank = {
+  id: string;
+  title: string;
+  icon: string;
+  minLevel: number;
+  description: string;
+  unlocks: string[];
+};
 
-export const getLevelLabel = (level: number): string => LEVEL_LABELS[Math.min(level, LEVEL_LABELS.length - 1)] || `Level ${level}`;
+export const RANKS: Rank[] = [
+  {
+    id: "recruit",
+    title: "Recruit",
+    icon: "🪖",
+    minLevel: 1,
+    description: "You've taken the first step into cyber security.",
+    unlocks: ["Basic lab access", "AI mentor chat"],
+  },
+  {
+    id: "operator",
+    title: "Operator",
+    icon: "🔐",
+    minLevel: 2,
+    description: "You can execute basic recon and understand attack surfaces.",
+    unlocks: ["All sandbox labs", "Mission system"],
+  },
+  {
+    id: "analyst",
+    title: "Analyst",
+    icon: "🛡️",
+    minLevel: 4,
+    description: "You analyze threats and map attack vectors.",
+    unlocks: ["Advanced tools", "Community access"],
+  },
+  {
+    id: "hunter",
+    title: "Hunter",
+    icon: "🎯",
+    minLevel: 6,
+    description: "You actively hunt vulnerabilities and exploit chains.",
+    unlocks: ["CTF challenges", "Leaderboard ranking"],
+  },
+  {
+    id: "specialist",
+    title: "Specialist",
+    icon: "⚡",
+    minLevel: 8,
+    description: "You specialise in offensive or defensive operations.",
+    unlocks: ["Custom tool config", "Advanced analytics"],
+  },
+  {
+    id: "guardian",
+    title: "Guardian",
+    icon: "👑",
+    minLevel: 10,
+    description: "You protect systems and mentor the next wave.",
+    unlocks: ["Premium mission content", "Full sandbox"],
+  },
+  {
+    id: "elite-guardian",
+    title: "Elite Guardian",
+    icon: "💀",
+    minLevel: 16,
+    description: "You are among the top operators in the field.",
+    unlocks: ["All features unlocked", "Exclusive content"],
+  },
+];
+
+export const getRankByLevel = (level: number): Rank => {
+  let rank = RANKS[0];
+  for (const r of RANKS) {
+    if (level >= r.minLevel) rank = r;
+  }
+  return rank;
+};
+
+export const getNextRank = (level: number): Rank | null => {
+  const current = getRankByLevel(level);
+  const idx = RANKS.indexOf(current);
+  return idx < RANKS.length - 1 ? RANKS[idx + 1] : null;
+};
+
+export const getRankProgress = (level: number, xpIntoLevel: number, xpToNextLevel: number) => {
+  const current = getRankByLevel(level);
+  const nextRank = getNextRank(level);
+  if (!nextRank) return { current, next: null, progress: 1, icon: current.icon };
+
+  const currentMinLevel = current.minLevel;
+  const nextMinLevel = nextRank.minLevel;
+  const levelsForRank = nextMinLevel - currentMinLevel;
+  const levelProgress = level - currentMinLevel;
+
+  // Estimate progress: level-based + partial XP within current level
+  const levelFraction = levelsForRank > 0 ? levelProgress / levelsForRank : 0;
+  const xpFraction = xpToNextLevel > 0 ? xpIntoLevel / (xpIntoLevel + xpToNextLevel) : 0;
+  const progress = Math.min(1, levelFraction + xpFraction * (1 / levelsForRank));
+
+  return { current, next: nextRank, progress, icon: current.icon };
+};
+
+export const getLevelLabel = (level: number): string => getRankByLevel(level).title;
+
+export const getRankIcon = (level: number): string => getRankByLevel(level).icon;
 
 const MOTTO_READY = "Deploy the next move. Intel is live.";
 const MOTTO_DEGRADED = "Intel uplink is unstable. Mission data is protected.";
@@ -896,7 +997,7 @@ export const submitGamifiedQuizAnswer = async (
 
 export const useGamificationSystem = (userId?: string | null, handle?: string | null): GamificationHook => {
   const [snapshot, setSnapshot] = useState<GamificationSnapshot>(() => defaultSnapshot(userId || "anonymous"));
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [latestReward, setLatestReward] = useState<GamificationReward | null>(null);
 

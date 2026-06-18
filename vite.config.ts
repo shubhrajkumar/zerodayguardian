@@ -18,6 +18,15 @@ const resolveSiteUrl = () =>
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://zerodayguardian-backend.onrender.com",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') }
   },

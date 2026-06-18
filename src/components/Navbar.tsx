@@ -1,6 +1,7 @@
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, Menu } from "lucide-react";
+import { ChevronDown, Menu, Swords } from "lucide-react";
+import { motion } from "framer-motion";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import NotificationBell from "@/components/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
+import { hoverScale, tapScale, navbarReveal } from "@/lib/animations";
 
 const primaryNav = [
   { label: "Learn", to: "/learn" },
@@ -30,12 +32,15 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout, user } = useAuth();
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
+      const scrollY = window.scrollY;
       const total = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(total > 0 ? (window.scrollY / total) * 100 : 0);
+      setScrollProgress(total > 0 ? (scrollY / total) * 100 : 0);
+      setScrolled(scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -49,70 +54,87 @@ const Navbar = () => {
 
   const startFreeRoute = isAuthenticated ? "/program" : "/auth";
   const isToolsActive = toolsNav.some((item) => location.pathname === item.to);
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <>
+      {/* Scroll progress bar with glow */}
       <div
-        className="fixed left-0 top-0 z-[60] h-[2px] bg-[linear-gradient(90deg,#00ff88,#0066ff)] transition-all duration-150"
+        className="fixed left-0 top-0 z-[60] h-[2px] bg-gradient-to-r from-cyan-500 via-emerald-400 to-cyan-500 transition-all duration-200 shadow-[0_0_8px_rgba(34,211,238,0.3)]"
         style={{ width: `${scrollProgress}%` }}
       />
+      {/* Tactical status bar — top left */}
+      <div className="fixed left-4 top-[68px] z-50 hidden md:flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-600">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+        <span>OPS:{scrolled ? "NAV" : "HOM"}</span>
+        <span className="text-slate-700">|</span>
+        <span>ZDG-SECURE</span>
+      </div>
 
-      <nav className="fixed left-0 right-0 top-0 z-50 border-b backdrop-blur-2xl" style={{ borderColor: "var(--theme-border)", backgroundColor: "color-mix(in srgb, var(--theme-bg) 92%, transparent)" }}>
-        <div className="mobile-page-frame flex min-h-16 items-center justify-between gap-3 py-2">
-          <Link to="/" className="min-w-0 shrink-0">
-            <span className="block truncate text-sm font-extrabold uppercase tracking-[0.18em] sm:text-[0.95rem]" style={{ color: "var(--theme-text)" }}>
-              ZeroDay
-              <span className="ml-2 terminal-font text-[0.78em]" style={{ color: "var(--theme-accent-green)" }}>Guardian</span>
+      {/* Navbar */}
+      <motion.nav
+        variants={navbarReveal}
+        initial="hidden"
+        animate="visible"
+        className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "backdrop-blur-xl bg-[#050508]/80 border-b border-slate-800/50 shadow-[0_4px_30px_rgba(0,0,0,0.3)]"
+            : "bg-transparent border-b border-transparent"
+        }`}
+      >
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 py-2">
+          {/* Brand */}
+          <motion.div whileHover={hoverScale} whileTap={tapScale}>
+            <Link to="/" className="group flex shrink-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-cyan-500/10 text-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.08)] transition-all duration-300 group-hover:border-emerald-400/50 group-hover:shadow-[0_0_20px_rgba(52,211,153,0.15)]">
+              <Swords className="h-4 w-4" />
+            </span>
+            <span className="hidden text-sm font-bold tracking-[0.2em] text-slate-100 min-[480px]:block">
+              <span className="text-slate-500">ZDG:</span>
+              <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                CORE
+              </span>
             </span>
           </Link>
+          </motion.div>
 
+          {/* Desktop nav links */}
           <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 md:flex">
-            {primaryNav.map((item) => {
-              const active = location.pathname === item.to;
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="inline-flex min-h-[40px] items-center rounded-xl px-4 py-2 text-sm font-medium transition hover:bg-[var(--theme-overlay)]"
-                  style={{
-                    color: active ? "var(--theme-text)" : "var(--theme-text-muted)",
-                    backgroundColor: active ? "color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
-                    borderColor: active ? "color-mix(in srgb, var(--theme-accent-green) 16%, transparent)" : undefined,
-                    borderWidth: active ? "1px" : undefined,
-                    borderStyle: active ? "solid" : undefined,
-                    boxShadow: active ? "0 0 18px color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
-                  }}
-                  aria-current={active ? "page" : undefined}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+            {primaryNav.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`inline-flex min-h-[38px] items-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                  isActive(item.to)
+                    ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.06)]"
+                    : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                }`}
+                aria-current={isActive(item.to) ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            ))}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex min-h-[40px] items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition hover:bg-[var(--theme-overlay)]"
-                  style={{
-                    color: isToolsActive ? "var(--theme-text)" : "var(--theme-text-muted)",
-                    backgroundColor: isToolsActive ? "color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
-                    borderColor: isToolsActive ? "color-mix(in srgb, var(--theme-accent-green) 16%, transparent)" : undefined,
-                    borderWidth: isToolsActive ? "1px" : undefined,
-                    borderStyle: isToolsActive ? "solid" : undefined,
-                    boxShadow: isToolsActive ? "0 0 18px color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
-                  }}
+                  className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                    isToolsActive
+                      ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                      : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+                  }`}
                 >
                   Tools
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-3.5 w-3.5" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="center"
-                className="w-48 rounded-xl backdrop-blur-xl" style={{ border: "1px solid var(--theme-border)", backgroundColor: "var(--theme-surface)", color: "var(--theme-text)" }}
+                className="w-48 rounded-lg border border-slate-800 bg-slate-900/95 backdrop-blur-xl"
               >
                 {toolsNav.map((item) => (
-                  <DropdownMenuItem key={item.to} asChild className="cursor-pointer rounded-lg">
+                  <DropdownMenuItem key={item.to} asChild className="cursor-pointer rounded-md text-slate-300 focus:text-emerald-300 focus:bg-emerald-500/10">
                     <Link to={item.to}>{item.label}</Link>
                   </DropdownMenuItem>
                 ))}
@@ -120,13 +142,14 @@ const Navbar = () => {
             </DropdownMenu>
           </div>
 
+          {/* Desktop right side */}
           <div className="hidden items-center gap-2 md:flex">
             <ThemeToggle />
             {isAuthenticated ? <NotificationBell /> : null}
             {isAuthenticated && user ? (
               <Link
                 to={`/u/${user.id}`}
-                className="inline-flex min-h-[40px] items-center rounded-xl px-3 py-2 text-sm transition hover:bg-[var(--theme-overlay)]" style={{ color: "var(--theme-text-muted)" }}
+                className="inline-flex min-h-[38px] items-center rounded-lg px-3 py-2 text-sm text-slate-400 transition-all duration-200 hover:bg-slate-800/40 hover:text-slate-200"
               >
                 Profile
               </Link>
@@ -135,16 +158,14 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="ghost-btn min-h-[40px] px-3 py-2 text-sm"
-              style={{ color: "var(--theme-text-muted)" }}
+                className="inline-flex min-h-[38px] items-center rounded-lg px-3 py-2 text-sm text-slate-400 transition-all duration-200 hover:bg-slate-800/40 hover:text-slate-200"
               >
                 Logout
               </button>
             ) : (
               <Link
                 to="/auth"
-                className="ghost-btn min-h-[40px] px-3 py-2 text-sm"
-                style={{ color: "var(--theme-text-muted)" }}
+                className="inline-flex min-h-[38px] items-center rounded-lg px-3 py-2 text-sm text-slate-400 transition-all duration-200 hover:bg-slate-800/40 hover:text-slate-200"
               >
                 Login
               </Link>
@@ -152,65 +173,61 @@ const Navbar = () => {
 
             <Link
               to={startFreeRoute}
-              className="cyber-btn cta-focus-ring min-h-[42px] px-5 py-2 text-sm font-semibold"
+              className="group relative inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-all duration-200 hover:shadow-[0_0_20px_rgba(52,211,153,0.25)] active:scale-[0.98]"
             >
+              <Swords className="h-3.5 w-3.5 transition-transform group-hover:rotate-12" />
               Deploy Access
             </Link>
           </div>
 
+          {/* Mobile menu trigger */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" className="h-12 w-12 shrink-0 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-overlay)] text-[var(--theme-text)]">
+              <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-lg border border-slate-800 bg-slate-900/50 text-slate-300">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
 
-            <SheetContent side="right" className="w-[92vw] max-w-[22rem] border-[var(--theme-border)] bg-[var(--theme-surface)] px-4 py-4 backdrop-blur-2xl sm:w-[24rem]">
+            <SheetContent side="right" className="w-[92vw] max-w-[22rem] border-l border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur-2xl sm:w-[24rem]">
               <div className="flex items-center justify-between mb-2">
-                <SheetTitle className="text-base font-bold" style={{ color: "var(--theme-text)" }}>ZeroDay Guardian</SheetTitle>
+                <SheetTitle className="flex items-center gap-2 text-base font-bold text-slate-100">
+                  <Swords className="h-4 w-4 text-emerald-400" />
+                  ZeroDay Guardian
+                </SheetTitle>
                 <ThemeToggle />
               </div>
 
-              <div className="mt-4 flex flex-col gap-3">
+              <div className="mt-4 flex flex-col gap-2">
                 {primaryNav.map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}
                     onClick={() => setOpen(false)}
-                    className={`flex min-h-12 w-full items-center rounded-xl px-4 py-3 text-sm font-medium transition ${
-                      location.pathname === item.to
-                        ? "border"
-                        : ""
+                    className={`flex min-h-11 w-full items-center rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200 ${
+                      isActive(item.to)
+                        ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                        : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
                     }`}
-                    style={{
-                      color: location.pathname === item.to ? "var(--theme-text)" : "var(--theme-text-muted)",
-                      backgroundColor: location.pathname === item.to ? "color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
-                      borderColor: location.pathname === item.to ? "color-mix(in srgb, var(--theme-accent-green) 16%, transparent)" : undefined,
-                    }}
-                    aria-current={location.pathname === item.to ? "page" : undefined}
+                    aria-current={isActive(item.to) ? "page" : undefined}
                   >
                     {item.label}
                   </Link>
                 ))}
 
-                <div className="rounded-xl p-3" style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)" }}>
-                  <p className="terminal-font text-[11px] uppercase tracking-[0.2em]" style={{ color: "var(--theme-text-dim)" }}>Tools</p>
-                  <div className="mt-3 flex flex-col gap-2">
+                <div className="mt-2 rounded-lg border border-slate-800 bg-slate-900/50 p-3">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">Tools</p>
+                  <div className="mt-2 flex flex-col gap-1">
                     {toolsNav.map((item) => (
                       <Link
                         key={item.to}
                         to={item.to}
                         onClick={() => setOpen(false)}
-                        className={`flex min-h-12 w-full items-center rounded-xl px-3 py-3 text-sm font-medium transition ${
-                          location.pathname === item.to
-                            ? ""
-                            : ""
+                        className={`flex min-h-11 w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                          isActive(item.to)
+                            ? "bg-emerald-500/10 text-emerald-300"
+                            : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
                         }`}
-                        style={{
-                          color: location.pathname === item.to ? "var(--theme-text)" : "var(--theme-text-muted)",
-                          backgroundColor: location.pathname === item.to ? "color-mix(in srgb, var(--theme-accent-green) 8%, transparent)" : undefined,
-                        }}
                       >
                         {item.label}
                       </Link>
@@ -223,8 +240,7 @@ const Navbar = () => {
                     <Link
                       to={`/u/${user.id}`}
                       onClick={() => setOpen(false)}
-                      className="flex min-h-12 w-full items-center rounded-xl px-4 py-3 text-sm font-medium transition hover:bg-[var(--theme-overlay)]"
-                      style={{ color: "var(--theme-text-muted)" }}
+                      className="flex min-h-11 w-full items-center rounded-lg px-4 py-3 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-slate-800/40 hover:text-slate-200"
                     >
                       Public Profile
                     </Link>
@@ -233,8 +249,7 @@ const Navbar = () => {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="ghost-btn min-h-12 w-full justify-start px-4 py-3 text-left text-sm"
-                      style={{ color: "var(--theme-text-muted)" }}
+                      className="flex min-h-11 w-full items-center rounded-lg px-4 py-3 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-slate-800/40 hover:text-slate-200"
                     >
                       Logout
                     </button>
@@ -242,8 +257,7 @@ const Navbar = () => {
                     <Link
                       to="/auth"
                       onClick={() => setOpen(false)}
-                      className="ghost-btn min-h-12 w-full justify-start px-4 py-3 text-sm"
-                      style={{ color: "var(--theme-text-muted)" }}
+                      className="flex min-h-11 w-full items-center rounded-lg px-4 py-3 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-slate-800/40 hover:text-slate-200"
                     >
                       Login
                     </Link>
@@ -252,7 +266,7 @@ const Navbar = () => {
                   <Link
                     to={startFreeRoute}
                     onClick={() => setOpen(false)}
-                    className="cyber-btn cta-focus-ring inline-flex min-h-12 w-full justify-center px-4 py-3 text-sm font-semibold"
+                    className="flex min-h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-sm font-semibold text-white"
                   >
                     Deploy Access
                   </Link>
@@ -261,7 +275,7 @@ const Navbar = () => {
             </SheetContent>
           </Sheet>
         </div>
-      </nav>
+      </motion.nav>
     </>
   );
 };

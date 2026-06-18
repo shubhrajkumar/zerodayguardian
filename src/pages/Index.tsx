@@ -7,7 +7,7 @@ import LandingIntro from "@/components/LandingIntro";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { nextMissionHook, totalPoints, streak, completedDays, completedSandboxLabs } = useMissionSystem();
+  const { nextMissionHook, totalPoints = 0, streak = 0, completedDays = 0, completedSandboxLabs = 0 } = useMissionSystem();
 
   const entryRoute = nextMissionHook?.route || "/program";
 

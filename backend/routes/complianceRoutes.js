@@ -26,7 +26,7 @@ router.get("/data",
       const exportData = {
         exportedAt: new Date().toISOString(),
         platform: "ZeroDay Guardian",
-        contactEmail: "ksubhraj28@gmail.com",
+        contactEmail: "ops@zerodayguardian.net",
         user: user || { id: userId, note: "User record from token (DB record not found)" },
         scans: scans.map(s => ({ ...s, id: String(s._id) })),
         labProgress: labProgress.map(l => ({ ...l, id: String(l._id) })),
@@ -74,13 +74,13 @@ router.delete("/data",
         success: true,
         message: "Your account and associated data have been deleted permanently.",
         note: "You may need to clear your browser cookies and local storage to complete the process.",
-        supportContact: "ksubhraj28@gmail.com",
+        supportContact: "ops@zerodayguardian.net",
       });
     } catch (err) {
       return res.status(500).json({
         success: false,
         error: "Account deletion failed",
-        message: "Unable to delete your account. Please contact support at ksubhraj28@gmail.com.",
+        message: "Unable to delete your account. Please contact support at ops@zerodayguardian.net.",
       });
     }
   }

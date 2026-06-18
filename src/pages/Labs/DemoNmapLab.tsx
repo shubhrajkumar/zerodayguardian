@@ -6,8 +6,9 @@
  * terminal output, typewriter effects, and ethical disclaimers.
  */
 import { useCallback, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, CheckCircle2, Cpu, Globe, Loader2, Network, Shield, Terminal, XCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Cpu, Globe, Loader2, Network, Shield, Target, Terminal, XCircle } from "lucide-react";
 import { sanitize } from "@/lib/utils";
 
 // ── Types ──
@@ -110,6 +111,7 @@ const PortStateIcon = ({ state }: { state: PortResult["state"] }) => {
 
 // ── Main Component ──
 export default function DemoNmapLab() {
+  const navigate = useNavigate();
   const [targetIP, setTargetIP] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -433,16 +435,53 @@ export default function DemoNmapLab() {
         </div>
       )}
 
-      {/* CTA to register */}
+      {/* Conversion section */}
       {!scanning && (
-        <div className="mt-8 text-center">
-          <p className="text-xs text-slate-500">
-            Like this lab?{" "}
-            <a href="/auth" className="text-cyan-400 underline underline-offset-2 hover:text-cyan-300">
-              Create a free account
-            </a>{" "}
-            to access 60+ real labs, missions, and AI mentorship.
-          </p>
+        <div className="mt-8 space-y-4">
+          {/* Main CTA banner */}
+          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 p-6 text-center">
+            <p className="text-lg font-bold text-white">Ready to Go Deeper?</p>
+            <p className="mt-1 text-sm text-slate-400">
+              This was just one lab. Unlock 60 missions, AI mentorship, and a complete
+              cyber security learning system.
+            </p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate("/demo/assessment")}
+                className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-5 py-2 text-xs font-semibold text-cyan-300 transition-all duration-200 hover:border-cyan-400/50 active:scale-[0.98]"
+              >
+                <Target className="h-3.5 w-3.5" />
+                Find Your Path
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/auth")}
+                className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-5 py-2 text-xs font-bold uppercase tracking-[0.14em] text-black transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Shield className="h-4 w-4" />
+                Create Free Account
+              </button>
+            </div>
+            <p className="mt-3 text-xs text-slate-500">
+              Already have an account?{" "}
+              <a href="/auth" className="text-cyan-400 underline underline-offset-2 hover:text-cyan-300">
+                Sign in
+              </a>
+            </p>
+          </div>
+
+          {/* Secondary CTAs */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/demo/roadmap")}
+              className="inline-flex min-h-[36px] items-center justify-center gap-2 rounded-lg border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[11px] text-slate-400 transition-colors hover:border-cyan-400/30 hover:text-cyan-300"
+            >
+              <Terminal className="h-3 w-3" />
+              View Full 60-Mission Roadmap
+            </button>
+          </div>
         </div>
       )}
     </div>

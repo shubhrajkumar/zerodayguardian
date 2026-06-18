@@ -3,8 +3,6 @@ import { getStoredAccessToken, apiGetJson } from "@/lib/apiClient";
 import api from "@/lib/api";
 import { getPyApiUserMessage, pyPostJson, resolvePublicPyApiUrl } from "@/lib/pyApiClient";
 import { useToast } from "@/hooks/use-toast";
-import GlassCard from "@/components/ui/GlassCard";
-
 const MODULES = [
   { id: "whois", label: "WHOIS" },
   { id: "dns", label: "DNS" },
@@ -253,26 +251,49 @@ const OsintPage = () => {
   useEffect(() => {
     const token = getStoredAccessToken();
     if (!token || typeof window === "undefined" || typeof EventSource === "undefined") return;
-    const stream = new EventSource(
-      resolvePublicPyApiUrl(`/recommendations/stream?access_token=${encodeURIComponent(token)}`),
-      { withCredentials: true }
-    );
-    const handleEvent = (event: MessageEvent) => {
+
+    // Check if the pyapi endpoint is available before opening a stream
+    // (avoids 404 console noise when no pyapi backend is running)
+    const streamUrl = resolvePublicPyApiUrl(`/recommendations/stream?access_token=${encodeURIComponent(token)}`);
+
+    const checkAndConnect = async () => {
       try {
-        const payload = JSON.parse(event.data) as PyRecommendationResponse;
-        setPyRecommendations(payload);
-        setPyRecError("");
+        const resp = await fetch(streamUrl, { method: "HEAD", credentials: "include" });
+        if (!resp.ok) {
+          setPyRecError("Live recommendations are not available on this server.");
+          return;
+        }
       } catch {
-        // ignore malformed payloads
+        setPyRecError("Live recommendations are not available on this server.");
+        return;
       }
+
+      const stream = new EventSource(streamUrl, { withCredentials: true });
+
+      const handleEvent = (event: MessageEvent) => {
+        try {
+          const payload = JSON.parse(event.data) as PyRecommendationResponse;
+          setPyRecommendations(payload);
+          setPyRecError("");
+        } catch {
+          // ignore malformed payloads
+        }
+      };
+
+      stream.addEventListener("recommendations", handleEvent as EventListener);
+      stream.onmessage = handleEvent;
+      stream.onerror = () => {
+        setPyRecError("Live recommendations stream disconnected. The latest saved guidance is still available.");
+        stream.close();
+      };
+
+      return () => stream.close();
     };
-    stream.addEventListener("recommendations", handleEvent as EventListener);
-    stream.onmessage = handleEvent;
-    stream.onerror = () => {
-      setPyRecError("Live recommendations stream disconnected. The latest saved guidance is still available.");
-      stream.close();
+
+    const cleanup = checkAndConnect();
+    return () => {
+      cleanup.then((fn) => fn?.());
     };
-    return () => stream.close();
   }, []);
 
   const selectCase = async (id: string) => {
@@ -449,31 +470,47 @@ const OsintPage = () => {
             geolocation, social signals, and live threat news.
           </p>
 
+          {/* Intel telemetry cards — terminal-grade */}
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Risk Score</div>
-              <div className="mt-2 text-3xl font-black text-white">{riskScore ?? "--"}</div>
-              <div className="text-xs text-slate-300">Level: {riskLevel}</div>
+            <div className="terminal-card">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.5)]" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">SIGNAL</span>
+              </div>
+              <div className="font-mono text-3xl font-bold tracking-wider text-slate-100">{riskScore ?? "--"}</div>
+              <div className="font-mono text-[11px] text-slate-500 mt-1">Level: {riskLevel}</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Active Watchlists</div>
-              <div className="mt-2 text-3xl font-black text-white">{watchlists.filter((w) => w.active).length}</div>
-              <div className="text-xs text-slate-300">Scheduled monitors</div>
+            <div className="terminal-card">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">WATCHING</span>
+              </div>
+              <div className="font-mono text-3xl font-bold tracking-wider text-slate-100">{watchlists.filter((w) => w.active).length}</div>
+              <div className="font-mono text-[11px] text-slate-500 mt-1">Scheduled monitors</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Recent Alerts</div>
-              <div className="mt-2 text-3xl font-black text-white">{alerts.length}</div>
-              <div className="text-xs text-slate-300">Signals detected</div>
+            <div className="terminal-card">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">ALERTS</span>
+              </div>
+              <div className="font-mono text-3xl font-bold tracking-wider text-slate-100">{alerts.length}</div>
+              <div className="font-mono text-[11px] text-slate-500 mt-1">Signals detected</div>
             </div>
           </div>
 
-          <div className="mt-8 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl md:grid-cols-[1.5fr_1fr_auto]">
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Enter domain, IP, email, or username"
-              className="h-12 w-full rounded-xl border border-white/10 bg-slate-950/40 px-4 text-sm text-white shadow-inner shadow-black/40 focus:border-cyan-300/50 focus:outline-none"
-            />
+          {/* Command interface — terminal-inspired */}
+          <div className="mt-8 grid gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 md:grid-cols-[1.5fr_1fr_auto]">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-emerald-400">
+                {">_"}
+              </span>
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Enter domain, IP, email, or username"
+                className="h-12 w-full rounded-lg border border-slate-800 bg-slate-950/60 py-2.5 pl-10 pr-4 font-mono text-sm text-slate-100 placeholder-slate-500 transition-all duration-200 focus:border-cyan-500/50 focus:shadow-[0_0_12px_rgba(34,211,238,0.08)] focus:outline-none"
+              />
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               {MODULES.map((module) => (
                 <button
@@ -510,8 +547,14 @@ const OsintPage = () => {
             {result?.meta?.durationMs ? <span>Last run: {result.meta.durationMs}ms</span> : null}
           </div>
 
-          <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-400/5 px-4 py-3 text-xs text-amber-100/80">
-            Use only on assets you own or are authorized to test. We log requests and enforce safe OSINT usage policies.
+          {/* Compliance notice — terminal warning */}
+          <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5 font-mono text-[11px] text-amber-400/70">⚠</span>
+              <p className="font-mono text-[11px] leading-5 text-amber-300/70">
+                Use only on assets you own or are authorized to test. We log requests and enforce safe OSINT usage policies.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -519,18 +562,21 @@ const OsintPage = () => {
       <section className="mx-auto max-w-6xl px-4 pb-16">
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5 shadow-[0_30px_60px_rgba(15,23,42,0.45)]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-white">Investigation Summary</h2>
-                  <p className="text-xs text-slate-400">Coverage across all enabled OSINT modules.</p>
+            <div className="terminal-card">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-100">INVESTIGATION_SUMMARY</h2>
+                    <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Coverage across all enabled OSINT modules</p>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={loadProviders}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:border-cyan-300/40"
+                  className="rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-1 font-mono text-[10px] text-slate-400 transition hover:border-cyan-500/40 hover:text-cyan-300"
                 >
-                  Refresh Providers
+                  refresh_providers
                 </button>
               </div>
 
@@ -562,13 +608,13 @@ const OsintPage = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <div className="flex items-center justify-between">
+            <div className="terminal-card">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-white">Threat Intelligence</h2>
-                  <p className="text-xs text-slate-400">Automated risk score and recommendations.</p>
+                  <h2 className="text-sm font-bold text-slate-100">THREAT_INTEL</h2>
+                  <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Risk analysis and recommendations</p>
                 </div>
-                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300">
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-amber-400/80">
                   {riskLevel.toUpperCase()}
                 </span>
               </div>
@@ -598,35 +644,35 @@ const OsintPage = () => {
 
             <div className="grid gap-6 lg:grid-cols-2">
               {MODULES.map((module) => (
-                <GlassCard key={module.id} className="rounded-2xl p-5">
+                <div key={module.id} className="terminal-card p-5">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-white">{module.label}</h3>
-                    <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-400">
+                    <h3 className="text-sm font-bold text-slate-100">{module.label}</h3>
+                    <span className="rounded-full border border-slate-800 bg-slate-900/50 px-2 py-0.5 font-mono text-[10px] text-slate-400">
                       {result?.results?.[module.id]?.status || "idle"}
                     </span>
                   </div>
-                  <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-black/40 p-3 text-[11px] text-slate-200/80">
+                  <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-black/40 p-3 font-mono text-[11px] text-slate-300/80">
                     {formatValue(result?.results?.[module.id]?.data)}
                   </pre>
-                </GlassCard>
+                </div>
               ))}
             </div>
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <div className="flex items-center justify-between">
+            <div className="terminal-card">
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="text-base font-semibold text-white">Live Recommendations</h3>
-                  <p className="text-xs text-slate-400">Guided recommendations from verified activity.</p>
+                  <h3 className="text-sm font-bold text-slate-100">LIVE_RECOMMENDATIONS</h3>
+                  <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Guided recommendations from verified activity</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => loadPyRecommendations().catch(() => undefined)}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:border-cyan-300/40"
+                  className="rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-1 font-mono text-[10px] text-slate-400 transition hover:border-cyan-500/40 hover:text-cyan-300"
                   disabled={pyRecLoading}
                 >
-                  {pyRecLoading ? "Refreshing..." : "Refresh"}
+                  {pyRecLoading ? "refreshing..." : "refresh"}
                 </button>
               </div>
               {pyRecError ? <p className="mt-2 text-xs text-rose-300">{pyRecError}</p> : null}
@@ -646,9 +692,11 @@ const OsintPage = () => {
                 )}
               </div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Investigation Graph</h3>
-              <p className="text-xs text-slate-400">Entities and OSINT modules linked to the target.</p>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">INVESTIGATION_GRAPH</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Entities and OSINT modules linked to target</p>
+              </div>
               <div className="mt-4 flex justify-center rounded-xl border border-white/10 bg-black/30 p-4">
                 <svg width="360" height="320" role="img">
                   {graphLayout.map((node) => (
@@ -688,9 +736,11 @@ const OsintPage = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">OSINT Playbooks</h3>
-              <p className="text-xs text-slate-400">Guided investigation paths for common scenarios.</p>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">OSINT_PLAYBOOKS</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Guided investigation paths for common scenarios</p>
+              </div>
               <div className="mt-3 space-y-3 text-xs text-slate-200/80">
                 {[
                   {
@@ -731,9 +781,11 @@ const OsintPage = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Live Provider Status</h3>
-              <p className="text-xs text-slate-400">Configured connectors and coverage readiness.</p>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">PROVIDER_STATUS</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Configured connectors and coverage readiness</p>
+              </div>
               <div className="mt-4 space-y-2 text-xs text-slate-200/80">
                 {providers
                   ? Object.entries(providers).map(([key, value]: any) => (
@@ -751,8 +803,11 @@ const OsintPage = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Watchlists</h3>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">WATCHLISTS</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Monitored targets and alert rules</p>
+              </div>
               <div className="mt-3 space-y-2 text-xs text-slate-200/80">
                 <input
                   value={watchLabel}
@@ -1042,8 +1097,11 @@ const OsintPage = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Alert Feed</h3>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">ALERT_FEED</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Real-time threat signals</p>
+              </div>
               <div className="mt-3 space-y-2 text-xs text-slate-200/80">
                 {alerts.length ? (
                   alerts.map((alert) => (
@@ -1061,8 +1119,11 @@ const OsintPage = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Case Management</h3>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">CASE_MANAGEMENT</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Create and manage investigations</p>
+              </div>
               <div className="mt-3 space-y-3 text-xs text-slate-200/80">
                 <input
                   value={caseTitle}
@@ -1165,8 +1226,11 @@ const OsintPage = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Case Notes</h3>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">CASE_NOTES</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Log findings, hypotheses, and next steps</p>
+              </div>
               <textarea
                 value={caseNotes}
                 onChange={(event) => setCaseNotes(event.target.value)}
@@ -1175,9 +1239,11 @@ const OsintPage = () => {
               />
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Evidence Upload (AI)</h3>
-              <p className="mt-1 text-xs text-slate-400">Analyze documents and artifacts for metadata, hashes, and indicators.</p>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">EVIDENCE_UPLOAD</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Analyze documents for metadata, hashes, and indicators</p>
+              </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <input
                   type="file"
@@ -1206,8 +1272,11 @@ const OsintPage = () => {
               ) : null}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Entity Tracker</h3>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">ENTITY_TRACKER</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Tracked IPs, domains, and accounts</p>
+              </div>
               <div className="mt-3 flex gap-2">
                 <input
                   value={entityInput}
@@ -1240,8 +1309,11 @@ const OsintPage = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Timeline</h3>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">TIMELINE</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Event history log</p>
+              </div>
               <div className="mt-3 space-y-3 text-xs text-slate-300">
                 {events.length ? (
                   events.slice(0, 12).map((event, index) => (
@@ -1258,8 +1330,11 @@ const OsintPage = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-              <h3 className="text-base font-semibold text-white">Cases</h3>
+            <div className="terminal-card">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-100">CASES</h3>
+                <p className="font-mono text-[10px] text-slate-500 mt-0.5">// Saved investigation records</p>
+              </div>
               <div className="mt-3 space-y-2 text-xs text-slate-300">
                 {cases.length ? (
                   cases.map((row) => (

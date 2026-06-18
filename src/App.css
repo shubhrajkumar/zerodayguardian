@@ -54,40 +54,6 @@
   }
 }
 
-/* ── Glass Card Variants ── */
-.card-cyber {
-  border-radius: var(--radius);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: all 0.3s ease;
-}
-
-.card-cyber:hover {
-  border-color: var(--color-accent);
-  box-shadow: 0 4px 24px var(--color-shadow);
-}
-
-/* ── Grid Background Pattern (subtle) ── */
-.grid-bg {
-  background-image:
-    linear-gradient(rgba(42, 42, 62, 0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 42, 62, 0.3) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-
-/* ── Scan Line Overlay ── */
-.scan-line::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.03), transparent);
-  transform: translateY(-100%);
-  animation: scan-line 8s linear infinite;
-}
-
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *,

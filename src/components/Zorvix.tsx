@@ -27,26 +27,50 @@ import { NeuroMessage, NeuroTopicContext } from "@/lib/neurobotEngine";
 import { useAuth } from "@/context/AuthContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import { safeArray } from "@/utils/safeData";
+import { generateLocalMentorResponse } from "@/lib/localMentorEngine";
+import { queryGroqDirect } from "@/lib/groqDirect";
 import { parseTelemetryFromResponse, stripTelemetryBlock, vectorTrackLabel, RuntimeTelemetry } from "@/lib/telemetryTypes";
 
 const ZORVIX_NAME = "ZORVIX";
+const MENTOR_LABEL = "Personal Cyber Mentor";
+const MENTOR_TAGLINE = "I assess, guide, and push you further — like a senior analyst mentoring a new operator.";
 const MAX_ATTACHMENT_BYTES = 2_000_000;
 const DEFAULT_ATTACHMENT_PROMPT = "Analyze this attachment from a cybersecurity perspective.";
 const WELCOME_PATTERN = /^##\s*zorvi/i;
 const STREAM_ERROR_TEXT = "The live stream was interrupted. ZORVIX kept the workspace stable, but please retry for a complete answer.";
-const SERVICE_UNAVAILABLE_TEXT =
-  "ZORVIX could not reach the AI service right now. Your message was received, but the response path is temporarily unavailable. Please retry in a moment.";
 const GROQ_DIRECT_MAX_LENGTH = 500;
 const GROQ_DIRECT_TIMEOUT_MS = 15_000;
+
+/** Hacker spinner — green blinking dots that pulse like a terminal activity indicator */
+const HackerSpinner = () => (
+  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/8 px-4 py-2 shadow-[0_0_12px_rgba(52,211,153,0.08)]">
+    {[0, 1, 2].map((dot) => (
+      <span
+        key={dot}
+        className="h-2 w-2 rounded-full bg-emerald-400"
+        style={{
+          animation: "hacker-pulse 1.2s ease-in-out infinite",
+          animationDelay: `${dot * 0.2}s`,
+          boxShadow: "0 0 6px rgba(52, 211, 153, 0.6)",
+        }}
+      />
+    ))}
+    <span className="text-xs font-mono font-medium tracking-wider text-emerald-300/90">
+      ZORVIX is deciphering...
+    </span>
+  </div>
+);
 
 /** Heuristic: short, attachment-free messages route through the fast Groq endpoint. */
 const isQuickQuery = (prompt: string, attachment: ChatAttachmentPayload | null) =>
   !attachment && prompt.length > 0 && prompt.length <= GROQ_DIRECT_MAX_LENGTH;
 const DEFAULT_SUGGESTIONS = [
-  "Tell me the highest-value next cyber mission and why it matters.",
   "Debrief my current security learning state and expose my blind spots.",
-  "Turn this security problem into next action, risk, and validation.",
-  "Build a focused recon or defense practice sprint for today.",
+  "Assess my cyber momentum and tell me the most important move today.",
+  "Guide me through the next mission with tactical steps, risk, and validation.",
+  "Think like a senior analyst — what am I missing in my current approach?",
+  "Build a focused practice sprint for today based on my weakest skill.",
+  "Compare my progress to the 60-day roadmap and tell me where to focus.",
 ];
 const ATTACHMENT_ACCEPT = ".txt,.md,.csv,.json,.log,.pdf,.png,.jpg,.jpeg,.gif,.webp,text/plain,text/markdown,text/csv,application/json,application/pdf,image/png,image/jpeg,image/gif,image/webp";
 const SUPPORTED_ATTACHMENT_EXTENSIONS = new Set(["txt", "md", "csv", "json", "log", "pdf", "png", "jpg", "jpeg", "gif", "webp"]);
@@ -726,8 +750,7 @@ const TypingBubble = () => (
         className="h-2 w-2 animate-bounce rounded-full bg-[var(--theme-accent-blue)]"
         style={{ animationDelay: `${dot * 0.12}s`, animationDuration: "0.9s" }}
       />
-    ))}
-    <span className="text-xs font-medium text-[var(--theme-text-dim)]">{ZORVIX_NAME} soch raha hai...</span>
+    ))}                    <span className="text-xs font-medium text-[var(--theme-text-dim)]">{ZORVIX_NAME} is analyzing your question against mission context...</span>
   </div>
 );
 
@@ -749,7 +772,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isPreparingAttachment, setIsPreparingAttachment] = useState(false);
-  const [statusHint, setStatusHint] = useState("Open ZORVIX aur next smart move lo.");
+  const [statusHint, setStatusHint] = useState("ZORVIX Mentor ready. Share your current challenge or ask for guidance.");
   const [backendHealth, setBackendHealth] = useState<ChatbotHealthResponse | null>(null);
   const [attachment, setAttachment] = useState<ChatAttachmentPayload | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<AttachmentPreview | null>(null);
@@ -1116,11 +1139,18 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
         setBackendHealth({ status: "degraded", llm_ready: false });
         const apiFallback = error instanceof ApiError ? fallbackFromApiError(error) : null;
         const llmError = apiFallback?.llmError || llmErrorFromException(error);
+
+        // Last-resort: use the local mentor engine for context-aware fallback
+        const localResponse = generateLocalMentorResponse(prompt, {
+          topic: topic?.title || undefined,
+          missionTitle: topic?.title || undefined,
+          skillLevel: "intermediate",
+        });
         const fallbackText =
           apiFallback?.text ||
-          (error instanceof ApiError && error.status === 429 ? error.message : SERVICE_UNAVAILABLE_TEXT);
+          (error instanceof ApiError && error.status === 429 ? error.message : localResponse.text);
         replaceAssistantMessage(assistantId, fallbackText);
-        setStatusHint(statusHintFromLlmError(llmError));
+        setStatusHint("ZORVIX Core: Uplink unstable. Local guidance active.");
         return {
           assistantText: fallbackText,
           llmError,
@@ -1289,14 +1319,6 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
       const composerAttachment = attachmentOverride ?? attachment;
       const prompt = String(promptOverride ?? input).trim() || (composerAttachment ? DEFAULT_ATTACHMENT_PROMPT : "");
       if (!prompt || isStreaming || isPreparingAttachment) return;
-      if (!canUseSyncedSession) {
-        setStatusHint("Sign in to start a ZORVIX session.");
-        toast({
-          title: "Sign in required",
-          description: "ZORVIX session sync is available after authentication.",
-        });
-        return;
-      }
 
       const assistantId = `assistant-${Date.now() + 1}`;
       const attachmentPayload = composerAttachment;
@@ -1315,43 +1337,83 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
       setIsUtilityMenuOpen(false);
       setIsStreaming(true);
 
-      // ── Fast path: short, attachment-free queries go through Groq directly ──
-      const useFastPath = isQuickQuery(prompt, attachmentPayload);
-      if (useFastPath) {
-        setStatusHint(`${ZORVIX_NAME} routing through fast Groq path...`);
-      } else {
-        setStatusHint(`${ZORVIX_NAME} is reasoning across tools and knowledge modules...`);
-      }
+      setStatusHint(`${ZORVIX_NAME} is deciphering...`);
       scrollToBottom();
 
       let result = { assistantText: "", llmError: null as LlmErrorState | null };
 
-      // ── Step 1: Try fast Groq path for quick queries ──
-      if (useFastPath) {
+      // ── Step 0: Direct Groq API from frontend (no auth, no backend required) ──
+      if (!attachmentPayload && isQuickQuery(prompt, null)) {
+        setStatusHint(`${ZORVIX_NAME} routing through direct Groq channel...`);
         try {
-          result = await queryZorvixDirect({ prompt, assistantId });
-          if (!result.assistantText.trim()) throw new Error("empty_groq_response");
-        } catch (groqError) {
-          // Fast path failed — fall through to neurobot stream below
-          const llmErr = (groqError as Error & { llmError?: LlmErrorState | null }).llmError;
-          if (llmErr?.code === "rate_limit") {
-            // Rate limited on Groq — retry via neurobot stream (which has its own provider rotation)
-            setStatusHint("Fast path rate-limited. Switching to full pipeline...");
+          const groqDirect = await queryGroqDirect(prompt, {
+            topic: topic?.title,
+          });
+          if (groqDirect.source === "live") {
+            result = {
+              assistantText: groqDirect.reply,
+              llmError: null,
+            };
+            replaceAssistantMessage(assistantId, groqDirect.reply);
+            setStatusHint("Fast reply ready (Groq direct).");
+          } else {
+            // Fallback response from direct path — still use it
+            result = {
+              assistantText: groqDirect.reply,
+              llmError: { code: "local_fallback", title: "Local guidance active", detail: groqDirect.error || "" },
+            };
+            replaceAssistantMessage(assistantId, groqDirect.reply);
+            setStatusHint("Zorvix Core: Uplink interrupted. Local guidance active.");
           }
-          // Reset the assistant bubble for the stream path
+        } catch {
+          // Direct Groq failed — fall through to backend paths
           replaceAssistantMessage(assistantId, "");
           queuedDeltaRef.current = "";
         }
       }
 
-      // ── Step 2: Full neurobot stream path (or fallback from fast path) ──
+      // ── Step 1: If no result yet, try the existing backend paths ──
       if (!result.assistantText.trim()) {
-        try {
-          result = await streamPrompt({ prompt, attachmentPayload });
-          if (!result.assistantText.trim()) throw new Error("empty_stream");
-          setStatusHint(result.llmError ? statusHintFromLlmError(result.llmError) : "Live answer ready.");
-        } catch {
-          result = await recoverWithSync({ prompt, assistantId, attachmentPayload, topic });
+        if (!canUseSyncedSession) {
+          // No auth available and direct Groq failed — use local mentor immediately
+          const localResp = generateLocalMentorResponse(prompt, {
+            topic: topic?.title || undefined,
+            missionTitle: topic?.title || undefined,
+            skillLevel: "intermediate",
+          });
+          result = {
+            assistantText: localResp.text,
+            llmError: { code: "local_fallback", title: "Local guidance active", detail: "No backend or direct API available." },
+          };
+          replaceAssistantMessage(assistantId, localResp.text);
+          setStatusHint("Zorvix Core: Uplink interrupted. Local guidance active.");
+        } else {
+          // Authenticated — try the backend paths
+          const useFastPath = isQuickQuery(prompt, attachmentPayload);
+          if (useFastPath) {
+            try {
+              const fastResult = await queryZorvixDirect({ prompt, assistantId });
+              if (fastResult.assistantText.trim()) {
+                result = fastResult;
+                setStatusHint("Fast reply ready (Groq).");
+              }
+            } catch {
+              replaceAssistantMessage(assistantId, "");
+              queuedDeltaRef.current = "";
+            }
+          }
+
+          if (!result.assistantText.trim()) {
+            try {
+              const streamResult = await streamPrompt({ prompt, attachmentPayload });
+              if (streamResult.assistantText.trim()) {
+                result = streamResult;
+                setStatusHint(streamResult.llmError ? statusHintFromLlmError(streamResult.llmError) : "Live answer ready.");
+              }
+            } catch {
+              result = await recoverWithSync({ prompt, assistantId, attachmentPayload, topic });
+            }
+          }
         }
       }
 
@@ -1381,6 +1443,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
       input,
       isPreparingAttachment,
       isStreaming,
+      queryGroqDirect,
       queryZorvixDirect,
       recoverWithSync,
       replaceAssistantMessage,
@@ -1732,7 +1795,8 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
               </span>
               <div className="flex min-w-0 items-center gap-2">
                 <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${!online ? "bg-slate-500" : backendHealth?.status && backendHealth.status !== "ok" ? "bg-amber-500" : "bg-[#00ff88]"}`} />
-                <span className="text-sm font-semibold text-[var(--theme-text)]">{ZORVIX_NAME} AI</span>
+                <span className="text-sm font-semibold text-[var(--theme-text)]">{ZORVIX_NAME}</span>
+                <span className="text-[10px] font-medium text-cyan-400/70 font-mono hidden sm:inline">{MENTOR_LABEL}</span>
                 {activeTopic ? (
                   <span className="max-w-[42vw] truncate rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--theme-text-muted)] sm:max-w-[240px]">
                     {activeTopic.title}
@@ -1758,9 +1822,12 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
               ) : !visibleMessages.length ? (
                 <div className="mx-auto flex min-h-full w-full max-w-[760px] flex-col justify-center gap-4 py-4 sm:gap-5">
                   <div className="space-y-2 px-1">
-                    <h3 className="text-xl font-semibold tracking-tight text-[var(--theme-text)] sm:text-2xl">Ask ZORVIX</h3>
-                    <p className="max-w-[46ch] text-sm leading-6 text-[var(--theme-text-muted)]">
-                      Clear guidance, next actions, and focused cyber answers without noise.
+                    <h3 className="text-xl font-semibold tracking-tight text-[var(--theme-text)] sm:text-2xl">
+                      {ZORVIX_NAME}
+                      <span className="ml-2 text-sm font-normal text-cyan-400/80 font-mono">{MENTOR_LABEL}</span>
+                    </h3>
+                    <p className="max-w-[52ch] text-sm leading-6 text-[var(--theme-text-muted)]">
+                      {MENTOR_TAGLINE}
                     </p>
                   </div>
                   <div className="grid gap-2">
@@ -1780,12 +1847,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
                       <article key={message.id} className={`flex w-full ${isAssistant ? "justify-start" : "justify-end"}`}>
                         <div className={`min-w-0 max-w-[92%] rounded-[22px] px-4 py-3 text-[15px] leading-7 text-[var(--theme-text)] sm:max-w-[78%] sm:px-5 ${isAssistant ? "border-l-[3px] border-[#00ff88] bg-[var(--theme-surface)]" : "bg-[var(--theme-card)]"}`}>
                           {isPendingAssistant ? (
-                            <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-[var(--theme-surface)] px-4 py-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] fadeInUp">
-                              {[0, 1, 2].map((dot) => (
-                                <span key={dot} className="h-2 w-2 animate-bounce rounded-full bg-[var(--theme-accent-blue)]" style={{ animationDelay: `${dot * 0.12}s`, animationDuration: "0.9s" }} />
-                              ))}
-                              <span className="text-xs font-medium text-[var(--theme-text-dim)]">{ZORVIX_NAME} thinking...</span>
-                            </div>
+                            <HackerSpinner />
                           ) : (
                             <div className={`space-y-3 ${isAssistant ? "zorvix-assistant-copy" : "zorvix-user-copy"}`}>
                               {isAssistant ? renderMarkdownLite(stripTelemetryBlock(message.content)) : <p className="whitespace-pre-wrap">{message.content}</p>}
@@ -1893,6 +1955,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
             </span>
             <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${!online ? "bg-slate-500" : backendHealth?.status && backendHealth.status !== "ok" ? "bg-amber-500" : "bg-[#00ff88]"}`} />
             <span className="text-sm font-semibold text-[var(--theme-text)]">{ZORVIX_NAME}</span>
+            <span className="text-[10px] font-medium text-cyan-400/70 font-mono hidden sm:inline">{MENTOR_LABEL}</span>
             {activeTopic ? (
               <span className="max-w-[200px] truncate rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface)] px-2.5 py-1 text-[10px] font-medium text-[var(--theme-text-muted)]">
                 {activeTopic.title}
@@ -1921,8 +1984,13 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
             ) : !visibleMessages.length ? (
               <div className="mx-auto flex min-h-full w-full max-w-[420px] flex-col justify-center gap-4 px-4 py-4">
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold tracking-tight text-[var(--theme-text)]">Ask ZORVIX</h3>
-                  <p className="text-sm leading-6 text-[var(--theme-text-muted)]">Clear guidance and focused answers.</p>
+                  <h3 className="text-lg font-semibold tracking-tight text-[var(--theme-text)]">
+                    {ZORVIX_NAME}
+                    <span className="ml-2 text-xs font-normal text-cyan-400/80 font-mono">{MENTOR_LABEL}</span>
+                  </h3>
+                  <p className="text-sm leading-6 text-[var(--theme-text-muted)] max-w-[42ch]">
+                    {MENTOR_TAGLINE}
+                  </p>
                 </div>
                 <div className="grid gap-2">
                   {(missionStarterSuggestions.length ? missionStarterSuggestions : DEFAULT_SUGGESTIONS).slice(0, 3).map((suggestion) => (
@@ -1941,10 +2009,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
                     <article key={message.id} className={`flex w-full ${isAssistant ? "justify-start" : "justify-end"}`}>
                       <div className={`min-w-0 max-w-[92%] rounded-[20px] px-3.5 py-2.5 text-[14px] leading-6 text-[var(--theme-text)] sm:max-w-[82%] ${isAssistant ? "border-l-[3px] border-[#00ff88] bg-[var(--theme-surface)]" : "bg-[var(--theme-card)]"}`}>
                         {isPendingAssistant ? (
-                          <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-[var(--theme-surface)] px-3 py-1.5 text-xs text-[var(--theme-text-dim)]">
-                            <Loader2 className="h-3 w-3 animate-spin text-cyan-300" />
-                            Thinking...
-                          </div>
+                          <HackerSpinner />
                         ) : (
                           <div className="space-y-2">
                             {isAssistant ? renderMarkdownLite(stripTelemetryBlock(message.content)) : <p className="whitespace-pre-wrap text-[14px]">{message.content}</p>}

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { logFrontendErrorToFirestore } from "@/lib/firestoreGrowth";
 import { logger } from "@/lib/logger";
 
-const SUPPORT_EMAIL = "ksubhraj28@gmail.com";
+const SUPPORT_EMAIL = "ops@zerodayguardian.net";
 
 type Props = {
   children: ReactNode;

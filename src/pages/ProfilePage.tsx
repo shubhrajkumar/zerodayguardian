@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Award, BookOpen, Flame, Zap, Settings, LogOut } from "lucide-react";
+import { ArrowLeft, BookOpen, Flame, Zap, Settings, LogOut } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import { useAuth } from "@/context/AuthContext";
 import { useUserProgress } from "@/context/UserProgressContext";
-import { useGamificationSystem, getLevelLabel } from "@/lib/gamificationSystem";
+import { useGamificationSystem, getLevelLabel, getRankIcon } from "@/lib/gamificationSystem";
 import XPBar from "@/components/gamification/XPBar";
 import StreakCounter from "@/components/gamification/StreakCounter";
 import BadgeDisplay from "@/components/gamification/BadgeDisplay";
@@ -37,7 +37,8 @@ export default function ProfilePage() {
   const handle = profile?.handle || displayName.toLowerCase().replace(/\s+/g, ".");
   const xp = progress?.xp ?? snapshot.totalXp;
   const streak = progress?.streak ?? snapshot.streakDays;
-  const rank = progress?.rank || getLevelLabel(snapshot.level);
+  const rankLabel = progress?.rank || getLevelLabel(snapshot.level);
+  const rankIcon = getRankIcon(snapshot.level);
   const labsCompleted = progress?.completedLabs ?? 0;
 
   useEffect(() => {
@@ -48,10 +49,10 @@ export default function ProfilePage() {
 
   const stats = useMemo(() => [
     { label: "XP", value: xp.toLocaleString(), icon: <Zap className="h-4 w-4" />, color: "var(--theme-accent-blue)" },
-    { label: "Rank", value: rank, icon: <Award className="h-4 w-4" />, color: "var(--theme-accent-purple)" },
+    { label: "Rank", value: rankLabel, icon: <span className="text-base">{rankIcon}</span>, color: "var(--theme-accent-purple)" },
     { label: "Labs", value: labsCompleted.toString(), icon: <BookOpen className="h-4 w-4" />, color: "var(--theme-accent-green)" },
     { label: "Streak", value: `${streak}d`, icon: <Flame className="h-4 w-4" />, color: "var(--theme-accent-orange)" },
-  ], [xp, rank, labsCompleted, streak]);
+  ], [xp, rankLabel, labsCompleted, streak]);
 
   const recentActivity: ActivityItem[] = useMemo(() => {
     const items: ActivityItem[] = [];

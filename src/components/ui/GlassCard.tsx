@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 import { type ReactNode } from "react";
+import { motion } from "framer-motion";
+import { hoverLift, tapScale } from "@/lib/animations";
 
 export interface GlassCardProps {
   /** Visual variant. `default` = subtle border; `accent` = neon accent border; `locked` = dimmed */
@@ -28,17 +30,15 @@ const variantStyles: Record<string, string> = {
 };
 
 const hoverEffect = cn(
-  "will-change-transform transition-all duration-300 motion-reduce:transition-none",
-  "hover:-translate-y-0.5",
+  "will-change-transform",
   "active:scale-[0.98]",
 );
 
 /**
- * GlassCard — Premium glassmorphism card with optional neon glow on hover.
+ * GlassCard — Premium glassmorphism card with framer-motion spring hover/tap.
  *
- * 🔍 Cyber Rationale: GPU-accelerated transforms (translateY, scale) for jank-free
- * 60fps interactions even on low-end devices. Glassmorphism adds depth hierarchy
- * to the cyber theme. ARIA attributes ensure screen readers announce interactive cards.
+ * 🔍 Uses GPU-accelerated transforms (translateY, scale) for jank-free
+ * 60fps interactions via framer-motion's spring physics engine.
  */
 export default function GlassCard({
   variant = "default",
@@ -54,7 +54,7 @@ export default function GlassCard({
   const isInteractive = Boolean(onClick);
 
   return (
-    <div
+    <motion.div
       style={style}
       className={cn(
         "rounded-2xl border backdrop-blur-xl",
@@ -78,9 +78,11 @@ export default function GlassCard({
       tabIndex={isInteractive ? 0 : undefined}
       role={role || (isInteractive ? "button" : undefined)}
       aria-label={ariaLabel}
+      whileHover={isInteractive || glowOnHover ? hoverLift : undefined}
+      whileTap={isInteractive ? tapScale : undefined}
       {...rest}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

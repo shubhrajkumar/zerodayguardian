@@ -1,4 +1,4 @@
-const CONTACT_EMAIL = "ksubhraj28@gmail.com";
+const CONTACT_EMAIL = "ops@zerodayguardian.net";
 
 const contactChannels = [
   {

@@ -7,6 +7,7 @@
  */
 import { ComponentType, lazy, LazyExoticComponent, ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { BrowserRouter, matchPath, Route, Routes, useLocation } from "react-router-dom";
+import PageTransition from "./components/PageTransition";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SEOManager, { type JsonLdEntry } from "./components/SEOManager";
 import Layout from "./components/Layout";
@@ -16,10 +17,12 @@ import ServerWakeUpBanner from "./components/ui/ServerWakeUpBanner";
 import { clearAnonymousClientState } from "./lib/apiClient";
 import { UserProgressProvider, useUserProgress } from "./context/UserProgressContext";
 import { useAuth } from "./context/AuthContext";
+import { useGamificationSystem } from "./lib/gamificationSystem";
 import { LearningModeProvider } from "./context/LearningModeContext";
 import { MissionSystemProvider } from "./context/MissionSystemApiContext";
 import { AdaptiveMentorProvider } from "./context/AdaptiveMentorContext";
 import { GamificationProvider } from "./context/GamificationContext";
+import { OnboardingProvider, useOnboarding } from "./context/OnboardingContext";
 import { warmHighIntentRoutes } from "./lib/routeWarmup";
 import { useScrollReveal } from "./hooks/useScrollReveal";
 import { useGrowthProfileSync } from "./hooks/useGrowthFeatures";
@@ -66,6 +69,8 @@ const LazyToasters = lazy(() =>
 );
 const LazyFirebaseStatusBadge = lazy(() => import("./components/FirebaseStatusBadge"));
 const RewardExperience = lazy(() => import("./components/platform/RewardExperience"));
+const RankUpCelebration = lazy(() => import("./components/gamification/RankUpCelebration"));
+const LazyOnboarding = lazy(() => import("./components/onboarding/OnboardingCeremony"));
 
 // ── Lazy-loaded page components ──
 const IndexPage = lazy(() => import("./pages/HomePage"));
@@ -97,10 +102,12 @@ const MissionsPage = lazy(() => import("./pages/MissionsPage"));
 const ComingSoonLabsPage = lazy(() => import("./components/ComingSoonLabs"));
 const RoadmapPage = lazy(() => import("./pages/RoadmapPage"));
 const DemoNmapLab = lazy(() => import("./pages/Labs/DemoNmapLab"));
+const DemoAssessmentPage = lazy(() => import("./pages/Labs/DemoAssessmentPage"));
+const DemoRoadmapPage = lazy(() => import("./pages/Labs/DemoRoadmapPage"));
 
 // ── Site config ──
 const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "").replace(/\/+$/, "");
-const SUPPORT_EMAIL = "ksubhraj28@gmail.com";
+const SUPPORT_EMAIL = "ops@zerodayguardian.net";
 
 // ── SEO Config ──
 type RouteSeoConfig = {
@@ -149,9 +156,9 @@ const buildCourseJsonLd = (canonical: string) => ({
 const routeSeoConfig: RouteSeoConfig[] = [
   {
     patterns: ["/"],
-    title: "ZeroDay Guardian | Deploy Your Cyber-AI Workspace",
-    description: "Deploy missions, labs, OSINT workflows, and adaptive ZORVIX AI guidance inside one premium cybersecurity workspace.",
-    keywords: "cybersecurity SaaS, AI cyber mentor, cyber labs, OSINT tools, threat intelligence, zero day guardian",
+    title: "ZeroDay Guardian | Become a Cyber Security Professional Through Real Missions",
+    description: "Master cyber security step-by-step through guided labs, AI mentorship, practical missions, and structured career paths. Start learning free.",
+    keywords: "cybersecurity learning, ethical hacking, bug bounty hunter, SOC analyst, OSINT investigator, cyber missions, AI mentor, hands-on labs",
     buildJsonLd: () => [buildOrganizationJsonLd(), buildWebSiteJsonLd()],
   },
   {
@@ -180,7 +187,7 @@ const routeSeoConfig: RouteSeoConfig[] = [
     keywords: "cyber labs, nmap demo, free scan lab, cybersecurity labs, hands-on security",
   },
   {
-    patterns: ["/roadmap"],
+    patterns: ["/demo/assessment", "/demo/roadmap", "/roadmap"],
     title: "60-Day Cyber Roadmap | ZeroDay Guardian",
     description: "Follow a structured 60-day cybersecurity learning path — from recon fundamentals to binary exploitation. Track your progress and unlock each day.",
     keywords: "cybersecurity roadmap, 60-day plan, ethical hacking path, cyber learning journey",
@@ -342,6 +349,31 @@ const ColdStartWatcher = () => {
   );
 };
 
+/** Detect new users (0 XP, 0 missions) and trigger onboarding */
+const OnboardingGate = () => {
+  const { isAuthenticated, user } = useAuth();
+  const { snapshot, loading } = useGamificationSystem(user?.id, user?.name || undefined);
+  const { initiateCeremony, showCeremony } = useOnboarding();
+  const hasTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    // Wait for auth AND gamification data to finish loading before checking
+    // This prevents false triggers for existing users whose data hasn't loaded yet
+    if (loading || !isAuthenticated || !user || hasTriggeredRef.current) return;
+    
+    // New user = 0 total XP and 0 completed days (data is loaded, not default)
+    const isNewUser = snapshot.totalXp === 0 && snapshot.completedDays === 0 && snapshot.level <= 1;
+    if (isNewUser) {
+      hasTriggeredRef.current = true;
+      // Small delay so everything renders first
+      const timer = setTimeout(() => initiateCeremony(), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isAuthenticated, user, snapshot.totalXp, snapshot.completedDays, snapshot.level, initiateCeremony]);
+
+  return showCeremony ? <LazyOnboarding /> : null;
+};
+
 const GamificationTracker = () => {
   const location = useLocation();
   const { trackAction } = useUserProgress();
@@ -397,6 +429,8 @@ const appRoutes: AppRouteDefinition[] = [
   { path: "/lab", component: LabPage, requiresAuth: true },
   { path: "/labs", component: ComingSoonLabsPage },
   { path: "/labs/demo-nmap", component: DemoNmapLab },
+  { path: "/demo/assessment", component: DemoAssessmentPage },
+  { path: "/demo/roadmap", component: DemoRoadmapPage },
   { path: "/roadmap", component: RoadmapPage },
   { path: "/blog", component: BlogPage, requiresAuth: true },
   { path: "/blog/:slug", component: BlogDetail, requiresAuth: true },
@@ -443,6 +477,7 @@ export default function AppShell() {
         <LearningModeProvider>
           <AdaptiveMentorProvider>
             <GamificationProvider userId={user?.id} handle={user?.name}>
+            <OnboardingProvider defaultCallSign={user?.name || ""}>
             <BrowserRouter
               future={{
                 v7_startTransition: true,
@@ -455,6 +490,7 @@ export default function AppShell() {
               <GrowthProfileSync />
               <Suspense fallback={null}><LazyFirebaseStatusBadge /></Suspense>
               <RewardExperience />
+              <Suspense fallback={null}><RankUpCelebration /></Suspense>
               <ServerWakeUpBanner />
               <ColdStartWatcher />
               <Layout>
@@ -464,17 +500,27 @@ export default function AppShell() {
                       <Route
                         key={route.path}
                         path={route.path}
-                        element={renderRouteElement(route.component, route.requiresAuth)}
+                        element={
+                          <PageTransition>
+                            {renderRouteElement(route.component, route.requiresAuth)}
+                          </PageTransition>
+                        }
                       />
                     ))}
-                    <Route path="*" element={renderRouteElement(NotFoundPage)} />
+                    <Route path="*" element={
+                      <PageTransition>
+                        {renderRouteElement(NotFoundPage)}
+                      </PageTransition>
+                    } />
                   </Routes>
                 </Suspense>
               </Layout>
 
               <Suspense fallback={null}><LazyToasters /></Suspense>
               <ToastContainer />
+              <OnboardingGate />
             </BrowserRouter>
+            </OnboardingProvider>
             </GamificationProvider>
           </AdaptiveMentorProvider>
         </LearningModeProvider>

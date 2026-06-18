@@ -56,16 +56,16 @@ export default function BadgeDisplay({ badges, earnedBadges }: BadgeDisplayProps
 
   return (
     <section
-      className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-4"
+      className="rounded-xl border border-slate-800/50 bg-slate-900/40 p-4 hologram-card"
       aria-labelledby="badges-title"
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <p id="badges-title" className="text-sm font-semibold text-[var(--theme-text)]">
-            Achievements
+          <p id="badges-title" className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <span className="text-emerald-400">🏅</span> Achievements
           </p>
-          <p className="text-xs text-slate-400">
-            {earned.size} / {catalog.length} earned
+          <p className="text-xs text-slate-500 font-mono">
+            {earned.size} / {catalog.length} collected
           </p>
         </div>
       </div>
@@ -86,15 +86,17 @@ export default function BadgeDisplay({ badges, earnedBadges }: BadgeDisplayProps
             >
               <button
                 type="button"
-                className={`flex min-h-[6.25rem] w-full flex-col items-center justify-center gap-2 rounded-xl border p-3 text-center transition duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                className={`flex min-h-[6.25rem] w-full flex-col items-center justify-center gap-2 rounded-lg border p-3 text-center transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 ${
                   isEarned
-                    ? "border-blue-400/35 bg-blue-500/10 text-blue-50"
-                    : "border-[var(--theme-border)] bg-[var(--theme-overlay)] text-slate-400 opacity-30"
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-slate-100 hover:border-emerald-400/50 hover:shadow-[0_0_12px_rgba(52,211,153,0.1)]"
+                    : "border-slate-800/40 bg-slate-800/10 text-slate-500 opacity-40"
                 }`}
-                aria-label={`${badge.name} badge - ${isEarned ? "earned" : "locked"}`}
+                aria-label={`${badge.name} badge - ${isEarned ? "collected" : "locked"}`}
                 aria-describedby={active ? tooltipId : undefined}
               >
-                <span className="text-2xl" aria-hidden="true">
+                <span className="text-2xl" aria-hidden="true" style={{
+                  filter: isEarned ? "drop-shadow(0 0 6px rgba(52,211,153,0.3))" : undefined,
+                }}>
                   {badge.icon}
                 </span>
                 <span className="text-xs font-semibold">{badge.name}</span>
@@ -104,13 +106,13 @@ export default function BadgeDisplay({ badges, earnedBadges }: BadgeDisplayProps
                 <div
                   id={tooltipId}
                   role="tooltip"
-                  className="absolute bottom-full left-1/2 z-20 mb-2 w-52 -translate-x-1/2 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-card)] p-3 text-left shadow-xl"
+                  className="absolute bottom-full left-1/2 z-20 mb-2 w-52 -translate-x-1/2 rounded-lg border border-slate-700/50 bg-slate-900/95 backdrop-blur-xl p-3 text-left shadow-xl"
                 >
-                  <p className="text-xs font-semibold text-[var(--theme-text)]">{badge.name}</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-300">{badge.description}</p>
-                  <p className="mt-2 text-[11px] text-slate-400">Requirement: {badge.requirement}</p>
+                  <p className="text-xs font-semibold text-slate-100">{badge.name}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-400">{badge.description}</p>
+                  <p className="mt-2 text-[10px] font-mono text-slate-500">Requirement: {badge.requirement}</p>
                   <p className={isEarned ? "mt-1 text-[11px] text-emerald-300" : "mt-1 text-[11px] text-slate-500"}>
-                    {isEarned ? "Earned" : "Locked"}
+                    {isEarned ? "✓ Collected" : "Locked"}
                   </p>
                 </div>
               ) : null}

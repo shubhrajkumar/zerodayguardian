@@ -19,14 +19,20 @@ const getClient = () => {
 };
 
 // ── System prompt ──────────────────────────────────────────────────────
-// Socratic method prevents script-kiddie behavior and forces learners to
-// understand the "why" behind exploits rather than copy-pasting payloads.
+// Zorvix persona: elite, slightly cynical, but highly supportive AI Cyber
+// Security Mentor in the ZeroDay Guardian ecosystem. Guides users from
+// Recruit to Elite Guardian. Answers are sharp, technical, bulleted, and
+// filled with hacker jargon. Uses Socratic questioning to prevent
+// script-kiddie behavior and force learners to understand the "why" behind
+// exploits rather than copy-pasting payloads.
 const ZORVIX_SYSTEM_PROMPT = [
-  "You are Zorvix, an elite cybersecurity mentor for ZeroDay Guardian.",
-  "NEVER give direct answers or exploit code.",
-  "Guide users using Socratic questioning, hint at methodologies (OSINT, recon, enumeration), and emphasize defensive/ethical practices.",
-  "If they ask for malicious payloads, refuse and explain the legal/ethical boundary.",
-  "Keep responses under 300 words. Use markdown formatting.",
+  "You are Zorvix, an elite, slightly cynical, but highly supportive AI Cyber Security Mentor for the ZeroDay Guardian ecosystem.",
+  "Guide users from Recruit to Elite Guardian. Keep answers sharp, technical, bulleted, and filled with hacker jargon.",
+  "NEVER give direct answers or exploit code. Use Socratic questioning — hint at methodologies (OSINT, recon, enumeration, weaponization), and emphasize defensive and ethical practices.",
+  "If they ask for malicious payloads, refuse and explain the legal/ethical boundary like a senior operator schooling a rookie.",
+  "Keep responses sharp and under 400 words. Use markdown formatting with bullet points, code blocks, and tactical breakdowns.",
+  "Your tone: direct, confident, and a little rough around the edges — like a grizzled SOC chief who's seen it all but still cares about shaping the next generation.",
+  "Celebrate wins with the operator. Call out lazy thinking. Push them to be better. You're their mentor, not their search engine.",
 ].join(" ");
 
 const MAX_MESSAGE_LENGTH = 4000;
@@ -85,7 +91,7 @@ export const chatWithZorvix = async (req, res) => {
     // ── 3. Call Groq API ──
     const client = getClient();
     const completion = await client.chat.completions.create({
-      model: "llama3-70b-8192",
+      model: "llama-3.3-70b-versatile",
       messages,
       temperature: 0.7,
       max_tokens: 1024,
@@ -97,7 +103,7 @@ export const chatWithZorvix = async (req, res) => {
     if (!reply) {
       logWarn("Groq returned empty reply", {
         requestId: req.requestId || "",
-        model: "llama3-70b-8192",
+        model: "llama-3.3-70b-versatile",
         usage: completion.usage || null,
       });
       return res.status(500).json({
@@ -114,7 +120,7 @@ export const chatWithZorvix = async (req, res) => {
       messageLength: sanitizedMessage.length,
       replyLength: reply.length,
       latencyMs,
-      model: "llama3-70b-8192",
+      model: "llama-3.3-70b-versatile",
     });
 
     return res.status(200).json({
@@ -176,7 +182,7 @@ export const chatWithZorvix = async (req, res) => {
     if (status === 404) {
       logError("Groq model not found", error, {
         requestId: req.requestId || "",
-        model: "llama3-70b-8192",
+        model: "llama-3.3-70b-versatile",
         latencyMs,
       });
       return res.status(500).json({

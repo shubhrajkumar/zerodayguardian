@@ -2,7 +2,6 @@ import { test, expect, Page } from "@playwright/test";
 
 /**
  * Collects all console messages of a given type from the page.
- * Call this before navigating to start collection.
  */
 const collectConsole = (page: Page, type: "error" | "warning" = "error") => {
   const messages: string[] = [];
@@ -16,8 +15,7 @@ const collectConsole = (page: Page, type: "error" | "warning" = "error") => {
 
 /**
  * Sets up mock auth via addInitScript so the flag is present
- * before ANY JavaScript executes on the page. Must be called
- * before the first page.goto() in each test.
+ * before ANY JavaScript executes on the page.
  */
 const enableMockAuth = (page: Page) => {
   return page.addInitScript(() => {
@@ -26,32 +24,34 @@ const enableMockAuth = (page: Page) => {
 };
 
 /**
- * E2E tests for the ZeroDay Guardian dashboard using mock auth.
+ * E2E tests for the ZeroDay Guardian Dashboard — Mission Control Center.
  *
- * Validates that the dashboard renders without console errors,
- * displays all key sections, and survives navigation/refresh.
+ * Validates the dashboard renders with the Cyber Operations Academy layout:
+ * - Operations sidebar (Command Center, AI Mentor, Operations, etc.)
+ * - Command Center header with COMMAND CENTER label
+ * - System Status Telemetry grid (Command Core, AI Uplink, Network, Threat Feed)
+ * - Active Mission Briefing
+ * - Telemetry Stats (Total XP, Streak, Badges, Rank)
+ * - Quick Deploy actions (AI Mentor, Combat Lab, Operations, Briefings)
+ * - Operator Progress (XPBar, StreakCounter, BadgeDisplay)
+ * - Intel Feed (activity log)
  */
-test.describe("Dashboard — no console errors", () => {
+test.describe("Dashboard — Mission Control Center", () => {
   test("loads dashboard with mock auth and zero console errors", async ({ page }) => {
-    // Set mock auth BEFORE navigating (runs before page JS)
     await enableMockAuth(page);
-
     const errors = collectConsole(page, "error");
 
     await page.goto("/dashboard");
 
     // Wait for the dashboard to fully render
-    await page.waitForSelector("text=Cyber Sentinel", { timeout: 20000 });
-    await page.waitForSelector("text=Quick Actions", { timeout: 10000 });
-    await page.waitForSelector("text=Recent Activity", { timeout: 10000 });
-
-    // Wait for lazy-loaded components (Zorvix overlay, SentryTestPanel)
+    await page.waitForSelector("text=COMMAND CENTER", { timeout: 20000 });
+    await page.waitForSelector("text=System Status", { timeout: 10000 });
     await page.waitForTimeout(3000);
 
     // Screenshot for visual debugging
     await page.screenshot({ path: "e2e/screenshots/dashboard-loaded.png", fullPage: true });
 
-    // Assert: no critical console errors (backend 500/401 expected without real backend)
+    // Assert: no critical console errors (backend errors expected without real backend)
     const criticalErrors = errors.filter((msg) => {
       if (msg.includes("is not authorized for OAuth operations")) return false;
       if (msg.includes("Source map") || msg.includes("source map")) return false;
@@ -65,38 +65,48 @@ test.describe("Dashboard — no console errors", () => {
     expect(criticalErrors).toEqual([]);
   });
 
-  test("dashboard renders all key sections", async ({ page }) => {
+  test("dashboard renders all key Mission Control sections", async ({ page }) => {
     await enableMockAuth(page);
     await page.goto("/dashboard");
 
     // Wait for critical content
-    await page.waitForSelector("text=Test Guardian", { timeout: 20000 });
-
-    // Verify we're on the dashboard
+    await page.waitForSelector("text=COMMAND CENTER", { timeout: 20000 });
     await expect(page).toHaveURL(/\/dashboard/);
 
-    // Verify we're on the dashboard
-    await expect(page).toHaveURL(/\/dashboard/);
+    // ── Sidebar ──
+    await expect(page.locator("text=Command Center").first()).toBeAttached();
+    await expect(page.locator("text=AI Mentor").first()).toBeAttached();
+    await expect(page.locator("text=Operations").first()).toBeAttached();
+    await expect(page.locator("text=Combat Labs").first()).toBeAttached();
 
-    // Stats section — use stat labels for unambiguous matching
-    await expect(page.locator("text=1,280")).toBeVisible();
-    await expect(page.locator("text=7 days")).toBeVisible();
+    // ── Command Center Header ──
+    await expect(page.locator("text=COMMAND CENTER").first()).toBeVisible();
+
+    // ── System Status Telemetry ──
+    await expect(page.locator("text=Command Core")).toBeVisible();
+    await expect(page.locator("text=AI Uplink")).toBeVisible();
+    await expect(page.locator("text=Network").first()).toBeVisible();
+    await expect(page.locator("text=Threat Feed")).toBeVisible();
+
+    // ── Active Mission Briefing ──
+    await expect(page.locator("text=Active Operation").first()).toBeVisible();
+
+    // ── Telemetry Stats ──
+    await expect(page.locator("text=Total XP").first()).toBeVisible();
+    await expect(page.locator("text=Streak").first()).toBeVisible();
     await expect(page.locator("text=Badges").first()).toBeVisible();
-    await expect(page.locator("text=Cyber Sentinel").first()).toBeVisible();
+    await expect(page.locator("text=Rank").first()).toBeVisible();
 
-    // Quick actions
-    await expect(page.locator("text=AI Assistant").first()).toBeVisible();
-    await expect(page.locator("text=Run Lab")).toBeVisible();
-    await expect(page.locator("text=Tools").first()).toBeVisible();
-    await expect(page.locator("text=Learn").first()).toBeVisible();
+    // ── Quick Deploy Actions ──
+    await expect(page.locator("text=Quick Deploy").first()).toBeVisible();
+    await expect(page.locator("text=AI Mentor").nth(1)).toBeVisible();
+    await expect(page.locator("text=Combat Lab").first()).toBeVisible();
 
-    // Recent activity
-    await expect(page.locator("text=Threat scan completed")).toBeVisible();
-    await expect(page.locator("text=Weekly report generated")).toBeVisible();
-    await expect(page.locator("text=Lab exercise completed")).toBeVisible();
+    // ── Operator Progress ──
+    await expect(page.locator("text=Operator Progress").first()).toBeVisible();
 
-    // System status
-    await expect(page.locator("text=System Online")).toBeVisible();
+    // ── Intel Feed ──
+    await expect(page.locator("text=Intel Feed").first()).toBeVisible();
   });
 });
 
@@ -104,32 +114,32 @@ test.describe("Dashboard — resilience", () => {
   test("handles route refresh without crashing", async ({ page }) => {
     await enableMockAuth(page);
     await page.goto("/dashboard");
-    await page.waitForSelector("text=Test Guardian", { timeout: 20000 });
+    await page.waitForSelector("text=COMMAND CENTER", { timeout: 20000 });
 
     // Full page refresh
     await page.reload();
-    await page.waitForSelector("text=Test Guardian", { timeout: 20000 });
+    await page.waitForSelector("text=COMMAND CENTER", { timeout: 20000 });
 
     // Dashboard should still be intact
-    await expect(page.locator("text=Recent Activity")).toBeVisible();
+    await expect(page.locator("text=System Status").first()).toBeVisible();
+    await expect(page.locator("text=Quick Deploy").first()).toBeVisible();
   });
 
   test("navigates between pages and back without crashing", async ({ page }) => {
     await enableMockAuth(page);
-
     const errors = collectConsole(page, "error");
 
     await page.goto("/dashboard");
-    await page.waitForSelector("text=Test Guardian", { timeout: 20000 });
+    await page.waitForSelector("text=COMMAND CENTER", { timeout: 20000 });
 
-    // Navigate to assistant via direct URL (avoids React click-handling races)
+    // Navigate to assistant via direct URL
     await page.goto("/assistant");
     await page.waitForURL("**/assistant", { timeout: 15000 });
     await page.waitForTimeout(2000);
 
     // Navigate back to dashboard
     await page.goto("/dashboard");
-    await page.waitForSelector("text=Test Guardian", { timeout: 20000 });
+    await page.waitForSelector("text=COMMAND CENTER", { timeout: 20000 });
 
     // No critical console errors
     const criticalErrors = errors.filter(

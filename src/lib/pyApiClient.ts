@@ -30,7 +30,13 @@ const unwrapPayload = <T,>(payload: unknown): T => {
 
 export const resolvePublicPyApiUrl = (path: string) => resolvePyApiUrl(path);
 
-const normalizeUrl = (path: string) => resolvePyApiUrl(path);
+const normalizeUrl = (path: string) => {
+  // The axios instance already has PY_API_BASE_URL as its baseURL,
+  // so resolvePyApiUrl would double-prefix (e.g., /pyapi/pyapi/users).
+  // Just return the path as-is and let axios combine it with baseURL.
+  if (/^https?:\/\//i.test(path)) return path;
+  return path.startsWith("/") ? path : `/${path}`;
+};
 
 const buildPyApiErrorFromAxios = (error: AxiosError) => {
   const response = error.response;

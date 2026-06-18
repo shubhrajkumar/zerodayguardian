@@ -31,13 +31,15 @@ const makeSnapshot = (overrides: Partial<GamificationSnapshot> = {}): Gamificati
 
 describe("StreakCounter", () => {
   it("renders streak days count", () => {
-    render(<StreakCounter snapshot={makeSnapshot({ streakDays: 5 })} />);
-    expect(screen.getByText("5 days")).toBeTruthy();
+    const { container } = render(<StreakCounter snapshot={makeSnapshot({ streakDays: 5 })} />);
+    const title = container.querySelector("#streak-title");
+    expect(title?.textContent).toMatch(/\b5\b.*\bdays\b/);
   });
 
   it("renders singular 'day' for streak of 1", () => {
-    render(<StreakCounter snapshot={makeSnapshot({ streakDays: 1 })} />);
-    expect(screen.getByText("1 day")).toBeTruthy();
+    const { container } = render(<StreakCounter snapshot={makeSnapshot({ streakDays: 1 })} />);
+    const title = container.querySelector("#streak-title");
+    expect(title?.textContent).toMatch(/\b1\b.*\bday\b/);
   });
 
   it("renders 'Daily streak' when streak < 7", () => {
@@ -52,8 +54,8 @@ describe("StreakCounter", () => {
 
   it("renders fire badge indicator when on fire (streak >= 7)", () => {
     const { container } = render(<StreakCounter snapshot={makeSnapshot({ streakDays: 10 })} />);
-    // The "!" badge with animate-pulse class
-    const fireBadge = container.querySelector(".animate-pulse");
+    // The "!" badge with animate-bounce-glow class
+    const fireBadge = container.querySelector(".animate-bounce-glow");
     expect(fireBadge).toBeTruthy();
     expect(fireBadge?.textContent).toBe("!");
   });
@@ -81,13 +83,15 @@ describe("StreakCounter", () => {
   });
 
   it("uses streakDays when it is larger than completedDays", () => {
-    render(<StreakCounter snapshot={makeSnapshot({ streakDays: 15, completedDays: 8 })} />);
-    expect(screen.getByText("15")).toBeTruthy();
+    const { container } = render(<StreakCounter snapshot={makeSnapshot({ streakDays: 15, completedDays: 8 })} />);
+    const title = container.querySelector("#streak-title");
+    expect(title?.textContent).toContain("15");
   });
 
   it("renders zero streak correctly", () => {
-    render(<StreakCounter snapshot={makeSnapshot({ streakDays: 0, completedDays: 0 })} />);
-    expect(screen.getByText("0 days")).toBeTruthy();
+    const { container } = render(<StreakCounter snapshot={makeSnapshot({ streakDays: 0, completedDays: 0 })} />);
+    const title = container.querySelector("#streak-title");
+    expect(title?.textContent).toMatch(/\b0\b.*\bdays\b/);
     expect(screen.getByText("Streak paused")).toBeTruthy();
   });
 });

@@ -9,11 +9,11 @@ const CSRF_TOKEN_KEY = "neurobot_csrf_token";
 export const ZDG_REFRESH_TOKEN_KEY = "zdg_refresh";
 
 const verboseApiLogging =
-  import.meta.env.DEV ||
   String(import.meta.env.VITE_ENABLE_FIREBASE_DIAGNOSTICS || "").trim().toLowerCase() === "true";
 const logDebug = (...args: unknown[]) => {
   if (!verboseApiLogging) return;
-  console.log(...args);
+  // Use console.debug so messages are hidden at default log level in dev tools
+  console.debug(...args);
 };
 const logDebugError = (...args: unknown[]) => {
   if (!verboseApiLogging) return;

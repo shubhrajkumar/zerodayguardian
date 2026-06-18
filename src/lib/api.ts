@@ -50,15 +50,19 @@ api.interceptors.request.use(async (config) => {
   if (!['get', 'head', 'options'].includes(method)) {
     let csrf = getCsrfToken();
     if (!csrf) {
-      // Fetch a fresh CSRF token if none exists
-      try {
-        const csrfUrl = resolvedBaseUrl ? `${resolvedBaseUrl}/api/auth/csrf` : '/api/auth/csrf';
-        const resp = await fetch(csrfUrl, { credentials: 'include', headers: { Accept: 'application/json' } });
-        if (resp.ok) {
-          const body = await resp.json().catch(() => ({}));
-          csrf = body?.csrfToken || getCsrfTokenFromCookie();
-        }
-      } catch { /* CSRF fetch failed — will retry on next request */ }
+      // Skip CSRF fetch in mock auth mode — no backend is running
+      const isMockAuth = (() => { try { return localStorage.getItem('zdg_mock_auth') === 'true'; } catch { return false; } })();
+      if (!isMockAuth) {
+        // Fetch a fresh CSRF token if none exists
+        try {
+          const csrfUrl = resolvedBaseUrl ? `${resolvedBaseUrl}/api/auth/csrf` : '/api/auth/csrf';
+          const resp = await fetch(csrfUrl, { credentials: 'include', headers: { Accept: 'application/json' } });
+          if (resp.ok) {
+            const body = await resp.json().catch(() => ({}));
+            csrf = body?.csrfToken || getCsrfTokenFromCookie();
+          }
+        } catch { /* CSRF fetch failed — will retry on next request */ }
+      }
     }
     if (csrf) config.headers['X-CSRF-Token'] = csrf;
   }

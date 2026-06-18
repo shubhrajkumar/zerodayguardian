@@ -31,23 +31,24 @@ const makeSnapshot = (overrides: Partial<GamificationSnapshot> = {}): Gamificati
 
 describe("XPBar", () => {
   it("renders the level number", () => {
-    render(<XPBar snapshot={makeSnapshot({ level: 5 })} />);
-    expect(screen.getByText("5")).toBeTruthy();
+    const { container } = render(<XPBar snapshot={makeSnapshot({ level: 5 })} />);
+    const badge = container.querySelector("[aria-label*='Level 5']");
+    expect(badge).toBeTruthy();
   });
 
   it("renders the level label for known levels", () => {
     render(<XPBar snapshot={makeSnapshot({ level: 1 })} />);
-    expect(screen.getByText("Rookie")).toBeTruthy();
+    expect(screen.getByText("Recruit")).toBeTruthy();
   });
 
-  it("renders 'Legend' for level 10", () => {
+  it("renders 'Guardian' for level 10", () => {
     render(<XPBar snapshot={makeSnapshot({ level: 10 })} />);
-    expect(screen.getByText("Legend")).toBeTruthy();
+    expect(screen.getByText("Guardian")).toBeTruthy();
   });
 
-  it("renders 'Legend' for level 15 (capped at index 10)", () => {
-    render(<XPBar snapshot={makeSnapshot({ level: 15 })} />);
-    expect(screen.getByText("Legend")).toBeTruthy();
+  it("renders 'Elite Guardian' for level 16+ (capped at Elite Guardian)", () => {
+    render(<XPBar snapshot={makeSnapshot({ level: 16 })} />);
+    expect(screen.getByText("Elite Guardian")).toBeTruthy();
   });
 
   it("renders total XP formatted with locale separators", () => {
@@ -57,7 +58,10 @@ describe("XPBar", () => {
 
   it("renders XP progress fraction", () => {
     render(<XPBar snapshot={makeSnapshot({ xpIntoLevel: 500, xpToNextLevel: 500 })} />);
-    expect(screen.getByText("500 / 1,000")).toBeTruthy();
+    const fractions = screen.getAllByText("500", { exact: false });
+    const fraction = fractions.find((el) => el.textContent?.includes("/"));
+    expect(fraction).toBeTruthy();
+    expect(fraction!.textContent).toMatch(/500\s*\/\s*1,000/);
   });
 
   it("renders XP to next level", () => {
@@ -91,16 +95,18 @@ describe("XPBar", () => {
 
   it("handles zero XP gracefully", () => {
     render(<XPBar snapshot={makeSnapshot({ totalXp: 0, xpIntoLevel: 0, xpToNextLevel: 0, level: 1 })} />);
-    expect(screen.getByText("Rookie")).toBeTruthy();
+    expect(screen.getByText("Recruit")).toBeTruthy();
     expect(screen.getByText("0 total XP")).toBeTruthy();
   });
 
   it("renders with direct props instead of snapshot", () => {
     render(<XPBar currentXP={450} level={5} xpToNextLevel={1000} />);
-    expect(screen.getByText("5")).toBeTruthy();
-    expect(screen.getByText("Operative")).toBeTruthy();
-    // The component displays currentXP / (currentXP + xpToNextLevel)
-    expect(screen.getByText("450 / 1,450")).toBeTruthy();
+    expect(screen.getByText("Analyst")).toBeTruthy();
+    expect(screen.getByText("450 total XP")).toBeTruthy();
+    const fractions = screen.getAllByText("450", { exact: false });
+    const fraction = fractions.find((el) => el.textContent?.includes("/"));
+    expect(fraction).toBeTruthy();
+    expect(fraction!.textContent).toMatch(/450\s*\/\s*1,450/);
     expect(screen.getByText("1,000 XP to next level")).toBeTruthy();
   });
 });

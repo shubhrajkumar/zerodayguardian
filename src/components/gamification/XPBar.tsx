@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { getLevelLabel, type GamificationSnapshot } from "@/lib/gamificationSystem";
+import { getLevelLabel, getRankIcon, type GamificationSnapshot } from "@/lib/gamificationSystem";
 
 export interface XPBarProps {
   /** Full gamification snapshot used by the existing dashboard/profile flows. */
@@ -34,44 +34,45 @@ export default function XPBar({ snapshot, currentXP, level, xpToNextLevel }: XPB
     return clampPercent((xpIntoLevel / levelTarget) * 100);
   }, [levelTarget, leveledUp, xpIntoLevel]);
 
+  const rankIcon = getRankIcon(resolvedLevel);
   const label = getLevelLabel(resolvedLevel);
   const progressLabel = `${progress}% progress to level ${resolvedLevel + 1}`;
 
   return (
     <section
-      className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-4 shadow-sm"
+      className="rounded-xl border border-slate-800/50 bg-slate-900/40 p-4 hologram-card"
       aria-labelledby="xpbar-title"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-sm font-bold ${
-              leveledUp ? "animate-pulse border-purple-300/70" : "border-blue-400/40"
-            } bg-blue-500/10 text-blue-100`}
-            aria-label={`Level ${resolvedLevel}`}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border text-lg ${
+              leveledUp ? "animate-bounce-glow border-emerald-400/60 bg-emerald-500/20" : "border-emerald-500/30 bg-emerald-500/10"
+            }`}
+            aria-label={`Level ${resolvedLevel} — ${label}`}
           >
-            {resolvedLevel}
+            <span className={leveledUp ? "animate-scale-in" : ""}>{rankIcon}</span>
           </div>
           <div className="min-w-0">
-            <p id="xpbar-title" className="text-sm font-semibold text-[var(--theme-text)]">
+            <p id="xpbar-title" className="text-sm font-semibold text-slate-100">
               {label}
             </p>
-            <p className="text-xs text-slate-400">{totalXp.toLocaleString()} total XP</p>
+            <p className="text-xs text-slate-500 font-mono">{totalXp.toLocaleString()} total XP</p>
           </div>
         </div>
 
         <div className="text-right">
-          <p className="text-sm font-semibold text-[var(--theme-text)]">
-            {xpIntoLevel.toLocaleString()} / {Math.max(levelTarget, xpIntoLevel).toLocaleString()}
+          <p className="text-sm font-semibold text-slate-100 font-mono">
+            {xpIntoLevel.toLocaleString()} <span className="text-slate-500">/</span> {Math.max(levelTarget, xpIntoLevel).toLocaleString()}
           </p>
-          <p className="text-xs text-slate-400">
-            {leveledUp ? "Level up ready" : `${remaining.toLocaleString()} XP to next level`}
+          <p className="text-xs text-slate-500 font-mono">
+            {leveledUp ? "⏫ Promotion ready" : `${remaining.toLocaleString()} XP to next level`}
           </p>
         </div>
       </div>
 
       <div
-        className="mt-4 h-3 overflow-hidden rounded-full bg-[var(--theme-overlay)]"
+        className="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-800/50"
         role="progressbar"
         aria-label={progressLabel}
         aria-valuemin={0}
@@ -79,20 +80,20 @@ export default function XPBar({ snapshot, currentXP, level, xpToNextLevel }: XPB
         aria-valuenow={progress}
       >
         <div
-          className="h-full rounded-full bg-gradient-to-r from-blue-400 via-cyan-300 to-purple-500 transition-all duration-700 ease-out motion-reduce:transition-none"
+          className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-cyan-300 transition-all duration-700 ease-out motion-reduce:transition-none"
           style={{
             width: `${progress}%`,
-            boxShadow: progress > 0 ? "0 0 18px rgba(96, 165, 250, 0.45)" : "none",
+            boxShadow: progress > 0 ? "0 0 14px rgba(52, 211, 153, 0.3)" : "none",
           }}
         />
       </div>
 
       {progress > 10 ? (
         <div
-          className="pointer-events-none mt-[-0.75rem] h-3 rounded-full opacity-30"
+          className="pointer-events-none mt-[-0.65rem] h-2.5 rounded-full opacity-25"
           style={{
             width: `${progress}%`,
-            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent)",
+            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
             animation: "shimmer 2s infinite",
             backgroundSize: "200% 100%",
           }}

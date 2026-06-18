@@ -18,7 +18,7 @@ configMapGenerator:
   - name: zdg-config
     literals:
       - NODE_ENV=production
-      - CORS_ORIGIN=https://zerodayguardian-delta.vercel.app
+      - CORS_ORIGIN=https://zerodayguardian-delta.vercel.app,http://localhost:5173
       - TRUST_PROXY=true
       - OTEL_SERVICE_NAME=zeroday-guardian
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318

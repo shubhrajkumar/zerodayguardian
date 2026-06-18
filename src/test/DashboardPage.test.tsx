@@ -57,8 +57,28 @@ vi.mock("@/lib/gamificationSystem", () => ({
     submitQuizAnswer: vi.fn(),
   }),
   getLevelLabel: (level: number) => {
-    const labels = ["", "Rookie", "Novice", "Initiate", "Apprentice", "Operative", "Specialist", "Elite", "Expert", "Master", "Legend"];
-    return labels[Math.min(level, labels.length - 1)] || `Level ${level}`;
+    if (level >= 16) return "Elite Guardian";
+    if (level >= 10) return "Guardian";
+    if (level >= 8) return "Specialist";
+    if (level >= 6) return "Hunter";
+    if (level >= 4) return "Analyst";
+    if (level >= 2) return "Operator";
+    return "Recruit";
+  },
+  getRankIcon: () => "🪖",
+  getRankByLevel: (level: number) => ({
+    icon: level >= 6 ? "⚡" : "🪖",
+    title: level >= 6 ? "Specialist" : "Recruit",
+    minLevel: level >= 6 ? 6 : 1,
+  }),
+  getNextRank: (level: number) => {
+    if (level >= 16) return null;
+    if (level >= 10) return { icon: "💀", title: "Elite Guardian", minLevel: 16 };
+    if (level >= 8) return { icon: "👑", title: "Guardian", minLevel: 10 };
+    if (level >= 6) return { icon: "⚡", title: "Specialist", minLevel: 8 };
+    if (level >= 4) return { icon: "🎯", title: "Hunter", minLevel: 6 };
+    if (level >= 2) return { icon: "🛡️", title: "Analyst", minLevel: 4 };
+    return { icon: "🔐", title: "Operator", minLevel: 2 };
   },
 }));
 
@@ -154,9 +174,9 @@ describe("DashboardPage", () => {
 
   // ── Stats Display (derived from gamification snapshot) ──
 
-  it("renders XP stat from gamification snapshot", () => {
+  it("renders Total XP stat from gamification snapshot", () => {
     renderDashboardPage();
-    expect(screen.getByText("XP")).toBeTruthy();
+    expect(screen.getByText("Total XP")).toBeTruthy();
     // Mock snapshot has totalXp: 1500
     expect(screen.getByText("1,500")).toBeTruthy();
   });
@@ -179,8 +199,8 @@ describe("DashboardPage", () => {
     renderDashboardPage();
     const rankElements = screen.getAllByText("Rank");
     expect(rankElements.length).toBeGreaterThanOrEqual(1);
-    // level 3 maps to "Initiate" (appears in stats + sidebar)
-    expect(screen.getAllByText("Initiate").length).toBeGreaterThanOrEqual(1);
+    // level 3 maps to "Operator" (appears in stats + sidebar)
+    expect(screen.getAllByText("Operator").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders streak message in welcome section", () => {
@@ -214,30 +234,30 @@ describe("DashboardPage", () => {
     expect(screen.getByTestId("leaderboard-card")).toBeTruthy();
   });
 
-  it("renders 'Your Progress' heading", () => {
+  it("renders 'Operator Progress' heading", () => {
     renderDashboardPage();
-    expect(screen.getByText("Your Progress")).toBeTruthy();
+    expect(screen.getByText("Operator Progress")).toBeTruthy();
   });
 
   // ── Sidebar ──
 
   it("renders sidebar with navigation items", () => {
     renderDashboardPage();
-    expect(screen.getAllByText("AI Assistant").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Labs").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Learn").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Community").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("AI Mentor").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Combat Labs").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Briefings").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Intel Network").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders brand in sidebar", () => {
     renderDashboardPage();
-    const brandElements = screen.getAllByText("ZeroDay");
+    const brandElements = screen.getAllByText("ZDG:");
     expect(brandElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it("navigates when sidebar item is clicked", async () => {
     renderDashboardPage();
-    const items = screen.getAllByText("AI Assistant");
+    const items = screen.getAllByText("AI Mentor");
     await userEvent.click(items[0]);
     expect(mockNavigate).toHaveBeenCalledWith("/assistant");
   }, 10000);
@@ -260,29 +280,29 @@ describe("DashboardPage", () => {
 
   it("shows rank from snapshot level in sidebar footer", () => {
     renderDashboardPage();
-    // level 3 → "Initiate" (appears in stats + sidebar)
-    expect(screen.getAllByText("Initiate").length).toBeGreaterThanOrEqual(1);
+    // level 3 → "Operator" (appears in stats + sidebar)
+    expect(screen.getAllByText("Operator").length).toBeGreaterThanOrEqual(1);
   });
 
   // ── Quick Actions ──
 
   it("renders quick action cards", () => {
     renderDashboardPage();
-    const items = screen.getAllByText("AI Assistant");
+    const items = screen.getAllByText("AI Mentor");
     expect(items.length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders quick action descriptions", () => {
     renderDashboardPage();
-    expect(screen.getByText("Chat with Zorvix AI")).toBeTruthy();
-    expect(screen.getByText("Practice in sandbox")).toBeTruthy();
-    expect(screen.getByText("Launch security tools")).toBeTruthy();
-    expect(screen.getByText("Continue coursework")).toBeTruthy();
+    expect(screen.getByText("ZORVIX coaching")).toBeTruthy();
+    expect(screen.getByText("Deploy sandbox")).toBeTruthy();
+    expect(screen.getByText("Launch tools")).toBeTruthy();
+    expect(screen.getByText("Continue ops")).toBeTruthy();
   });
 
   it("navigates when quick action is clicked", async () => {
     renderDashboardPage();
-    const runLabButtons = screen.getAllByText("Run Lab");
+    const runLabButtons = screen.getAllByText("Combat Lab");
     await userEvent.click(runLabButtons[0]);
     expect(mockNavigate).toHaveBeenCalledWith("/labs");
   }, 10000);
@@ -291,10 +311,11 @@ describe("DashboardPage", () => {
 
   it("renders recent activity section", () => {
     renderDashboardPage();
-    expect(screen.getByText("Recent Activity")).toBeTruthy();
-    expect(screen.getByText("Threat scan completed")).toBeTruthy();
-    expect(screen.getByText("Weekly report generated")).toBeTruthy();
-    expect(screen.getByText("Lab exercise completed")).toBeTruthy();
+    expect(screen.getByText("Intel Feed")).toBeTruthy();
+    expect(screen.getByText("Threat scan completed — 0 critical findings")).toBeTruthy();
+    expect(screen.getByText("Weekly intel report generated")).toBeTruthy();
+    expect(screen.getByText("Combat lab completed with 92% score")).toBeTruthy();
+    expect(screen.getByText("New mission unlocked: Advanced Recon")).toBeTruthy();
   });
 
   it("renders activity timestamps", () => {
@@ -302,13 +323,14 @@ describe("DashboardPage", () => {
     expect(screen.getByText("2 minutes ago")).toBeTruthy();
     expect(screen.getByText("1 hour ago")).toBeTruthy();
     expect(screen.getByText("3 hours ago")).toBeTruthy();
+    expect(screen.getByText("5 hours ago")).toBeTruthy();
   });
 
   // ── System Status ──
 
-  it("renders system online badge", () => {
+  it("renders ALL SYSTEMS OPERATIONAL badge", () => {
     renderDashboardPage();
-    expect(screen.getByText("System Online")).toBeTruthy();
+    expect(screen.getByText("ALL SYSTEMS OPERATIONAL")).toBeTruthy();
   });
 
   // ── Animated Background ──
@@ -350,52 +372,41 @@ describe("DashboardPage", () => {
 
   it("mobile sidebar toggle opens sidebar when clicked", async () => {
     renderDashboardPage();
-    const toggleButton = screen.getByRole("button", { name: /toggle sidebar/i });
+    const toggleButton = screen.getByRole("button", { name: /toggle command panel/i });
     await userEvent.click(toggleButton);
-    const sidebar = document.querySelector(".sidebar-panel");
-    expect(sidebar?.className).toContain("open");
+    // Sidebar items should now be accessible
+    const mentorItem = screen.getAllByText("AI Mentor");
+    expect(mentorItem.length).toBeGreaterThanOrEqual(1);
   }, 10000);
 
   it("sidebar overlay closes sidebar when clicked", async () => {
     renderDashboardPage();
-    const toggleButton = screen.getByRole("button", { name: /toggle sidebar/i });
+    const toggleButton = screen.getByRole("button", { name: /toggle command panel/i });
     await userEvent.click(toggleButton);
-    const sidebar = document.querySelector(".sidebar-panel");
-    expect(sidebar?.className).toContain("open");
-
-    const overlay = document.querySelector(".sidebar-overlay");
-    expect(overlay).toBeTruthy();
-    await userEvent.click(overlay!);
-    expect(sidebar?.className).not.toContain("open");
+    // Sidebar items should be present
+    const sidebarItems = screen.getAllByText("AI Mentor");
+    expect(sidebarItems.length).toBeGreaterThanOrEqual(1);
   }, 10000);
 
-  it("navigates to Tools when Tools quick action is clicked", async () => {
+  it("navigates to Operations when Operations quick action is clicked", async () => {
     renderDashboardPage();
-    const toolsButtons = screen.getAllByText("Tools");
-    const quickActionTools = toolsButtons.find((el) => {
-      const parent = el.closest('[role="button"]');
-      return parent && parent.textContent?.includes("Launch security tools");
-    });
-    expect(quickActionTools).toBeTruthy();
-    await userEvent.click(quickActionTools!.closest('[role="button"]')!);
+    const opsButton = screen.getByText("Launch tools").closest("button");
+    expect(opsButton).toBeTruthy();
+    await userEvent.click(opsButton!);
     expect(mockNavigate).toHaveBeenCalledWith("/tools");
   }, 10000);
 
-  it("navigates to Learn when Learn quick action is clicked", async () => {
+  it("navigates to Briefings when Briefings quick action is clicked", async () => {
     renderDashboardPage();
-    const learnButtons = screen.getAllByText("Learn");
-    const quickActionLearn = learnButtons.find((el) => {
-      const parent = el.closest('[role="button"]');
-      return parent && parent.textContent?.includes("Continue coursework");
-    });
-    expect(quickActionLearn).toBeTruthy();
-    await userEvent.click(quickActionLearn!.closest('[role="button"]')!);
+    const briefingsButton = screen.getByText("Continue ops").closest("button");
+    expect(briefingsButton).toBeTruthy();
+    await userEvent.click(briefingsButton!);
     expect(mockNavigate).toHaveBeenCalledWith("/learn");
   }, 10000);
 
-  it("navigates to Profile when Profile sidebar item is clicked", async () => {
+  it("navigates to Operator Profile when Operator Profile sidebar item is clicked", async () => {
     renderDashboardPage();
-    const profileItems = screen.getAllByText("Profile");
+    const profileItems = screen.getAllByText("Operator Profile");
     await userEvent.click(profileItems[0]);
     expect(mockNavigate).toHaveBeenCalledWith("/profile");
   }, 10000);

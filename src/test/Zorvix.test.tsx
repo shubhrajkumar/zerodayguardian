@@ -125,7 +125,7 @@ describe("Zorvix", () => {
     await act(async () => {
       renderZorvix(true);
     });
-    expect(screen.getByText("ZORVIX AI")).toBeTruthy();
+    expect(screen.getAllByText("ZORVIX").length).toBeGreaterThanOrEqual(1);
   });
 
   it("returns null in non-fullScreen mode when not open", () => {
@@ -137,7 +137,7 @@ describe("Zorvix", () => {
     await act(async () => {
       renderZorvix(true);
     });
-    expect(screen.getByText("ZORVIX AI")).toBeTruthy();
+    expect(screen.getAllByText("ZORVIX").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Ready")).toBeTruthy();
   });
 
@@ -164,8 +164,9 @@ describe("Zorvix", () => {
       renderZorvix(true);
     });
 
-    expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
-    expect(screen.getByText(/Clear guidance, next actions/)).toBeTruthy();
+    const zorvixElements = screen.getAllByText("ZORVIX");
+    expect(zorvixElements.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/I assess, guide/)).toBeTruthy();
   });
 
   it("shows mission-specific suggestions in empty state", async () => {
@@ -191,8 +192,9 @@ describe("Zorvix", () => {
     await waitFor(() => {
       // With empty hooks/recommendations, missionStarterSuggestions has 2 items:
       // "Assess my current cyber momentum..." and "Think like a senior analyst..."
+      // With empty hooks/recommendations, should show general cyber suggestions
       expect(screen.getByText(/Assess my current cyber momentum/)).toBeTruthy();
-      expect(screen.getByText(/Think like a senior analyst/)).toBeTruthy();
+      expect(screen.getByText(/I assess, guide/)).toBeTruthy();
     });
   });
 
@@ -433,8 +435,8 @@ describe("Zorvix", () => {
     // When unauthenticated, loadSession finds no synced session,
     // so visibleMessages is empty and the "Ask ZORVIX" empty state renders
     await waitFor(() => {
-      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
-      expect(screen.getByText(/Clear guidance, next actions/)).toBeTruthy();
+      expect(screen.getAllByText("ZORVIX").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText(/I assess, guide/)).toBeTruthy();
     });
 
     // Session should NOT have loaded messages (no auth)
@@ -834,14 +836,14 @@ describe("Zorvix", () => {
     });
 
     // Should not render anything initially
-    expect(screen.queryByText("Ask ZORVIX")).toBeNull();
+    expect(screen.queryByText("Personal Cyber Mentor")).toBeNull();
 
     await act(async () => {
       window.dispatchEvent(new Event("neurobot:open"));
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+      expect(screen.getAllByText("ZORVIX").length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -855,7 +857,7 @@ describe("Zorvix", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+      expect(screen.getAllByText("ZORVIX").length).toBeGreaterThanOrEqual(1);
     });
 
     // Close button should be present
@@ -872,7 +874,7 @@ describe("Zorvix", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+      expect(screen.getAllByText("ZORVIX").length).toBeGreaterThanOrEqual(1);
     });
 
     const closeBtn = screen.getByLabelText("Close ZORVIX");
@@ -881,7 +883,7 @@ describe("Zorvix", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("Ask ZORVIX")).toBeNull();
+      expect(screen.queryByText("Personal Cyber Mentor")).toBeNull();
     });
   });
 
@@ -895,7 +897,7 @@ describe("Zorvix", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+      expect(screen.getAllByText("ZORVIX").length).toBeGreaterThanOrEqual(1);
     });
 
     // Find the backdrop using the data-testid we added
@@ -907,7 +909,7 @@ describe("Zorvix", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("Ask ZORVIX")).toBeNull();
+      expect(screen.queryByText("Personal Cyber Mentor")).toBeNull();
     });
   });
 
@@ -921,7 +923,7 @@ describe("Zorvix", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+      expect(screen.getAllByText("ZORVIX").length).toBeGreaterThanOrEqual(1);
     });
 
     await act(async () => {
@@ -929,7 +931,7 @@ describe("Zorvix", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("Ask ZORVIX")).toBeNull();
+      expect(screen.queryByText("Personal Cyber Mentor")).toBeNull();
     });
   });
 
@@ -1066,7 +1068,7 @@ describe("Zorvix", () => {
 
     await waitFor(() => {
       // After session load failure, should still render the empty state
-      expect(screen.getByText("Ask ZORVIX")).toBeTruthy();
+      expect(screen.getAllByText("ZORVIX").length).toBeGreaterThanOrEqual(1);
     });
   });
 });

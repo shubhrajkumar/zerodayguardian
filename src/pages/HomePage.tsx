@@ -1,205 +1,342 @@
-import { useMemo } from "react";
-import { ArrowRight, Radar, ShieldCheck, TerminalSquare } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowRight, BookOpen, Bot, ChartLine, ChevronRight, Cpu, Radar, Shield, Swords, Terminal, TrendingUp, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
-import LandingIntro from "@/components/LandingIntro";
+import { useGamificationSystem, getLevelLabel, getRankIcon, getRankByLevel, getNextRank } from "@/lib/gamificationSystem";
+import LandingHero from "@/components/landing/LandingHero";
+import CareerPathsSection from "@/components/landing/CareerPathsSection";
+import {
+  staggerContainer,
+  staggerItem,
+  fadeInUp,
+  tapScale,
+  cardHover,
+  springGentle,
+  hoverGlow,
+  sectionHeader,
+  sectionHeaderItem,
+} from "@/lib/animations";
 
-const HomePage = () => {
+/** Command Center Hero summary for authenticated users — replaces old UserProgressSummary */
+const CommandCenterSummary = () => {
+  const { user } = useAuth();
+  const { totalPoints = 0, completedDays = 0, completedSandboxLabs = 0, streak = 0, nextMissionHook } =
+    useMissionSystem();
+  const { snapshot } = useGamificationSystem(user?.id, user?.name || undefined);
   const navigate = useNavigate();
-  const { nextMissionHook, totalPoints, streak, completedDays, completedSandboxLabs } = useMissionSystem();
 
-  const entryRoute = nextMissionHook?.route || "/program";
+  const userLabel = user?.name || user?.email?.split("@")[0] || "Operator";
+  const rank = getRankByLevel(snapshot.level);
+  const nextRank = getNextRank(snapshot.level);
+  const rankLabel = getLevelLabel(snapshot.level);
+  const rankIcon = getRankIcon(snapshot.level);
 
-  const orbitSignals = useMemo(
-    () => [
-      { id: "intel", label: "intel", x: "12%", y: "18%", delay: 0 },
-      { id: "labs", label: "labs", x: "82%", y: "20%", delay: 0.8 },
-      { id: "mentor", label: "zorvix", x: "18%", y: "76%", delay: 1.4 },
-      { id: "range", label: "range", x: "84%", y: "74%", delay: 2 },
-    ],
-    []
-  );
-
-  const controlPills = useMemo(
-    () => [
-      { label: "XP", value: `${totalPoints}` },
-      { label: "Days", value: `${completedDays}` },
-      { label: "Labs", value: `${completedSandboxLabs}` },
-      { label: "Streak", value: `${streak}d` },
-    ],
-    [completedDays, completedSandboxLabs, streak, totalPoints]
-  );
+  const progressItems = [
+    { label: "XP", value: totalPoints.toLocaleString(), icon: TrendingUp },
+    { label: "Missions", value: completedDays.toString(), icon: Swords },
+    { label: "Labs", value: completedSandboxLabs.toString(), icon: Terminal },
+    { label: "Streak", value: `${streak}d`, icon: Zap },
+  ];
 
   return (
-    <div className="ui-shell relative min-h-[calc(100vh-4rem)] overflow-hidden" style={{ backgroundColor: "var(--theme-bg)" }}>
-
-      <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: "radial-gradient(circle at top, color-mix(in srgb, var(--theme-accent-blue) 14%, transparent), transparent 22%), radial-gradient(circle at 80% 18%, color-mix(in srgb, var(--theme-accent-green) 8%, transparent), transparent 20%), linear-gradient(180deg, var(--theme-bg) 0%, color-mix(in srgb, var(--theme-bg) 80%, var(--theme-accent-blue) 10%) 100%)" }} />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.12]" style={{ background: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)", backgroundSize: "44px 44px" }} />
-
-      {/* Orb glow — CSS infinite float animation */}
-      <div
-        className="animate-orb-float pointer-events-none absolute inset-x-0 top-[-18%] mx-auto h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(circle,rgba(0,102,255,0.18)_0%,rgba(0,255,136,0.1)_36%,transparent_70%)] blur-3xl"
-        aria-hidden="true"
-      />
-
-      {/* Orbit signal pills — CSS infinite pulse with staggered delays */}
-      {orbitSignals.map((signal) => (
-        <div
-          key={signal.id}
-          className="animate-orbit-pulse pointer-events-none absolute hidden rounded-full border border-sky-300/12 bg-slate-900/70 px-3 py-1 terminal-font text-[10px] uppercase tracking-[0.22em] text-slate-300/85 md:block"
-          style={{ left: signal.x, top: signal.y, animationDelay: `${signal.delay}s` }}
+    <section className="relative px-4 py-8">
+      <div className="mx-auto max-w-5xl">
+        <motion.div
+          className="hologram-card rounded-xl border border-emerald-500/20 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 shadow-[0_0_30px_rgba(52,211,153,0.03)]"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
-          {signal.label}
-        </div>
-      ))}
-
-      <div className="relative z-10 flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-10 md:py-14">
-        <div className="w-full max-w-5xl">
-          <div className="mx-auto mb-8 max-w-4xl">
-            <LandingIntro />
-          </div>
-
-          {/* Hero text block — CSS fade-in */}
-          <div className="animate-hero-fade-in mx-auto max-w-3xl text-center" style={{ contain: 'layout style' }}>
-            <p
-              className="animate-hero-fade-in terminal-font text-[11px] uppercase tracking-[0.5em] text-slate-300/85"
-              style={{ animationDelay: '0.08s' }}
-            >
-              ZeroDay Guardian
-            </p>
-            <h1
-              className="animate-hero-fade-in mt-4 text-balance text-4xl font-extrabold tracking-[-0.06em] text-white drop-shadow-[0_0_24px_rgba(0,255,136,0.14)] md:text-6xl"
-              style={{ animationDelay: '0.12s' }}
-            >
-              <span className="bg-[linear-gradient(90deg,#e2f7ff_0%,#7dd3fc_36%,#86efac_100%)] bg-clip-text text-transparent">
-                ZeroDay Guardian
-              </span>
-              <span className="block text-white/92">The One Line of Defense</span>
-            </h1>
-            <p
-              className="animate-hero-fade-in mt-4 text-sm font-medium uppercase tracking-[0.42em] text-slate-300/85 md:text-[0.95rem]"
-              style={{ animationDelay: '0.2s' }}
-            >
-              ZORVIX AI
-            </p>
-          </div>
-
-          {/* Cyber card section — CSS fade-in */}
-          <section
-            className="animate-hero-fade-in cyber-card relative mx-auto mt-10 max-w-3xl rounded-xl p-5 shadow-[0_24px_72px_rgba(0,0,0,0.34)] md:p-7"
-            style={{ animationDelay: '0.22s' }}
-          >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,102,255,0.10),transparent_34%),radial-gradient(circle_at_50%_100%,rgba(0,255,136,0.08),transparent_34%)]" />
-            <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(0,255,136,0.36),transparent)]" />
-
-            <div className="relative">
-              <div className="flex items-center justify-center gap-2">
-                <span className="cyber-badge">
-                  <Radar className="h-3.5 w-3.5" />
-                  Mission Online
+          {/* Status header */}
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">OPERATOR COMMAND CENTER</span>
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
                 </span>
               </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-[1.15fr_0.85fr] md:items-start">
-                <div className="text-center md:text-left">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Primary Mission</p>
-                  <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-white md:text-3xl">
-                    {nextMissionHook?.title || "Enter the training loop"}
-                  </h2>
-                  <p className="mt-3 text-sm leading-7 text-slate-300/80">
-                    {nextMissionHook?.detail || "Start the next guided cyber mission with ZORVIX watching your path, scoring your actions, and keeping the flow clear."}
-                  </p>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    {[
-                      { icon: ShieldCheck, label: "Clear next step", detail: "One obvious action. No clutter." },
-                      { icon: TerminalSquare, label: "Operator flow", detail: "Labs, program, and progress stay visible." },
-                    ].map((item) => (
-                      <div key={item.label} className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
-                        <item.icon className="h-4 w-4 text-[#00ff88]" />
-                        <p className="mt-3 text-sm font-semibold text-white">{item.label}</p>
-                        <p className="mt-2 text-sm text-slate-300/85">{item?.detail || ''}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-white/8 bg-black/24 p-4">
-                  <p className="terminal-font text-[11px] uppercase tracking-[0.22em] text-slate-500">Control Status</p>
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    {controlPills.map((item, i) => (
-                      <div
-                        key={item.label}
-                        className="animate-scale-in rounded-xl border border-white/8 bg-white/[0.03] p-3"
-                        style={{ animationDelay: `${0.3 + i * 0.08}s` }}
-                      >
-                        <p className="terminal-font text-[10px] uppercase tracking-[0.2em] text-slate-500">{item.label}</p>
-                        <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 rounded-xl border border-white/8 bg-slate-900/72 p-4">
-                    <p className="terminal-font text-[10px] uppercase tracking-[0.2em] text-slate-300/85">Active Stack</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {["Recon", "Labs", "Defense", "ZORVIX"].map((item) => (
-                        <span key={item} className="rounded-xl border border-white/8 bg-black/28 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-300/82">
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+              <p className="text-xl font-bold text-slate-100">{userLabel}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{rankIcon}</span>
+                <span className="text-sm text-cyan-300 font-semibold">{rankLabel}</span>
+                {nextRank && (
+                  <>
+                    <span className="text-slate-600">→</span>
+                    <span className="text-xs text-slate-400">Next: {nextRank.icon} {nextRank.title}</span>
+                  </>
+                )}
               </div>
             </div>
-          </section>
 
-          {/* CTA button — CSS fade-in + CSS hover/active transitions */}
-          <div
-            className="animate-hero-fade-in mx-auto mt-8 flex max-w-3xl justify-center"
-            style={{ animationDelay: '0.3s' }}
-          >
-            <button
-              type="button"
-              onClick={() => navigate(entryRoute)}
-              className="cyber-btn cta-focus-ring inline-flex min-h-[54px] min-w-[220px] items-center justify-center gap-2 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] transition-transform duration-200 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99]"
-            >
-              <ArrowRight className="h-4 w-4" />
-              Start Free
-            </button>
+            <div className="flex flex-col items-end gap-2">
+              <motion.button
+                type="button"
+                onClick={() => navigate(nextMissionHook?.route || "/program")}
+                className="group inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 transition-all duration-200 hover:border-emerald-400/50 hover:bg-emerald-500/20 hover:shadow-[0_0_12px_rgba(52,211,153,0.15)] active:scale-[0.98]"
+                whileHover={{ scale: 1.02 }}
+                whileTap={tapScale}
+              >
+                <Swords className="h-3 w-3" />
+                {nextMissionHook?.ctaLabel || "Continue Mission"}
+                <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+              </motion.button>
+
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+                <span className="text-[10px] font-mono text-emerald-300/80">SYSTEM ACTIVE</span>
+              </div>
+            </div>
           </div>
 
-          {/* Feature cards — CSS fade-in */}
-          <div
-            className="animate-hero-fade-in mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-3"
-            style={{ animationDelay: '0.38s' }}
+          {/* Rank progress */}
+          {nextRank && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-slate-400 font-mono">{rankIcon} {rankLabel}</span>
+                <span className="text-slate-400 font-mono">{nextRank.icon} {nextRank.title}</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-slate-800/50 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(100, ((snapshot.level - rank.minLevel) / (nextRank.minLevel - rank.minLevel)) * 100)}%` }}
+                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Stats grid — single-line horizontal on mobile */}
+          <motion.div
+            className="mt-5 flex flex-row gap-2 overflow-x-auto sm:grid sm:grid-cols-4"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
           >
-            <div className="group rounded-xl border border-white/8 bg-white/[0.03] p-5 transition-all duration-300 hover:border-[#00d4ff]/40 hover:shadow-[0_0_20px_rgba(0,212,255,0.12)]" style={{borderColor: 'var(--zdg-border)', backgroundColor: 'var(--zdg-card)'}}>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔬</span>
-                <span className="rounded-md border border-[#00d4ff]/30 bg-[#00d4ff]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{borderColor: 'var(--zdg-tag-border)', backgroundColor: 'var(--zdg-tag-bg)', color: 'var(--zdg-tag-text)'}}>Coming Soon</span>
-              </div>
-              <h3 className="mt-3 text-sm font-semibold" style={{color: 'var(--zdg-text)'}}>Interactive Labs</h3>
-              <p className="mt-1.5 text-xs leading-5" style={{color: 'var(--zdg-muted)'}}>Hands-on cybersecurity challenges in a safe sandbox environment</p>
-            </div>
-            <div className="group rounded-xl border border-white/8 bg-white/[0.03] p-5 transition-all duration-300 hover:border-[#00ff88]/40 hover:shadow-[0_0_20px_rgba(0,255,136,0.12)]" style={{borderColor: 'var(--zdg-border)', backgroundColor: 'var(--zdg-card)'}}>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🎯</span>
-                <span className="rounded-md border border-[#00ff88]/30 bg-[#00ff88]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{borderColor: 'var(--zdg-tag-border)', backgroundColor: 'var(--zdg-tag-bg)', color: 'var(--zdg-tag-text)'}}>Active</span>
-              </div>
-              <h3 className="mt-3 text-sm font-semibold" style={{color: 'var(--zdg-text)'}}>Daily Missions</h3>
-              <p className="mt-1.5 text-xs leading-5" style={{color: 'var(--zdg-muted)'}}>Earn XP and build streaks with daily cybersecurity challenges</p>
-            </div>
-            <div className="group rounded-xl border border-white/8 bg-white/[0.03] p-5 transition-all duration-300 hover:border-[#a855f7]/40 hover:shadow-[0_0_20px_rgba(168,85,247,0.12)]" style={{borderColor: 'var(--zdg-border)', backgroundColor: 'var(--zdg-card)'}}>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🤖</span>
-                <span className="rounded-md border border-[#a855f7]/30 bg-[#a855f7]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{borderColor: 'var(--zdg-tag-border)', backgroundColor: 'var(--zdg-tag-bg)', color: 'var(--zdg-tag-text)'}}>Online</span>
-              </div>
-              <h3 className="mt-3 text-sm font-semibold" style={{color: 'var(--zdg-text)'}}>Zorvix AI</h3>
-              <p className="mt-1.5 text-xs leading-5" style={{color: 'var(--zdg-muted)'}}>Your personal AI mentor for cyber defense guidance</p>
-            </div>
-          </div>
-        </div>
+            {progressItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={item.label}
+                  variants={staggerItem}
+                  className="flex items-center gap-2 sm:block shrink-0 rounded-lg border border-slate-800/40 bg-slate-800/20 px-3 py-2 hover:border-slate-700/60 transition-colors sm:px-3 sm:py-2.5"
+                >
+                  <div className="flex items-center gap-1.5 sm:mb-1">
+                    <Icon className="h-3 w-3 text-emerald-400" />
+                    <p className="text-[9px] font-mono uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
+                  </div>
+                  <p className="text-sm sm:text-base font-bold text-slate-100">{item.value}</p>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </motion.div>
       </div>
+    </section>
+  );
+};
+
+/** Cyber Features Section — redesigned with ops terminology */
+const CyberFeaturesSection = () => {
+  const navigate = useNavigate();
+  const [inView, setInView] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const features = [
+    {
+      icon: Terminal,
+      title: "Combat Labs",
+      description: "Deploy real attack & defense scenarios in a sandboxed environment. Practice penetration testing, reconnaissance, and exploitation.",
+      tag: "DEPLOY",
+      route: "/labs/demo-nmap",
+      accent: "emerald",
+    },
+    {
+      icon: Bot,
+      title: "ZORVIX AI Mentor",
+      description: "Your personal cyber coach. Assesses weaknesses, recommends missions, and guides your journey from Recruit to Elite Guardian.",
+      tag: "24/7 ACTIVE",
+      route: "/assistant",
+      accent: "cyan",
+    },
+    {
+      icon: Radar,
+      title: "Operation Briefings",
+      description: "Follow a 60-mission ops curriculum. Each briefing teaches real offensive and defensive tradecraft used in the field.",
+      tag: "60 OPS",
+      route: "/program",
+      accent: "purple",
+    },
+    {
+      icon: Shield,
+      title: "Career Tracks",
+      description: "Choose your specialization: Red Team Operator, SOC Analyst, Bug Bounty Hunter, or OSINT Investigator.",
+      tag: "4 TRACKS",
+      route: "/auth",
+      accent: "amber",
+    },
+  ];
+
+  const accentMap: Record<string, { border: string; icon: string; tagBorder: string; tagBg: string; tagText: string }> = {
+    emerald: { border: "group-hover:border-emerald-500/40", icon: "text-emerald-400 border-slate-700/60 bg-slate-800/40", tagBorder: "border-emerald-500/20", tagBg: "bg-emerald-500/10", tagText: "text-emerald-300" },
+    cyan: { border: "group-hover:border-cyan-500/40", icon: "text-cyan-400 border-slate-700/60 bg-slate-800/40", tagBorder: "border-cyan-500/20", tagBg: "bg-cyan-500/10", tagText: "text-cyan-300" },
+    purple: { border: "group-hover:border-purple-500/40", icon: "text-purple-400 border-slate-700/60 bg-slate-800/40", tagBorder: "border-purple-500/20", tagBg: "bg-purple-500/10", tagText: "text-purple-300" },
+    amber: { border: "group-hover:border-amber-500/40", icon: "text-amber-400 border-slate-700/60 bg-slate-800/40", tagBorder: "border-amber-500/20", tagBg: "bg-amber-500/10", tagText: "text-amber-300" },
+  };
+
+  return (
+    <section className="relative px-4 py-16 md:py-24 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] aspect-square rounded-full opacity-[0.06] blur-[120px]"
+          style={{ background: "radial-gradient(circle, rgba(52, 211, 153, 0.2), transparent 70%)" }}
+        />
+      </div>
+      <div className="mx-auto max-w-6xl relative z-10">
+        <motion.div
+          className="mx-auto max-w-2xl text-center"
+          variants={sectionHeader}
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+        >
+          <motion.div variants={sectionHeaderItem} className="inline-flex items-center gap-2.5 rounded-full border border-slate-700/40 bg-slate-800/30 px-4 py-1.5 mb-6">
+            <Cpu className="h-3 w-3 text-cyan-400" />
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">OPERATIONS SUITE</span>
+          </motion.div>
+          <motion.h2 variants={sectionHeaderItem} className="text-3xl font-bold tracking-[-0.04em] text-slate-100 md:text-4xl">
+            Your Cyber Operations{" "}
+            <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">Toolkit</span>
+          </motion.h2>
+          <motion.p variants={sectionHeaderItem} className="mt-4 text-sm leading-6 text-slate-400 max-w-lg mx-auto">
+            Everything you need to transform from Recruit to Elite Guardian — real labs, AI coaching, and structured ops.
+          </motion.p>
+        </motion.div>
+
+        <motion.div
+          ref={ref}
+          className="mt-10 grid gap-4 sm:grid-cols-2"
+          variants={staggerContainer}
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+        >
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            const c = accentMap[feature.accent] || accentMap.emerald;
+            return (
+              <motion.button
+                key={feature.title}
+                type="button"
+                onClick={() => navigate(feature.route)}
+                variants={staggerItem}
+                whileHover={cardHover}
+                whileTap={tapScale}
+                className={`group rounded-xl border border-slate-800/40 bg-slate-900/30 p-5 text-left ${c.border} hover:shadow-[0_0_20px_rgba(34,211,238,0.04)]`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${c.icon} transition-all duration-200 group-hover:scale-110`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className={`shrink-0 rounded-md border ${c.tagBorder} ${c.tagBg} px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${c.tagText}`}>
+                    {feature.tag}
+                  </span>
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-slate-100 transition-colors group-hover:text-emerald-300">{feature.title}</h3>
+                <p className="mt-2 text-xs leading-5 text-slate-400">{feature.description}</p>
+              </motion.button>
+            );
+          })}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+/** Final deployment CTA */
+const DeploymentCTA = () => {
+  const navigate = useNavigate();
+  const [inView, setInView] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      { threshold: 0.2 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section className="relative px-4 py-20 md:py-32 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] aspect-square rounded-full opacity-[0.08] blur-[120px]"
+          style={{ background: "radial-gradient(circle, rgba(52, 211, 153, 0.3), transparent 70%)" }}
+        />
+      </div>
+      <motion.div
+        ref={ref}
+        className="relative z-10 mx-auto max-w-3xl text-center"
+        initial="hidden"
+        animate={inView ? "visible" : "hidden"}
+        variants={staggerContainer}
+      >
+        <motion.div variants={staggerItem} className="inline-flex items-center gap-2.5 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-5 py-2 mb-6">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-300">Ready for Deployment</span>
+        </motion.div>
+        <motion.h2 variants={staggerItem} className="text-3xl font-bold tracking-[-0.04em] text-slate-100 md:text-4xl lg:text-5xl">
+          Secure Your{" "}
+          <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">Operator Access</span>
+        </motion.h2>
+        <motion.p variants={staggerItem} className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-400">
+          Join thousands training through real missions, not just courses. Deploy your first operation in seconds — no credit card required.
+        </motion.p>
+        <motion.div variants={staggerItem}>
+          <motion.button
+            type="button"
+            onClick={() => navigate("/labs/demo-nmap")}
+            className="group mt-8 inline-flex min-h-[56px] min-w-[220px] items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-8 py-3 text-sm font-bold uppercase tracking-[0.18em] text-white shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
+            whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(52, 211, 153, 0.4)" }}
+            whileTap={tapScale}
+          >
+            <Terminal className="h-4 w-4 transition-transform group-hover:rotate-12" />
+            Deploy Free Mission
+            <ArrowRight className="h-4 w-4 transition-all group-hover:translate-x-1" />
+          </motion.button>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+};
+
+const HomePage = () => {
+  const { isAuthenticated, authState } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-[#050508]">
+      <div className="noise-overlay" />
+      <LandingHero />
+      {isAuthenticated && authState === "authenticated" && <CommandCenterSummary />}
+      <CareerPathsSection />
+      <CyberFeaturesSection />
+      <DeploymentCTA />
     </div>
   );
 };

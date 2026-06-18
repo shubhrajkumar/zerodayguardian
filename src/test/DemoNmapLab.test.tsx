@@ -43,6 +43,18 @@ vi.mock("framer-motion", async () => {
 
 import DemoNmapLab from "@/pages/Labs/DemoNmapLab";
 
+// Mock useNavigate to prevent "outside Router" error
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+const renderComponent = () => render(<DemoNmapLab />);
+
 // ── Helpers ──
 
 /**
@@ -53,7 +65,7 @@ import DemoNmapLab from "@/pages/Labs/DemoNmapLab";
  */
 const runScanWithFakeTimers = () => {
   vi.useFakeTimers();
-  render(<DemoNmapLab />);
+  renderComponent();
 
   const input = screen.getByLabelText("Target IP address");
   fireEvent.change(input, { target: { value: "192.168.1.1" } });
@@ -95,71 +107,73 @@ describe("DemoNmapLab", () => {
   // ── Rendering ──
 
   it("renders the Free Demo Lab badge", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     expect(screen.getByText("Free Demo Lab")).toBeTruthy();
   });
 
   it("renders the main heading", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toContain("Nmap Port Scanner");
   });
 
   it("renders the description paragraph", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     expect(screen.getByText(/no account required/i)).toBeTruthy();
   });
 
   it("renders the IP input field with correct label", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     const input = screen.getByLabelText("Target IP address");
     expect(input).toBeTruthy();
     expect(input.getAttribute("placeholder")).toBe("e.g., 192.168.1.1");
   });
 
   it("renders the Scan button", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     const scanBtn = screen.getByRole("button", { name: /run scan/i });
     expect(scanBtn.textContent).toContain("Scan");
   });
 
   it("renders quick IP suggestion buttons", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     expect(screen.getByText("192.168.1.1")).toBeTruthy();
     expect(screen.getByText("10.0.0.1")).toBeTruthy();
     expect(screen.getByText("8.8.8.8")).toBeTruthy();
   });
 
   it("renders the terminal window", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     expect(screen.getByText(/terminal — nmap scan/i)).toBeTruthy();
   });
 
   it("shows 'Awaiting target input' in the terminal initially", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     expect(screen.getByText("Awaiting target input...")).toBeTruthy();
   });
 
   it("shows the empty state message when no results", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     expect(screen.getByText(/Enter an IP address and click Scan/i)).toBeTruthy();
   });
 
-  it("renders the CTA link to create an account", () => {
-    render(<DemoNmapLab />);
-    const ctaLink = screen.getByText("Create a free account");
-    expect(ctaLink.getAttribute("href")).toBe("/auth");
+  it("renders the CTA button to create an account", async () => {
+    renderComponent();
+    const ctaBtn = screen.getByText("Create Free Account");
+    expect(ctaBtn).toBeTruthy();
+    await userEvent.click(ctaBtn);
+    expect(mockNavigate).toHaveBeenCalledWith("/auth");
   });
 
   // ── Input State ──
 
   it("disables Scan button when input is empty", () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     const scanBtn = screen.getByRole("button", { name: /run scan/i });
     expect(scanBtn.hasAttribute("disabled")).toBe(true);
   });
 
   it("enables Scan button when input has text", async () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     const input = screen.getByLabelText("Target IP address");
     await userEvent.type(input, "192.168.1.1");
     const scanBtn = screen.getByRole("button", { name: /run scan/i });
@@ -169,14 +183,14 @@ describe("DemoNmapLab", () => {
   // ── Quick IP Buttons ──
 
   it("fills the input when a quick IP button is clicked", async () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     await userEvent.click(screen.getByText("192.168.1.1"));
     const input = screen.getByLabelText("Target IP address") as HTMLInputElement;
     expect(input.value).toBe("192.168.1.1");
   });
 
   it("enables Scan button after clicking quick IP button", async () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     await userEvent.click(screen.getByText("10.0.0.1"));
     const scanBtn = screen.getByRole("button", { name: /run scan/i });
     expect(scanBtn.hasAttribute("disabled")).toBe(false);
@@ -185,7 +199,7 @@ describe("DemoNmapLab", () => {
   // ── Validation (uses userEvent, real timers) ──
 
   it("shows validation error for non-IP input", async () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     const input = screen.getByLabelText("Target IP address");
     await userEvent.type(input, "not-an-ip");
     await userEvent.click(screen.getByRole("button", { name: /run scan/i }));
@@ -193,7 +207,7 @@ describe("DemoNmapLab", () => {
   });
 
   it("shows validation error when IP octets exceed 255", async () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     const input = screen.getByLabelText("Target IP address");
     await userEvent.type(input, "999.999.999.999");
     await userEvent.click(screen.getByRole("button", { name: /run scan/i }));
@@ -201,7 +215,7 @@ describe("DemoNmapLab", () => {
   });
 
   it("clears validation error when user types valid IP after error", async () => {
-    render(<DemoNmapLab />);
+    renderComponent();
     const input = screen.getByLabelText("Target IP address");
     await userEvent.type(input, "bad");
     await userEvent.click(screen.getByRole("button", { name: /run scan/i }));
@@ -287,7 +301,7 @@ describe("DemoNmapLab", () => {
 
   it("handles Enter key to trigger scan", async () => {
     vi.useFakeTimers();
-    render(<DemoNmapLab />);
+    renderComponent();
 
     const input = screen.getByLabelText("Target IP address");
     fireEvent.change(input, { target: { value: "192.168.1.1" } });

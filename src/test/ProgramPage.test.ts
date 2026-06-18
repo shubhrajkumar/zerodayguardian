@@ -65,18 +65,21 @@ function normalizeOverviewPayload(
  * Used when the backend is down and the primary API call fails.
  */
 function generateFallbackOverview(): DayOverviewResponse {
-  const generatedItems: DayOverviewItem[] = Array.from({ length: 60 }, (_, index) => ({
-    day: index + 1,
-    title: `Day ${index + 1} Lab`,
-    focus: "Cyber skills",
-    difficulty: index < 20 ? "Beginner" : index < 40 ? "Intermediate" : "Advanced",
-    unlocked: index === 0,
-    completed: false,
-  }));
+  const generatedItems: DayOverviewItem[] = Array.from({ length: 60 }, (_, index) => {
+    const day = index + 1;
+    return {
+      day,
+      title: `Mission ${String(day).padStart(2, '0')}: Lab ${day}`,
+      focus: day <= 20 ? "Reconnaissance" : day <= 40 ? "Web Security" : "Exploitation",
+      difficulty: index < 20 ? "Beginner" : index < 40 ? "Intermediate" : "Advanced",
+      unlocked: index === 0,
+      completed: false,
+    };
+  });
   return {
     items: generatedItems,
     recommended_day: 1,
-    streak_message: "Start with Day 1 to begin your 60-day journey.",
+    streak_message: "Start with Mission 01 to begin your 60-day journey.",
   };
 }
 
@@ -267,10 +270,10 @@ describe("generateFallbackOverview", () => {
     expect(result.recommended_day).toBe(1);
   });
 
-  it("has a non-empty streak_message mentioning Day 1", () => {
+  it("has a non-empty streak_message mentioning Mission 01", () => {
     const result = generateFallbackOverview();
     expect(result.streak_message.length).toBeGreaterThan(0);
-    expect(result.streak_message).toContain("Day 1");
+    expect(result.streak_message).toContain("Mission 01");
   });
 
   it("day numbers are sequential starting from 1", () => {
@@ -316,17 +319,10 @@ describe("generateFallbackOverview", () => {
     });
   });
 
-  it("every item has a title matching Day N Lab pattern", () => {
+  it("every item has a title matching Mission NN pattern", () => {
     const result = generateFallbackOverview();
     result.items.forEach((item) => {
-      expect(item.title).toBe(`Day ${item.day} Lab`);
-    });
-  });
-
-  it("every item has focus='Cyber skills'", () => {
-    const result = generateFallbackOverview();
-    result.items.forEach((item) => {
-      expect(item.focus).toBe("Cyber skills");
+      expect(item.title).toContain(`Mission ${String(item.day).padStart(2, '0')}:`);
     });
   });
 

@@ -16,12 +16,12 @@ describe("BadgeDisplay", () => {
 
   it("shows correct earned count with no badges", () => {
     render(<BadgeDisplay />);
-    expect(screen.getByText(`0 / ${CATALOG_COUNT} earned`)).toBeTruthy();
+    expect(screen.getByText((content) => content.includes("0") && content.includes("/") && content.includes("10") && content.includes("collected"))).toBeTruthy();
   });
 
   it("shows correct earned count with earnedBadges", () => {
     render(<BadgeDisplay earnedBadges={["first-blood", "bug-hunter"]} />);
-    expect(screen.getByText(`2 / ${CATALOG_COUNT} earned`)).toBeTruthy();
+    expect(screen.getByText((content) => content.includes("2") && content.includes("/") && content.includes("10") && content.includes("collected"))).toBeTruthy();
   });
 
   it("renders all catalog badges by default", () => {
@@ -35,7 +35,7 @@ describe("BadgeDisplay", () => {
 
   it("marks earned badges correctly in aria-label", () => {
     render(<BadgeDisplay earnedBadges={["first-blood"]} />);
-    expect(screen.getByLabelText("First Blood badge - earned")).toBeTruthy();
+    expect(screen.getByLabelText("First Blood badge - collected")).toBeTruthy();
     expect(screen.getByLabelText("Bug Hunter badge - locked")).toBeTruthy();
   });
 
@@ -57,12 +57,12 @@ describe("BadgeDisplay", () => {
     expect(tooltip.textContent).toContain("Locked");
   });
 
-  it("tooltip shows 'Earned' for earned badges", async () => {
+  it("tooltip shows 'Collected' for earned badges", async () => {
     render(<BadgeDisplay earnedBadges={["first-blood"]} />);
-    const badge = screen.getByLabelText("First Blood badge - earned");
+    const badge = screen.getByLabelText("First Blood badge - collected");
     await userEvent.hover(badge);
     const tooltip = screen.getByRole("tooltip");
-    expect(tooltip.textContent).toContain("Earned");
+    expect(tooltip.textContent).toContain("✓ Collected");
     expect(tooltip.textContent).not.toContain("Locked");
   });
 
@@ -77,7 +77,7 @@ describe("BadgeDisplay", () => {
 
   it("renders without crashing with no props", () => {
     render(<BadgeDisplay />);
-    expect(screen.getByText(`0 / ${CATALOG_COUNT} earned`)).toBeTruthy();
+    expect(screen.getByText((content) => content.includes("0") && content.includes("/") && content.includes("10") && content.includes("collected"))).toBeTruthy();
   });
 
   it("accepts custom badge catalog via badges prop", () => {
@@ -85,7 +85,7 @@ describe("BadgeDisplay", () => {
       { id: "custom-1", name: "Custom Badge", description: "A custom badge", icon: "🏅", requirement: "Do something" },
     ];
     render(<BadgeDisplay badges={customBadges} />);
-    expect(screen.getByText(`0 / 1 earned`)).toBeTruthy();
+    expect(screen.getByText((content) => content.includes("0") && content.includes("/") && content.includes("1") && content.includes("collected"))).toBeTruthy();
     expect(screen.getByLabelText("Custom Badge badge - locked")).toBeTruthy();
   });
 });
