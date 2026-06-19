@@ -143,14 +143,14 @@ import HttpHeaderTool from "@/components/HttpHeaderTool";
 
 const renderComponent = () => render(<HttpHeaderTool />);
 
-const setupSuccessfulLookup = (response = MOCK_HEADER_RESPONSE) => {
+const setupSuccessfulLookup = (response: Record<string, unknown> = MOCK_HEADER_RESPONSE) => {
   mockFetch.mockResolvedValueOnce({
     ok: true,
     json: () => Promise.resolve(response),
   });
 };
 
-const setupErrorLookup = (status = 400, body = MOCK_ERROR_RESPONSE) => {
+const setupErrorLookup = (status = 400, body: Record<string, unknown> = MOCK_ERROR_RESPONSE) => {
   mockFetch.mockResolvedValueOnce({
     ok: false,
     status,

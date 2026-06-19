@@ -43,7 +43,7 @@ const setupSuccessfulScan = () => {
   });
 };
 
-const setupErrorScan = (status = 400, body = MOCK_ERROR_RESPONSE) => {
+const setupErrorScan = (status = 400, body: Record<string, unknown> = MOCK_ERROR_RESPONSE) => {
   mockFetch.mockResolvedValueOnce({
     ok: false,
     status,
