@@ -10,6 +10,7 @@ interface CareerPath {
   title: string;
   description: string;
   target: string;
+  difficulty: string;
   level: string;
   rewards: string;
   skills: string[];
@@ -23,6 +24,7 @@ const careerPaths: CareerPath[] = [
     title: "Ethical Hacker",
     description: "Recon, web security, and penetration testing from beginner to pro.",
     target: "Become a certified pentester",
+    difficulty: "Beginner",
     level: "Beginner → Advanced",
     rewards: "CEH, OSCP-aligned skills",
     skills: ["Recon", "Web Security", "Vulnerability Assessment"],
@@ -34,6 +36,7 @@ const careerPaths: CareerPath[] = [
     title: "Bug Bounty Hunter",
     description: "Identify and responsibly report real-world vulnerabilities for rewards.",
     target: "Earn bounties on HackerOne",
+    difficulty: "Intermediate",
     level: "Intermediate",
     rewards: "Real-world CVEs + cash",
     skills: ["Vuln Research", "Exploit Analysis", "Report Writing"],
@@ -45,6 +48,7 @@ const careerPaths: CareerPath[] = [
     title: "SOC Analyst",
     description: "Monitor, detect threats, and lead incident response operations.",
     target: "Join a SOC team",
+    difficulty: "Beginner",
     level: "Beginner → Intermediate",
     rewards: "Security+, CySA+ aligned",
     skills: ["Threat Detection", "SIEM", "Incident Response"],
@@ -56,6 +60,7 @@ const careerPaths: CareerPath[] = [
     title: "OSINT Investigator",
     description: "Digital investigations, intel gathering, and footprint analysis.",
     target: "Conduct intel ops",
+    difficulty: "All Levels",
     level: "All Levels",
     rewards: "OSINT tool mastery",
     skills: ["Intel Gathering", "Footprinting", "Data Correlation"],

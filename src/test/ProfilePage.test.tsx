@@ -21,6 +21,23 @@ vi.mock("@/context/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock("@/context/ZdgContext", () => ({
+  useZdg: () => ({
+    user: null,
+    globalXp: 0,
+    streakCount: 0,
+    completedLabs: [],
+    isAuthenticated: false,
+    isLoading: false,
+    login: vi.fn(),
+    signup: vi.fn(),
+    logout: vi.fn(),
+    addXp: vi.fn(),
+    completeLab: vi.fn(),
+    syncFromGamification: vi.fn(),
+  }),
+}));
+
 vi.mock("@/context/UserProgressContext", () => ({
   useUserProgress: () => mockUseUserProgress(),
 }));

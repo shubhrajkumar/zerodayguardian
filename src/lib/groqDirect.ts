@@ -103,7 +103,7 @@ export const queryGroqDirect = async (
   // ── Step 1: Check API key ──
   const apiKey = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
   if (!apiKey || !apiKey.trim() || apiKey === "your_groq_api_key_here") {
-    return useLocalFallback(trimmed, context, "VITE_GROQ_API_KEY is not configured in .env");
+    return getLocalFallback(trimmed, context, "VITE_GROQ_API_KEY is not configured in .env");
   }
 
   // ── Step 2: Strict try/catch with 10s timeout ──
@@ -133,9 +133,11 @@ export const queryGroqDirect = async (
 
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
-      const errorCode = (errorBody as Record<string, unknown>)?.error?.code || response.status;
+      const errorBodyRecord = errorBody as Record<string, unknown>;
+      const errorDetail = errorBodyRecord?.error as Record<string, unknown> | undefined;
+      const errorCode = errorDetail?.code || response.status;
       const errorMessage = typeof errorCode === "string" ? errorCode : `HTTP ${response.status}`;
-      return useLocalFallback(trimmed, context, `Groq API error: ${errorMessage}`);
+      return getLocalFallback(trimmed, context, `Groq API error: ${errorMessage}`);
     }
 
     const data = (await response.json()) as {
@@ -144,7 +146,7 @@ export const queryGroqDirect = async (
     const reply = data?.choices?.[0]?.message?.content?.trim();
 
     if (!reply) {
-      return useLocalFallback(trimmed, context, "Groq returned empty response");
+      return getLocalFallback(trimmed, context, "Groq returned empty response");
     }
 
     return { reply, source: "live" };
@@ -160,13 +162,13 @@ export const queryGroqDirect = async (
       errorReason = String((error as Error)?.message || error);
     }
 
-    return useLocalFallback(trimmed, context, errorReason);
+    return getLocalFallback(trimmed, context, errorReason);
   }
 };
 
 // ── Fallback logic ──
 
-const useLocalFallback = (
+const getLocalFallback = (
   message: string,
   context?: { topic?: string; skillLevel?: string },
   errorReason?: string

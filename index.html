@@ -71,8 +71,14 @@
     <link rel="preconnect" href="https://zerodayguardian-backend.onrender.com" crossorigin />
     <link rel="dns-prefetch" href="https://zerodayguardian-backend.onrender.com">
 
-    <!-- Fonts are self-hosted in public/fonts/ with @font-face in index.css -->
-    <!-- Preload critical Inter font (primary UI typeface) for earlier font swap -->
+    <!-- Fonts: self-hosted woff2 (primary) + Google Fonts CDN fallback -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..900&family=JetBrains+Mono:wght@400..700&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..900&family=JetBrains+Mono:wght@400..700&display=swap" />
+    </noscript>
+    <!-- Preload self-hosted woff2 for fast local-first loading -->
     <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="preload" href="/fonts/inter-latin-ext.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
     <script type="application/ld+json">

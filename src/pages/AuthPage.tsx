@@ -4,8 +4,10 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
 import GlassCard from "@/components/ui/GlassCard";
 import { AuthUser, useAuth } from "@/context/AuthContext";
+import { useZdg } from "@/context/ZdgContext";
 import api from "@/lib/api";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { isFirebaseConfigured, initFirebase } from "@/lib/firebase";
 
 type AuthMode = "login" | "register" | "reset" | "reset-otp";
 
@@ -33,6 +35,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading, login } = useAuth();
+  const zdg = useZdg();
 
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -132,12 +135,18 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       if (mode === "register") {
-        const payload = await api.post<BackendAuthResponse>("/api/auth/signup", {
-          name: getDisplayNameFromEmail(email),
-          email,
-          password,
-        });
-        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
+        // Sign up locally (localStorage persistence) AND via backend
+        await zdg.signup(email, password, getDisplayNameFromEmail(email));
+        try {
+          const payload = await api.post<BackendAuthResponse>("/api/auth/signup", {
+            name: getDisplayNameFromEmail(email),
+            email,
+            password,
+          });
+          login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
+        } catch {
+          // Backend may be unavailable — local auth still works
+        }
         setSuccess("Account created. Welcome to your dashboard.");
         showToast("Account created successfully.", "success");
         navigate("/dashboard", { replace: true });
@@ -172,12 +181,18 @@ export default function AuthPage() {
         showToast("Password reset successful!", "success");
         setTimeout(() => { setMode("login"); setOtp(""); setPassword(""); setConfirmPassword(""); }, 2000);
       } else {
-        const payload = await api.post<BackendAuthResponse>("/api/auth/login", {
-          email,
-          password,
-          rememberMe: true,
-        });
-        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
+        // Login locally (localStorage persistence) AND via backend
+        await zdg.login(email, password);
+        try {
+          const payload = await api.post<BackendAuthResponse>("/api/auth/login", {
+            email,
+            password,
+            rememberMe: true,
+          });
+          login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
+        } catch {
+          // Backend may be unavailable — local auth still works
+        }
         showToast("Welcome back!", "success");
         navigate("/dashboard", { replace: true });
       }
@@ -237,8 +252,8 @@ export default function AuthPage() {
     setSuccess(null);
   };
 
-  // If Firebase auth is not configured, show a configuration error
-  if (!firebaseAuth) {
+  // If Firebase is not configured (missing env vars), show a configuration error
+  if (!isFirebaseConfigured) {
     return (
       <div className="auth-screen relative min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center animate-fade-in-up">
@@ -249,6 +264,20 @@ export default function AuthPage() {
               Authentication service is not configured. Please contact your administrator.
             </p>
           </GlassCard>
+        </div>
+      </div>
+    );
+  }
+
+  // If Firebase is configured but not yet initialized, show loading
+  if (!firebaseAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--theme-bg)" }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="spinner-cyber spinner-lg" />
+          <p className="text-sm" style={{ color: "var(--theme-text-muted)" }}>
+            Initializing secure connection...
+          </p>
         </div>
       </div>
     );

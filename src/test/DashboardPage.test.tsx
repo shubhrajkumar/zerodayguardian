@@ -20,8 +20,29 @@ vi.mock("@/context/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock("@/context/ZdgContext", () => ({
+  useZdg: () => ({
+    user: null,
+    globalXp: 0,
+    streakCount: 0,
+    completedLabs: [],
+    isAuthenticated: false,
+    isLoading: false,
+    login: vi.fn(),
+    signup: vi.fn(),
+    logout: vi.fn(),
+    addXp: vi.fn(),
+    completeLab: vi.fn(),
+    syncFromGamification: vi.fn(),
+  }),
+}));
+
 vi.mock("@/components/AnimatedCyberBackground", () => ({
   default: () => <div data-testid="cyber-background" />,
+}));
+
+vi.mock("@/components/ThreatRadar", () => ({
+  default: () => <div data-testid="threat-radar" />,
 }));
 
 const mockSnapshot = {
@@ -177,8 +198,9 @@ describe("DashboardPage", () => {
   it("renders Total XP stat from gamification snapshot", () => {
     renderDashboardPage();
     expect(screen.getByText("Total XP")).toBeTruthy();
-    // Mock snapshot has totalXp: 1500
-    expect(screen.getByText("1,500")).toBeTruthy();
+    // Mock snapshot has totalXp: 1500 — appears in both stat grid and rank progress
+    const xpElements = screen.getAllByText("1,500");
+    expect(xpElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders Streak stat from gamification snapshot", () => {

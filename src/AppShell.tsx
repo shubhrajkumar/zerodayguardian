@@ -23,6 +23,7 @@ import { MissionSystemProvider } from "./context/MissionSystemApiContext";
 import { AdaptiveMentorProvider } from "./context/AdaptiveMentorContext";
 import { GamificationProvider } from "./context/GamificationContext";
 import { OnboardingProvider, useOnboarding } from "./context/OnboardingContext";
+import { ZdgProvider } from "./context/ZdgContext";
 import { warmHighIntentRoutes } from "./lib/routeWarmup";
 import { useScrollReveal } from "./hooks/useScrollReveal";
 import { useGrowthProfileSync } from "./hooks/useGrowthFeatures";
@@ -104,6 +105,7 @@ const RoadmapPage = lazy(() => import("./pages/RoadmapPage"));
 const DemoNmapLab = lazy(() => import("./pages/Labs/DemoNmapLab"));
 const DemoAssessmentPage = lazy(() => import("./pages/Labs/DemoAssessmentPage"));
 const DemoRoadmapPage = lazy(() => import("./pages/Labs/DemoRoadmapPage"));
+const ProgramDay1Page = lazy(() => import("./pages/ProgramDay1Page"));
 
 // ── Site config ──
 const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "").replace(/\/+$/, "");
@@ -425,6 +427,7 @@ const appRoutes: AppRouteDefinition[] = [
   { path: "/learn", component: LearnPage, requiresAuth: true },
   { path: "/program", component: ProgramPage, requiresAuth: true },
   { path: "/assistant", component: AssistantPage, requiresAuth: true },
+  { path: "/program/day/1", component: ProgramDay1Page, requiresAuth: true },
   { path: "/program/day/:day", component: ProgramLabPage, requiresAuth: true },
   { path: "/lab", component: LabPage, requiresAuth: true },
   { path: "/labs", component: ComingSoonLabsPage },
@@ -476,6 +479,7 @@ export default function AppShell() {
       <MissionSystemProvider>
         <LearningModeProvider>
           <AdaptiveMentorProvider>
+            <ZdgProvider>
             <GamificationProvider userId={user?.id} handle={user?.name}>
             <OnboardingProvider defaultCallSign={user?.name || ""}>
             <BrowserRouter
@@ -522,6 +526,7 @@ export default function AppShell() {
             </BrowserRouter>
             </OnboardingProvider>
             </GamificationProvider>
+            </ZdgProvider>
           </AdaptiveMentorProvider>
         </LearningModeProvider>
       </MissionSystemProvider>

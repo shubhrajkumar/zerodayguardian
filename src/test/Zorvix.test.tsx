@@ -45,6 +45,10 @@ vi.mock("@/lib/apiClient", () => ({
   getStoredAccessToken: () => mockGetStoredAccessToken(),
 }));
 
+vi.mock("@/lib/groqDirect", () => ({
+  queryGroqDirect: vi.fn().mockRejectedValue(new Error("Mocked Groq failure — forces backend path")),
+}));
+
 vi.mock("@/hooks/use-toast", () => ({
   toast: (...args: unknown[]) => mockToast(...args),
 }));

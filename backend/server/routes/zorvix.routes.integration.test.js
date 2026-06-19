@@ -56,7 +56,7 @@ describe("POST /api/ai/zorvix (integration)", () => {
     // Verify the Groq model was called correctly
     expect(mockChatCompletionsCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "llama3-70b-8192",
+        model: "llama-3.3-70b-versatile",
         messages: expect.arrayContaining([
           expect.objectContaining({ role: "system" }),
           expect.objectContaining({ role: "user", content: expect.stringContaining("How do I scan ports?") }),

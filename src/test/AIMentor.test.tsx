@@ -205,7 +205,7 @@ describe("AIMentor", () => {
   });
 
   it("shows Mission Pending when no next mission route", () => {
-    setup({ mission: { nextMissionHook: { route: null as unknown as string, title: "", detail: "", ctaLabel: "", target: "return" as const } } });
+    setup({ mission: { nextMissionHook: { route: null as unknown as string, title: "", detail: "", ctaLabel: "", target: "task" as const } } });
     render(<AIMentor />);
     expect(screen.getByText(/Mission Pending/)).toBeTruthy();
   });

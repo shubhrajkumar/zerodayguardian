@@ -28,7 +28,7 @@ interface AssessmentQuestion {
   options: Array<{
     value: string;
     label: string;
-    scores: Record<string, number>;
+    scores: Record<string, number | string>;
   }>;
 }
 
@@ -40,6 +40,8 @@ interface AssessmentResult {
     icon: string;
     description: string;
     focusScores: Record<string, number>;
+    color: string;
+    borderColor: string;
   };
   topFocusAreas: Array<{ name: string; score: number }>;
   totalScore: number;
@@ -48,7 +50,17 @@ interface AssessmentResult {
 
 // ── Career Path Definitions ──
 
-const CAREER_PATHS = [
+const CAREER_PATHS: Array<{
+  id: string;
+  title: string;
+  icon: string;
+  description: string;
+  keySkills: string[];
+  color: string;
+  borderColor: string;
+  accentColor: string;
+  focusScores: Record<string, number>;
+}> = [
   {
     id: "ethical-hacker",
     title: "Ethical Hacker",
@@ -59,6 +71,7 @@ const CAREER_PATHS = [
     description:
       "You're wired for offensive security. Learn reconnaissance, web security, vulnerability discovery, and penetration testing to help organizations find weaknesses before attackers do.",
     keySkills: ["Penetration Testing", "Exploitation", "Reconnaissance", "Web Security"],
+    focusScores: {},
   },
   {
     id: "bug-bounty",
@@ -70,6 +83,7 @@ const CAREER_PATHS = [
     description:
       "You have a hunter's mindset. Learn how to identify, exploit, and responsibly report real-world vulnerabilities across web apps, APIs, and mobile platforms.",
     keySkills: ["Vulnerability Research", "Web Exploitation", "Report Writing", "Recon"],
+    focusScores: {},
   },
   {
     id: "soc-analyst",
@@ -81,6 +95,7 @@ const CAREER_PATHS = [
     description:
       "You're a natural defender. Master monitoring, threat detection, incident response, and blue-team operations to protect enterprise environments.",
     keySkills: ["Threat Detection", "Incident Response", "SIEM Operations", "Network Security"],
+    focusScores: {},
   },
   {
     id: "osint-investigator",
@@ -92,6 +107,7 @@ const CAREER_PATHS = [
     description:
       "You have an investigator's eye. Learn digital investigations, intelligence gathering, online footprint analysis, and threat intelligence tradecraft.",
     keySkills: ["OSINT Collection", "Digital Forensics", "Threat Intelligence", "Data Analysis"],
+    focusScores: {},
   },
 ];
 
@@ -195,11 +211,11 @@ const scoreResult = (answers: Record<string, AssessmentAnswer>): AssessmentResul
 
     for (const [key, val] of Object.entries(option.scores)) {
       if (key === "_skill") {
-        skillPoints += val;
+        skillPoints += val as number;
       } else if (key === "_time") {
-        timeCommitment = val;
+        timeCommitment = val as string;
       } else {
-        scores[key] = (scores[key] || 0) + val;
+        scores[key] = (scores[key] || 0) + (val as number);
       }
     }
   }
@@ -218,7 +234,7 @@ const scoreResult = (answers: Record<string, AssessmentAnswer>): AssessmentResul
   };
 
   const bestPathId = Object.entries(pathScores).sort((a, b) => b[1] - a[1])[0][0];
-  const recommendedPath = CAREER_PATHS.find((p) => p.id === bestPathId) || CAREER_PATHS[0];
+  const recommendedPath = (CAREER_PATHS.find((p) => p.id === bestPathId) || CAREER_PATHS[0]) as AssessmentResult['recommendedPath'];
 
   // Top focus areas
   const focusMap: Record<string, string> = {
@@ -266,12 +282,14 @@ const ProgressBar = ({ current, total }: { current: number; total: number }) => 
   );
 };
 
+const SKILL_BADGE_CONFIG = {
+  beginner: { label: "Beginner", color: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
+  intermediate: { label: "Intermediate", color: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" },
+  advanced: { label: "Advanced", color: "border-purple-500/30 bg-purple-500/10 text-purple-300" },
+};
+
 const SkillLevelBadge = ({ level }: { level: string }) => {
-  const config = {
-    beginner: { label: "Beginner", color: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
-    intermediate: { label: "Intermediate", color: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" },
-    advanced: { label: "Advanced", color: "border-purple-500/30 bg-purple-500/10 text-purple-300" },
-  }[level as keyof typeof config] || config.beginner;
+  const config = SKILL_BADGE_CONFIG[level as keyof typeof SKILL_BADGE_CONFIG] || SKILL_BADGE_CONFIG.beginner;
 
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${config.color}`}>

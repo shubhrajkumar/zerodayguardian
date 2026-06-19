@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { useZdg } from "@/context/ZdgContext";
 import { useGamificationSystem, getLevelLabel, getRankIcon, getRankByLevel, getNextRank } from "@/lib/gamificationSystem";
 import AnimatedCyberBackground from "@/components/AnimatedCyberBackground";
+import ThreatRadar from "@/components/ThreatRadar";
 import LiveClock, { formatRelativeTime } from "@/components/ui/LiveClock";
 import XPBar from "@/components/gamification/XPBar";
 import StreakCounter from "@/components/gamification/StreakCounter";
@@ -41,6 +43,7 @@ export default function DashboardPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { globalXp, streakCount, completedLabs } = useZdg();
   const { snapshot } = useGamificationSystem(user?.id, user?.name || undefined);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [greeting, setGreeting] = useState("Welcome");
@@ -53,13 +56,17 @@ export default function DashboardPage() {
   }, []);
 
   const displayName = user?.name || user?.email?.split("@")[0] || "Guardian";
-  const xp = snapshot.totalXp;
-  const streak = snapshot.streakDays;
+  const xp = globalXp > 0 ? globalXp : snapshot.totalXp;
+  const streak = streakCount > 0 ? streakCount : snapshot.streakDays;
   const badges = snapshot.badges.length;
   const rank = getRankByLevel(snapshot.level);
   const nextRank = getNextRank(snapshot.level);
   const rankLabel = getLevelLabel(snapshot.level);
   const rankIcon = getRankIcon(snapshot.level);
+
+  // XP progress toward next rank (each rank bracket is 1000 XP)
+  const xpInLevel = xp % 1000;
+  const xpPercent = (xpInLevel / 10).toFixed(1); // 0-100%
 
   const telemetryStats = [
     { label: "Total XP", value: xp.toLocaleString(), icon: <TrendingUp className="h-5 w-5" />, color: "from-cyan-500 to-blue-600" },
@@ -226,6 +233,26 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+
+            {/* ── Global Threat Radar ── */}
+            <div className="mt-6 flex flex-col items-center">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                  GLOBAL THREAT RADAR
+                </span>
+              </div>
+              <div className="flex justify-center w-full max-w-[280px] mx-auto">
+                <ThreatRadar size={260} dotCount={20} />
+              </div>
+              <div className="flex items-center gap-3 mt-3">
+                <span className="font-mono text-[9px] text-slate-600">SCANNING</span>
+                <span className="h-1 w-1 rounded-full bg-emerald-400/50" />
+                <span className="font-mono text-[9px] text-slate-600">{xp.toLocaleString()} XP</span>
+                <span className="h-1 w-1 rounded-full bg-emerald-400/50" />
+                <span className="font-mono text-[9px] text-slate-600">{streak}d STREAK</span>
+              </div>
+            </div>
           </motion.div>
 
           {/* ── System Status Telemetry ── */}
@@ -250,7 +277,7 @@ export default function DashboardPage() {
             ))}
           </motion.div>
 
-          {/* ── Active Mission Briefing ── */}
+          {/* ── Active Mission Briefing — XP Rank Progress ── */}
           <motion.div
             className="rounded-xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 p-5"
             initial={{ opacity: 0, y: 16 }}
@@ -258,30 +285,120 @@ export default function DashboardPage() {
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
           >
             <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
+              <div className="space-y-1 flex-1">
                 <div className="flex items-center gap-2">
                   <Target className="h-4 w-4 text-cyan-400" />
-                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-300">{activeMission.label}</span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-300">RANK PROGRESS</span>
                 </div>
-                <p className="text-sm font-semibold text-slate-200">{activeMission.name}</p>
+                <p className="text-sm font-semibold text-slate-200">{rankLabel} — Next: {nextRank?.title || "MAX"}</p>
               </div>
-              <span className="shrink-0 rounded-lg bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 text-[10px] font-mono text-cyan-300">
-                {activeMission.xpReward}
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-mono text-lg font-bold text-emerald-300">{xp.toLocaleString()}</span>
+                <span className="text-[10px] text-slate-500">XP</span>
+              </div>
             </div>
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                <span>Progress</span>
-                <span>{Math.round(activeMission.progress)}%</span>
-              </div>
-              <div className="h-1.5 w-full rounded-full bg-slate-800/50 overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${activeMission.progress}%` }}
-                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+
+            {/* ── SVG Progress Arc ── */}
+            <div className="mt-4 flex flex-col items-center">
+              <svg
+                width="100%"
+                height="64"
+                viewBox="0 0 300 64"
+                className="w-full max-w-xs"
+                aria-hidden="true"
+              >
+                {/* Background track */}
+                <rect x="16" y="20" width="268" height="10" rx="5" fill="rgba(30, 41, 59, 0.4)" />
+
+                {/* XP fill bar — width via style prop for reliable CSS transition */}
+                <rect
+                  x="16"
+                  y="20"
+                  height="10"
+                  rx="5"
+                  fill="url(#xpGrad)"
+                  className="transition-all duration-500 ease-out"
+                  style={{
+                    width: `${Math.min(268, Math.max(0, (268 * Number(xpPercent)) / 100))}px`,
+                    filter: "drop-shadow(0 0 6px rgba(52, 211, 153, 0.4))",
+                  }}
                 />
-              </div>
+
+                {/* Glow highlight on leading edge — translateX for reliable position animation */}
+                <rect
+                  x="0"
+                  y="18"
+                  width="8"
+                  height="14"
+                  rx="4"
+                  fill="rgba(52, 211, 153, 0.3)"
+                  className="transition-all duration-500 ease-out"
+                  style={{
+                    transform: `translateX(${Math.min(264, Math.max(12, 16 + (268 * Number(xpPercent)) / 100 - 4))}px)`,
+                    filter: "blur(3px)",
+                  }}
+                />
+
+                {/* Rounded end cap on fill */}
+                <rect
+                  x="0"
+                  y="19"
+                  width="6"
+                  height="12"
+                  rx="3"
+                  fill="#34d399"
+                  className="transition-all duration-500 ease-out"
+                  style={{
+                    transform: `translateX(${Math.min(264, Math.max(12, 16 + (268 * Number(xpPercent)) / 100 - 2))}px)`,
+                  }}
+                />
+
+                {/* XP markers */}
+                <text x="16" y="14" fontSize="8" fontFamily="'JetBrains Mono', monospace" fill="rgba(100, 116, 139, 0.6)">
+                  0 XP
+                </text>
+                <text x="268" y="14" fontSize="8" fontFamily="'JetBrains Mono', monospace" fill="rgba(100, 116, 139, 0.6)" textAnchor="end">
+                  1,000 XP
+                </text>
+
+                {/* Center percentage label */}
+                <text
+                  x="150"
+                  y="52"
+                  fontSize="11"
+                  fontFamily="'JetBrains Mono', monospace"
+                  fill="rgba(52, 211, 153, 0.7)"
+                  textAnchor="middle"
+                  fontWeight="bold"
+                >
+                  {xpPercent}%
+                </text>
+
+                {/* Subtle tick marks */}
+                {[25, 50, 75].map((tick) => (
+                  <line
+                    key={tick}
+                    x1={16 + (268 * tick) / 100}
+                    y1="19"
+                    x2={16 + (268 * tick) / 100}
+                    y2="24"
+                    stroke="rgba(100, 116, 139, 0.2)"
+                    strokeWidth="1"
+                  />
+                ))}
+
+                <defs>
+                  <linearGradient id="xpGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#22d3ee" />
+                    <stop offset="50%" stopColor="#34d399" />
+                    <stop offset="100%" stopColor="#22d3ee" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              <p className="font-mono text-[10px] text-slate-500 mt-2">
+                {xpInLevel} / 1,000 XP toward {nextRank?.title || "MAX"}
+              </p>
             </div>
           </motion.div>
 

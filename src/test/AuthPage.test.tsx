@@ -28,6 +28,23 @@ vi.mock("@/context/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock("@/context/ZdgContext", () => ({
+  useZdg: () => ({
+    user: null,
+    globalXp: 0,
+    streakCount: 0,
+    completedLabs: [],
+    isAuthenticated: false,
+    isLoading: false,
+    login: vi.fn(),
+    signup: vi.fn(),
+    logout: vi.fn(),
+    addXp: vi.fn(),
+    completeLab: vi.fn(),
+    syncFromGamification: vi.fn(),
+  }),
+}));
+
 const mockSignInWithPopup = vi.fn();
 const mockSendPasswordResetEmail = vi.fn();
 const mockSendEmailVerification = vi.fn();
@@ -259,9 +276,9 @@ describe("AuthPage", () => {
     expect(screen.getByLabelText("Password")).toBeDisabled();
   });
 
-  // ── Error Handling ──
+  // ── Local Auth Resiliency (backend failure falls through to local login) ──
 
-  it("displays auth error messages", async () => {
+  it("navigates to dashboard when backend auth fails but local login succeeds", async () => {
     mockApiPost.mockRejectedValue({
       response: { data: { code: "auth/user-not-found" } },
       code: "auth/user-not-found",
@@ -272,11 +289,12 @@ describe("AuthPage", () => {
     await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByText("Sign In"));
     await waitFor(() => {
-      expect(screen.getByText("No account with this email")).toBeTruthy();
+      // Local auth succeeds despite backend failure → navigates to dashboard
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
     });
   });
 
-  it("displays generic error for unknown error codes", async () => {
+  it("navigates to dashboard on unknown backend errors when local login works", async () => {
     mockApiPost.mockRejectedValue({
       code: "auth/unknown",
       message: "Something went wrong",
@@ -286,7 +304,7 @@ describe("AuthPage", () => {
     await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByText("Sign In"));
     await waitFor(() => {
-      expect(screen.getByText("Something went wrong")).toBeTruthy();
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
     });
   });
 

@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
+import { useZdg } from "@/context/ZdgContext";
 import NotificationBell from "@/components/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
 import { hoverScale, tapScale, navbarReveal } from "@/lib/animations";
@@ -31,6 +32,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, logout, user } = useAuth();
+  const { isAuthenticated: zdgIsAuth, globalXp, streakCount, user: zdgUser, logout: zdgLogout } = useZdg();
   const [scrollProgress, setScrollProgress] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -47,12 +49,14 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = async () => {
-    await logout();
+    await Promise.all([logout(), zdgLogout()]);
     startTransition(() => navigate("/auth", { replace: true }));
     setOpen(false);
   };
 
-  const startFreeRoute = isAuthenticated ? "/program" : "/auth";
+  const displayHandle = zdgUser?.handle || user?.name || "Guardian";
+  const isUserAuthenticated = isAuthenticated || zdgIsAuth;
+  const startFreeRoute = isUserAuthenticated ? "/program" : "/auth";
   const isToolsActive = toolsNav.some((item) => location.pathname === item.to);
   const isActive = (path: string) => location.pathname === path;
 
@@ -145,16 +149,29 @@ const Navbar = () => {
           {/* Desktop right side */}
           <div className="hidden items-center gap-2 md:flex">
             <ThemeToggle />
-            {isAuthenticated ? <NotificationBell /> : null}
-            {isAuthenticated && user ? (
+            {isUserAuthenticated ? <NotificationBell /> : null}
+            {isUserAuthenticated && (zdgUser || user) ? (
+              <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg border border-slate-800/50 bg-slate-900/50">
+                <span className="text-[10px] font-mono font-medium text-emerald-400">
+                  {globalXp.toLocaleString()} XP
+                </span>
+                {streakCount > 0 && (
+                  <span className="text-[10px] font-mono text-amber-400 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    {streakCount}d
+                  </span>
+                )}
+              </div>
+            ) : null}
+            {isUserAuthenticated && (zdgUser || user) ? (
               <Link
-                to={`/u/${user.id}`}
+                to={`/u/${zdgUser?.handle || user?.id}`}
                 className="inline-flex min-h-[38px] items-center rounded-lg px-3 py-2 text-sm text-slate-400 transition-all duration-200 hover:bg-slate-800/40 hover:text-slate-200"
               >
-                Profile
+                {displayHandle}
               </Link>
             ) : null}
-            {isAuthenticated ? (
+            {isUserAuthenticated ? (
               <button
                 type="button"
                 onClick={handleLogout}
@@ -236,7 +253,7 @@ const Navbar = () => {
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2">
-                  {isAuthenticated && user ? (
+                  {isUserAuthenticated && user ? (
                     <Link
                       to={`/u/${user.id}`}
                       onClick={() => setOpen(false)}
@@ -245,7 +262,7 @@ const Navbar = () => {
                       Public Profile
                     </Link>
                   ) : null}
-                  {isAuthenticated ? (
+                  {isUserAuthenticated ? (
                     <button
                       type="button"
                       onClick={handleLogout}

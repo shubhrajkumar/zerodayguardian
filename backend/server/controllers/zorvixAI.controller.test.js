@@ -88,7 +88,7 @@ describe("chatWithZorvix", () => {
     );
     // Verify Groq was called with the correct model
     expect(mockChatCompletionsCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ model: "llama3-70b-8192" })
+      expect.objectContaining({ model: "llama-3.3-70b-versatile" })
     );
     // Verify system prompt is included
     const call = mockChatCompletionsCreate.mock.calls[0][0];

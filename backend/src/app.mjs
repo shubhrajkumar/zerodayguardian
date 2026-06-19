@@ -39,6 +39,10 @@ import platformRoutes from "./routes/platformRoutes.mjs";
 import pyApiCompatRoutes from "./routes/pyApiCompatRoutes.mjs";
 import zorvixAiRoutes from "../server/routes/zorvix.routes.js";
 import complianceRoutes from "../routes/complianceRoutes.js";
+import portScanRoutes from "../routes/portScanRoutes.js";
+import subdomainRoutes from "../routes/subdomainRoutes.js";
+import httpHeaderRoutes from "../routes/httpHeaderRoutes.js";
+import tlsCertRoutes from "../routes/tlsCertRoutes.js";
 import { createSessionId, decryptSessionToken, encryptSessionToken } from "./utils/security.mjs";
 import { chatAbuseDetection } from "./middleware/abuseDetection.mjs";
 import { allowProbeAccess } from "./middleware/probeAccess.mjs";
@@ -680,6 +684,10 @@ export const createApp = () => {
   // Compliance / GDPR routes
   app.use("/api/compliance", requireAuth, complianceRoutes);
   // Zorvix AI (Groq-powered) — public endpoint with dedicated rate limiter
+  app.use("/api/tools/portscan", portScanRoutes);
+  app.use("/api/tools/subdomains", subdomainRoutes);
+  app.use("/api/tools/headers", httpHeaderRoutes);
+  app.use("/api/tools/tlscert", tlsCertRoutes);
   app.use("/api/ai/zorvix", zorvixAiRoutes);
   app.use("/api/neurobot/chat", chatRateLimit, chatAbuseDetection);
   app.use("/api/neurobot", requireCsrf, requireAuth, neurobotRateLimit, neurobotRoutes);
