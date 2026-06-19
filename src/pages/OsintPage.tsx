@@ -37,6 +37,7 @@ import SubdomainTool from "@/components/SubdomainTool";
 import HttpHeaderTool from "@/components/HttpHeaderTool";
 import TlsCertTool from "@/components/TlsCertTool";
 import SEOManager from "@/components/SEOManager";
+import OsintServiceStatus from "@/components/OsintServiceStatus";
 
 // ── Tool Mode Definitions ──
 const TOOL_MODES = [
@@ -363,6 +364,9 @@ const OsintPage = () => {
         <div className="grid gap-4 lg:grid-cols-[280px_1fr_280px]">
           {/* ═══ LEFT COLUMN: Threat Feeds & Intel Streams ═══ */}
           <div className="space-y-3">
+            {/* ── Service Status Panel ── */}
+            <OsintServiceStatus />
+
             <div className="flex items-center gap-2 mb-2">
               <span className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.5)]" />
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-400">LIVE CYBER UPDATES</span>
