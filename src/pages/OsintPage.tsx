@@ -54,73 +54,10 @@ const TOOL_MODES = [
 
 type ToolMode = (typeof TOOL_MODES)[number]["id"];
 
-// ── Live Cyber Threats (real-world intel data) ──
-interface ThreatIntel {
-  id: string;
-  severity: "CRITICAL" | "HIGH" | "MEDIUM";
-  title: string;
-  body: string;
-  timestamp: string;
-  source: string;
-  tags: string[];
-}
-
-const LIVE_THREATS: ThreatIntel[] = [
-  {
-    id: "apt41-c2",
-    severity: "CRITICAL",
-    title: "APT41 Infrastructure Shift Detected",
-    body: "New active C2 servers matching pattern 185.234.x.x observed communicating with compromised government sector endpoints in Southeast Asia. Multiple Beacon variants identified with custom encryption.",
-    timestamp: "2026-06-19T08:40Z",
-    source: "Threat Intel Feed · CISA",
-    tags: ["apt41", "c2", "government-sector"],
-  },
-  {
-    id: "cve-gateway-rce",
-    severity: "CRITICAL",
-    title: "CVE-2026-XXXX — Unauthenticated RCE in Core Enterprise Gateways",
-    body: "Exploit code leaked on GitHub. Active scanning detected against port 8443 on enterprise VPN concentrators. Proof-of-concept achieves remote code execution without authentication. Patch expected within 72 hours.",
-    timestamp: "2026-06-19T07:15Z",
-    source: "Vuln Disclosure · NVD",
-    tags: ["rce", "gateway", "exploit-leak", "active-scanning"],
-  },
-  {
-    id: "ransomware-apt",
-    severity: "HIGH",
-    title: "BlackCat/ALPHV Ransomware Variant Targeting ESXi Clusters",
-    body: "New Linux locker variant deploys via SSH brute-force + stolen credentials against exposed ESXi management interfaces. Encrypts VM disk images with ChaCha20. No decryptor available.",
-    timestamp: "2026-06-19T06:30Z",
-    source: "Ransomware Monitoring · CrowdStrike",
-    tags: ["ransomware", "esxi", "blackcat", "cha cha20"],
-  },
-  {
-    id: "phishing-campaign",
-    severity: "HIGH",
-    title: "Large-Scale Phishing Campaign Spoofing Microsoft 365 MFA Prompts",
-    body: "Adversary-in-the-Middle (AiTM) phishing kit targeting 40+ organizations. Captures session cookies post-MFA to bypass conditional access policies. Campaign infrastructure spans 120+ domains registered this week.",
-    timestamp: "2026-06-19T05:00Z",
-    source: "Phishing Intel · Proofpoint",
-    tags: ["phishing", "mfa-bypass", "aitm", "microsoft-365"],
-  },
-  {
-    id: "dns-watering-hole",
-    severity: "MEDIUM",
-    title: "DNS Watering Hole — Multiple Defense Contractor Domains Compromised",
-    body: "Three aerospace subcontractor DNS records redirected to credential harvesting pages. Attackers modified NS records via compromised registrar accounts. Active investigation by ICANN.",
-    timestamp: "2026-06-18T22:15Z",
-    source: "DNS Intelligence · DNSSEC Monitoring",
-    tags: ["dns", "watering-hole", "defense-contractor", "registrar-compromise"],
-  },
-  {
-    id: "iot-botnet-surge",
-    severity: "MEDIUM",
-    title: "IoT Botnet Surge Targeting CCTV & NVR Devices via Default Credentials",
-    body: "Mozi-variant botnet scanning /24 ranges for Hikvision and Dahua devices on ports 554, 37777, and 80. Over 15,000 new devices enrolled in past 48 hours. Recommended: isolate IoT VLANs immediately.",
-    timestamp: "2026-06-18T19:45Z",
-    source: "Botnet Monitoring · Shadowserver",
-    tags: ["iot", "botnet", "cctv", "default-credentials"],
-  },
-];
+// ── Live Cyber Threats — currently unavailable ──
+// Previously contained hardcoded/fabricated threat data that has been removed
+// for honesty. When a real threat intel feed API is integrated, results will
+// appear here.
 
 // ── Google Dorking Queries ──
 const GOOGLE_DORKS = [
@@ -236,24 +173,6 @@ const RESOURCE_ICONS: Record<string, React.ReactNode> = {
   zap: <Zap className="h-4 w-4" />,
 };
 
-const SEVERITY_STYLES: Record<string, { badge: string; dot: string; border: string }> = {
-  CRITICAL: {
-    badge: "bg-red-950/40 text-red-400 border-red-800",
-    dot: "bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.5)]",
-    border: "border-red-800/30",
-  },
-  HIGH: {
-    badge: "bg-amber-950/40 text-amber-400 border-amber-800",
-    dot: "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]",
-    border: "border-amber-800/30",
-  },
-  MEDIUM: {
-    badge: "bg-blue-950/40 text-blue-400 border-blue-800",
-    dot: "bg-blue-400 shadow-[0_0_6px_rgba(96,165,250,0.5)]",
-    border: "border-blue-800/30",
-  },
-};
-
 // ── OsintPage Component ──
 const OsintPage = () => {
   const { toast } = useToast();
@@ -262,7 +181,7 @@ const OsintPage = () => {
   const [breachInputType, setBreachInputType] = useState<"email" | "phone" | "domain">("email");
   const [breachInput, setBreachInput] = useState("");
   const [metadataFile, setMetadataFile] = useState<File | null>(null);
-  const [expandedThreats, setExpandedThreats] = useState<Set<string>>(new Set(LIVE_THREATS.slice(0, 3).map((t) => t.id)));
+  const [expandedThreats, setExpandedThreats] = useState<Set<string>>(new Set());
 
   // ── OSINT Investigation State (preserved) ──
   const [query, setQuery] = useState("");
@@ -310,7 +229,7 @@ const OsintPage = () => {
     } catch { /* ignore */ }
   }, []);
 
-  // ── Toggle threat expansion ──
+  // ── Toggle threat expansion (reserved for live feed) ──
   const toggleThreat = useCallback((id: string) => {
     setExpandedThreats((prev) => {
       const next = new Set(prev);
@@ -320,10 +239,10 @@ const OsintPage = () => {
     });
   }, []);
 
-  // ── Collapse state ──
+  // ── Collapse state (reserved for live feed) ──
   const collapsedThreats = useMemo(
-    () => LIVE_THREATS.filter((t) => !expandedThreats.has(t.id)),
-    [expandedThreats],
+    () => [] as { id: string }[],
+    [],
   );
 
   // ── Risk score from result ──
@@ -368,73 +287,21 @@ const OsintPage = () => {
             <OsintServiceStatus />
 
             <div className="flex items-center gap-2 mb-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.5)]" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-400">LIVE CYBER UPDATES</span>
-              <span className="ml-auto font-mono text-[9px] text-slate-600">{LIVE_THREATS.length} signals</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">THREAT FEED</span>
             </div>
 
-            {/* Expanded threats */}
-            {LIVE_THREATS.filter((t) => expandedThreats.has(t.id)).map((threat) => {
-              const styles = SEVERITY_STYLES[threat.severity] || SEVERITY_STYLES.MEDIUM;
-              return (
-                <div
-                  key={threat.id}
-                  className={`rounded-lg border ${styles.border} bg-slate-900/40 p-3 cursor-pointer transition-all duration-200 hover:bg-slate-900/60`}
-                  onClick={() => toggleThreat(threat.id)}
-                >
-                  {/* Header row */}
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
-                      <span className={`rounded px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-[0.12em] border ${styles.badge}`}>
-                        {threat.severity}
-                      </span>
-                    </div>
-                    <span className="font-mono text-[8px] text-slate-600 tabular-nums">
-                      {threat.timestamp.split("T").join(" · ").slice(0, 16)}
-                    </span>
-                  </div>
-
-                  {/* Title + body */}
-                  <p className="font-mono text-[11px] font-semibold text-slate-100 leading-snug mb-1">{threat.title}</p>
-                  <p className="font-mono text-[10px] text-slate-400 leading-relaxed">{threat.body}</p>
-
-                  {/* Meta */}
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="font-mono text-[8px] text-slate-600">{threat.source}</span>
-                    <div className="flex gap-1">
-                      {threat.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="rounded-full bg-slate-800/50 px-1.5 py-0.5 font-mono text-[7px] text-slate-500">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Collapsed threats (show as compact chips) */}
-            {collapsedThreats.length > 0 && (
-              <div className="space-y-1">
-                {collapsedThreats.slice(0, 4).map((threat) => {
-                  const styles = SEVERITY_STYLES[threat.severity] || SEVERITY_STYLES.MEDIUM;
-                  return (
-                    <div
-                      key={threat.id}
-                      className="flex items-center gap-2 rounded-lg border border-slate-800/40 bg-slate-900/20 px-3 py-2 cursor-pointer transition hover:bg-slate-900/40"
-                      onClick={() => toggleThreat(threat.id)}
-                    >
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${styles.dot}`} />
-                      <p className="flex-1 truncate font-mono text-[10px] text-slate-400">{threat.title}</p>
-                      <span className={`rounded px-1 py-0.5 font-mono text-[7px] font-bold border ${styles.badge}`}>
-                        {threat.severity}
-                      </span>
-                    </div>
-                  );
-                })}
+            {/* Honest empty state — no fake threats */}
+            <div className="rounded-lg border border-slate-800/40 bg-slate-900/20 p-4 text-center">
+              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/40">
+                <AlertTriangle className="h-5 w-5 text-slate-500" />
               </div>
-            )}
+              <p className="font-mono text-xs font-medium text-slate-400">No live threat data available</p>
+              <p className="mt-1 font-mono text-[10px] text-slate-600 leading-relaxed">
+                A real threat intel feed will appear here once connected to a
+                live provider (e.g., CISA, AlienVault OTX, or GreyNoise API).
+              </p>
+            </div>
 
             {/* Intel telemetry cards */}
             <div className="space-y-2 mt-4">

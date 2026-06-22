@@ -596,20 +596,20 @@ export default function AIMentor() {
   const rankIcon = getRankIcon(level);
 
   const skills = useMemo(() =>
-    DEFAULT_SKILLS.map((skill, index) => ({
+    DEFAULT_SKILLS.map((skill) => ({
       ...skill,
-      // Distribute completed missions proportionally across skill areas
-      missionsCompleted: Math.min(skill.totalMissions, Math.max(0, Math.round((completedDays / 60) * skill.totalMissions * (1 + (index % 3) * 0.1)))),
+      // All skills start at 0 — real progress requires completed lab data from backend
+      missionsCompleted: 0,
     })),
-    [completedDays]
+    []
   );
 
   const goals = useMemo(() =>
     GOAL_SUGGESTIONS.map((g) => ({
       ...g,
-      progress: Math.min(100, Math.round((completedDays / 60) * 100)),
+      progress: 0,
     })),
-    [completedDays]
+    []
   );
 
   const recommendations = useMemo(() => {

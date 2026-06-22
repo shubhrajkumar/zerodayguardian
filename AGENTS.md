@@ -1,40 +1,36 @@
-# Mock Auth Mode (Frontend Testing)
+# Authentication Architecture
 
-When the backend is unavailable (e.g., during local frontend development), you can enable mock authentication to test pages that require a logged-in user — including the Dashboard, Labs, and Tools pages.
+ZeroDay Guardian uses a single authentication system managed by **AuthContext** (`src/context/AuthContext.tsx`).
 
-## Enabling mock auth
+## Auth Flow
 
-Open your browser's DevTools console and run:
+1. User submits login credentials on the AuthPage (`src/pages/AuthPage.tsx`)
+2. Backend is called via `POST /api/auth/login` (or signup, Google OAuth)
+3. On backend success, JWT tokens are stored to `localStorage` (`zdg_token`, `zdg_refresh`)
+4. On backend failure, an error is shown — **no local fallback**
+5. AuthContext goes through a 6-step refresh chain: verify → refresh → bootstrap → Firebase → cached state → clear
 
-```js
-localStorage.setItem("zdg_mock_auth", "true");
-```
+## Key Files
 
-Then reload the page. The app will skip all backend API calls and immediately authenticate as **Test Guardian** (`test@zerodayguardian.com`).
+| File | Role |
+|---|---|
+| `src/context/AuthContext.tsx` | **Single source of truth** for authentication |
+| `src/lib/firebase.ts` | Lazy-loaded Firebase SDK (Google sign-in only) |
+| `src/lib/api.ts` | Axios instance with auth interceptor |
+| `src/lib/apiClient.ts` | Token persistence and auth helpers |
+| `src/components/ProtectedRoute.tsx` | Route guard using AuthContext only |
+| `src/context/ZdgContext.tsx` | **Gamification only** — no auth logic |
 
-## Disabling mock auth
+## What Was Removed
 
-```js
-localStorage.removeItem("zdg_mock_auth");
-```
+- **ZdgContext auth logic** (login/signup/logout/isAuthenticated) — moved to AuthContext
+- **Mock JWT generation** (`generateMockJwt`) — eliminated
+- **Local auth fallback** — backend authentication is the only path
+- **`zdg_mock_auth` flag** — replaced with `auth_state` localStorage for E2E tests
+- **Token writes from ZdgContext** — `zdg_token` is managed exclusively by AuthContext
 
-Then reload the page. The app will return to the normal authentication flow.
-
-## How it works
-
-The check lives in `src/context/AuthContext.tsx` inside the `refreshAuth` callback. Before calling any backend auth APIs, it checks for `localStorage.getItem("zdg_mock_auth") === "true"`. If the flag is set, it skips the backend entirely and injects a mock user object directly into the auth state.
-
-The mock user is a plain object (not a real Firebase/backend user) with:
-- **id:** `mock-user-1`
-- **name:** Test Guardian
-- **email:** test@zerodayguardian.com
-- **role:** user
-
-> ⚠️ **This is strictly a development/testing tool.** API calls to `/api/users/profile` and similar endpoints are bypassed. Features that make backend API calls (profile updates, saving progress) will fail silently since no real backend is running. Static UI content — dashboard stats, navigation, theme toggle — works as expected.
-
-## When to use
-
-- Testing dashboard layout, responsive styles, and theme switching
-- Verifying auth-conditional UI (RequireAuth, navigation menu items)
-- Debugging frontend-only bugs without needing the full backend stack
-- Running browser-based tests (Vite dev server on `localhost:8080`, no backend required)
+> ⚠️ If you need to test authenticated features locally, set `auth_state` in localStorage:
+> ```js
+> localStorage.setItem("auth_state", JSON.stringify({ isAuthenticated: true, user: { id: "t1", name: "Test", email: "test@test.com", role: "user" }, timestamp: Date.now(), accessToken: "mock-token" }));
+> ```
+> This uses AuthContext's cached state fallback chain.

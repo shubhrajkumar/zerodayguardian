@@ -4,7 +4,6 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase";
 import GlassCard from "@/components/ui/GlassCard";
 import { AuthUser, useAuth } from "@/context/AuthContext";
-import { useZdg } from "@/context/ZdgContext";
 import api from "@/lib/api";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { isFirebaseConfigured, initFirebase } from "@/lib/firebase";
@@ -35,7 +34,6 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading, login } = useAuth();
-  const zdg = useZdg();
 
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -135,18 +133,13 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       if (mode === "register") {
-        // Sign up locally (localStorage persistence) AND via backend
-        await zdg.signup(email, password, getDisplayNameFromEmail(email));
-        try {
-          const payload = await api.post<BackendAuthResponse>("/api/auth/signup", {
-            name: getDisplayNameFromEmail(email),
-            email,
-            password,
-          });
-          login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
-        } catch {
-          // Backend may be unavailable — local auth still works
-        }
+        // Sign up via backend only — no local auth fallback
+        const payload = await api.post<BackendAuthResponse>("/api/auth/signup", {
+          name: getDisplayNameFromEmail(email),
+          email,
+          password,
+        });
+        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
         setSuccess("Account created. Welcome to your dashboard.");
         showToast("Account created successfully.", "success");
         navigate("/dashboard", { replace: true });
@@ -181,18 +174,13 @@ export default function AuthPage() {
         showToast("Password reset successful!", "success");
         setTimeout(() => { setMode("login"); setOtp(""); setPassword(""); setConfirmPassword(""); }, 2000);
       } else {
-        // Login locally (localStorage persistence) AND via backend
-        await zdg.login(email, password);
-        try {
-          const payload = await api.post<BackendAuthResponse>("/api/auth/login", {
-            email,
-            password,
-            rememberMe: true,
-          });
-          login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
-        } catch {
-          // Backend may be unavailable — local auth still works
-        }
+        // Login via backend only — no local auth fallback
+        const payload = await api.post<BackendAuthResponse>("/api/auth/login", {
+          email,
+          password,
+          rememberMe: true,
+        });
+        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
         showToast("Welcome back!", "success");
         navigate("/dashboard", { replace: true });
       }

@@ -10,10 +10,6 @@ import {
 import api from "@/lib/api";
 import { firebaseAuth, initFirebase } from "@/lib/firebase";
 
-// ── Mock Auth (dev/test only) ──
-// Enable by setting localStorage.setItem("zdg_mock_auth", "true") then reload.
-// Skipped entirely when zdg_mock_auth is not set, so there's zero production impact.
-
 type AuthState = "loading" | "authenticated" | "unauthenticated";
 
 export type AuthUser = {
@@ -109,23 +105,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refreshAuth = useCallback(async (_force?: boolean): Promise<boolean> => {
-    // 0. Mock auth bypass for local frontend testing (no backend required)
-    try {
-      if (localStorage.getItem("zdg_mock_auth") === "true") {
-        const mockUser: AuthUser = {
-          id: "mock-user-1",
-          name: "Test Guardian",
-          email: "test@zerodayguardian.com",
-          role: "user",
-        };
-        localStorage.setItem("zdg_token", "mock_access_token_abc123");
-        localStorage.setItem("zdg_refresh", "mock_refresh_token_xyz789");
-        return syncAuthState(mockUser);
-      }
-    } catch {
-      // localStorage unavailable
-    }
-
     // 1. Try token verify first (silent — no toast, no redirect)
     const storedToken = localStorage.getItem("zdg_token");
     if (storedToken && storedToken.length > 10) {

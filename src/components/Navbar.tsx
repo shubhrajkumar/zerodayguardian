@@ -32,7 +32,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, logout, user } = useAuth();
-  const { isAuthenticated: zdgIsAuth, globalXp, streakCount, user: zdgUser, logout: zdgLogout } = useZdg();
+  const { globalXp, streakCount } = useZdg();
   const [scrollProgress, setScrollProgress] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -49,13 +49,13 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = async () => {
-    await Promise.all([logout(), zdgLogout()]);
+    await logout();
     startTransition(() => navigate("/auth", { replace: true }));
     setOpen(false);
   };
 
-  const displayHandle = zdgUser?.handle || user?.name || "Guardian";
-  const isUserAuthenticated = isAuthenticated || zdgIsAuth;
+  const displayHandle = user?.name || "Guardian";
+  const isUserAuthenticated = isAuthenticated;
   const startFreeRoute = isUserAuthenticated ? "/program" : "/auth";
   const isToolsActive = toolsNav.some((item) => location.pathname === item.to);
   const isActive = (path: string) => location.pathname === path;
@@ -150,7 +150,7 @@ const Navbar = () => {
           <div className="hidden items-center gap-2 md:flex">
             <ThemeToggle />
             {isUserAuthenticated ? <NotificationBell /> : null}
-            {isUserAuthenticated && (zdgUser || user) ? (
+            {isUserAuthenticated ? (
               <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg border border-slate-800/50 bg-slate-900/50">
                 <span className="text-[10px] font-mono font-medium text-emerald-400">
                   {globalXp.toLocaleString()} XP
@@ -163,9 +163,9 @@ const Navbar = () => {
                 )}
               </div>
             ) : null}
-            {isUserAuthenticated && (zdgUser || user) ? (
+            {isUserAuthenticated && user ? (
               <Link
-                to={`/u/${zdgUser?.handle || user?.id}`}
+                to={`/u/${user?.id}`}
                 className="inline-flex min-h-[38px] items-center rounded-lg px-3 py-2 text-sm text-slate-400 transition-all duration-200 hover:bg-slate-800/40 hover:text-slate-200"
               >
                 {displayHandle}

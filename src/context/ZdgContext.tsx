@@ -1,15 +1,15 @@
 /**
- * ZdgContext — Global Security Context with localStorage persistence.
+ * ZdgContext — Gamification Context with localStorage persistence.
  *
  * Manages:
- *   - Operator profile (handle, email, rank, XP, streak)
- *   - Persistent localStorage session (survives page refresh)
- *   - Daily streak calculation (resets after 24h idle)
- *   - Mock JWT token generation for offline/local auth
- *   - Login / Signup / Logout flows
+ *   - Operator gamification profile (handle, rank, XP, streak, completed labs)
+ *   - Persistent localStorage save (survives page refresh)
+ *   - Daily streak calculation
+ *   - XP tracking and lab completion tracking
  *
- * Integrates with the existing gamification localStorage keys so
- * XP and streak data stay consistent across contexts.
+ * Note: Authentication is handled exclusively by AuthContext.
+ * ZdgContext manages local gamification state only — no JWT,
+ * no login/signup, no auth state.
  */
 import {
   createContext,
@@ -26,8 +26,6 @@ import {
 
 const OPERATOR_STORAGE_KEY = "zdg:operator";
 const GAMIFICATION_PREFIX = "zdg:gamification";
-const TOKEN_STORAGE_KEY = "zdg:token";
-const MOCK_JWT_PREFIX = "zdg_mock_jwt_";
 
 // ── Types ──
 
@@ -52,7 +50,7 @@ export type ZdgOperator = {
 };
 
 export type ZdgContextValue = {
-  /** The current operator profile, or null if signed out */
+  /** The current operator gamification profile, or null if none saved */
   user: ZdgOperator | null;
   /** Current total XP (sourced from operator + gamification localStorage) */
   globalXp: number;
@@ -60,21 +58,11 @@ export type ZdgContextValue = {
   streakCount: number;
   /** Array of completed lab IDs */
   completedLabs: string[];
-  /** Whether a user is currently signed in */
-  isAuthenticated: boolean;
-  /** Whether the context is still initializing from localStorage */
-  isLoading: boolean;
-  /** Sign in with email + password. Creates/loads operator profile. */
-  login: (email: string, password?: string) => Promise<void>;
-  /** Sign up with email, password, and handle. Creates new operator profile. */
-  signup: (email: string, password: string, handle: string) => Promise<void>;
-  /** Sign out and clear all local session data. */
-  logout: () => Promise<void>;
-  /** Add XP to the operator's total and persist. */
+  /** Add XP to the operator's total and persist */
   addXp: (amount: number) => void;
-  /** Mark a lab as completed and persist. */
+  /** Mark a lab as completed and persist */
   completeLab: (labId: string) => void;
-  /** Force a refresh of XP/streak from gamification storage. */
+  /** Force a refresh of XP/streak from gamification storage */
   syncFromGamification: () => void;
 };
 
@@ -83,11 +71,6 @@ const ZDG_CONTEXT_EMPTY: ZdgContextValue = {
   globalXp: 0,
   streakCount: 0,
   completedLabs: [],
-  isAuthenticated: false,
-  isLoading: true,
-  login: async () => {},
-  signup: async () => {},
-  logout: async () => {},
   addXp: () => {},
   completeLab: () => {},
   syncFromGamification: () => {},
@@ -96,21 +79,6 @@ const ZDG_CONTEXT_EMPTY: ZdgContextValue = {
 const ZdgContext = createContext<ZdgContextValue>(ZDG_CONTEXT_EMPTY);
 
 // ── Utilities ──
-
-const generateMockJwt = (handle: string): string => {
-  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = btoa(
-    JSON.stringify({
-      sub: handle,
-      handle,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 86400 * 30, // 30 days
-      iss: "zdg-local-auth",
-    })
-  );
-  const signature = btoa(`${handle}:${Date.now()}:zdg_local`);
-  return `${header}.${payload}.${signature}`;
-};
 
 const calculateOperatorRank = (xp: number): OperatorRank => {
   if (xp >= 20000) return "Elite Guardian";
@@ -155,16 +123,7 @@ const saveOperator = (operator: ZdgOperator): void => {
   }
 };
 
-const clearOperator = (): void => {
-  try {
-    localStorage.removeItem(OPERATOR_STORAGE_KEY);
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem("zdg_token");
-    localStorage.removeItem("zdg_refresh");
-  } catch {
-    // ignore
-  }
-};
+
 
 const readGamificationXp = (userId: string): number => {
   try {
@@ -205,7 +164,6 @@ const readGamificationCompletedLabs = (userId: string): string[] => {
 
 export const ZdgProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<ZdgOperator | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [globalXp, setGlobalXp] = useState(0);
   const [streakCount, setStreakCount] = useState(0);
   const [completedLabs, setCompletedLabs] = useState<string[]>([]);
@@ -245,11 +203,9 @@ export const ZdgProvider = ({ children }: { children: ReactNode }) => {
       if (gStreak > 0) setStreakCount(gStreak);
       if (gLabs.length > 0) setCompletedLabs(gLabs);
     }
-
-    setIsLoading(false);
   }, []);
 
-  // ── Periodic gamification sync (every 10s) ──
+  // ── Periodic gamification sync (every 30s) ──
   useEffect(() => {
     if (!user) return;
     gamificationSyncTimerRef.current = setInterval(syncFromGamification, 30_000);
@@ -259,96 +215,6 @@ export const ZdgProvider = ({ children }: { children: ReactNode }) => {
       }
     };
   }, [user, syncFromGamification]);
-
-  // ── Login: authenticate with email/password, store operator to localStorage ──
-  const login = useCallback(async (email: string, _password?: string) => {
-    const handle = email.split("@")[0].replace(/[^a-zA-Z0-9_-]/g, "_");
-    const now = Date.now();
-
-    // Try to load existing operator for this handle
-    const existing = loadOperator();
-
-    const operator: ZdgOperator = existing && existing.email === email
-      ? {
-          ...existing,
-          lastLogin: now,
-          streak: calculateStreak(existing.lastLogin, existing.streak),
-        }
-      : {
-          handle,
-          email,
-          rank: "Recruit",
-          xp: 0,
-          streak: 1,
-          lastLogin: now,
-          createdAt: now,
-          completedLabs: [],
-        };
-
-    // Generate and store mock JWT
-    const token = generateMockJwt(operator.handle);
-    try {
-      localStorage.setItem(TOKEN_STORAGE_KEY, token);
-      localStorage.setItem("zdg_token", token);
-      localStorage.setItem("zdg_mock_auth", "true");
-    } catch {
-      // ignore
-    }
-
-    saveOperator(operator);
-    setUser(operator);
-    setGlobalXp(operator.xp);
-    setStreakCount(operator.streak);
-    setCompletedLabs(operator.completedLabs);
-  }, []);
-
-  // ── Signup: create new operator profile ──
-  const signup = useCallback(async (email: string, _password: string, handle: string) => {
-    const now = Date.now();
-    const sanitizedHandle = handle.replace(/[^a-zA-Z0-9_-]/g, "_") || email.split("@")[0];
-
-    const operator: ZdgOperator = {
-      handle: sanitizedHandle,
-      email,
-      rank: "Recruit",
-      xp: 0,
-      streak: 1,
-      lastLogin: now,
-      createdAt: now,
-      completedLabs: [],
-    };
-
-    const token = generateMockJwt(operator.handle);
-    try {
-      localStorage.setItem(TOKEN_STORAGE_KEY, token);
-      localStorage.setItem("zdg_token", token);
-      localStorage.setItem("zdg_mock_auth", "true");
-    } catch {
-      // ignore
-    }
-
-    saveOperator(operator);
-    setUser(operator);
-    setGlobalXp(0);
-    setStreakCount(1);
-    setCompletedLabs([]);
-  }, []);
-
-  // ── Logout: clear everything ──
-  const logout = useCallback(async () => {
-    clearOperator();
-    try {
-      localStorage.removeItem("zdg_mock_auth");
-      localStorage.removeItem("zdg_token");
-      localStorage.removeItem("zdg_refresh");
-    } catch {
-      // ignore
-    }
-    setUser(null);
-    setGlobalXp(0);
-    setStreakCount(0);
-    setCompletedLabs([]);
-  }, []);
 
   // ── Add XP and persist ──
   const addXp = useCallback(
@@ -395,16 +261,11 @@ export const ZdgProvider = ({ children }: { children: ReactNode }) => {
       globalXp,
       streakCount,
       completedLabs,
-      isAuthenticated: user !== null,
-      isLoading,
-      login,
-      signup,
-      logout,
       addXp,
       completeLab,
       syncFromGamification,
     }),
-    [user, globalXp, streakCount, completedLabs, isLoading, login, signup, logout, addXp, completeLab, syncFromGamification]
+    [user, globalXp, streakCount, completedLabs, addXp, completeLab, syncFromGamification]
   );
 
   return <ZdgContext.Provider value={value}>{children}</ZdgContext.Provider>;

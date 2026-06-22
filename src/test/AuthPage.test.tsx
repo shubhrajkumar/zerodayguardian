@@ -34,11 +34,6 @@ vi.mock("@/context/ZdgContext", () => ({
     globalXp: 0,
     streakCount: 0,
     completedLabs: [],
-    isAuthenticated: false,
-    isLoading: false,
-    login: vi.fn(),
-    signup: vi.fn(),
-    logout: vi.fn(),
     addXp: vi.fn(),
     completeLab: vi.fn(),
     syncFromGamification: vi.fn(),
@@ -276,35 +271,20 @@ describe("AuthPage", () => {
     expect(screen.getByLabelText("Password")).toBeDisabled();
   });
 
-  // ── Local Auth Resiliency (backend failure falls through to local login) ──
+  // ── Backend Failure Handling (no local auth fallback) ──
 
-  it("navigates to dashboard when backend auth fails but local login succeeds", async () => {
-    mockApiPost.mockRejectedValue({
-      response: { data: { code: "auth/user-not-found" } },
-      code: "auth/user-not-found",
+  it("shows error when backend login fails (no local fallback)", async () => {
+    mockApiPost.mockImplementation(() => Promise.reject({
+      response: { data: { code: "user_not_found" } },
       message: "User not found",
-    });
+    }));
     renderAuthPage();
     await userEvent.type(screen.getByLabelText("Email address"), "unknown@example.com");
     await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByText("Sign In"));
+    // Error message from backend should be displayed (no local fallback)
     await waitFor(() => {
-      // Local auth succeeds despite backend failure → navigates to dashboard
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
-    });
-  });
-
-  it("navigates to dashboard on unknown backend errors when local login works", async () => {
-    mockApiPost.mockRejectedValue({
-      code: "auth/unknown",
-      message: "Something went wrong",
-    });
-    renderAuthPage();
-    await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
-    await userEvent.click(screen.getByText("Sign In"));
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
+      expect(screen.getByText("No account with this email address")).toBeTruthy();
     });
   });
 

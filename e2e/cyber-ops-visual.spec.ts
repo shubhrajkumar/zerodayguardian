@@ -14,10 +14,12 @@ import { test, expect, Page } from "@playwright/test";
 
 const SCREENSHOT_DIR = "e2e/screenshots";
 
-/** Set up mock auth for pages that require authentication */
+/** Set up mock auth via auth_state for pages that require authentication */
 const enableMockAuth = (page: Page) => {
   return page.addInitScript(() => {
-    localStorage.setItem("zdg_mock_auth", "true");
+    const mockUser = { id: "test-user-1", name: "Test Guardian", email: "test@zerodayguardian.com", role: "user" };
+    localStorage.setItem("auth_state", JSON.stringify({ isAuthenticated: true, user: mockUser, timestamp: Date.now(), accessToken: "test-access-token-e2e" }));
+    localStorage.setItem("zdg_token", "test-access-token-e2e");
   });
 };
 

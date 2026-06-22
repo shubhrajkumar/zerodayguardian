@@ -7,7 +7,7 @@ import { useZdg } from "@/context/ZdgContext";
 import { useGamificationSystem, getLevelLabel, getRankIcon, getRankByLevel, getNextRank } from "@/lib/gamificationSystem";
 import AnimatedCyberBackground from "@/components/AnimatedCyberBackground";
 import ThreatRadar from "@/components/ThreatRadar";
-import LiveClock, { formatRelativeTime } from "@/components/ui/LiveClock";
+import LiveClock from "@/components/ui/LiveClock";
 import XPBar from "@/components/gamification/XPBar";
 import StreakCounter from "@/components/gamification/StreakCounter";
 import BadgeDisplay from "@/components/gamification/BadgeDisplay";
@@ -75,10 +75,10 @@ export default function DashboardPage() {
   ];
 
   const systemStatus = [
-    { label: "Command Core", status: "Active", color: "bg-emerald-400", glow: "shadow-[0_0_8px_rgba(52,211,153,0.5)]" },
-    { label: "AI Uplink", status: "Synchronized", color: "bg-cyan-400", glow: "shadow-[0_0_8px_rgba(34,211,238,0.5)]" },
-    { label: "Network", status: "Secure", color: "bg-emerald-400", glow: "shadow-[0_0_8px_rgba(52,211,153,0.5)]" },
-    { label: "Threat Feed", status: "Nominal", color: "bg-amber-400", glow: "shadow-[0_0_8px_rgba(251,191,36,0.5)]" },
+    { label: "Command Core", status: "Checking...", color: "bg-slate-500", glow: "" },
+    { label: "AI Uplink", status: "Checking...", color: "bg-slate-500", glow: "" },
+    { label: "Network", status: "Checking...", color: "bg-slate-500", glow: "" },
+    { label: "Threat Feed", status: "Checking...", color: "bg-slate-500", glow: "" },
   ] as const;
 
   const activeMission = {
@@ -216,13 +216,9 @@ export default function DashboardPage() {
               </div>
               <div className="hidden sm:flex flex-col items-end gap-2">
                 <LiveClock />
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  <motion.span
-                    className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"
-                    animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                  <span className="text-xs font-medium font-mono text-emerald-300">ALL SYSTEMS OPERATIONAL</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/20">
+                  <span className="h-2 w-2 rounded-full bg-slate-500" />
+                  <span className="text-xs font-medium font-mono text-slate-400">CONNECTING TO BACKEND...</span>
                 </div>
               </div>
             </div>
@@ -502,31 +498,13 @@ export default function DashboardPage() {
               initial="hidden"
               animate="visible"
             >
-              {[
-                { icon: "🛡️", text: "Threat scan completed — 0 critical findings", date: new Date(Date.now() - 2 * 60 * 1000), color: "bg-emerald-400" },
-                { icon: "📊", text: "Weekly intel report generated", date: new Date(Date.now() - 1 * 60 * 60 * 1000), color: "bg-cyan-400" },
-                { icon: "⚡", text: "Combat lab completed with 92% score", date: new Date(Date.now() - 3 * 60 * 60 * 1000), color: "bg-purple-400" },
-                { icon: "🎯", text: "New mission unlocked: Advanced Recon", date: new Date(Date.now() - 5 * 60 * 60 * 1000), color: "bg-amber-400" },
-              ].map((activity, i) => (
-                <motion.div
-                  key={i}
-                  variants={listItem}
-                  whileHover={{ x: 4, borderColor: "rgba(71, 85, 105, 0.6)", backgroundColor: "rgba(15, 15, 26, 0.5)" }}
-                  className="flex items-center gap-3 rounded-lg border border-slate-800/40 bg-slate-950/30 px-3 py-3 transition-colors cursor-pointer"
-                  role="listitem"
-                >
-                  <span className="text-lg flex-shrink-0">{activity.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-200">{activity.text}</p>
-                    <p className="font-mono text-[11px] text-slate-500">{formatRelativeTime(activity.date)}</p>
-                  </div>
-                  <motion.span
-                    className={`h-1.5 w-1.5 rounded-full ${activity.color} shadow-[0_0_6px_rgba(52,211,153,0.5)] flex-shrink-0`}
-                    animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
-                  />
-                </motion.div>
-              ))}
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
+                <span className="text-2xl">📡</span>
+                <p className="text-sm font-medium text-slate-400">No recent activity</p>
+                <p className="text-xs text-slate-500 max-w-xs">
+                  Activity from labs, missions, and tool usage will appear here once the backend is connected.
+                </p>
+              </div>
             </motion.div>
           </motion.div>
         </main>

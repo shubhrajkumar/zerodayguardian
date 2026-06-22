@@ -26,11 +26,6 @@ vi.mock("@/context/ZdgContext", () => ({
     globalXp: 0,
     streakCount: 0,
     completedLabs: [],
-    isAuthenticated: false,
-    isLoading: false,
-    login: vi.fn(),
-    signup: vi.fn(),
-    logout: vi.fn(),
     addXp: vi.fn(),
     completeLab: vi.fn(),
     syncFromGamification: vi.fn(),
@@ -157,7 +152,7 @@ describe("DashboardPage", () => {
     vi.setSystemTime(new Date(2025, 0, 1, 9, 0, 0));
     renderDashboardPage();
     const heading = screen.getByRole("heading", { level: 1 });
-    expect(heading.textContent).toContain("Good morning");
+    expect(heading.textContent).toContain("Good Morning");
     expect(heading.textContent).toContain("TestUser");
     vi.useRealTimers();
   });
@@ -167,7 +162,7 @@ describe("DashboardPage", () => {
     vi.setSystemTime(new Date(2025, 0, 1, 14, 0, 0));
     renderDashboardPage();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
-      "Good afternoon"
+      "Good Afternoon"
     );
     vi.useRealTimers();
   });
@@ -177,7 +172,7 @@ describe("DashboardPage", () => {
     vi.setSystemTime(new Date(2025, 0, 1, 20, 0, 0));
     renderDashboardPage();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
-      "Good evening"
+      "Good Evening"
     );
     vi.useRealTimers();
   });
@@ -188,7 +183,7 @@ describe("DashboardPage", () => {
     vi.setSystemTime(new Date(2025, 0, 1, 14, 0, 0));
     renderDashboardPage();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
-      "Guardian"
+      "System Access: Guest Operator"
     );
     vi.useRealTimers();
   });
@@ -230,7 +225,7 @@ describe("DashboardPage", () => {
     vi.setSystemTime(new Date(2025, 0, 1, 14, 0, 0));
     renderDashboardPage();
     // Mock snapshot has streakDays: 5
-    expect(screen.getByText(/5-day streak/)).toBeTruthy();
+    expect(screen.getByText(/Streak: 5 Days Active/)).toBeTruthy();
     vi.useRealTimers();
   });
 
@@ -329,30 +324,19 @@ describe("DashboardPage", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/labs");
   }, 10000);
 
-  // ── Recent Activity ──
+  // ── Intel Feed (honest empty state) ──
 
-  it("renders recent activity section", () => {
+  it("renders intel feed section with empty state", () => {
     renderDashboardPage();
     expect(screen.getByText("Intel Feed")).toBeTruthy();
-    expect(screen.getByText("Threat scan completed — 0 critical findings")).toBeTruthy();
-    expect(screen.getByText("Weekly intel report generated")).toBeTruthy();
-    expect(screen.getByText("Combat lab completed with 92% score")).toBeTruthy();
-    expect(screen.getByText("New mission unlocked: Advanced Recon")).toBeTruthy();
+    expect(screen.getByText("No recent activity")).toBeTruthy();
   });
 
-  it("renders activity timestamps", () => {
-    renderDashboardPage();
-    expect(screen.getByText("2 minutes ago")).toBeTruthy();
-    expect(screen.getByText("1 hour ago")).toBeTruthy();
-    expect(screen.getByText("3 hours ago")).toBeTruthy();
-    expect(screen.getByText("5 hours ago")).toBeTruthy();
-  });
+  // ── System Status (honest checking state) ──
 
-  // ── System Status ──
-
-  it("renders ALL SYSTEMS OPERATIONAL badge", () => {
+  it("renders CONNECTING TO BACKEND badge", () => {
     renderDashboardPage();
-    expect(screen.getByText("ALL SYSTEMS OPERATIONAL")).toBeTruthy();
+    expect(screen.getByText("CONNECTING TO BACKEND...")).toBeTruthy();
   });
 
   // ── Animated Background ──
@@ -370,7 +354,7 @@ describe("DashboardPage", () => {
     // The mock snapshot always has streakDays: 5, so we test the welcome message logic
     // by checking that the streak message appears when streak > 0
     renderDashboardPage();
-    expect(screen.getByText(/5-day streak/)).toBeTruthy();
+    expect(screen.getByText(/Streak: 5 Days Active/)).toBeTruthy();
     vi.useRealTimers();
   });
 

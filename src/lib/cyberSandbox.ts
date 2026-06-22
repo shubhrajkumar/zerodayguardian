@@ -1,4 +1,5 @@
-const NO_VERIFIED_DATA = "No verified data.";
+/** Message shown when a sandbox feature has not been implemented yet. */
+const SANDBOX_COMING_SOON = "🚧 [Coming Soon] The interactive sandbox environment is not yet available. Real Docker-based sandbox execution is under development. Stand by, Operator.";
 
 export interface SandboxSession {
   id: string;
@@ -158,7 +159,7 @@ export class CyberSandbox {
     };
 
     this.sessions.set(session.id, session);
-    this.logOutput(session.id, 'warning', NO_VERIFIED_DATA);
+    this.logOutput(session.id, 'warning', SANDBOX_COMING_SOON);
     this.logOutput(session.id, 'info', `Sandbox session requested: ${name}`);
     this.logOutput(session.id, 'info', `Environment: ${environment.name}`);
     this.logOutput(session.id, 'info', `Type: ${type}`);
@@ -181,11 +182,11 @@ export class CyberSandbox {
       throw new Error(`Session ${sessionId} is not running`);
     }
 
-    this.logOutput(sessionId, 'warning', NO_VERIFIED_DATA);
+    this.logOutput(sessionId, 'warning', SANDBOX_COMING_SOON);
     const output: SandboxOutput = {
       id: crypto.randomUUID(),
       type: 'warning',
-      content: NO_VERIFIED_DATA,
+      content: SANDBOX_COMING_SOON,
       timestamp: new Date(),
       metadata: { command, timeout }
     };
@@ -242,7 +243,7 @@ export class CyberSandbox {
       'env-linux-basic'
     );
 
-    this.logOutput(session.id, 'warning', NO_VERIFIED_DATA);
+    this.logOutput(session.id, 'warning', SANDBOX_COMING_SOON);
     this.logOutput(session.id, 'info', `Lab requested: ${lab.title}`);
 
     // Initialize lab steps
@@ -260,7 +261,7 @@ export class CyberSandbox {
     void sessionId;
     void stepId;
     void userOutput;
-    return { success: false, feedback: NO_VERIFIED_DATA, score: 0 };
+    return { success: false, feedback: SANDBOX_COMING_SOON, score: 0 };
   }
 
   // Get session status

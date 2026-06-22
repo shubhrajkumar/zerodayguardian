@@ -4,7 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
  * Playwright E2E config for ZeroDay Guardian dashboard tests.
  *
  * - Starts Vite dev server on port 8080 (same as production config)
- * - Uses mock auth (zdg_mock_auth) to bypass backend
+ * - Uses auth_state localStorage to mock authentication for E2E tests
  * - Captures console errors for crash detection
  * - Screenshots on failure for debugging
  */
