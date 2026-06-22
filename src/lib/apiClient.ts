@@ -325,6 +325,26 @@ const triggerServerWakeUp = () => {
 
 const triggerAuthRedirect = () => {
   if (redirectingToAuth) return;
+
+  // Don't redirect on public routes — landing page, auth page, etc.
+  const currentPath =
+    typeof window !== "undefined" ? window.location.pathname : "";
+  const publicRoutes = [
+    "/",
+    "/auth",
+    "/about",
+    "/privacy",
+    "/terms",
+    "/contact",
+    "/labs",
+    "/labs/demo-nmap",
+    "/demo/assessment",
+    "/demo/roadmap",
+  ];
+  if (publicRoutes.some((route) => currentPath === route || currentPath.startsWith(route + "/"))) {
+    return;
+  }
+
   redirectingToAuth = true;
   toast({
     title: "Session expired, please sign in again.",

@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import { apiGetJson } from "@/lib/apiClient";
+import LockedModule from "@/components/ui/LockedModule";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import { useAuth } from "@/context/AuthContext";
@@ -424,15 +425,22 @@ const LearnPage = () => {
                 Each track shows what you will learn, how many modules it includes, and where your progress stands right now.
               </p>
             </div>
-            <div className="cyber-badge">
-              {filteredTracks.length} tracks visible
-            </div>
+            {filteredTracks.length > 0 ? (
+              <div className="cyber-badge">
+                {filteredTracks.length} tracks visible
+              </div>
+            ) : learningReady ? (
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/8 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.2em] text-amber-300/80">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
+                No tracks available
+              </span>
+            ) : null}
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
             {!learningReady ? Array.from({ length: 3 }).map((_, index) => (
               <div key={`track-skeleton-${index}`} className="skeleton-block min-h-[280px] rounded-[28px]" />
-            )) : filteredTracks.map((track) => {
+            )) : filteredTracks.length > 0 ? filteredTracks.map((track) => {
               const Icon = track.icon;
               const isEnrolled = track.enrolledProgress > 0;
 
@@ -490,7 +498,15 @@ const LearnPage = () => {
                   </button>
                 </article>
               );
-            })}
+            }) : (
+              <div className="col-span-full">
+                <LockedModule
+                  label="Learning Tracks"
+                  variant="decrypting"
+                  message="No tracks match your current search or filter. Try adjusting your query or clearing the filter to browse available tracks."
+                />
+              </div>
+            )}
           </div>
         </section>
 
@@ -503,15 +519,22 @@ const LearnPage = () => {
                 Browse clean course cards, see the category at a glance, and enroll straight into guided learning.
               </p>
             </div>
-            <div className="cyber-badge">
-              {filteredCourses.length} courses visible
-            </div>
+            {filteredCourses.length > 0 ? (
+              <div className="cyber-badge">
+                {filteredCourses.length} courses visible
+              </div>
+            ) : learningReady ? (
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/8 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.2em] text-amber-300/80">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
+                No courses available
+              </span>
+            ) : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {!learningReady ? Array.from({ length: 3 }).map((_, index) => (
               <div key={`course-skeleton-${index}`} className="skeleton-block min-h-[360px] rounded-[28px]" />
-            )) : filteredCourses.map((course) => (
+            )) : filteredCourses.length > 0 ? filteredCourses.map((course) => (
               <article
                 key={course.id}
                 data-reveal
@@ -550,7 +573,15 @@ const LearnPage = () => {
                   </button>
                 </div>
               </article>
-            ))}
+            )) : (
+              <div className="col-span-full">
+                <LockedModule
+                  label="Featured Courses"
+                  variant="deploying"
+                  message="No courses match your current search or filter. Try adjusting your query or clearing the filter to browse available courses."
+                />
+              </div>
+            )}
           </div>
         </section>
 

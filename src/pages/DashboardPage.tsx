@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useAuth } from "@/context/AuthContext";
 import { useZdg } from "@/context/ZdgContext";
 import { useGamificationSystem, getLevelLabel, getRankIcon, getRankByLevel, getNextRank } from "@/lib/gamificationSystem";
@@ -46,15 +47,6 @@ export default function DashboardPage() {
   const { globalXp, streakCount, completedLabs } = useZdg();
   const { snapshot } = useGamificationSystem(user?.id, user?.name || undefined);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [greeting, setGreeting] = useState("Welcome");
-
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good morning");
-    else if (hour < 18) setGreeting("Good afternoon");
-    else setGreeting("Good evening");
-  }, []);
-
   const displayName = user?.name || user?.email?.split("@")[0] || "Guardian";
   const xp = globalXp > 0 ? globalXp : snapshot.totalXp;
   const streak = streakCount > 0 ? streakCount : snapshot.streakDays;
@@ -215,11 +207,12 @@ export default function DashboardPage() {
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
                   </span>
                 </div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-100">{greeting}, {displayName}</h1>
-                <p className="text-sm text-slate-400 flex items-center gap-2">
-                  <span>{rankIcon}</span>
-                  <span>{rankLabel} • {streak > 0 && `${streak}-day streak active`}</span>
-                </p>
+                <DashboardHeader
+                  user={user}
+                  rankLabel={rankLabel}
+                  rankIcon={rankIcon}
+                  streak={streak}
+                />
               </div>
               <div className="hidden sm:flex flex-col items-end gap-2">
                 <LiveClock />

@@ -4,6 +4,7 @@ import { Bot, Fingerprint, Flag, Globe, PlayCircle, Radar, Search, Shield } from
 import api from "@/lib/api";
 import { apiGetJson } from "@/lib/apiClient";
 import { getPyApiUserMessage, pyPostJson } from "@/lib/pyApiClient";
+import LockedModule from "@/components/ui/LockedModule";
 import PlatformHero from "@/components/platform/PlatformHero";
 import LabExecutionModal from "@/components/LabExecutionModal";
 import UnlockAnimation from "@/components/gamification/UnlockAnimation";
@@ -527,7 +528,7 @@ const LabPage = () => {
         {labLoadError ? <div className="rounded-2xl border border-amber-300/15 bg-[var(--theme-surface)] px-4 py-4 text-sm text-slate-200"><span className="block">{labLoadError}</span><button type="button" className="mt-2 text-xs text-blue-100 underline transition hover:text-blue-50" onClick={() => window.location.reload()}>Retry</button></div> : null}
 
         {!labs.length ? (
-          <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] px-6 py-10 text-center"><div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-400/18 bg-blue-500/8"><span className="text-3xl">🔬</span></div><h2 className="text-xl font-semibold text-[var(--theme-text)]">Labs Launching Soon</h2><p className="mt-3 text-sm text-slate-300 max-w-md mx-auto">Stay tuned for interactive cyber labs covering web security, network defense, forensics, OSINT, and CTF challenges.</p><button type="button" className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-400/18 bg-emerald-400/10 px-5 py-2.5 text-sm font-medium text-emerald-100 transition hover:bg-emerald-400/16" onClick={() => window.location.href = "/mission-control"}>Try Missions Instead</button></div>
+          <LockedModule label="Combat Labs" variant="deploying" message="Sector Locked: Interactive cyber labs are being deployed to the range. Live sandbox content is under construction. Standby, Operator." />
         ) : activeLab ? (
           <section data-reveal className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-4">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { BrainCircuit, ChevronDown, Grid2x2, Search, Shield, ShieldCheck, Sparkles } from "lucide-react";
+import LockedModule from "@/components/ui/LockedModule";
 import ToolCard from "@/components/ToolCard";
 import {
   TOOL_FILTERS,
@@ -194,7 +195,7 @@ const ToolsPage = () => {
                 </h2>
               </div>
               <div className="engagement-marquee">
-                {[`${activeCount} visible tools`, `${verifiedCount} verified workspaces`, recentTools[0] ? `Resume ${recentTools[0].name}` : "Use smart search"].map((item) => (
+                {[activeCount > 0 ? `${activeCount} visible tools` : "No tools available", `${verifiedCount} verified workspaces`, recentTools[0] ? `Resume ${recentTools[0].name}` : "Use smart search"].map((item) => (
                   <span key={item} className="engagement-pill">{item}</span>
                 ))}
               </div>

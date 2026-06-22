@@ -7,13 +7,30 @@ type ProtectedRouteProps = {
   children: ReactNode;
 };
 
+/**
+ * Check for mock auth synchronously so protected routes don't redirect
+ * before the async auth initialization completes.
+ */
+const hasMockAuth = (): boolean => {
+  try {
+    return localStorage.getItem("zdg_mock_auth") === "true";
+  } catch {
+    return false;
+  }
+};
+
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const location = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
   const { isAuthenticated: zdgIsAuth, isLoading: zdgLoading } = useZdg();
 
-  const authReady = !isLoading && !zdgLoading;
-  const isAuthed = isAuthenticated || zdgIsAuth;
+  // If mock auth is set, skip the loading gate — treat the user as authenticated
+  // even before the async AuthContext finishes initializing. This prevents a flash
+  // redirect to /auth on protected routes during local development / E2E testing.
+  const mockEnabled = hasMockAuth();
+
+  const authReady = mockEnabled || (!isLoading && !zdgLoading);
+  const isAuthed = mockEnabled || isAuthenticated || zdgIsAuth;
 
   if (!authReady) {
     return (
