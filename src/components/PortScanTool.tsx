@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Loader2, Search, Terminal, Copy, Check } from "lucide-react";
+import { apiFetch } from "@/lib/apiClient";
 
 type PortState = "open" | "closed" | "filtered";
 
@@ -122,7 +123,7 @@ export default function PortScanTool() {
         payload.group = portGroup;
       }
 
-      const res = await fetch(API_PATH, {
+      const res = await apiFetch(API_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

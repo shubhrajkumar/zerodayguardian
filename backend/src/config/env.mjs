@@ -426,7 +426,7 @@ export const env = {
   oauthSuccessRedirect: process.env.OAUTH_SUCCESS_REDIRECT || "/",
   oauthFailureRedirect: process.env.OAUTH_FAILURE_REDIRECT || "/auth?error=oauth_failed",
   newsRefreshIntervalMs: Math.max(60_000, Math.min(3_600_000, toNum(process.env.NEWS_REFRESH_INTERVAL_MS, 900_000))),
-  labDockerEnabled: (process.env.LAB_DOCKER_ENABLED || "false") === "true",
+  labDockerEnabled: (process.env.LAB_DOCKER_ENABLED || "true") === "true",
   osintWhoisApiKey: process.env.OSINT_WHOIS_API_KEY || "",
   osintWhoisBaseUrl: process.env.OSINT_WHOIS_BASE_URL || "",
   osintWhoisProvider: process.env.OSINT_WHOIS_PROVIDER || "",
@@ -584,11 +584,7 @@ const buildStartupEnvValidation = () => {
     );
   }
   if (String(env.jwtSecret || "").trim() && String(env.jwtSecret || "").length < 32) {
-    const severity = isManagedDeploy ? "warn" : isProduction ? "error" : "warn";
-    addIssue(issues, "JWT_SECRET", "Should be at least 32 characters", severity);
-    if (isManagedDeploy) {
-      warnDeployConfig("JWT_SECRET is shorter than 32 characters. Configure a real production secret in your deployment env.");
-    }
+    addIssue(issues, "JWT_SECRET", "Must be at least 32 characters for secure JWT signing");
   }
   if (env.llmRetryMaxMs < env.llmRetryBaseMs) {
     addIssue(issues, "LLM_RETRY_MAX_MS", "Must be greater than or equal to LLM_RETRY_BASE_MS");

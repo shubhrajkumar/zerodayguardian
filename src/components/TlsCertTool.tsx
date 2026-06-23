@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2, Search, Terminal, Copy, Check, Shield, ShieldAlert, ShieldCheck, ChevronRight } from "lucide-react";
+import { apiFetch } from "@/lib/apiClient";
 
 type SubjectAltNames = {
   dns: string[];
@@ -132,7 +133,7 @@ export default function TlsCertTool() {
     setCertData(null);
 
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_PATH}?host=${encodeURIComponent(target)}&port=${encodeURIComponent(targetPort)}`
       );
 

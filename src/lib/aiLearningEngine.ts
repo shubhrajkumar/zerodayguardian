@@ -475,7 +475,7 @@ export class AILearningEngine {
                 type: 'video',
                 title: 'Network Security Basics',
                 description: 'Introduction to network security concepts',
-                content: 'https://example.com/network-security-basics',
+                content: '/labs/network-security', // TODO: Replace with real content URL
                 duration: 30,
                 difficulty: 'beginner',
                 interactive: false,
@@ -486,7 +486,7 @@ export class AILearningEngine {
                 type: 'article',
                 title: 'Firewalls and IDS',
                 description: 'Understanding firewalls and intrusion detection systems',
-                content: 'https://example.com/firewalls-ids',
+                content: '/labs/firewalls-ids', // TODO: Replace with real content URL
                 duration: 45,
                 difficulty: 'beginner',
                 interactive: false,
@@ -521,7 +521,7 @@ export class AILearningEngine {
                 type: 'video',
                 title: 'Cryptography Fundamentals',
                 description: 'Introduction to cryptographic principles',
-                content: 'https://example.com/cryptography-basics',
+                content: '/labs/cryptography', // TODO: Replace with real content URL
                 duration: 45,
                 difficulty: 'intermediate',
                 interactive: false,
@@ -580,7 +580,7 @@ export class AILearningEngine {
                 type: 'video',
                 title: 'SQL Injection Explained',
                 description: 'Understanding SQL injection vulnerabilities',
-                content: 'https://example.com/sqli-explained',
+                content: '/labs/sqli', // TODO: Replace with real content URL
                 duration: 30,
                 difficulty: 'intermediate',
                 interactive: false,

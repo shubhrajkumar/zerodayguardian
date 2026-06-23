@@ -41,7 +41,7 @@ npm run dev
 npm run dev:server
 ```
 
-> **Frontend-only development?** Enable mock auth in DevTools: `localStorage.setItem("zdg_mock_auth", "true")` then reload. See [AGENTS.md](./AGENTS.md) for details.
+> **Frontend-only development?** Set `auth_state` in DevTools to simulate an authenticated session: `localStorage.setItem("auth_state", JSON.stringify({ isAuthenticated: true, user: { id: "dev", name: "Dev User", email: "dev@test.com", role: "user" }, timestamp: Date.now(), accessToken: "dev-token" }))` then reload. This uses AuthContext's cached state fallback. See [AGENTS.md](./AGENTS.md) for details.
 
 ---
 

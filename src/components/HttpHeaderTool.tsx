@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2, Search, Terminal, Copy, Check, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+import { apiFetch } from "@/lib/apiClient";
 
 type HeaderCategories = {
   security: Record<string, string>;
@@ -77,7 +78,7 @@ export default function HttpHeaderTool() {
     setHeaderData(null);
 
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_PATH}?url=${encodeURIComponent(target)}`
       );
 

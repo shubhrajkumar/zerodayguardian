@@ -15,7 +15,7 @@ import {
 } from "../src/services/authService.mjs";
 import { env } from "../src/config/env.mjs";
 import { assertAuthAttemptAllowed, recordAuthFailure, recordAuthSuccess } from "../src/services/authThreatService.mjs";
-import { logError, logInfo, redact } from "../src/utils/logger.mjs";
+import { logError, logInfo, logWarn, redact } from "../src/utils/logger.mjs";
 
 const resolveBackendBaseUrl = (req) => {
   if (env.backendPublicUrl) return env.backendPublicUrl;
@@ -200,14 +200,30 @@ export const login = async (req, res) => {
 export const googleLogin = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: "google-oauth" });
-    logInfo("Auth Google login request", { requestId: req.requestId || "" });
+    const tokenPreview = String(req.validatedBody?.credential || "").substring(0, 20);
+    logInfo("Auth Google login request", {
+      requestId: req.requestId || "",
+      hasCredential: Boolean(req.validatedBody?.credential),
+      tokenPrefix: tokenPreview ? `${tokenPreview}...` : "missing",
+    });
+    if (!req.validatedBody?.credential) {
+      throw Object.assign(new Error("Google credential is required. Expected field: 'credential' in the request body (received from Firebase idToken)."), {
+        status: 400,
+        code: "google_token_required",
+      });
+    }
     const user = await authenticateGoogleUser({ idToken: req.validatedBody?.credential });
     const { accessToken, refreshToken } = await setAuthCookies(res, user, { rememberMe: true });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
     res.json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: "google-oauth", reason: error?.code || "google_login_failed" });
-    logError("Auth Google login failed", error, { requestId: req.requestId || "" });
+    logError("Auth Google login failed", error, {
+      requestId: req.requestId || "",
+      code: String(error?.code || ""),
+      message: String(error?.message || ""),
+      missingKeys: Array.isArray(error?.missingKeys) ? error.missingKeys : undefined,
+    });
     sendAuthError(req, res, error);
   }
 };
@@ -216,10 +232,37 @@ export const startGoogleOauth = async (req, res) => {
   try {
     logInfo("Auth Google OAuth start", { requestId: req.requestId || "" });
     const next = String(req.query?.next || "").trim();
+    const googleAuth = getGoogleAuthConfigStatus();
+    if (!googleAuth.enabled) {
+      const err = Object.assign(new Error("Google OAuth is not configured. Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET."), {
+        status: 503,
+        code: "google_auth_not_configured",
+        missingKeys: googleAuth.missingKeys,
+        invalidKeys: googleAuth.invalidKeys,
+        action: googleAuth.invalidKeys?.length
+          ? "Fix invalid Google OAuth environment variables or remove them to disable."
+          : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment.",
+      });
+      logWarn("Google OAuth start blocked — not configured", {
+        requestId: req.requestId || "",
+        missingKeys: googleAuth.missingKeys,
+        invalidKeys: googleAuth.invalidKeys,
+      });
+      sendAuthError(req, res, err);
+      return;
+    }
     const redirectUrl = buildGoogleOauthRedirectUrl({ state: next || "" });
+    logInfo("Auth Google OAuth redirecting", {
+      requestId: req.requestId || "",
+      redirectUrl: String(redirectUrl || "").substring(0, 120),
+    });
     res.redirect(302, redirectUrl);
   } catch (error) {
-    logError("Auth Google OAuth start failed", error, { requestId: req.requestId || "" });
+    logError("Auth Google OAuth start failed", error, {
+      requestId: req.requestId || "",
+      code: String(error?.code || ""),
+      message: String(error?.message || ""),
+    });
     sendAuthError(req, res, error);
   }
 };
@@ -439,12 +482,41 @@ export const googleOauthCallback = async (req, res) => {
   try {
     const code = String(req.query?.code || "").trim();
     const state = String(req.query?.state || "").trim();
+    const hasError = String(req.query?.error || "").trim();
+
+    logInfo("Google OAuth callback received", {
+      requestId: req.requestId || "",
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      hasError: Boolean(hasError),
+      errorDescription: String(req.query?.error_description || "").substring(0, 200),
+      codeLength: code.length,
+    });
+
+    if (hasError) {
+      const errDescription = String(req.query?.error_description || hasError).substring(0, 300);
+      logWarn("Google OAuth callback received error from Google", {
+        requestId: req.requestId || "",
+        error: hasError,
+        errorDescription: errDescription,
+      });
+      const failureBase = resolveAppRedirect(env.oauthFailureRedirect || "/auth?error=oauth_failed", "/auth?error=oauth_failed");
+      const failedTarget = `${failureBase}${String(failureBase).includes("?") ? "&" : "?"}error=${encodeURIComponent(hasError)}&error_description=${encodeURIComponent(errDescription)}`;
+      res.redirect(failedTarget);
+      return;
+    }
+
     if (!code) {
+      logWarn("Google OAuth callback missing code", {
+        requestId: req.requestId || "",
+        query: JSON.stringify(req.query || {}),
+      });
       const failureBase = resolveAppRedirect(env.oauthFailureRedirect || "/auth?error=oauth_failed", "/auth?error=oauth_failed");
       const failedTarget = `${failureBase}${String(failureBase).includes("?") ? "&" : "?"}code=missing_google_code`;
       res.redirect(failedTarget);
       return;
     }
+
     const user = await authenticateGoogleCode({ code });
     await setAuthCookies(res, user, { rememberMe: true });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
@@ -452,10 +524,21 @@ export const googleOauthCallback = async (req, res) => {
       ? resolveAppRedirect(state, "/dashboard")
       : resolveAppRedirect(env.oauthSuccessRedirect || "/dashboard", "/dashboard");
     const target = appendQueryParam(successBase, "oauth", "google");
+    logInfo("Google OAuth callback success, redirecting", {
+      requestId: req.requestId || "",
+      userId: user._id?.toString?.() || "",
+      email: user.email,
+      target: target.substring(0, 100),
+    });
     res.redirect(target);
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: "google-oauth", reason: error?.code || "oauth_callback_failed" });
-    logError("Google OAuth callback redirect failed", error, { requestId: req.requestId || "" });
+    logError("Google OAuth callback redirect failed", error, {
+      requestId: req.requestId || "",
+      code: String(error?.code || ""),
+      message: String(error?.message || ""),
+      missingKeys: Array.isArray(error?.missingKeys) ? error.missingKeys : undefined,
+    });
     const failureBase = resolveAppRedirect(env.oauthFailureRedirect || "/auth?error=oauth_failed", "/auth?error=oauth_failed");
     const failedTarget = `${failureBase}${String(failureBase).includes("?") ? "&" : "?"}code=${encodeURIComponent(String(error?.code || "oauth_failed"))}`;
     res.redirect(failedTarget);

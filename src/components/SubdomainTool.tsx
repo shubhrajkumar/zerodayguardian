@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2, Search, Terminal, Copy, Check, Globe } from "lucide-react";
+import { apiFetch } from "@/lib/apiClient";
 
 type SubdomainResponse = {
   status: string;
@@ -34,7 +35,7 @@ export default function SubdomainTool() {
     setSubData(null);
 
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_PATH}?domain=${encodeURIComponent(target)}`
       );
 

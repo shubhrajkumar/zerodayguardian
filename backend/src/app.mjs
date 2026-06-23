@@ -684,10 +684,12 @@ export const createApp = () => {
   // Compliance / GDPR routes
   app.use("/api/compliance", requireAuth, complianceRoutes);
   // Zorvix AI (Groq-powered) — public endpoint with dedicated rate limiter
-  app.use("/api/tools/portscan", portScanRoutes);
-  app.use("/api/tools/subdomains", subdomainRoutes);
-  app.use("/api/tools/headers", httpHeaderRoutes);
-  app.use("/api/tools/tlscert", tlsCertRoutes);
+  // Tool routes — require authentication to prevent abuse
+  app.use("/api/tools/portscan", requireAuth, portScanRoutes);
+  app.use("/api/tools/subdomains", requireAuth, subdomainRoutes);
+  app.use("/api/tools/headers", requireAuth, httpHeaderRoutes);
+  app.use("/api/tools/tlscert", requireAuth, tlsCertRoutes);
+  // Zorvix AI — public (rate-limited inside route) so unauthenticated students can use the mentor
   app.use("/api/ai/zorvix", zorvixAiRoutes);
   app.use("/api/neurobot/chat", chatRateLimit, chatAbuseDetection);
   app.use("/api/neurobot", requireCsrf, requireAuth, neurobotRateLimit, neurobotRoutes);

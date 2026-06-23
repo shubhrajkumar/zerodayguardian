@@ -5,6 +5,33 @@ import rateLimit from "express-rate-limit";
 
 const router = Router();
 
+// Block private/internal hosts (SSRF protection)
+const isBlockedHost = (hostname) => {
+  const h = hostname.toLowerCase();
+  if (
+    h === 'localhost' ||
+    h === '127.0.0.1' ||
+    h === '0.0.0.0' ||
+    h === '[::1]' ||
+    h === '::1'
+  )
+    return true;
+  if (h.endsWith('.local') || h.endsWith('.internal')) return true;
+  if (/^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|169\.254\.)/.test(h))
+    return true;
+  return false;
+};
+
+// Check if a resolved IP address is in a private range
+const isPrivateIp = (ip) => {
+  if (/^(127\.|10\.|0\.0\.0\.0$)/.test(ip)) return true;
+  if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(ip)) return true;
+  if (/^192\.168\./.test(ip)) return true;
+  if (/^169\.254\./.test(ip)) return true;
+  // Check if it's a valid IPv4 before returning false
+  return !/^\d{1,3}(\.\d{1,3}){3}$/.test(ip);
+};
+
 // Per-IP rate limit: max 5 port scans per IP per minute
 const portScanRateLimit = rateLimit({
   windowMs: 60 * 1000,
@@ -163,14 +190,33 @@ router.post("/", portScanRateLimit, async (req, res) => {
       portList = portList.slice(0, 25);
     }
 
+    // SSRF protection: block private/internal hosts
+    if (isBlockedHost(cleanTarget)) {
+      return res.status(400).json({
+        status: "error",
+        code: "blocked_host",
+        error: "Internal and private hosts are not allowed.",
+      });
+    }
+
     // Verify hostname resolves before scanning
+    let resolvedIp;
     try {
-      await resolveHost(cleanTarget);
+      resolvedIp = await resolveHost(cleanTarget);
     } catch {
       return res.status(400).json({
         status: "error",
         code: "dns_resolution_failed",
         error: "Hostname could not be resolved. Check the target and try again.",
+      });
+    }
+
+    // SSRF protection: verify resolved IP is not in a private range
+    if (resolvedIp && isPrivateIp(resolvedIp)) {
+      return res.status(400).json({
+        status: "error",
+        code: "blocked_resolved_ip",
+        error: "Target resolved to an internal/private IP address.",
       });
     }
 

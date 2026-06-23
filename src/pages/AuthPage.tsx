@@ -82,7 +82,7 @@ export default function AuthPage() {
        const idToken = await result.user.getIdToken();
 
        const payload = await api.post<BackendAuthResponse>("/api/auth/google", {
-         idToken,
+         credential: idToken,
        });
 
        login({ accessToken: payload.data.accessToken, refreshToken: payload.data.refreshToken, user: payload.data.user! });
@@ -90,13 +90,27 @@ export default function AuthPage() {
        navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const error = err as { code?: string } | undefined;
-      const message = error?.code === "auth/popup-closed-by-user"
+      // Extract error details from Firebase Auth errors and backend responses
+      const fbCode = error?.code || "";
+      const googleError = error as { code?: string; message?: string; error?: { code?: number; message?: string } } | undefined;
+
+      const message = fbCode === "auth/popup-closed-by-user"
         ? "Sign-in cancelled"
-        : error?.code === "auth/popup-blocked"
+        : fbCode === "auth/popup-blocked"
           ? "Pop-up was blocked by your browser. Please allow pop-ups and try again."
-          : error?.code === "auth/unauthorized-domain"
-            ? "This domain is not authorized for sign-in. Try using email/password instead."
-            : "Google sign-in failed. Please try again.";
+          : fbCode === "auth/unauthorized-domain"
+            ? `This domain (${window.location.origin}) is not authorized for Google sign-in. Add it to the Authorized JavaScript Origins in Google Cloud Console > APIs & Services > Credentials. Try using email/password instead.`
+            : fbCode === "auth/operation-not-supported-in-this-environment"
+              ? "Google sign-in is not supported in this browser environment. Try a different browser or use email/password."
+              : fbCode === "auth/cancelled-popup-request"
+                ? "Another sign-in request is already open. Please close all pop-ups and try again."
+                : fbCode === "auth/credential-already-in-use"
+                  ? "This Google account is already linked to another account."
+                  : fbCode === "auth/account-exists-with-different-credential"
+                    ? "An account with this email already exists using a different sign-in method. Please sign in with email/password."
+                    : fbCode === "auth/access-denied" || fbCode === "Access blocked" || (error?.message || "").includes("Access blocked")
+                      ? "Access Blocked: Your Google account or this app is not authorized. Ensure the OAuth consent screen is published or your email is added as a test user in Google Cloud Console > APIs & Services > OAuth consent screen."
+                      : "Google sign-in failed. Please try again.";
       setError(message);
     } finally {
       setIsLoading(false);
