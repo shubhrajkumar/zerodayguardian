@@ -10,7 +10,7 @@ ZeroDay Guardian uses Google OAuth for authentication via two paths:
 
 | Field | Value |
 |-------|-------|
-| **Google Client ID** | `156777670484-1a79vc8ghkqnhqndqihr2727h076t4ha.apps.googleusercontent.com` |
+| **Google Client ID** | `754043289403-5395lupd8t396uml1cuestusf99ve9gd.apps.googleusercontent.com` |
 | **Google Client Secret** | ⚠️ Must be regenerated (see below) |
 | **Authorized Origins** | `http://localhost:5173`, `https://zerodayguardian-delta.vercel.app` |
 | **Authorized Redirect URIs** | Backend callback + Firebase handler |
@@ -23,7 +23,7 @@ ZeroDay Guardian uses Google OAuth for authentication via two paths:
 1. Go to https://console.cloud.google.com/apis/credentials
 2. Select your project
 3. Find the OAuth 2.0 Client ID matching:
-   156777670484-1a79vc8ghkqnhqndqihr2727h076t4ha.apps.googleusercontent.com
+   754043289403-5395lupd8t396uml1cuestusf99ve9gd.apps.googleusercontent.com
 4. Click the pencil/edit icon
 5. Click "Regenerate secret"
 6. Copy the new secret immediately (it won't be shown again)
@@ -55,12 +55,12 @@ https://zerodayguardian-delta.vercel.app/__/auth/handler
 
 ```env
 # Frontend
-VITE_GOOGLE_CLIENT_ID=156777670484-1a79vc8ghkqnhqndqihr2727h076t4ha.apps.googleusercontent.com
+VITE_GOOGLE_CLIENT_ID=754043289403-5395lupd8t396uml1cuestusf99ve9gd.apps.googleusercontent.com
 
 # Backend
-GOOGLE_CLIENT_ID=156777670484-1a79vc8ghkqnhqndqihr2727h076t4ha.apps.googleusercontent.com
+GOOGLE_CLIENT_ID=754043289403-5395lupd8t396uml1cuestusf99ve9gd.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=[paste-regenerated-secret-here]
-GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+GOOGLE_REDIRECT_URI=http://localhost:8787/auth/google/callback
 ENABLE_GOOGLE_LOCALHOST=true
 ```
 
@@ -68,7 +68,7 @@ ENABLE_GOOGLE_LOCALHOST=true
 
 | Variable | Value | Environment |
 |----------|-------|-------------|
-| `VITE_GOOGLE_CLIENT_ID` | `156777670484-...` | Production + Preview |
+| `VITE_GOOGLE_CLIENT_ID` | `754043289403-...` | Production + Preview |
 | `VITE_FIREBASE_API_KEY` | (existing) | Production + Preview |
 | `VITE_FIREBASE_AUTH_DOMAIN` | (existing) | Production + Preview |
 | `VITE_FIREBASE_PROJECT_ID` | (existing) | Production + Preview |
@@ -77,7 +77,7 @@ ENABLE_GOOGLE_LOCALHOST=true
 
 | Variable | Value | Sensitive |
 |----------|-------|-----------|
-| `GOOGLE_CLIENT_ID` | `156777670484-...` | No |
+| `GOOGLE_CLIENT_ID` | `754043289403-...` | No |
 | `GOOGLE_CLIENT_SECRET` | [regenerated secret] | **Yes** ⚠️ |
 | `GOOGLE_REDIRECT_URI` | `https://zerodayguardian-backend.onrender.com/auth/google/callback` | No |
 
@@ -117,7 +117,7 @@ curl https://zerodayguardian-backend.onrender.com/api/auth/providers
 ```bash
 # 1. Start frontend and backend
 npm run dev       # frontend on :5173
-npm run dev:backend  # backend on :3000
+npm run dev:server  # backend on :3000
 
 # 2. Open http://localhost:5173
 # 3. Click "Sign in with Google"
