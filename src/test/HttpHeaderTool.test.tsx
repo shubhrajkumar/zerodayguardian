@@ -7,8 +7,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-// ── Mock fetch globally ──
-const mockFetch = vi.fn();
+// ── Mock apiFetch from apiClient ──
+const { mockApiFetch } = vi.hoisted(() => ({
+  mockApiFetch: vi.fn(),
+}));
+
+vi.mock("@/lib/apiClient", () => ({
+  apiFetch: mockApiFetch,
+}));
 
 const MOCK_HEADER_RESPONSE = {
   status: "ok",
@@ -144,14 +150,14 @@ import HttpHeaderTool from "@/components/HttpHeaderTool";
 const renderComponent = () => render(<HttpHeaderTool />);
 
 const setupSuccessfulLookup = (response: Record<string, unknown> = MOCK_HEADER_RESPONSE) => {
-  mockFetch.mockResolvedValueOnce({
+  mockApiFetch.mockResolvedValueOnce({
     ok: true,
     json: () => Promise.resolve(response),
   });
 };
 
 const setupErrorLookup = (status = 400, body: Record<string, unknown> = MOCK_ERROR_RESPONSE) => {
-  mockFetch.mockResolvedValueOnce({
+  mockApiFetch.mockResolvedValueOnce({
     ok: false,
     status,
     json: () => Promise.resolve(body),
@@ -159,14 +165,13 @@ const setupErrorLookup = (status = 400, body: Record<string, unknown> = MOCK_ERR
 };
 
 const setupNetworkError = () => {
-  mockFetch.mockRejectedValueOnce(new Error("Network error"));
+  mockApiFetch.mockRejectedValueOnce(new Error("Network error"));
 };
 
 // ── Tests ──
 describe("HttpHeaderTool", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal("fetch", mockFetch);
 
     // Mock clipboard API
     Object.assign(navigator, {
@@ -177,7 +182,6 @@ describe("HttpHeaderTool", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
@@ -262,8 +266,8 @@ describe("HttpHeaderTool", () => {
     expect(screen.getByText("x-content-type-options")).toBeTruthy();
     expect(screen.getByText(/nginx\/1\.24\.0/)).toBeTruthy();
 
-    // Verify fetch was called with the right URL
-    expect(mockFetch).toHaveBeenCalledWith(
+    // Verify apiFetch was called with the right URL
+    expect(mockApiFetch).toHaveBeenCalledWith(
       "/api/tools/headers?url=https%3A%2F%2Fexample.com"
     );
   });
@@ -281,8 +285,8 @@ describe("HttpHeaderTool", () => {
       fireEvent.click(screen.getByRole("button", { name: /inspect headers/i }));
     });
 
-    // The URL in the response is the original, but the fetch call should use auto-prepended URL
-    expect(mockFetch).toHaveBeenCalledWith(
+    // The URL in the response is the original, but the apiFetch call should use auto-prepended URL
+    expect(mockApiFetch).toHaveBeenCalledWith(
       "/api/tools/headers?url=https%3A%2F%2Fexample.com"
     );
   });
@@ -501,7 +505,7 @@ describe("HttpHeaderTool", () => {
 
   it("disables the inspect button while loading and shows FETCHING HEADERS", async () => {
     let resolvePromise;
-    mockFetch.mockReturnValueOnce(
+    mockApiFetch.mockReturnValueOnce(
       new Promise((resolve) => {
         resolvePromise = resolve;
       })
@@ -545,8 +549,8 @@ describe("HttpHeaderTool", () => {
     const btn = screen.getByRole("button", { name: /inspect headers/i });
     expect(btn.hasAttribute("disabled")).toBe(true);
 
-    // fetch should NOT have been called
-    expect(mockFetch).not.toHaveBeenCalled();
+    // apiFetch should NOT have been called
+    expect(mockApiFetch).not.toHaveBeenCalled();
   });
 
   // ── Status code color ──

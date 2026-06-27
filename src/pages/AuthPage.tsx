@@ -108,7 +108,7 @@ export default function AuthPage() {
                   ? "This Google account is already linked to another account."
                   : fbCode === "auth/account-exists-with-different-credential"
                     ? "An account with this email already exists using a different sign-in method. Please sign in with email/password."
-                    : fbCode === "auth/access-denied" || fbCode === "Access blocked" || (error?.message || "").includes("Access blocked")
+                    : fbCode === "auth/access-denied" || fbCode === "Access blocked" || (googleError?.message || "").includes("Access blocked")
                       ? "Access Blocked: Your Google account or this app is not authorized. Ensure the OAuth consent screen is published or your email is added as a test user in Google Cloud Console > APIs & Services > OAuth consent screen."
                       : "Google sign-in failed. Please try again.";
       setError(message);

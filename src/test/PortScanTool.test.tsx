@@ -1,14 +1,20 @@
 /**
  * PortScanTool Tests — Covers rendering, port group selection, custom ports,
- * scan execution with mock fetch, progress indicator, error handling,
+ * scan execution with mock apiFetch, progress indicator, error handling,
  * Enter key submission, and copy-to-clipboard.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-// ── Mock fetch globally ──
-const mockFetch = vi.fn();
+// ── Mock apiFetch from apiClient ──
+const { mockApiFetch } = vi.hoisted(() => ({
+  mockApiFetch: vi.fn(),
+}));
+
+vi.mock("@/lib/apiClient", () => ({
+  apiFetch: mockApiFetch,
+}));
 
 const MOCK_SCAN_RESPONSE = {
   status: "ok",
@@ -37,14 +43,14 @@ import PortScanTool from "@/components/PortScanTool";
 const renderComponent = () => render(<PortScanTool />);
 
 const setupSuccessfulScan = () => {
-  mockFetch.mockResolvedValueOnce({
+  mockApiFetch.mockResolvedValueOnce({
     ok: true,
     json: () => Promise.resolve(MOCK_SCAN_RESPONSE),
   });
 };
 
 const setupErrorScan = (status = 400, body: Record<string, unknown> = MOCK_ERROR_RESPONSE) => {
-  mockFetch.mockResolvedValueOnce({
+  mockApiFetch.mockResolvedValueOnce({
     ok: false,
     status,
     json: () => Promise.resolve(body),
@@ -52,14 +58,13 @@ const setupErrorScan = (status = 400, body: Record<string, unknown> = MOCK_ERROR
 };
 
 const setupNetworkError = () => {
-  mockFetch.mockRejectedValueOnce(new Error("Network error"));
+  mockApiFetch.mockRejectedValueOnce(new Error("Network error"));
 };
 
 // ── Tests ──
 describe("PortScanTool", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal("fetch", mockFetch);
 
     // Mock clipboard API
     Object.assign(navigator, {
@@ -178,8 +183,8 @@ describe("PortScanTool", () => {
     expect(screen.getByText("SSH")).toBeTruthy();
     expect(screen.getByText("HTTP")).toBeTruthy();
 
-    // Verify fetch was called with correct payload
-    expect(mockFetch).toHaveBeenCalledWith(
+    // Verify apiFetch was called with correct URL and payload
+    expect(mockApiFetch).toHaveBeenCalledWith(
       "/api/tools/portscan",
       expect.objectContaining({
         method: "POST",
@@ -203,7 +208,7 @@ describe("PortScanTool", () => {
       fireEvent.click(screen.getByRole("button", { name: /scan ports/i }));
     });
 
-    expect(mockFetch).toHaveBeenCalledWith(
+    expect(mockApiFetch).toHaveBeenCalledWith(
       "/api/tools/portscan",
       expect.objectContaining({
         body: JSON.stringify({ target: "example.com", group: "all" }),
@@ -225,7 +230,7 @@ describe("PortScanTool", () => {
       fireEvent.click(screen.getByRole("button", { name: /scan ports/i }));
     });
 
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    const body = JSON.parse(mockApiFetch.mock.calls[0][1].body);
     expect(body.target).toBe("test.dev");
     expect(body.ports).toEqual([80, 443, 22, 3306]);
     expect(body.group).toBeUndefined();
@@ -239,7 +244,7 @@ describe("PortScanTool", () => {
     vi.useFakeTimers();
 
     let resolvePromise;
-    mockFetch.mockReturnValueOnce(
+    mockApiFetch.mockReturnValueOnce(
       new Promise((resolve) => {
         resolvePromise = resolve;
       })
@@ -364,8 +369,8 @@ describe("PortScanTool", () => {
       screen.getByText(/No valid ports specified in custom list/i)
     ).toBeTruthy();
 
-    // fetch should NOT have been called
-    expect(mockFetch).not.toHaveBeenCalled();
+    // apiFetch should NOT have been called
+    expect(mockApiFetch).not.toHaveBeenCalled();
   });
 
   // ── Enter key ──
@@ -428,7 +433,7 @@ describe("PortScanTool", () => {
       expect(screen.getByText("scanme.nmap.org")).toBeTruthy();
     });
 
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    const body = JSON.parse(mockApiFetch.mock.calls[0][1].body);
     expect(body.target).toBe("scanme.nmap.org");
   });
 
@@ -436,7 +441,7 @@ describe("PortScanTool", () => {
 
   it("disables the scan button while scanning", async () => {
     let resolvePromise;
-    mockFetch.mockReturnValueOnce(
+    mockApiFetch.mockReturnValueOnce(
       new Promise((resolve) => {
         resolvePromise = resolve;
       })
