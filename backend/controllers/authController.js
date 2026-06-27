@@ -272,7 +272,10 @@ export const sendOtp = async (req, res) => {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "" });
     logInfo("Auth send OTP request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
     const result = await sendResetOtp(req.validatedBody);
-    await safeRecordAuthSuccess({ req, identifier: req.validatedBody?.email || "" });
+    // Only record auth success when email was actually sent (not preview mode)
+    if (result.sent === true) {
+      await safeRecordAuthSuccess({ req, identifier: req.validatedBody?.email || "" });
+    }
     res.json({ status: "ok", ...result });
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "", reason: error?.code || "send_otp_failed" });

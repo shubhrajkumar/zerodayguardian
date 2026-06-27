@@ -562,6 +562,20 @@ const buildStartupEnvValidation = () => {
     );
   }
 
+  // Auth email — warn when AUTH_EMAIL_ENABLED=true but credentials are missing
+  if (env.authEmailEnabled && (!env.authEmailUser || !env.authEmailAppPassword)) {
+    const missingEmailKeys = [
+      !env.authEmailUser ? AUTH_EMAIL_USER_KEYS.join(" or ") : "",
+      !env.authEmailAppPassword ? AUTH_EMAIL_PASSWORD_KEYS.join(" or ") : "",
+    ].filter(Boolean);
+    addIssue(
+      issues,
+      "AUTH_EMAIL_CREDENTIALS",
+      `AUTH_EMAIL_ENABLED=true but email credentials are incomplete. OTP/password-reset emails will NOT be delivered. Missing: ${missingEmailKeys.join(", ")}`,
+      isProduction ? "error" : "warn"
+    );
+  }
+
   // Groq (Zorvix AI) — warn in production when key is missing
   if (isProduction && !String(env.groqApiKey || "").trim()) {
     addIssue(
@@ -778,4 +792,36 @@ if (ollamaBackupEnabled || env.hasOllamaBackup) {
   if (!["http:", "https:"].includes(ollamaBackupUrl.protocol)) {
     throw new Error("[neurobot] OLLAMA_BACKUP_BASE_URL must use http:// or https://");
   }
+}
+
+// ── SMTP startup verification (non-blocking) ──
+// Verifies the SMTP transport at startup if email is configured.
+// Runs asynchronously — does not block server startup.
+if (env.authEmailEnabled && env.authEmailUser && env.authEmailAppPassword && env.authEmailFrom) {
+  (async () => {
+    try {
+      const { default: nodemailer } = await import("nodemailer");
+      const testTransporter = nodemailer.createTransport({
+        host: env.smtpHost,
+        port: env.smtpPort,
+        secure: env.smtpSecure,
+        auth: {
+          user: env.authEmailUser,
+          pass: env.authEmailAppPassword,
+        },
+        requireTLS: env.smtpRequireTls,
+      });
+      await testTransporter.verify();
+      console.log(`[SMTP] ✓ Connected to ${env.smtpHost}:${env.smtpPort} as ${env.authEmailUser}`);
+      testTransporter.close();
+    } catch (error) {
+      const maskedUser = String(env.authEmailUser || "").includes("@")
+        ? env.authEmailUser.split("@")[0].slice(0, 2) + "***@" + env.authEmailUser.split("@")[1]
+        : "***";
+      console.warn(`[SMTP] ✗ Connection failed: ${String(error?.message || "unknown_error")}`);
+      console.warn(`[SMTP]   Host: ${env.smtpHost}:${env.smtpPort}, User: ${maskedUser}`);
+      console.warn(`[SMTP]   Code: ${String(error?.code || "")} | Command: ${String(error?.command || "")}`);
+      console.warn(`[SMTP]   OTP/password-reset emails will NOT be delivered until SMTP is fixed.`);
+    }
+  })();
 }

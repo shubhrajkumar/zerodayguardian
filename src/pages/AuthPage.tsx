@@ -159,14 +159,17 @@ export default function AuthPage() {
         navigate("/dashboard", { replace: true });
       } else if (mode === "reset") {
         // Step 1: Send OTP via backend
-        const otpResult = await api.post<{ sent: boolean; delivery: string; destination?: string; expiresInMinutes?: number; otpPreview?: string }>("/api/auth/send-otp", { email });
-        const delivery = otpResult.data.delivery || "email";
+        const otpResult = await api.post<{ sent: boolean; delivery?: string; destination?: string; expiresInMinutes?: number; message?: string }>("/api/auth/send-otp", { email });
+        if (otpResult.data.delivery === "preview") {
+          // Development preview mode — email service is not configured
+          setError("Email service is not configured. Cannot send verification email. Please contact the administrator.");
+          showToast("Email not sent — service not configured", "error");
+          return;
+        }
         setSuccess(
-          delivery === "preview"
-            ? `Reset OTP: ${otpResult.data.otpPreview || "(check console)"} — expires in ${otpResult.data.expiresInMinutes || 10} min`
-            : `Verification code sent to ${otpResult.data.destination || email}. Check your inbox.`
+          `Verification code sent to ${otpResult.data.destination || email}. Check your inbox. It expires in ${otpResult.data.expiresInMinutes || 10} minutes.`
         );
-        showToast("Verification code sent!", "success");
+        showToast("Verification code sent — check your email", "success");
         setMode("reset-otp");
       } else if (mode === "reset-otp") {
         // Step 2: Verify OTP and reset password
@@ -213,7 +216,7 @@ export default function AuthPage() {
         "wrong_password": "Incorrect email or password",
         "password_not_set": "This account uses Google sign-in. Please sign in with Google.",
         "user_exists": "An account with this email already exists",
-        "mail_not_configured": "Email service is not configured on the server.",
+        "mail_not_configured": "Unable to send verification email. The email service is not configured. Please contact the administrator.",
         "mail_delivery_failed": "Failed to send email. Please try again later.",
         "invalid_otp": "Invalid verification code. Please try again.",
         "otp_expired": "Verification code has expired. Please request a new one.",

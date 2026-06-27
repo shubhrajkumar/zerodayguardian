@@ -206,13 +206,32 @@ const brandedFromField = () => {
 
 let transporterPromise = null;
 
+/**
+ * Get or create the nodemailer transporter.
+ * Logs transport creation, SMTP verify result, and full error details on failure.
+ */
 const getMailTransporter = async () => {
   if (!mailConfigured()) {
+    logWarn("[MAIL] getMailTransporter called but mail is not configured", {
+      hasFrom: Boolean(env.authEmailFrom),
+      hasUser: Boolean(env.authEmailUser),
+      hasPassword: Boolean(env.authEmailAppPassword),
+      host: env.smtpHost,
+      port: env.smtpPort,
+    });
     throw createError("Email service is not configured", 500, "mail_not_configured");
   }
   if (!transporterPromise) {
-    transporterPromise = Promise.resolve(
-      nodemailer.createTransport({
+    logInfo("[MAIL] Creating nodemailer transport", {
+      host: env.smtpHost,
+      port: env.smtpPort,
+      user: env.authEmailUser,
+      from: brandedFromField(),
+      secure: env.smtpSecure,
+      requireTLS: env.smtpRequireTls,
+    });
+    transporterPromise = (async () => {
+      const transporter = nodemailer.createTransport({
         host: env.smtpHost,
         port: env.smtpPort,
         secure: env.smtpSecure,
@@ -221,11 +240,23 @@ const getMailTransporter = async () => {
           pass: env.authEmailAppPassword,
         },
         requireTLS: env.smtpRequireTls,
-      })
-    ).then(async (transporter) => {
-      await transporter.verify();
+      });
+      try {
+        await transporter.verify();
+        logInfo("[MAIL] SMTP transport verified successfully", {
+          host: env.smtpHost,
+          port: env.smtpPort,
+          user: maskEmail(env.authEmailUser),
+        });
+      } catch (verifyError) {
+        logWarn("[MAIL] SMTP transport verification failed — sendMail will still be attempted", {
+          error: String(verifyError?.message || verifyError),
+          code: String(verifyError?.code || ""),
+          command: String(verifyError?.command || ""),
+        });
+      }
       return transporter;
-    });
+    })();
   }
   return transporterPromise;
 };
@@ -631,20 +662,22 @@ export const sendResetOtp = async ({ email }) => {
 
   if (!mailConfigured()) {
     if (env.authOtpPreviewEnabled) {
-      logWarn("Password reset OTP email skipped; preview mode is enabled", {
+      logWarn("Password reset OTP email NOT sent — email service is not configured (preview mode; credentials missing)", {
         email: safeEmail,
         delivery: "preview",
+        hasFrom: Boolean(env.authEmailFrom),
+        hasUser: Boolean(env.authEmailUser),
+        hasPassword: Boolean(env.authEmailAppPassword),
       });
       return {
-        sent: true,
+        sent: false,
         delivery: "preview",
         destination: maskEmail(safeEmail),
         expiresInMinutes: resetOtpExpiresInMinutes,
-        otpPreview: otp,
-        message: "Password reset OTP generated in preview mode.",
+        message: "Email service is not configured. OTP would have been sent to " + maskEmail(safeEmail) + ".",
       };
     }
-    throw createError("Password reset email is not configured", 503, "mail_not_configured");
+    throw createError("Unable to send verification email. The email service is not configured. Please contact the administrator.", 503, "mail_not_configured");
   }
 
   try {
@@ -684,9 +717,11 @@ export const sendResetOtp = async ({ email }) => {
         </div>`,
     });
 
-    logInfo("OTP email sent", {
-      email: safeEmail,
+    logInfo("[MAIL] OTP email sent successfully", {
+      email: maskEmail(safeEmail),
       delivery: "email",
+      host: env.smtpHost,
+      from: brandedFromField(),
     });
 
     return {
@@ -697,10 +732,15 @@ export const sendResetOtp = async ({ email }) => {
       message: "Password reset OTP sent successfully.",
     };
   } catch (error) {
-    logWarn("OTP email delivery failed", {
-      email: safeEmail,
+    logWarn("[MAIL] OTP email delivery failed", {
+      email: maskEmail(safeEmail),
       code: String(error?.code || ""),
       message: String(error?.message || "unknown_error"),
+      command: String(error?.command || ""),
+      response: String(error?.response || ""),
+      responseCode: String(error?.responseCode || ""),
+      host: env.smtpHost,
+      port: env.smtpPort,
     });
     throw createError("Password reset email could not be sent", 502, "mail_delivery_failed");
   }
@@ -772,6 +812,94 @@ export const emailAvailableForUser = async ({ email, excludeUserId }) => {
   const candidate = await getUserByEmail({ email });
   if (!candidate) return true;
   return String(candidate._id?.toString?.() || candidate._id || "") === String(excludeUserId || "");
+};
+
+/**
+ * Get email configuration status (for debug/diagnostic endpoints).
+ * Never exposes the actual password — only flags and masked info.
+ */
+export const getEmailConfigStatus = () => ({
+  emailEnabled: mailConfigured(),
+  authEmailEnabled: Boolean(env.authEmailEnabled),
+  hasFrom: Boolean(env.authEmailFrom),
+  hasUser: Boolean(env.authEmailUser),
+  hasPassword: Boolean(env.authEmailAppPassword),
+  smtpHost: env.smtpHost,
+  smtpPort: env.smtpPort,
+  smtpSecure: env.smtpSecure,
+  smtpRequireTls: env.smtpRequireTls,
+  authEmailFrom: env.authEmailFrom ? maskEmail(env.authEmailFrom) : "",
+  authEmailUser: env.authEmailUser ? maskEmail(env.authEmailUser) : "",
+  authEmailFromName: env.authEmailFromName,
+  previewMode: env.authOtpPreviewEnabled,
+});
+
+/**
+ * Send a test email to verify SMTP configuration.
+ * Used by POST /api/debug/send-test-email.
+ */
+export const sendTestEmail = async ({ to }) => {
+  const safeTo = normalizeEmail(to);
+  try {
+    const transporter = await getMailTransporter();
+    const result = await transporter.sendMail({
+      from: brandedFromField(),
+      to: safeTo,
+      subject: "ZeroDay Guardian Security | Test Email",
+      text: [
+        "ZeroDay Guardian Security",
+        "",
+        "This is a test email to verify your SMTP configuration.",
+        "If you received this, SMTP is working correctly.",
+        "",
+        `Sent at: ${new Date().toISOString()}`,
+        "",
+        `${env.appBaseUrl}`,
+      ].join("\n"),
+      html: `
+        <div style="margin:0;padding:24px;background:#f3f6fb;font-family:Arial,sans-serif;color:#0f172a">
+          <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dbe4f0;border-radius:16px;overflow:hidden">
+            <div style="padding:20px 24px;background:linear-gradient(135deg,#0f172a,#0f766e);color:#ffffff">
+              <div style="font-size:12px;letter-spacing:1.2px;text-transform:uppercase;opacity:.82">ZeroDay Guardian Security</div>
+              <h2 style="margin:8px 0 0;font-size:22px;line-height:1.3">SMTP Test Email</h2>
+            </div>
+            <div style="padding:24px">
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6">This is a test email to verify your SMTP configuration.</p>
+              <p style="margin:0 0 10px;font-size:14px;line-height:1.6">If you received this, SMTP is working correctly.</p>
+              <p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#475569">Sent at: ${new Date().toISOString()}</p>
+            </div>
+          </div>
+        </div>`,
+    });
+    logInfo("[MAIL] Test email sent successfully", {
+      to: maskEmail(safeTo),
+      messageId: String(result?.messageId || ""),
+      accepted: Array.isArray(result?.accepted) ? result.accepted.map(maskEmail) : [],
+    });
+    return {
+      success: true,
+      messageId: String(result?.messageId || ""),
+      accepted: Array.isArray(result?.accepted) ? result.accepted : [],
+      message: `Test email sent to ${maskEmail(safeTo)}`,
+    };
+  } catch (error) {
+    logWarn("[MAIL] Test email delivery failed", {
+      to: maskEmail(safeTo),
+      code: String(error?.code || ""),
+      message: String(error?.message || "unknown_error"),
+      command: String(error?.command || ""),
+      response: String(error?.response || ""),
+      responseCode: String(error?.responseCode || ""),
+    });
+    return {
+      success: false,
+      message: error?.message || "Failed to send test email",
+      code: String(error?.code || ""),
+      command: String(error?.command || ""),
+      response: String(error?.response || ""),
+      responseCode: String(error?.responseCode || ""),
+    };
+  }
 };
 
 export const updateUserProfileSecure = async ({ userId, name, email }) => {

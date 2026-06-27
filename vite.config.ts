@@ -21,7 +21,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://zerodayguardian-backend.onrender.com",
+        target: resolveBackendPublicUrl(),
         changeOrigin: true,
         secure: false,
       },

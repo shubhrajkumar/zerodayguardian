@@ -43,6 +43,7 @@ import portScanRoutes from "../routes/portScanRoutes.js";
 import subdomainRoutes from "../routes/subdomainRoutes.js";
 import httpHeaderRoutes from "../routes/httpHeaderRoutes.js";
 import tlsCertRoutes from "../routes/tlsCertRoutes.js";
+import debugRoutes from "../api/debug/debugRoutes.mjs";
 import { createSessionId, decryptSessionToken, encryptSessionToken } from "./utils/security.mjs";
 import { chatAbuseDetection } from "./middleware/abuseDetection.mjs";
 import { allowProbeAccess } from "./middleware/probeAccess.mjs";
@@ -689,6 +690,10 @@ export const createApp = () => {
   app.use("/api/tools/subdomains", requireAuth, subdomainRoutes);
   app.use("/api/tools/headers", requireAuth, httpHeaderRoutes);
   app.use("/api/tools/tlscert", requireAuth, tlsCertRoutes);
+  // Debug routes — email status, test email, env check (no auth required)
+  // These are public diagnostic endpoints — do NOT mount in production without access control
+  app.use("/api/debug", debugRoutes);
+
   // Zorvix AI — public (rate-limited inside route) so unauthenticated students can use the mentor
   app.use("/api/ai/zorvix", zorvixAiRoutes);
   app.use("/api/neurobot/chat", chatRateLimit, chatAbuseDetection);
