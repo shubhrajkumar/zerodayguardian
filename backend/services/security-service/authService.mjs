@@ -10,6 +10,7 @@ import { logInfo, logWarn } from "../../src/utils/logger.mjs";
 import { buildCookieOptions } from "../../src/utils/cookiePolicy.mjs";
 import { createBlindIndex, decryptSensitive, encryptSensitive, sanitizeText } from "../../src/utils/security.mjs";
 import { getAuthFallbackCollection } from "./authFallbackStore.mjs";
+import * as otpService from "../../src/services/otpService.mjs";
 
 const USERS = "users";
 let googleOauthClient = null;
@@ -32,7 +33,11 @@ const ACCESS_TTL = "7d";
 const REFRESH_TTL = "30d";
 const REFRESH_TTL_LONG = "30d";
 const BCRYPT_ROUNDS = 12;
-const RESET_OTP_TTL_MS = 10 * 60 * 1000;
+// OTP bcrypt uses fewer rounds — it's only a backup persistence hash.
+// Primary verification uses the in-memory OTP service (no bcrypt).
+// Render's 0.1 CPU: 12 rounds = ~6s, 8 rounds = ~0.4s, 6 rounds = ~0.1s.
+// 8 rounds balances speed with adequate protection for short-lived OTPs.
+const OTP_BCRYPT_ROUNDS = 8;
 const REFRESH_GRACE_WINDOW_MS = 30 * 1000;
 
 const toObjectId = (value) => (ObjectId.isValid(value) ? new ObjectId(value) : value);
@@ -121,9 +126,6 @@ const getGoogleOauthWebClient = () => {
   }
   return googleOauthWebClient;
 };
-
-const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
-const resetOtpExpiresInMinutes = Math.round(RESET_OTP_TTL_MS / 60000);
 
 const hashPassword = async (password) => bcrypt.hash(String(password || ""), BCRYPT_ROUNDS);
 const createRefreshJti = () => crypto.randomUUID();
@@ -240,9 +242,17 @@ const getMailTransporter = async () => {
           pass: env.authEmailAppPassword,
         },
         requireTLS: env.smtpRequireTls,
+        connectionTimeout: 5_000, // 5s to connect
+        greetingTimeout: 5_000,   // 5s for SMTP greeting
+        socketTimeout: 10_000,    // 10s for socket operations
       });
       try {
-        await transporter.verify();
+        await Promise.race([
+          transporter.verify(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('SMTP verify timed out after 5000ms')), 5000)
+          ),
+        ]);
         logInfo("[MAIL] SMTP transport verified successfully", {
           host: env.smtpHost,
           port: env.smtpPort,
@@ -633,6 +643,7 @@ export const refreshAuth = async (refreshToken) => {
 export const sendResetOtp = async ({ email }) => {
   const users = getCollection(USERS);
   const safeEmail = normalizeEmail(email);
+
   const user = await findUserByEmailRecord(users, safeEmail);
 
   logInfo("User fetch", {
@@ -645,10 +656,22 @@ export const sendResetOtp = async ({ email }) => {
     throw createError("User not found", 404, "user_not_found");
   }
 
-  const otp = generateOtp();
-  const otpHash = await bcrypt.hash(otp, BCRYPT_ROUNDS);
-  const expiresAt = now() + RESET_OTP_TTL_MS;
+  const { otp, expiresAt, expiresInMinutes } = otpService.createOtp(safeEmail);
 
+  logInfo("[AUTH] Hashing OTP for storage", {
+    email: maskEmail(safeEmail),
+    rounds: OTP_BCRYPT_ROUNDS,
+  });
+  const otpHash = await bcrypt.hash(otp, OTP_BCRYPT_ROUNDS);
+  logInfo("[AUTH] OTP hashed successfully", {
+    email: maskEmail(safeEmail),
+    rounds: OTP_BCRYPT_ROUNDS,
+  });
+
+  logInfo("[AUTH] Persisting OTP hash to MongoDB", {
+    email: maskEmail(safeEmail),
+    expiresAt: new Date(expiresAt).toISOString(),
+  });
   await users.updateOne(
     { _id: user._id },
     {
@@ -657,12 +680,17 @@ export const sendResetOtp = async ({ email }) => {
         resetOtpExpire: expiresAt,
         updatedAt: now(),
       },
-    }
+    },
+    { maxTimeMS: AUTH_DB_MAX_TIME_MS }
   );
+  logInfo("[AUTH] OTP hash persisted to MongoDB", {
+    email: maskEmail(safeEmail),
+    expiresAt: new Date(expiresAt).toISOString(),
+  });
 
   if (!mailConfigured()) {
     if (env.authOtpPreviewEnabled) {
-      logWarn("Password reset OTP email NOT sent — email service is not configured (preview mode; credentials missing)", {
+      logWarn("Password reset OTP email NOT sent — email service is not configured (preview mode)", {
         email: safeEmail,
         delivery: "preview",
         hasFrom: Boolean(env.authEmailFrom),
@@ -673,76 +701,56 @@ export const sendResetOtp = async ({ email }) => {
         sent: false,
         delivery: "preview",
         destination: maskEmail(safeEmail),
-        expiresInMinutes: resetOtpExpiresInMinutes,
+        expiresInMinutes,
         message: "Email service is not configured. OTP would have been sent to " + maskEmail(safeEmail) + ".",
       };
     }
     throw createError("Unable to send verification email. The email service is not configured. Please contact the administrator.", 503, "mail_not_configured");
   }
 
+  // Send OTP via email using OTP service
+  // ── 5s hard timeout across getMailTransporter + sendMail ──
+  // Prevents any SMTP connection or send hang from blocking the request.
+  // On failure, returns a preview fallback so the client never experiences a 35s freeze.
+  const EMAIL_TIMEOUT_MS = 5_000;
+  const emailPromise = otpService.sendOtpEmail(safeEmail, otp, expiresInMinutes);
   try {
-    const transporter = await getMailTransporter();
-    await transporter.sendMail({
-      from: brandedFromField(),
-      to: safeEmail,
-      subject: "ZeroDay Guardian Security | Password Reset Verification Code",
-      text: [
-        "ZeroDay Guardian Security",
-        "",
-        `Your password reset verification code is: ${otp}`,
-        `This code expires in ${resetOtpExpiresInMinutes} minutes.`,
-        "",
-        "If you requested this reset, enter the code in the app to continue.",
-        "If you did not request a password reset, you can safely ignore this email.",
-        "",
-        `${env.appBaseUrl}`,
-      ].join("\n"),
-      html: `
-        <div style="margin:0;padding:24px;background:#f3f6fb;font-family:Arial,sans-serif;color:#0f172a">
-          <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dbe4f0;border-radius:16px;overflow:hidden">
-            <div style="padding:20px 24px;background:linear-gradient(135deg,#0f172a,#0f766e);color:#ffffff">
-              <div style="font-size:12px;letter-spacing:1.2px;text-transform:uppercase;opacity:.82">ZeroDay Guardian Security</div>
-              <h2 style="margin:8px 0 0;font-size:22px;line-height:1.3">Password Reset Verification</h2>
-            </div>
-            <div style="padding:24px">
-              <p style="margin:0 0 14px;font-size:14px;line-height:1.6">Use the verification code below to continue your password reset request.</p>
-              <div style="margin:18px 0;padding:18px;border:1px dashed #94a3b8;border-radius:14px;background:#f8fafc;text-align:center">
-                <div style="font-size:30px;font-weight:700;letter-spacing:8px;color:#0f172a">${otp}</div>
-              </div>
-              <p style="margin:0 0 10px;font-size:14px;line-height:1.6">This code expires in <strong>${resetOtpExpiresInMinutes} minutes</strong>.</p>
-              <p style="margin:0 0 10px;font-size:14px;line-height:1.6">If you did not request a password reset, you can safely ignore this email and your account will remain unchanged.</p>
-              <p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#475569">Requested from ZeroDay Guardian Security</p>
-            </div>
-          </div>
-        </div>`,
-    });
-
-    logInfo("[MAIL] OTP email sent successfully", {
+    await Promise.race([
+      emailPromise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Email dispatch timed out after ${EMAIL_TIMEOUT_MS}ms`)), EMAIL_TIMEOUT_MS)
+      ),
+    ]);
+    logInfo("[AUTH] OTP email sent successfully", {
       email: maskEmail(safeEmail),
-      delivery: "email",
-      host: env.smtpHost,
-      from: brandedFromField(),
+      expiresInMinutes,
     });
-
     return {
       sent: true,
       delivery: "email",
       destination: maskEmail(safeEmail),
-      expiresInMinutes: resetOtpExpiresInMinutes,
+      expiresInMinutes,
       message: "Password reset OTP sent successfully.",
     };
   } catch (error) {
-    logWarn("[MAIL] OTP email delivery failed", {
+    logWarn("[AUTH] OTP email delivery failed — falling back to preview mode", {
       email: maskEmail(safeEmail),
       code: String(error?.code || ""),
-      message: String(error?.message || "unknown_error"),
-      command: String(error?.command || ""),
-      response: String(error?.response || ""),
-      responseCode: String(error?.responseCode || ""),
-      host: env.smtpHost,
-      port: env.smtpPort,
+      message: String(error?.message || "timeout"),
+      fallback: "preview",
     });
-    throw createError("Password reset email could not be sent", 502, "mail_delivery_failed");
+    // Return preview fallback instead of throwing — the OTP is stored in-memory
+    // and can still be verified via the in-memory OTP store.
+    return {
+      sent: false,
+      delivery: "preview",
+      destination: maskEmail(safeEmail),
+      expiresInMinutes,
+      message: "Email delivery temporarily unavailable. The reset code has been stored and can be verified.",
+    };
+  } finally {
+    // Suppress any late rejection after the race is settled
+    emailPromise.catch(() => {});
   }
 };
 
@@ -762,20 +770,53 @@ export const resetPassword = async ({ email, otp, password }) => {
     throw createError("User not found", 404, "user_not_found");
   }
 
-  if (!user.resetOtp || !user.resetOtpExpire) {
-    throw createError("OTP not requested", 400, "otp_not_requested");
+  // Try in-memory OTP store first (fast path)
+  const inMemoryValid = otpService.verifyOtp(safeEmail, safeOtp);
+  logInfo("[AUTH] OTP verification (in-memory)", {
+    email: maskEmail(safeEmail),
+    valid: inMemoryValid,
+  });
+
+  if (!inMemoryValid) {
+    // Fall back to MongoDB bcrypt OTP hash
+    if (!user.resetOtp || !user.resetOtpExpire) {
+      throw createError("OTP not requested or expired", 400, "otp_not_requested");
+    }
+
+    if (Number(user.resetOtpExpire) < now()) {
+      throw createError("OTP expired", 400, "otp_expired");
+    }
+
+    logInfo("[AUTH] Comparing OTP against MongoDB bcrypt hash", {
+      email: maskEmail(safeEmail),
+    });
+    const otpMatches = await bcrypt.compare(safeOtp, String(user.resetOtp || ""));
+    logInfo("[AUTH] OTP bcrypt comparison result", {
+      email: maskEmail(safeEmail),
+      matched: otpMatches,
+    });
+    if (!otpMatches) {
+      throw createError("Invalid OTP", 400, "invalid_otp");
+    }
   }
 
-  if (Number(user.resetOtpExpire) < now()) {
-    throw createError("OTP expired", 400, "otp_expired");
-  }
+  // Clean up OTP from in-memory store if still present
+  otpService.deleteOtp(safeEmail);
+  logInfo("[AUTH] OTP consumed from in-memory store", {
+    email: maskEmail(safeEmail),
+  });
 
-  const otpMatches = await bcrypt.compare(safeOtp, String(user.resetOtp || ""));
-  if (!otpMatches) {
-    throw createError("Invalid OTP", 400, "invalid_otp");
-  }
-
+  logInfo("[AUTH] Hashing new password", {
+    email: maskEmail(safeEmail),
+  });
   const passwordHash = await hashPassword(password);
+  logInfo("[AUTH] New password hashed successfully", {
+    email: maskEmail(safeEmail),
+  });
+
+  logInfo("[AUTH] Persisting new password hash to MongoDB", {
+    email: maskEmail(safeEmail),
+  });
   await users.updateOne(
     { _id: user._id },
     {
@@ -790,6 +831,9 @@ export const resetPassword = async ({ email, otp, password }) => {
       },
     }
   );
+  logInfo("[AUTH] New password hash persisted to MongoDB", {
+    email: maskEmail(safeEmail),
+  });
 
   return getUserById(user._id);
 };
@@ -842,21 +886,21 @@ export const sendTestEmail = async ({ to }) => {
   const safeTo = normalizeEmail(to);
   try {
     const transporter = await getMailTransporter();
-    const result = await transporter.sendMail({
-      from: brandedFromField(),
-      to: safeTo,
-      subject: "ZeroDay Guardian Security | Test Email",
-      text: [
-        "ZeroDay Guardian Security",
-        "",
-        "This is a test email to verify your SMTP configuration.",
-        "If you received this, SMTP is working correctly.",
-        "",
-        `Sent at: ${new Date().toISOString()}`,
-        "",
-        `${env.appBaseUrl}`,
-      ].join("\n"),
-      html: `
+    const sendMailPromise = transporter.sendMail({
+        from: brandedFromField(),
+        to: safeTo,
+        subject: "ZeroDay Guardian Security | Test Email",
+        text: [
+          "ZeroDay Guardian Security",
+          "",
+          "This is a test email to verify your SMTP configuration.",
+          "If you received this, SMTP is working correctly.",
+          "",
+          `Sent at: ${new Date().toISOString()}`,
+          "",
+          `${env.appBaseUrl}`,
+        ].join("\n"),
+        html: `
         <div style="margin:0;padding:24px;background:#f3f6fb;font-family:Arial,sans-serif;color:#0f172a">
           <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dbe4f0;border-radius:16px;overflow:hidden">
             <div style="padding:20px 24px;background:linear-gradient(135deg,#0f172a,#0f766e);color:#ffffff">
@@ -870,7 +914,15 @@ export const sendTestEmail = async ({ to }) => {
             </div>
           </div>
         </div>`,
-    });
+      });
+    const result = await Promise.race([
+      sendMailPromise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('SMTP sendMail timed out after 5000ms')), 5000)
+      ),
+    ]);
+    // If we reach here, sendMail resolved successfully. Suppress any late rejection from a race-condition tick.
+    sendMailPromise.catch(() => {});
     logInfo("[MAIL] Test email sent successfully", {
       to: maskEmail(safeTo),
       messageId: String(result?.messageId || ""),

@@ -7,6 +7,7 @@ import { env } from "./config/env.mjs";
 import { optionalAuth } from "./middleware/auth.mjs";
 import {
   apiReadRateLimit,
+  authRateLimit,
   chatRateLimit,
   fileUploadRateLimit,
   intelligenceRateLimit,
@@ -60,6 +61,7 @@ import { logWarn } from "./utils/logger.mjs";
 import { requireAuth } from "./middleware/auth.mjs";
 import { buildCookieOptions } from "./utils/cookiePolicy.mjs";
 import { getGoogleAuthConfigStatus } from "../services/security-service/authService.mjs";
+import { sendOtpHandler, verifyOtpHandler, otpHealthHandler } from "./services/otpService.mjs";
 
 const COOKIE_NAME = "neurobot_ss";
 const ONE_WEEK = 60 * 60 * 24 * 7;
@@ -690,6 +692,13 @@ export const createApp = () => {
   app.use("/api/tools/subdomains", requireAuth, subdomainRoutes);
   app.use("/api/tools/headers", requireAuth, httpHeaderRoutes);
   app.use("/api/tools/tlscert", requireAuth, tlsCertRoutes);
+  // OTP server routes (in-app — no separate process needed)
+  // These mirror the standalone scripts/otp-server.mjs endpoints
+  // Rate-limited like auth to prevent abuse
+  app.post("/api/otp/send", authRateLimit, sendOtpHandler);
+  app.post("/api/otp/verify", authRateLimit, verifyOtpHandler);
+  app.get("/api/otp/health", otpHealthHandler);
+
   // Debug routes — email status, test email, env check (no auth required)
   // These are public diagnostic endpoints — do NOT mount in production without access control
   app.use("/api/debug", debugRoutes);
