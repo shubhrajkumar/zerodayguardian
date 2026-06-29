@@ -219,6 +219,9 @@ export const sendOtpEmail = async (email, otp, expiresInMinutes) => {
     expiresInMinutes,
   });
   try {
+    // ATTACH .catch() IMMEDIATELY to prevent UnhandledPromiseRejection crash
+    // When Promise.race is won by the timeout, sendMailPromise eventually rejects.
+    // Without an immediate .catch(), Node.js 15+ crashes on the unhandled rejection.
     const sendMailPromise = transporter.sendMail({
         from: brandedFromField(),
         to: safeEmail,
@@ -252,16 +255,31 @@ export const sendOtpEmail = async (email, otp, expiresInMinutes) => {
           </div>
         </div>
       </div>`.trim(),
-      });
+      })
+      .catch(() => {}); // ← IMMEDIATE .catch() prevents process crash from unhandled rejection
+
     await Promise.race([
       sendMailPromise,
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error(`SMTP sendMail timed out after ${SENDMAIL_TIMEOUT_MS}ms`)), SENDMAIL_TIMEOUT_MS)
       ),
     ]);
-    // Suppress any late rejection after the race is settled
-    sendMailPromise.catch(() => {});
   } catch (sendError) {
+    logWarn("[OTP] SMTP sendMail failed", {
+      email: maskEmail(safeEmail),
+      message: String(sendError?.message || "unknown_error"),
+      code: String(sendError?.code || ""),
+      command: String(sendError?.command || ""),
+      response: String(sendError?.response || ""),
+      responseCode: String(sendError?.responseCode || ""),
+    });
+    console.error("[OTP] SMTP sendMail error:", JSON.stringify({
+      message: String(sendError?.message || "unknown_error"),
+      code: String(sendError?.code || ""),
+      command: String(sendError?.command || ""),
+      response: String(sendError?.response || ""),
+      responseCode: String(sendError?.responseCode || ""),
+    }));
     // Re-throw so the caller (authService.sendResetOtp) can handle it
     throw sendError;
   }
@@ -290,10 +308,19 @@ export const sendOtpHandler = async (req, res) => {
     return;
   }
 
-  const { otp, expiresInMinutes } = createOtp(email);
-
-  if (!mailConfigured()) {
+  // ── Crash-safe env var guard ──
+  // Check env vars BEFORE creating OTP or touching SMTP.
+  // Prevents any crash from missing/null credentials.
+  // Also checks authEmailFrom to distinguish misconfiguration from real delivery failure.
+  if (!env.authEmailUser || !env.authEmailAppPassword || !env.authEmailFrom) {
+    const missing = [
+      !env.authEmailUser ? "AUTH_EMAIL_USER" : null,
+      !env.authEmailAppPassword ? "AUTH_EMAIL_APP_PASSWORD" : null,
+      !env.authEmailFrom ? "AUTH_EMAIL_FROM" : null,
+    ].filter(Boolean).join(", ");
+    console.error("[OTP] ❌ [CRITICAL] Missing SMTP Environment Variables: " + missing);
     if (env.authOtpPreviewEnabled) {
+      const { otp, expiresInMinutes } = createOtp(email);
       logWarn("[OTP] Email not configured — returning OTP in preview mode", {
         email: maskEmail(email),
         delivery: "preview",
@@ -305,17 +332,19 @@ export const sendOtpHandler = async (req, res) => {
         destination: maskEmail(email),
         expiresInMinutes,
         message: `Email service is not configured. OTP would have been sent to ${maskEmail(email)}.`,
-        otp, // exposed for development
+        otp,
       });
       return;
     }
     res.status(503).json({
       status: "error",
-      message: "Email service is not configured. Cannot send verification email.",
       code: "mail_not_configured",
+      message: "Email service is temporarily unavailable due to misconfiguration.",
     });
     return;
   }
+
+  const { otp, expiresInMinutes } = createOtp(email);
 
   try {
     await sendOtpEmail(email, otp, expiresInMinutes);

@@ -233,39 +233,48 @@ const getMailTransporter = async () => {
       requireTLS: env.smtpRequireTls,
     });
     transporterPromise = (async () => {
-      const transporter = nodemailer.createTransport({
-        host: env.smtpHost,
-        port: env.smtpPort,
-        secure: env.smtpSecure,
-        auth: {
-          user: env.authEmailUser,
-          pass: env.authEmailAppPassword,
-        },
-        requireTLS: env.smtpRequireTls,
-        connectionTimeout: 5_000, // 5s to connect
-        greetingTimeout: 5_000,   // 5s for SMTP greeting
-        socketTimeout: 25_000,    // Must exceed sendMail timeout (20s) to let Promise.race be the effective timeout
-      });
       try {
-        await Promise.race([
-          transporter.verify(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('SMTP verify timed out after 5000ms')), 5000)
-          ),
-        ]);
-        logInfo("[MAIL] SMTP transport verified successfully", {
+        const transporter = nodemailer.createTransport({
           host: env.smtpHost,
           port: env.smtpPort,
-          user: maskEmail(env.authEmailUser),
+          secure: env.smtpSecure,
+          auth: {
+            user: env.authEmailUser,
+            pass: env.authEmailAppPassword,
+          },
+          requireTLS: env.smtpRequireTls,
+          connectionTimeout: 5_000,
+          greetingTimeout: 5_000,
+          socketTimeout: 25_000,
         });
-      } catch (verifyError) {
-        logWarn("[MAIL] SMTP transport verification failed — sendMail will still be attempted", {
-          error: String(verifyError?.message || verifyError),
-          code: String(verifyError?.code || ""),
-          command: String(verifyError?.command || ""),
+        try {
+          await Promise.race([
+            transporter.verify(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('SMTP verify timed out after 5000ms')), 5000)
+            ),
+          ]);
+          logInfo("[MAIL] SMTP transport verified successfully", {
+            host: env.smtpHost,
+            port: env.smtpPort,
+            user: maskEmail(env.authEmailUser),
+          });
+        } catch (verifyError) {
+          logWarn("[MAIL] SMTP transport verification failed — sendMail will still be attempted", {
+            error: String(verifyError?.message || verifyError),
+            code: String(verifyError?.code || ""),
+            command: String(verifyError?.command || ""),
+          });
+        }
+        return transporter;
+      } catch (transportError) {
+        // If createTransport itself threw (extremely rare), reset promise so next call retries
+        transporterPromise = null;
+        logWarn("[MAIL] nodemailer.createTransport threw — resetting transporterPromise", {
+          error: String(transportError?.message || transportError),
         });
+        throw transportError;
       }
-      return transporter;
     })();
   }
   return transporterPromise;
@@ -894,6 +903,8 @@ export const sendTestEmail = async ({ to }) => {
   const safeTo = normalizeEmail(to);
   try {
     const transporter = await getMailTransporter();
+    // ATTACH .catch() IMMEDIATELY to prevent UnhandledPromiseRejection crash
+    // When Promise.race is won by the timeout, sendMailPromise eventually rejects.
     const sendMailPromise = transporter.sendMail({
         from: brandedFromField(),
         to: safeTo,
@@ -922,15 +933,15 @@ export const sendTestEmail = async ({ to }) => {
             </div>
           </div>
         </div>`,
-      });
+      })
+      .catch(() => {}); // ← IMMEDIATE .catch() prevents process crash
+
     const result = await Promise.race([
       sendMailPromise,
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error('SMTP sendMail timed out after 20000ms')), 20000)
       ),
     ]);
-    // If we reach here, sendMail resolved successfully. Suppress any late rejection from a race-condition tick.
-    sendMailPromise.catch(() => {});
     logInfo("[MAIL] Test email sent successfully", {
       to: maskEmail(safeTo),
       messageId: String(result?.messageId || ""),
