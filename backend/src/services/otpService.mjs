@@ -211,7 +211,7 @@ export const sendOtpEmail = async (email, otp, expiresInMinutes) => {
 
   const transporter = await getMailTransporter();
   const safeOtp = String(otp || "").trim();
-  const SENDMAIL_TIMEOUT_MS = 5_000;
+  const SENDMAIL_TIMEOUT_MS = 20_000; // Gmail SMTP can be slow — 20s to allow for delivery
 
   logInfo("[OTP] Sending OTP email via SMTP", {
     email: maskEmail(safeEmail),
@@ -328,6 +328,25 @@ export const sendOtpHandler = async (req, res) => {
       message: "Verification code sent successfully.",
     });
   } catch (error) {
+    logWarn("[OTP] Email delivery failed — falling back to preview mode", {
+      email: maskEmail(email),
+      error: String(error?.message || "timeout"),
+      fallback: "preview",
+    });
+    // Return preview fallback when authOtpPreviewEnabled is true
+    // so the client can still complete the password reset flow
+    if (env.authOtpPreviewEnabled) {
+      res.json({
+        status: "ok",
+        sent: false,
+        delivery: "preview",
+        destination: maskEmail(email),
+        expiresInMinutes,
+        message: "Email delivery temporarily unavailable. The reset code can still be verified via the stored OTP.",
+        otp, // exposed for development/preview so the user can still reset
+      });
+      return;
+    }
     deleteOtp(email);
     res.status(502).json({
       status: "error",

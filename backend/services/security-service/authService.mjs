@@ -709,10 +709,11 @@ export const sendResetOtp = async ({ email }) => {
   }
 
   // Send OTP via email using OTP service
-  // ── 5s hard timeout across getMailTransporter + sendMail ──
-  // Prevents any SMTP connection or send hang from blocking the request.
-  // On failure, returns a preview fallback so the client never experiences a 35s freeze.
-  const EMAIL_TIMEOUT_MS = 5_000;
+  // ── 20s hard timeout across getMailTransporter + sendMail ──
+  // Gmail SMTP can take 10-15s to deliver. 20s gives enough headroom
+  // while still preventing indefinite hangs.
+  // On failure, returns a preview fallback so the client never experiences a 35s+ freeze.
+  const EMAIL_TIMEOUT_MS = 20_000;
   const emailPromise = otpService.sendOtpEmail(safeEmail, otp, expiresInMinutes);
   try {
     await Promise.race([
@@ -918,7 +919,7 @@ export const sendTestEmail = async ({ to }) => {
     const result = await Promise.race([
       sendMailPromise,
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('SMTP sendMail timed out after 5000ms')), 5000)
+        setTimeout(() => reject(new Error('SMTP sendMail timed out after 20000ms')), 20000)
       ),
     ]);
     // If we reach here, sendMail resolved successfully. Suppress any late rejection from a race-condition tick.
