@@ -748,6 +748,7 @@ export const sendResetOtp = async ({ email }) => {
       destination: maskEmail(safeEmail),
       expiresInMinutes,
       message: "Email delivery temporarily unavailable. The reset code has been stored and can be verified.",
+      otp: env.authOtpPreviewEnabled ? otp : undefined, // Expose OTP in preview mode so users can complete reset
     };
   } finally {
     // Suppress any late rejection after the race is settled
