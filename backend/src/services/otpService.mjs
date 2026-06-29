@@ -83,7 +83,7 @@ const getMailTransporter = async () => {
         requireTLS: env.smtpRequireTls !== false,
         connectionTimeout: 5_000,
         greetingTimeout: 5_000,
-        socketTimeout: 10_000,
+        socketTimeout: 25_000, // Must exceed sendMail timeout (20s) to let Promise.race be the effective timeout
       });
       const VERIFY_TIMEOUT_MS = 5_000;
       try {
