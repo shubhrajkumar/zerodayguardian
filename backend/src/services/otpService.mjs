@@ -74,16 +74,16 @@ const getMailTransporter = async () => {
     transporterPromise = (async () => {
       const transporter = nodemailer.createTransport({
         host: env.smtpHost || "smtp.gmail.com",
-        port: Number(env.smtpPort) || 587,
-        secure: env.smtpSecure === true,
+        port: Number(env.smtpPort) || 465,
+        secure: env.smtpSecure !== false, // Port 465 = SSL by default
         auth: {
           user: env.authEmailUser,
           pass: env.authEmailAppPassword,
         },
-        requireTLS: env.smtpRequireTls !== false,
-        connectionTimeout: 5_000,
-        greetingTimeout: 5_000,
-        socketTimeout: 25_000, // Must exceed sendMail timeout (20s) to let Promise.race be the effective timeout
+        tls: { rejectUnauthorized: false }, // Bypass SSL cert issues on cloud containers
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 25_000,
       });
       const VERIFY_TIMEOUT_MS = 5_000;
       try {

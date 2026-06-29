@@ -242,9 +242,9 @@ const getMailTransporter = async () => {
             user: env.authEmailUser,
             pass: env.authEmailAppPassword,
           },
-          requireTLS: env.smtpRequireTls,
-          connectionTimeout: 5_000,
-          greetingTimeout: 5_000,
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 10_000,
+          greetingTimeout: 10_000,
           socketTimeout: 25_000,
         });
         try {

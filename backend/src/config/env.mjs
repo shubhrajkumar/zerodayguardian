@@ -473,8 +473,8 @@ export const env = {
   stripeTeamPriceId: process.env.STRIPE_TEAM_PRICE_ID || "",
   stripePortalReturnUrl: process.env.STRIPE_PORTAL_RETURN_URL || "",
   smtpHost: process.env.SMTP_HOST || "smtp.gmail.com",
-  smtpPort: Number(process.env.SMTP_PORT || 587),
-  smtpSecure: process.env.SMTP_SECURE === "true",
+  smtpPort: Number(process.env.SMTP_PORT || 465),
+  smtpSecure: process.env.SMTP_SECURE === "false" ? false : true,
   smtpRequireTls: process.env.SMTP_REQUIRE_TLS !== "false",
   authOtpPreviewEnabled: false,
   labDockerImage: process.env.LAB_DOCKER_IMAGE || "zeroday-lab-sandbox:latest",
@@ -811,7 +811,10 @@ if (env.authEmailEnabled && env.authEmailUser && env.authEmailAppPassword && env
           user: env.authEmailUser,
           pass: env.authEmailAppPassword,
         },
-        requireTLS: env.smtpRequireTls,
+        tls: { rejectUnauthorized: false },
+        connectionTimeout: 5_000,
+        greetingTimeout: 5_000,
+        socketTimeout: 10_000,
       });
       await testTransporter.verify();
       console.log(`[SMTP] ✓ Connected to ${env.smtpHost}:${env.smtpPort} as ${env.authEmailUser}`);
