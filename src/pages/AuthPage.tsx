@@ -159,23 +159,7 @@ export default function AuthPage() {
         navigate("/dashboard", { replace: true });
       } else if (mode === "reset") {
         // Step 1: Send OTP via backend
-        const otpResult = await api.post<{ sent: boolean; delivery?: string; destination?: string; expiresInMinutes?: number; message?: string; otp?: string }>("/api/auth/send-otp", { email });
-        if (otpResult.data.delivery === "preview") {
-          // Preview mode — email was not sent but OTP is stored and can be verified
-          const previewOtp = otpResult.data.otp;
-          if (previewOtp) {
-            // Preview mode with OTP exposed — fill it in for the user
-            setOtp(previewOtp);
-            setSuccess(`Preview mode: verification code ${previewOtp}. Enter a new password below to reset.`);
-            showToast("Preview mode — OTP pre-filled", "info");
-            setMode("reset-otp");
-            return;
-          }
-          // Preview mode without OTP (older backend)
-          setError("Email service is not configured. Cannot send verification email. Please contact the administrator.");
-          showToast("Email not sent — service not configured", "error");
-          return;
-        }
+        const otpResult = await api.post<{ sent: boolean; delivery?: string; destination?: string; expiresInMinutes?: number; message?: string }>("/api/auth/send-otp", { email });
         setSuccess(
           `Verification code sent to ${otpResult.data.destination || email}. Check your inbox. It expires in ${otpResult.data.expiresInMinutes || 10} minutes.`
         );

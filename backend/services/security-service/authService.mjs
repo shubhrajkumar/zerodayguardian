@@ -734,22 +734,28 @@ export const sendResetOtp = async ({ email }) => {
       message: "Password reset OTP sent successfully.",
     };
   } catch (error) {
-    logWarn("[AUTH] OTP email delivery failed — falling back to preview mode", {
-      email: maskEmail(safeEmail),
+    // Log the full SMTP error details for debugging
+    const smtpError = {
+      message: String(error?.message || "unknown_error"),
       code: String(error?.code || ""),
-      message: String(error?.message || "timeout"),
-      fallback: "preview",
-    });
-    // Return preview fallback instead of throwing — the OTP is stored in-memory
-    // and can still be verified via the in-memory OTP store.
-    return {
-      sent: false,
-      delivery: "preview",
-      destination: maskEmail(safeEmail),
-      expiresInMinutes,
-      message: "Email delivery temporarily unavailable. The reset code has been stored and can be verified.",
-      otp: env.authOtpPreviewEnabled ? otp : undefined, // Expose OTP in preview mode so users can complete reset
+      command: String(error?.command || ""),
+      response: String(error?.response || ""),
+      responseCode: String(error?.responseCode || ""),
     };
+    logWarn("[AUTH] SMTP email delivery failed — returning error to client", {
+      email: maskEmail(safeEmail),
+      ...smtpError,
+    });
+    // Also log to console for Render dashboard visibility
+    console.error("[AUTH] SMTP delivery error:", JSON.stringify(smtpError));
+    console.error("[AUTH] Full error object:", error);
+
+    // Throw a proper error so the frontend shows the real failure
+    throw createError(
+      `Failed to send verification email. SMTP error: ${smtpError.message}`,
+      502,
+      "mail_delivery_failed"
+    );
   } finally {
     // Suppress any late rejection after the race is settled
     emailPromise.catch(() => {});

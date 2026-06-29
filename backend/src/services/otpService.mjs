@@ -328,31 +328,28 @@ export const sendOtpHandler = async (req, res) => {
       message: "Verification code sent successfully.",
     });
   } catch (error) {
-    logWarn("[OTP] Email delivery failed — falling back to preview mode", {
+    // Log the full SMTP error details for debugging
+    const smtpError = {
+      message: String(error?.message || "unknown_error"),
+      code: String(error?.code || ""),
+      command: String(error?.command || ""),
+      response: String(error?.response || ""),
+      responseCode: String(error?.responseCode || ""),
+    };
+    logWarn("[OTP] SMTP email delivery failed — returning error to client", {
       email: maskEmail(email),
-      error: String(error?.message || "timeout"),
-      fallback: "preview",
+      ...smtpError,
     });
-    // Return preview fallback when authOtpPreviewEnabled is true
-    // so the client can still complete the password reset flow
-    if (env.authOtpPreviewEnabled) {
-      res.json({
-        status: "ok",
-        sent: false,
-        delivery: "preview",
-        destination: maskEmail(email),
-        expiresInMinutes,
-        message: "Email delivery temporarily unavailable. The reset code can still be verified via the stored OTP.",
-        otp, // exposed for development/preview so the user can still reset
-      });
-      return;
-    }
+    // Also log to console for Render dashboard visibility
+    console.error("[OTP] SMTP delivery error:", JSON.stringify(smtpError));
+    console.error("[OTP] Full error object:", error);
+
     deleteOtp(email);
     res.status(502).json({
       status: "error",
       message: "Failed to send verification email.",
       code: "mail_delivery_failed",
-      error: String(error?.message || "unknown_error"),
+      error: smtpError.message,
     });
   }
 };
