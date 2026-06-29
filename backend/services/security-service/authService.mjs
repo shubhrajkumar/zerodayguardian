@@ -901,11 +901,13 @@ export const getEmailConfigStatus = () => ({
  */
 export const sendTestEmail = async ({ to }) => {
   const safeTo = normalizeEmail(to);
+  let sendMailPromise;
   try {
     const transporter = await getMailTransporter();
-    // ATTACH .catch() IMMEDIATELY to prevent UnhandledPromiseRejection crash
-    // When Promise.race is won by the timeout, sendMailPromise eventually rejects.
-    const sendMailPromise = transporter.sendMail({
+    // Do NOT attach .catch() immediately — that would silently swallow SMTP failures.
+    // Errors propagate through Promise.race to the catch block below.
+    // Late rejections are suppressed in the finally block.
+    sendMailPromise = transporter.sendMail({
         from: brandedFromField(),
         to: safeTo,
         subject: "ZeroDay Guardian Security | Test Email",
@@ -933,8 +935,7 @@ export const sendTestEmail = async ({ to }) => {
             </div>
           </div>
         </div>`,
-      })
-      .catch(() => {}); // ← IMMEDIATE .catch() prevents process crash
+      });
 
     const result = await Promise.race([
       sendMailPromise,
@@ -970,6 +971,9 @@ export const sendTestEmail = async ({ to }) => {
       response: String(error?.response || ""),
       responseCode: String(error?.responseCode || ""),
     };
+  } finally {
+    // Suppress any late rejection after Promise.race settles
+    if (sendMailPromise) sendMailPromise.catch(() => {});
   }
 };
 

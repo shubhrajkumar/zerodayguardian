@@ -504,7 +504,9 @@ env.authOtpPreviewEnabled = isExplicitTrue(process.env.AUTH_OTP_PREVIEW_ENABLED)
   ? true
   : isExplicitFalse(process.env.AUTH_OTP_PREVIEW_ENABLED)
     ? false
-    : env.nodeEnv !== "production" || localLikeAppHost || (isManagedDeploy && !authEmailEnabled);
+    : authEmailEnabled
+      ? false  // Email is fully configured — no preview needed regardless of nodeEnv or Render
+      : env.nodeEnv !== "production" || localLikeAppHost || isManagedDeploy;
 
 const createIssue = (key, message, severity = "error") => ({ key, message, severity });
 const createErrorFromValidation = (report) => {

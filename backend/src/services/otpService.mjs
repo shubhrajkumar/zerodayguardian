@@ -218,11 +218,12 @@ export const sendOtpEmail = async (email, otp, expiresInMinutes) => {
     host: env.smtpHost,
     expiresInMinutes,
   });
+  let sendMailPromise;
   try {
-    // ATTACH .catch() IMMEDIATELY to prevent UnhandledPromiseRejection crash
-    // When Promise.race is won by the timeout, sendMailPromise eventually rejects.
-    // Without an immediate .catch(), Node.js 15+ crashes on the unhandled rejection.
-    const sendMailPromise = transporter.sendMail({
+    // Do NOT attach .catch() immediately — that would silently swallow SMTP failures.
+    // Instead, let errors propagate through Promise.race to the catch block,
+    // and suppress late rejections in the finally block.
+    sendMailPromise = transporter.sendMail({
         from: brandedFromField(),
         to: safeEmail,
         subject: "ZeroDay Guardian Security | Password Reset Verification Code",
@@ -255,8 +256,7 @@ export const sendOtpEmail = async (email, otp, expiresInMinutes) => {
           </div>
         </div>
       </div>`.trim(),
-      })
-      .catch(() => {}); // ← IMMEDIATE .catch() prevents process crash from unhandled rejection
+      });
 
     await Promise.race([
       sendMailPromise,
@@ -264,6 +264,12 @@ export const sendOtpEmail = async (email, otp, expiresInMinutes) => {
         setTimeout(() => reject(new Error(`SMTP sendMail timed out after ${SENDMAIL_TIMEOUT_MS}ms`)), SENDMAIL_TIMEOUT_MS)
       ),
     ]);
+
+    logInfo("[OTP] Email sent successfully", {
+      email: maskEmail(safeEmail),
+      host: env.smtpHost,
+      from: brandedFromField(),
+    });
   } catch (sendError) {
     logWarn("[OTP] SMTP sendMail failed", {
       email: maskEmail(safeEmail),
@@ -282,13 +288,11 @@ export const sendOtpEmail = async (email, otp, expiresInMinutes) => {
     }));
     // Re-throw so the caller (authService.sendResetOtp) can handle it
     throw sendError;
+  } finally {
+    // Suppress any late rejection after Promise.race settles
+    // Prevents UnhandledPromiseRejection crash when sendMail rejects after timeout
+    if (sendMailPromise) sendMailPromise.catch(() => {});
   }
-
-  logInfo("[OTP] Email sent successfully", {
-    email: maskEmail(safeEmail),
-    host: env.smtpHost,
-    from: brandedFromField(),
-  });
 };
 
 /**
