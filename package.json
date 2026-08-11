@@ -115,7 +115,6 @@
     "recharts": "^2.15.4",
     "redis": "^5.11.0",
     "sonner": "^1.7.4",
-    "stripe": "^21.0.1",
     "tailwind-merge": "^2.6.0",
     "vaul": "^0.9.9",
     "web-push": "^3.6.7",

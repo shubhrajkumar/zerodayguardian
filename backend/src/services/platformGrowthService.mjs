@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import nodemailer from "nodemailer";
-import Stripe from "stripe";
 import webpush from "web-push";
 import { env } from "../config/env.mjs";
 import { getDb } from "../config/db.mjs";
@@ -64,10 +63,9 @@ const CERTIFICATION_CATALOG = [
   },
 ];
 
+// Monetization is not configured (no Stripe keys) — only the free plan exists.
 const BILLING_PLANS = [
   { id: "free", name: "Free", priceMonthly: 0, priceId: "", features: PREMIUM_PLAN_FEATURES.free },
-  { id: "premium", name: "Premium", priceMonthly: 24, priceId: env.stripePremiumPriceId, features: PREMIUM_PLAN_FEATURES.premium },
-  { id: "team", name: "Team", priceMonthly: 99, priceId: env.stripeTeamPriceId, features: PREMIUM_PLAN_FEATURES.team },
 ];
 
 const sha256 = (value = "") => createHash("sha256").update(String(value)).digest("hex");
@@ -110,7 +108,6 @@ if (pushConfigured()) {
   webpush.setVapidDetails(env.pushVapidSubject, env.pushVapidPublicKey, env.pushVapidPrivateKey);
 }
 
-const stripe = env.stripeSecretKey ? new Stripe(env.stripeSecretKey) : null;
 const digestTransport =
   env.digestEmailEnabled && env.digestEmailUser && env.digestEmailAppPassword
     ? nodemailer.createTransport({
@@ -144,9 +141,6 @@ const getBillingRecord = async (userId) => {
     userId: String(userId),
     planId: "free",
     status: "active",
-    stripeCustomerId: "",
-    stripeSubscriptionId: "",
-    lastCheckoutSessionId: "",
     updatedAt: nowIso(),
     createdAt: nowIso(),
   };
@@ -778,146 +772,11 @@ export const reviewGithubPullRequest = async ({ userId, pullNumber }) =>
     return review;
   });
 
-export const getBillingPlans = async ({ userId }) => {
-  const current = await getBillingRecord(userId);
-  return {
-    plans: BILLING_PLANS.map((plan) => ({
-      ...plan,
-      current: current.planId === plan.id,
-      checkoutReady: plan.id === "free" ? true : Boolean(plan.priceId && stripe),
-    })),
-    subscription: current,
-  };
-};
-
-export const createBillingCheckoutSession = async ({ userId, planId }) =>
-  withRetry("create_billing_checkout_session", async () => {
-    const plan = BILLING_PLANS.find((item) => item.id === planId);
-    if (!plan || plan.id === "free") {
-      const error = new Error("A paid plan is required for checkout");
-      error.statusCode = 400;
-      error.code = "billing_plan_invalid";
-      throw error;
-    }
-    if (!stripe || !plan.priceId) {
-      const error = new Error("Stripe billing is not configured");
-      error.statusCode = 424;
-      error.code = "billing_not_configured";
-      throw error;
-    }
-    const user = await getUser(userId);
-    const current = await getBillingRecord(userId);
-    let customerId = current.stripeCustomerId || "";
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: user?.email || undefined,
-        name: user?.name || undefined,
-        metadata: { userId: String(userId) },
-      });
-      customerId = customer.id;
-    }
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      line_items: [{ price: plan.priceId, quantity: 1 }],
-      success_url: `${env.appBaseUrl.replace(/\/+$/, "")}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${env.appBaseUrl.replace(/\/+$/, "")}/dashboard?checkout=cancelled`,
-      metadata: { userId: String(userId), planId: String(planId) },
-      allow_promotion_codes: true,
-    });
-    const db = getDb();
-    await db.collection(BILLING_COLLECTION).updateOne(
-      { userId: String(userId) },
-      {
-        $set: {
-          stripeCustomerId: customerId,
-          lastCheckoutSessionId: session.id,
-          pendingPlanId: plan.id,
-          status: "checkout_pending",
-          updatedAt: nowIso(),
-        },
-        $setOnInsert: { createdAt: nowIso(), planId: "free" },
-      },
-      { upsert: true }
-    );
-    return { url: session.url, sessionId: session.id };
-  });
-
-export const syncBillingCheckoutSession = async ({ userId, sessionId }) =>
-  withRetry("sync_billing_checkout_session", async () => {
-    if (!stripe) {
-      const error = new Error("Stripe billing is not configured");
-      error.statusCode = 424;
-      error.code = "billing_not_configured";
-      throw error;
-    }
-    const session = await stripe.checkout.sessions.retrieve(String(sessionId), { expand: ["subscription"] });
-    if (String(session.metadata?.userId || "") !== String(userId)) {
-      const error = new Error("Checkout session does not belong to this user");
-      error.statusCode = 403;
-      error.code = "billing_session_forbidden";
-      throw error;
-    }
-    const paid = session.status === "complete" && session.mode === "subscription";
-    const nextPlan = String(session.metadata?.planId || "free");
-    const db = getDb();
-    await db.collection(BILLING_COLLECTION).updateOne(
-      { userId: String(userId) },
-      {
-        $set: {
-          planId: paid ? nextPlan : "free",
-          status: paid ? "active" : "checkout_pending",
-          stripeCustomerId: String(session.customer || ""),
-          stripeSubscriptionId: String(session.subscription?.id || session.subscription || ""),
-          lastCheckoutSessionId: String(session.id || ""),
-          updatedAt: nowIso(),
-        },
-        $unset: { pendingPlanId: "" },
-      },
-      { upsert: true }
-    );
-    if (paid) {
-      await createNotification({
-        userId,
-        title: "Subscription activated",
-        message: `Your ${nextPlan} subscription is now active.`,
-        type: "achievement",
-        severity: "success",
-      });
-    }
-    return getBillingRecord(userId);
-  });
-
-export const createBillingPortalSession = async ({ userId }) =>
-  withRetry("create_billing_portal_session", async () => {
-    if (!stripe) {
-      const error = new Error("Stripe billing is not configured");
-      error.statusCode = 424;
-      error.code = "billing_not_configured";
-      throw error;
-    }
-    const billing = await getBillingRecord(userId);
-    if (!billing.stripeCustomerId) {
-      const error = new Error("No Stripe customer exists for this user");
-      error.statusCode = 404;
-      error.code = "billing_customer_missing";
-      throw error;
-    }
-    const session = await stripe.billingPortal.sessions.create({
-      customer: billing.stripeCustomerId,
-      return_url: env.stripePortalReturnUrl || `${env.appBaseUrl.replace(/\/+$/, "")}/dashboard`,
-    });
-    return { url: session.url };
-  });
-
 export const getPlatformGrowthOverview = async ({ userId }) => {
   const defaultBilling = {
     userId: String(userId),
     planId: "free",
     status: "active",
-    stripeCustomerId: "",
-    stripeSubscriptionId: "",
-    lastCheckoutSessionId: "",
     updatedAt: nowIso(),
     createdAt: nowIso(),
   };
@@ -1010,7 +869,7 @@ export const getPlatformGrowthOverview = async ({ userId }) => {
         priceMonthly: plan.priceMonthly,
         features: plan.features,
         current: billing.planId === plan.id,
-        checkoutReady: plan.id === "free" ? true : Boolean(plan.priceId && stripe),
+        checkoutReady: true,
       })),
     },
   };
@@ -1031,6 +890,5 @@ export const generateAdminGrowthSnapshot = async () => {
 logInfo("Platform growth service ready", {
   pushConfigured: pushConfigured(),
   digestConfigured: Boolean(digestTransport),
-  stripeConfigured: Boolean(stripe),
   githubConfigured: Boolean(env.githubApiToken),
 });

@@ -1,16 +1,13 @@
 import express from "express";
 import { z } from "zod";
-import { validateBody, validateParams, validateQuery } from "../middleware/validate.mjs";
+import { validateBody } from "../middleware/validate.mjs";
 import { requireRole } from "../middleware/auth.mjs";
 import { platformArchitecture } from "../config/platform.mjs";
 import { cacheMiddleware } from "../middleware/cache.middleware.mjs";
 import {
   consumeStreakFreeze,
-  createBillingCheckoutSession,
-  createBillingPortalSession,
   enrollCertificationPath,
   generateAdminGrowthSnapshot,
-  getBillingPlans,
   getPlatformGrowthOverview,
   getPushConfig,
   joinWeeklyCtfEvent,
@@ -21,7 +18,6 @@ import {
   sendPushToUser,
   sendWeeklyDigestToUser,
   submitWeeklyCtfFlag,
-  syncBillingCheckoutSession,
   updateCertificationMilestone,
   updateDigestPreference,
 } from "../services/platformGrowthService.mjs";
@@ -68,14 +64,6 @@ const githubConnectSchema = z.object({
 
 const githubReviewSchema = z.object({
   pullNumber: z.number().int().positive(),
-});
-
-const checkoutSchema = z.object({
-  planId: z.enum(["premium", "team"]),
-});
-
-const checkoutSyncSchema = z.object({
-  sessionId: z.string().trim().min(8).max(200),
 });
 
 const pushTestSchema = z.object({
@@ -276,55 +264,10 @@ router.post("/github/review-pr", validateBody(githubReviewSchema), async (req, r
   }
 });
 
-router.get("/billing/plans", async (req, res, next) => {
-  try {
-    const result = await getBillingPlans({ userId: req.user.sub });
-    res.json({ status: "ok", ...result });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post("/billing/checkout", validateBody(checkoutSchema), async (req, res, next) => {
-  try {
-    const result = await createBillingCheckoutSession({ userId: req.user.sub, planId: req.validatedBody.planId });
-    res.json({ status: "ok", result });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post("/billing/sync", validateBody(checkoutSyncSchema), async (req, res, next) => {
-  try {
-    const result = await syncBillingCheckoutSession({ userId: req.user.sub, sessionId: req.validatedBody.sessionId });
-    res.json({ status: "ok", result });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post("/billing/portal", async (req, res, next) => {
-  try {
-    const result = await createBillingPortalSession({ userId: req.user.sub });
-    res.json({ status: "ok", result });
-  } catch (error) {
-    next(error);
-  }
-});
-
 router.get("/ops/growth-snapshot", requireRole("admin"), async (req, res, next) => {
   try {
     const snapshot = await generateAdminGrowthSnapshot();
     res.json({ status: "ok", snapshot });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get("/ops/checkout", validateQuery(z.object({ sessionId: z.string().trim().min(8).max(200) })), async (req, res, next) => {
-  try {
-    const result = await syncBillingCheckoutSession({ userId: req.user.sub, sessionId: req.validatedQuery.sessionId });
-    res.json({ status: "ok", result });
   } catch (error) {
     next(error);
   }

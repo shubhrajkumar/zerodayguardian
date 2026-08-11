@@ -47,11 +47,6 @@ type PlatformOverview = {
   certifications: CertificationPath[];
   ctfEvent: WeeklyCtfEvent;
   github: { connected: boolean; owner: string; repo: string; defaultBranch: string; reviewConfigured: boolean };
-  billing: {
-    planId: string;
-    status: string;
-    plans: Array<{ id: string; name: string; priceMonthly: number; features: string[]; current: boolean; checkoutReady: boolean }>;
-  };
 };
 
 const overviewKey = ["platform-growth-overview"];
@@ -75,15 +70,6 @@ const EMPTY_PLATFORM_OVERVIEW: PlatformOverview = {
     leaderboard: [],
   },
   github: { connected: false, owner: "", repo: "", defaultBranch: "main", reviewConfigured: false },
-  billing: {
-    planId: "free",
-    status: "inactive",
-    plans: [
-      { id: "free", name: "Free", priceMonthly: 0, features: [], current: true, checkoutReady: true },
-      { id: "premium", name: "Premium", priceMonthly: 0, features: [], current: false, checkoutReady: false },
-      { id: "team", name: "Team", priceMonthly: 0, features: [], current: false, checkoutReady: false },
-    ],
-  },
 };
 
 export const usePlatformGrowthOps = () => {
@@ -182,19 +168,6 @@ export const usePlatformGrowthOps = () => {
     )).data,
   });
 
-  const checkoutMutation = useMutation({
-    mutationFn: async (planId: "premium" | "team") => (await api.post<{ result: { url: string } }>("/api/platform/billing/checkout", { planId })).data,
-  });
-
-  const syncCheckoutMutation = useMutation({
-    mutationFn: async (sessionId: string) => (await api.post("/api/platform/billing/sync", { sessionId })).data,
-    onSuccess: invalidate,
-  });
-
-  const portalMutation = useMutation({
-    mutationFn: async () => (await api.post<{ result: { url: string } }>("/api/platform/billing/portal", {})).data,
-  });
-
   const activeCertification = useMemo(
     () => {
       const certs = overviewQuery.data?.certifications ?? [];
@@ -224,11 +197,5 @@ export const usePlatformGrowthOps = () => {
     reviewPullRequest: reviewPullRequestMutation.mutateAsync,
     reviewPullRequestPending: reviewPullRequestMutation.isPending,
     reviewResult: reviewPullRequestMutation.data?.result,
-    startCheckout: checkoutMutation.mutateAsync,
-    startCheckoutPending: checkoutMutation.isPending,
-    syncCheckout: syncCheckoutMutation.mutateAsync,
-    syncCheckoutPending: syncCheckoutMutation.isPending,
-    openBillingPortal: portalMutation.mutateAsync,
-    openBillingPortalPending: portalMutation.isPending,
   };
 };
