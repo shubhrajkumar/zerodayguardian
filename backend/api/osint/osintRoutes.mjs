@@ -1,1 +1,1 @@
-export { default } from "../../routes/osintRoutes.js";
+export { default } from "../../src/routes/osintRoutes.js";

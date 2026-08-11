@@ -1,0 +1,38 @@
+# ── Production Environment ──
+
+# Frontend deployment (Vercel)
+VITE_SITE_URL=https://zerodayguardian-delta.vercel.app
+VITE_API_URL=https://zerodayguardian-backend.onrender.com
+VITE_API_BASE_URL=https://zerodayguardian-backend.onrender.com
+BACKEND_PUBLIC_URL=https://zerodayguardian-backend.onrender.com
+VITE_APP_NAME=ZeroDay Guardian
+
+# Backend
+MONGODB_URI="<YOUR_MONGODB_URI>"
+SESSION_SECRET=<YOUR_SESSION_SECRET>
+JWT_SECRET=<YOUR_JWT_SECRET>
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174
+APP_BASE_URL=http://localhost:5173
+
+
+# Health
+HEALTHCHECK_SECRET=replace_with_strong_healthcheck_token
+
+# LLM / AI
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+LLM_PROVIDER=local_fallback
+LLM_MODE=auto
+ROUTING_MODE=failover
+
+# Firebase Auth — required for authentication (overridable per-deployment)
+VITE_GOOGLE_CLIENT_ID=
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_APP_ID=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+n# Enable Firebase Auth (required for sign-in popup/redirect)
+VITE_ENABLE_FIREBASE_AUTH=true
+
+# Optional
+# VITE_SENTRY_DSN=

@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import { env, getStartupEnvValidation } from "./env.mjs";
+import { env } from "./env.mjs";
 import { logInfo, logWarn } from "../utils/logger.mjs";
 
 let client;
@@ -53,113 +53,29 @@ const ensureIndex = async (collection, keys, options = {}) => {
   }
 };
 
-const firstSet = (...keys) => {
-  for (const key of keys) {
-    const value = process.env[key];
-    if (value != null && String(value).trim()) return String(value).trim();
-  }
-  return "";
-};
-
-const buildMongoUriFromParts = () => {
-  const host = firstSet("MONGODB_HOST", "MONGO_HOST", "DB_HOST");
-  const username = firstSet("MONGODB_USER", "MONGO_USER", "DB_USER");
-  const password = firstSet("MONGODB_PASSWORD", "MONGO_PASSWORD", "DB_PASSWORD");
-  if (!host || !username || !password) return "";
-
-  const protocol = firstSet("MONGODB_PROTOCOL", "MONGO_PROTOCOL") || (host.includes("mongodb.net") ? "mongodb+srv" : "mongodb");
-  const database = firstSet("MONGODB_DB_NAME", "MONGO_DB_NAME", "DB_NAME") || "zeroday_guardian";
-  const query = firstSet("MONGODB_OPTIONS", "MONGO_OPTIONS") || "retryWrites=true&w=majority";
-  const credentials = `${encodeURIComponent(username)}:${encodeURIComponent(password)}`;
-  const normalizedHost = host.replace(/^mongodb(?:\+srv)?:\/\//i, "").replace(/\/+$/, "");
-  return `${protocol}://${credentials}@${normalizedHost}/${encodeURIComponent(database)}${query ? `?${query.replace(/^\?/, "")}` : ""}`;
-};
-
-const mongoUriCandidates = () => {
-  const rawCandidates = [
-    process.env.MONGODB_URI,
-    process.env.DATABASE_URL,
-    process.env.MONGODB_URL,
-    process.env.MONGO_URI,
-    process.env.MONGO_URL,
-    process.env.DB_URI,
-    buildMongoUriFromParts(),
-    env.mongoUri,
-  ]
-    .map((value) => String(value || "").trim().replace(/^['"]|['"]$/g, ""))
-    .filter(Boolean);
-  const candidates = [];
-  for (const uri of rawCandidates) {
-    candidates.push(uri, ...mongoAuthVariants(uri));
-  }
-  return [...new Set(candidates)];
-};
-
-const mongoAuthVariants = (uri) => {
-  const variants = [];
-  try {
-    const parsed = new URL(uri);
-    if (!["mongodb:", "mongodb+srv:"].includes(parsed.protocol)) return variants;
-    if (!parsed.searchParams.has("authSource")) {
-      const withAdminAuth = new URL(uri);
-      withAdminAuth.searchParams.set("authSource", "admin");
-      variants.push(withAdminAuth.toString());
-    }
-    for (const mechanism of ["SCRAM-SHA-256", "SCRAM-SHA-1"]) {
-      const withMechanism = new URL(uri);
-      if (!withMechanism.searchParams.has("authSource")) withMechanism.searchParams.set("authSource", "admin");
-      withMechanism.searchParams.set("authMechanism", mechanism);
-      variants.push(withMechanism.toString());
-    }
-  } catch {
-    // Keep the original URI only if URL parsing fails.
-  }
-  return variants;
-};
-
 export const connectDb = async () => {
   if (db) return db;
 
-  const candidates = mongoUriCandidates();
-  if (!candidates.length) {
-    const report = getStartupEnvValidation();
-    const error = new Error("Database connection skipped: MONGODB_URI is missing");
-    error.code = "missing_env_var";
-    error.issues = report.issues.filter((issue) => issue.key === "MONGODB_URI");
+  const mongoUri = process.env.MONGODB_URI || "";
+  if (!mongoUri) {
     logWarn("Database connection skipped because MONGODB_URI is not configured", {
       environment: env.nodeEnv,
-      issues: error.issues,
     });
-    throw error;
+    throw new Error("Database connection skipped: MONGODB_URI is missing");
   }
 
+  const maskedUri = mongoUri.replace(/\/\/[^:]+:[^@]+@/, "//***:***@");
+  logInfo("[MongoDB] Native driver URI (masked): " + maskedUri, {
+    hasDbName: /\/zeroday_guardian/.test(mongoUri),
+  });
+
   const startedAt = Date.now();
-  const isRender =
-    ["1", "true"].includes(String(process.env.RENDER || "").trim().toLowerCase()) ||
-    Boolean(String(process.env.RENDER_EXTERNAL_URL || "").trim());
-  const poolOptions = isRender
-    ? {
-        maxPoolSize: 10,
-        minPoolSize: 0,
-        maxIdleTimeMS: 20_000,
-        serverSelectionTimeoutMS: 8_000,
-        connectTimeoutMS: 8_000,
-        socketTimeoutMS: 20_000,
-      }
-    : {
-        maxPoolSize: 30,
-        minPoolSize: 5,
-        maxIdleTimeMS: 30_000,
-        serverSelectionTimeoutMS: 10_000,
-        connectTimeoutMS: 10_000,
-        socketTimeoutMS: 10_000,
-      };
 
   let lastError;
-  for (const mongoUri of candidates) {
-    const candidateClient = new MongoClient(mongoUri, poolOptions);
 
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
+      const candidateClient = new MongoClient(mongoUri);
       await candidateClient.connect();
       await candidateClient.db("admin").command({ ping: 1 });
       client = candidateClient;
@@ -167,17 +83,26 @@ export const connectDb = async () => {
       break;
     } catch (error) {
       lastError = error;
-      await candidateClient.close().catch(() => {});
-      logWarn("MongoDB connection candidate failed", {
+      console.error("MONGO_DETAILED_ERROR:", error.message, "code:", error.code, "name:", error.name);
+      logWarn("MongoDB connection failed", {
+        attempt,
+        maxRetries: 3,
         code: String(error?.code || ""),
         name: String(error?.name || ""),
         message: String(error?.message || "MongoDB connection failed"),
       });
+
+      if (attempt < 3) {
+        const delayMs = 2000 * attempt;
+        logInfo(`MongoDB connection retry in ${delayMs}ms`, { attempt: attempt + 1, maxRetries: 3 });
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     }
   }
 
   if (!db) {
-    throw lastError || createDbUnavailableError("Database connection failed for all configured MongoDB URIs.");
+    console.error("[MongoDB] All connection attempts exhausted. Starting with fallback in-memory store.");
+    throw lastError || createDbUnavailableError("Database connection failed for the configured MongoDB URI.");
   }
 
   if (!indexesEnsured) {

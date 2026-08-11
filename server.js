@@ -1,13 +1,12 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import { createApp } from "./backend/src/app.mjs";
-import { closeDb, connectDb, setExternalDb } from "./backend/src/config/db.mjs";
+import { closeDb, connectDb, setExternalDb, verifyDbConnection } from "./backend/src/config/db.mjs";
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || process.env.NEUROBOT_PORT || 8787);
-const MONGO_URI = String(process.env.MONGO_URI || process.env.DATABASE_URL || process.env.MONGODB_URI || "")
-  .trim()
-  .replace(/^['"]|['"]$/g, "");
+// Use the raw MONGODB_URI from .env — no URI manipulation.
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL || "";
 const MONGO_CONNECT_TIMEOUT_MS = Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 8000);
 
 let serverStarted = false;
@@ -44,6 +43,26 @@ const startHttpServer = () => {
         })
         .catch(() => {});
     }, KEEPALIVE_INTERVAL_MS);
+
+    // Periodic DB health check — auto-reconnect if native driver connection drops
+    const DB_HEALTH_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+    const dbHealthTimer = setInterval(async () => {
+      try {
+        await verifyDbConnection();
+      } catch (error) {
+        console.warn("[DB Health] Connection lost, attempting reconnect:", error?.message || "unknown");
+        try {
+          await closeDb();
+          await connectDb();
+          console.log("[DB Health] Reconnected successfully");
+        } catch (reconnectError) {
+          console.error("[DB Health] Reconnect failed:", reconnectError?.message || "unknown");
+        }
+      }
+    }, DB_HEALTH_CHECK_INTERVAL_MS);
+
+    process.on("SIGINT", () => clearInterval(dbHealthTimer));
+    process.on("SIGTERM", () => clearInterval(dbHealthTimer));
   });
 
   server.on("error", (error) => {
@@ -66,16 +85,13 @@ const connectMongoBestEffort = async () => {
     return;
   }
 
+  // ── Log the exact URI being used (password masked) ──
+  console.log("Connecting with URI:", process.env.MONGODB_URI.replace(/:([^@]+)@/, ":****@"));
+
   console.log("[MongoDB] Connecting to Atlas...");
   try {
     await Promise.race([
-      mongoose.connect(MONGO_URI, {
-        serverSelectionTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
-        connectTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
-        family: 4,
-        maxPoolSize: 10,
-        autoIndex: false,
-      }),
+      mongoose.connect(process.env.MONGODB_URI),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error(`Mongo connect timeout after ${MONGO_CONNECT_TIMEOUT_MS}ms`)), MONGO_CONNECT_TIMEOUT_MS)
       ),
@@ -91,6 +107,7 @@ const connectMongoBestEffort = async () => {
       console.warn("[MongoDB] User.syncIndexes() skipped — will resolve on next startup");
     }
   } catch (error) {
+    console.error("MONGO_DETAILED_ERROR:", error instanceof Error ? error.message : String(error), error instanceof Error ? error.code : "");
     console.warn("[MongoDB] Atlas connect skipped:", error instanceof Error ? error.message : String(error));
   }
 };
@@ -152,6 +169,27 @@ process.on("SIGTERM", async () => {
   await closeDb().catch(() => undefined);
   console.log("[MongoDB] Connection closed");
   process.exit(0);
+});
+
+// ── Process-level crash handlers ──
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[CRASH] Unhandled Promise Rejection:");
+  console.error("  Reason:", reason instanceof Error ? reason.message : String(reason));
+  if (reason instanceof Error) {
+    console.error("  Stack:", reason.stack || "No stack trace");
+  }
+  console.error("  Timestamp:", new Date().toISOString());
+  // Don't exit — keep the server alive but log the full error for debugging.
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("[CRASH] Uncaught Exception:");
+  console.error("  Message:", error?.message || "Unknown error");
+  console.error("  Stack:", error?.stack || "No stack trace");
+  console.error("  Code:", error?.code || "none");
+  console.error("  Timestamp:", new Date().toISOString());
+  // Graceful shutdown on uncaught exception to avoid corrupted state.
+  process.exit(1);
 });
 
 await connectMongoBestEffort();

@@ -7,11 +7,11 @@
     "VITE_API_URL": "https://zerodayguardian-backend.onrender.com",
     "VITE_APP_NAME": "ZeroDay Guardian",
     "VITE_APP_VERSION": "1.0.0",
-    "VITE_FIREBASE_API_KEY": "AIzaSyBNV3z4iVqqHuvoWZratlOON7KThAU6Jek",
-    "VITE_FIREBASE_AUTH_DOMAIN": "zerodayguardian-3f0ea.firebaseapp.com",
-    "VITE_FIREBASE_PROJECT_ID": "zerodayguardian-3f0ea",
-    "VITE_FIREBASE_APP_ID": "1:754043289403:web:9a2db1e126911caddd411e",
-    "VITE_FIREBASE_MESSAGING_SENDER_ID": "754043289403",
+    "VITE_FIREBASE_API_KEY": "",
+    "VITE_FIREBASE_AUTH_DOMAIN": "",
+    "VITE_FIREBASE_PROJECT_ID": "",
+    "VITE_FIREBASE_APP_ID": "",
+    "VITE_FIREBASE_MESSAGING_SENDER_ID": "",
     "VITE_ENABLE_FIREBASE_AUTH": "true"
   },
   "rewrites": [

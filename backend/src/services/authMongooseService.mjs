@@ -1,11 +1,12 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.mjs";
 import { User } from "../models/User.mjs";
-import { loginUser, registerUser, verifyPassword } from "../../services/security-service/authService.mjs";
+import { getUserById } from "../../services/security-service/authService.mjs";
 
-export const registerWithMongoose = async (payload) => registerUser(payload);
-
-export const loginWithMongoose = async (payload) => loginUser(payload);
+/**
+ * Mongoose-based auth helpers — Google-only mode.
+ * Traditional login/register/verifyPassword have been removed.
+ */
 
 export const signJwt = (user) => {
   if (!env.jwtSecret) {
@@ -20,9 +21,13 @@ export const signJwt = (user) => {
   );
 };
 
-export const verifyMongoosePassword = async ({ email, password }) => {
-  const safeEmail = String(email || "").toLowerCase().trim();
-  const user = await User.findOne({ email: safeEmail }).lean();
-  if (!user) return false;
-  return verifyPassword(password, user.passwordHash || user.password || "");
+/**
+ * Look up a user by ID via Mongoose (for legacy code paths that still use it).
+ */
+export const findUserById = async (id) => {
+  try {
+    return await getUserById(id);
+  } catch {
+    return null;
+  }
 };

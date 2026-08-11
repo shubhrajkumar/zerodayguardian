@@ -22,28 +22,28 @@ import neurobotRoutes from "../api/ai/neurobotRoutes.mjs";
 import authRoutes from "../api/auth/authRoutes.mjs";
 import missionRoutes from "../api/mission/missionRoutes.mjs";
 import intelligenceRoutes from "../api/tools/intelligenceRoutes.mjs";
-import adaptiveRoutes from "../routes/adaptiveRoutes.js";
+import adaptiveRoutes from "./routes/adaptiveRoutes.js";
 import notificationRoutes from "../api/notifications/notificationRoutes.mjs";
 import scanRoutes from "../api/scans/scanRoutes.mjs";
 import fileRoutes from "../api/files/fileRoutes.mjs";
-import osintRoutes from "../routes/osintRoutes.js";
-import dashboardRoutes from "../routes/dashboardRoutes.js";
-import userRoutes from "../routes/userRoutes.js";
-import labsRoutes from "../routes/labsRoutes.js";
-import recommendationsRoutes from "../routes/recommendationsRoutes.js";
-import missionControlRoutes from "../routes/missionControlRoutes.js";
-import missionsRoutes from "../routes/missionsRoutes.js";
-import coursesRoutes from "../routes/coursesRoutes.js";
-import learningRoutes from "../routes/learningRoutes.js";
+import osintRoutes from "./routes/osintRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import labsRoutes from "./routes/labsRoutes.js";
+import recommendationsRoutes from "./routes/recommendationsRoutes.js";
+import missionControlRoutes from "./routes/missionControlRoutes.js";
+import missionsRoutes from "./routes/missionsRoutes.js";
+import coursesRoutes from "./routes/coursesRoutes.js";
+import learningRoutes from "./routes/learningRoutes.js";
 import productUserRoutes from "../api/users/productUserRoutes.mjs";
 import platformRoutes from "./routes/platformRoutes.mjs";
 import pyApiCompatRoutes from "./routes/pyApiCompatRoutes.mjs";
-import zorvixAiRoutes from "../server/routes/zorvix.routes.js";
-import complianceRoutes from "../routes/complianceRoutes.js";
-import portScanRoutes from "../routes/portScanRoutes.js";
-import subdomainRoutes from "../routes/subdomainRoutes.js";
-import httpHeaderRoutes from "../routes/httpHeaderRoutes.js";
-import tlsCertRoutes from "../routes/tlsCertRoutes.js";
+import zorvixAiRoutes from "./routes/zorvix.routes.js";
+import complianceRoutes from "./routes/complianceRoutes.js";
+import portScanRoutes from "./routes/portScanRoutes.js";
+import subdomainRoutes from "./routes/subdomainRoutes.js";
+import httpHeaderRoutes from "./routes/httpHeaderRoutes.js";
+import tlsCertRoutes from "./routes/tlsCertRoutes.js";
 import debugRoutes from "../api/debug/debugRoutes.mjs";
 import { createSessionId, decryptSessionToken, encryptSessionToken } from "./utils/security.mjs";
 import { chatAbuseDetection } from "./middleware/abuseDetection.mjs";
@@ -61,7 +61,6 @@ import { logWarn } from "./utils/logger.mjs";
 import { requireAuth } from "./middleware/auth.mjs";
 import { buildCookieOptions } from "./utils/cookiePolicy.mjs";
 import { getGoogleAuthConfigStatus } from "../services/security-service/authService.mjs";
-import { sendOtpHandler, verifyOtpHandler, otpHealthHandler } from "./services/otpService.mjs";
 
 const COOKIE_NAME = "neurobot_ss";
 const ONE_WEEK = 60 * 60 * 24 * 7;
@@ -385,9 +384,6 @@ export const createApp = () => {
   app.use(requestGuard);
 
   // ── Explicit CORS preflight catch-all ──
-  // Ensures every OPTIONS request receives a 204 + CORS headers
-  // immediately, preventing preflights from reaching rate-limit,
-  // CSRF, or auth middleware that would reject them.
   app.options("*", (req, res) => {
     const origin = req.headers.origin;
     if (origin) {
@@ -686,19 +682,11 @@ export const createApp = () => {
   app.use("/api/mission-control", requireAuth, apiReadRateLimit, missionControlRoutes);
   // Compliance / GDPR routes
   app.use("/api/compliance", requireAuth, complianceRoutes);
-  // Zorvix AI (Groq-powered) — public endpoint with dedicated rate limiter
   // Tool routes — require authentication to prevent abuse
   app.use("/api/tools/portscan", requireAuth, portScanRoutes);
   app.use("/api/tools/subdomains", requireAuth, subdomainRoutes);
   app.use("/api/tools/headers", requireAuth, httpHeaderRoutes);
   app.use("/api/tools/tlscert", requireAuth, tlsCertRoutes);
-  // OTP server routes (in-app — no separate process needed)
-  // These mirror the standalone scripts/otp-server.mjs endpoints
-  // Rate-limited like auth to prevent abuse
-  app.post("/api/otp/send", authRateLimit, sendOtpHandler);
-  app.post("/api/otp/verify", authRateLimit, verifyOtpHandler);
-  app.get("/api/otp/health", otpHealthHandler);
-
   // Debug routes — email status, test email, env check (no auth required)
   // These are public diagnostic endpoints — do NOT mount in production without access control
   app.use("/api/debug", debugRoutes);

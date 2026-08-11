@@ -23,7 +23,7 @@ const validationMiddleware = (schema, source, code, fallbackPath, assign) => (re
       sendValidationError(res, req.requestId, {
         code,
         error: `Invalid ${fallbackPath}`,
-        message: `${fallbackPath[0].toUpperCase()}${fallbackPath.slice(1)} validation failed`,
+        message: result.error.issues[0]?.message || `${fallbackPath[0].toUpperCase()}${fallbackPath.slice(1)} validation failed`,
         details: formatIssues(result.error.issues, fallbackPath),
       });
       return;
@@ -35,7 +35,7 @@ const validationMiddleware = (schema, source, code, fallbackPath, assign) => (re
       sendValidationError(res, req.requestId, {
         code,
         error: `Invalid ${fallbackPath}`,
-        message: `${fallbackPath[0].toUpperCase()}${fallbackPath.slice(1)} validation failed`,
+        message: error.issues[0]?.message || `${fallbackPath[0].toUpperCase()}${fallbackPath.slice(1)} validation failed`,
         details: formatIssues(error.issues, fallbackPath),
       });
       return;

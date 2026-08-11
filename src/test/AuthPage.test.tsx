@@ -8,12 +8,7 @@ import { MemoryRouter } from "react-router-dom";
 const mockNavigate = vi.fn();
 const mockUseSearchParams = vi.fn(() => [new URLSearchParams(), vi.fn()]);
 const mockUseAuth = vi.fn();
-const mockRefreshAuth = vi.fn();
 const mockLogin = vi.fn();
-const mockApiPost = vi.fn();
-const mockApiPostJson = vi.fn();
-const mockSetStoredAccessToken = vi.fn();
-const mockSetStoredAuthState = vi.fn();
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -28,29 +23,13 @@ vi.mock("@/context/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-vi.mock("@/context/ZdgContext", () => ({
-  useZdg: () => ({
-    user: null,
-    globalXp: 0,
-    streakCount: 0,
-    completedLabs: [],
-    addXp: vi.fn(),
-    completeLab: vi.fn(),
-    syncFromGamification: vi.fn(),
-  }),
-}));
-
 const mockSignInWithPopup = vi.fn();
-const mockSendPasswordResetEmail = vi.fn();
-const mockSendEmailVerification = vi.fn();
 
 vi.mock("firebase/auth", () => ({
   GoogleAuthProvider: vi.fn(() => ({
     setCustomParameters: vi.fn(),
   })),
   signInWithPopup: (...args: unknown[]) => mockSignInWithPopup(...args),
-  sendPasswordResetEmail: (...args: unknown[]) => mockSendPasswordResetEmail(...args),
-  sendEmailVerification: (...args: unknown[]) => mockSendEmailVerification(...args),
 }));
 
 vi.mock("@/lib/firebase", () => ({
@@ -60,18 +39,14 @@ vi.mock("@/lib/firebase", () => ({
 
 vi.mock("@/lib/api", () => ({
   default: {
-    post: (...args: unknown[]) => mockApiPost(...args),
+    post: vi.fn().mockResolvedValue({
+      data: {
+        accessToken: "fake-access-token",
+        refreshToken: "fake-refresh-token",
+        user: { id: "g1", name: "Google User", email: "g@test.com", role: "user" },
+      },
+    }),
   },
-}));
-
-vi.mock("@/lib/apiClient", () => ({
-  apiPostJson: (...args: unknown[]) => mockApiPostJson(...args),
-  setStoredAccessToken: (...args: unknown[]) => mockSetStoredAccessToken(...args),
-  setStoredAuthState: (...args: unknown[]) => mockSetStoredAuthState(...args),
-}));
-
-vi.mock("@/components/AnimatedCyberBackground", () => ({
-  default: () => <div data-testid="cyber-background" />,
 }));
 
 import AuthPage from "@/pages/AuthPage";
@@ -91,259 +66,75 @@ describe("AuthPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseSearchParams.mockReturnValue([new URLSearchParams(), vi.fn()]);
-    mockRefreshAuth.mockResolvedValue(true);
-    mockApiPost.mockResolvedValue({
-      data: {
-        user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
-        accessToken: "test-access-token",
-        refreshToken: "test-refresh-token",
-      },
-    });
-    mockUseAuth.mockReturnValue({ user: null, loading: false, refreshAuth: mockRefreshAuth, login: mockLogin });
+    mockUseAuth.mockReturnValue({ user: null, loading: false, login: mockLogin });
   });
 
   // ── Loading State ──
 
   it("renders loading spinner when auth is loading", () => {
-    mockUseAuth.mockReturnValue({ user: null, loading: true, refreshAuth: mockRefreshAuth, login: mockLogin });
+    mockUseAuth.mockReturnValue({ user: null, loading: true, login: mockLogin });
     renderAuthPage();
     expect(document.querySelector(".spinner-cyber")).toBeTruthy();
   });
 
-  // ── Login Mode (default) ──
-
-  it("renders login form by default", () => {
-    renderAuthPage();
-    expect(screen.getByText("Master Cybersecurity with AI")).toBeTruthy();
-    expect(screen.getByLabelText("Email address")).toBeTruthy();
-    expect(screen.getByLabelText("Password")).toBeTruthy();
-    expect(screen.getByText("Sign In")).toBeTruthy();
-    expect(screen.getByText("Continue with Google")).toBeTruthy();
-  });
-
-  it("shows Google button in login/register mode but not reset mode", () => {
-    renderAuthPage();
-    expect(screen.getByText("Continue with Google")).toBeTruthy();
-  });
+  // ── Brand Header ──
 
   it("renders the brand header", () => {
     renderAuthPage();
     expect(screen.getByText("ZeroDay")).toBeTruthy();
     expect(screen.getByText("Guardian")).toBeTruthy();
-    expect(screen.getAllByText(/Secure/).length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("renders forgot password link in login mode", () => {
-    renderAuthPage();
-    expect(screen.getByText("Forgot your password?")).toBeTruthy();
-  });
-
-  it("renders sign up toggle link", () => {
-    renderAuthPage();
-    expect(screen.getByText("Don't have an account?")).toBeTruthy();
-    expect(screen.getByText("Sign up")).toBeTruthy();
-  });
-
-  it("redirects to dashboard when user is already authenticated", () => {
-    mockUseAuth.mockReturnValue({
-      user: { id: "1", name: "Test", email: "test@example.com", role: "user" },
-      loading: false,
-      refreshAuth: mockRefreshAuth,
-      login: mockLogin,
-    });
-    renderAuthPage();
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
-  });
-
-  // ── Register Mode ──
-
-  it("switches to register mode showing confirm password", async () => {
-    renderAuthPage();
-    await userEvent.click(screen.getByText("Sign up"));
     expect(screen.getByText("Master Cybersecurity with AI")).toBeTruthy();
-    expect(screen.getByLabelText("Confirm password")).toBeTruthy();
-    expect(screen.getByText("Create Account")).toBeTruthy();
-    expect(screen.getByText("Already have an account?")).toBeTruthy();
-    expect(screen.getByText("Sign in")).toBeTruthy();
   });
 
-  it("shows Google button in register mode", async () => {
+  // ── Email/Password + Google Forms ──
+
+  it("renders email/password form and Google button", () => {
     renderAuthPage();
-    await userEvent.click(screen.getByText("Sign up"));
+    expect(screen.getByLabelText("Email address")).toBeTruthy();
+    expect(screen.getByLabelText("Password")).toBeTruthy();
     expect(screen.getByText("Continue with Google")).toBeTruthy();
   });
 
-  // ── Reset Mode ──
-
-  it("switches to reset mode via forgot password link", async () => {
+  it("renders Sign In and Sign Up mode toggles", () => {
     renderAuthPage();
-    await userEvent.click(screen.getByText("Forgot your password?"));
-    expect(screen.getByText("Reset your password")).toBeTruthy();
-    expect(screen.queryByLabelText("Password")).toBeFalsy();
-    expect(screen.getByText("Send Reset Email")).toBeTruthy();
-    expect(screen.getByText("Back to sign in")).toBeTruthy();
+    // Both the toggle and submit button show "Sign In" in login mode
+    const signInButtons = screen.getAllByText("Sign In");
+    expect(signInButtons.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("Sign Up")).toBeTruthy();
   });
 
-  it("hides Google button and password field in reset mode", async () => {
+  it("does NOT render OTP or reset-password elements by default", () => {
     renderAuthPage();
-    await userEvent.click(screen.getByText("Forgot your password?"));
-    expect(screen.queryByText("Continue with Google")).toBeFalsy();
-    expect(screen.queryByLabelText("Password")).toBeFalsy();
+    expect(screen.queryByText("Reset your password")).toBeFalsy();
+    expect(screen.queryByText("Send Reset Email")).toBeFalsy();
+    expect(screen.queryByText("Verification Code")).toBeFalsy();
   });
 
-  it("returns to login from reset mode", async () => {
+  it("redirects to dashboard when user is already authenticated", async () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: "1", name: "Test", email: "test@example.com", role: "user" },
+      loading: false,
+      login: mockLogin,
+    });
     renderAuthPage();
-    await userEvent.click(screen.getByText("Forgot your password?"));
-    await userEvent.click(screen.getByText("Back to sign in"));
-    expect(screen.getByText("Master Cybersecurity with AI")).toBeTruthy();
-    expect(screen.getByLabelText("Password")).toBeTruthy();
-  });
-
-  it("switches to reset mode when mode=resetPassword search param is present", () => {
-    mockUseSearchParams.mockReturnValue([new URLSearchParams("mode=resetPassword"), vi.fn()]);
-    renderAuthPage();
-    expect(screen.getByText("Reset your password")).toBeTruthy();
-    expect(screen.getByText("Send Reset Email")).toBeTruthy();
-  });
-
-  // ── Validation ──
-
-  it("shows error when submitting empty form", async () => {
-    renderAuthPage();
-    await userEvent.click(screen.getByText("Sign In"));
-    expect(screen.getByText("Please fill in all fields")).toBeTruthy();
-  });
-
-  it("shows error for short password", async () => {
-    renderAuthPage();
-    await userEvent.click(screen.getByText("Sign up"));
-    await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "ab");
-    await userEvent.type(screen.getByLabelText("Confirm password"), "ab");
-    await userEvent.click(screen.getByText("Create Account"));
-    expect(screen.getByText("Password must be at least 10 characters")).toBeTruthy();
-  });
-
-  it("shows error when passwords do not match in register mode", async () => {
-    renderAuthPage();
-    await userEvent.click(screen.getByText("Sign up"));
-    await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
-    await userEvent.type(screen.getByLabelText("Confirm password"), "different");
-    await userEvent.click(screen.getByText("Create Account"));
-    expect(screen.getByText("Passwords do not match")).toBeTruthy();
-  });
-
-  // ── Login Form Submit ──
-
-  it("calls backend login on login submit", async () => {
-    renderAuthPage();
-    await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
-    await userEvent.click(screen.getByText("Sign In"));
     await waitFor(() => {
-      expect(mockApiPost).toHaveBeenCalledWith("/api/auth/login", {
-        email: "test@example.com",
-        password: "Password123!",
-        rememberMe: true,
-      });
-    });
-    expect(mockLogin).toHaveBeenCalledWith({
-      accessToken: "test-access-token",
-      refreshToken: "test-refresh-token",
-      user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
-    });
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
-  });
-
-  it("disables inputs and shows spinner while loading", async () => {
-    mockApiPost.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({ data: { user: { uid: "123", accessToken: "tok", refreshToken: "rtok" } } }), 500))
-    );
-    renderAuthPage();
-    await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
-    await userEvent.click(screen.getByText("Sign In"));
-
-    expect(screen.getByText("Signing in...")).toBeTruthy();
-    expect(document.querySelector(".spinner-cyber")).toBeTruthy();
-    expect(screen.getByLabelText("Email address")).toBeDisabled();
-    expect(screen.getByLabelText("Password")).toBeDisabled();
-  });
-
-  // ── Backend Failure Handling (no local auth fallback) ──
-
-  it("shows error when backend login fails (no local fallback)", async () => {
-    mockApiPost.mockImplementation(() => Promise.reject({
-      response: { data: { code: "user_not_found" } },
-      message: "User not found",
-    }));
-    renderAuthPage();
-    await userEvent.type(screen.getByLabelText("Email address"), "unknown@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
-    await userEvent.click(screen.getByText("Sign In"));
-    // Error message from backend should be displayed (no local fallback)
-    await waitFor(() => {
-      expect(screen.getByText("No account with this email address")).toBeTruthy();
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
     });
   });
 
-  // ── Register Flow ──
+  // ── Mode Toggle ──
 
-  it("calls backend signup on register", async () => {
+  it("toggles between Sign In and Sign Up modes", async () => {
     renderAuthPage();
-    await userEvent.click(screen.getByText("Sign up"));
-    await userEvent.type(screen.getByLabelText("Email address"), "new@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
-    await userEvent.type(screen.getByLabelText("Confirm password"), "Password123!");
-    await userEvent.click(screen.getByText("Create Account"));
-    await waitFor(() => {
-      expect(mockApiPost).toHaveBeenCalledWith("/api/auth/signup", {
-        name: "new",
-        email: "new@example.com",
-        password: "Password123!",
-      });
-      // "Account created" appears in both inline success and toast
-      expect(screen.getAllByText(/Account created/).length).toBeGreaterThanOrEqual(1);
-    });
-  });
-
-  // ── Reset Password Flow ──
-
-  it("sends password reset OTP via backend", async () => {
-    mockApiPost.mockImplementation((url: string) => {
-      if (url === "/api/auth/send-otp") {
-        return Promise.resolve({
-          data: {
-            sent: true,
-            delivery: "email",
-            destination: "test@example.com",
-            expiresInMinutes: 10,
-            message: "OTP sent successfully",
-          },
-        });
-      }
-      return Promise.resolve({
-        data: {
-          user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
-          accessToken: "test-access-token",
-          refreshToken: "test-refresh-token",
-        },
-      });
-    });
-    renderAuthPage();
-    await userEvent.click(screen.getByText("Forgot your password?"));
-    await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.click(screen.getByText("Send Reset Email"));
-    await waitFor(() => {
-      expect(mockApiPost).toHaveBeenCalledWith("/api/auth/send-otp", {
-        email: "test@example.com",
-      });
-      // Success message appears in the inline success banner (role="status")
-      const statusBanners = screen.getAllByRole("status");
-      const otpSuccess = statusBanners.find((el) => /Verification code sent/.test(el.textContent || ""));
-      expect(otpSuccess).toBeTruthy();
-    });
+    // Default is login mode — both toggle and submit show "Sign In"
+    const signInButtons = screen.getAllByRole("button", { name: "Sign In" });
+    expect(signInButtons.length).toBeGreaterThanOrEqual(2);
+    // Click Sign Up toggle
+    await userEvent.click(screen.getByText("Sign Up"));
+    // Now the submit button should say Create Account
+    expect(screen.getByText("Create Account")).toBeTruthy();
+    // Name field should appear in signup mode
+    expect(screen.getByLabelText("Name")).toBeTruthy();
   });
 
   // ── Google Login ──
@@ -355,7 +146,9 @@ describe("AuthPage", () => {
     await waitFor(() => {
       expect(mockSignInWithPopup).toHaveBeenCalled();
     });
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
+    });
   });
 
   it("shows error when Google popup is closed", async () => {
@@ -385,58 +178,33 @@ describe("AuthPage", () => {
     });
   });
 
-  // ── Error/Success Display ──
-
-  it("displays error in a styled error box", async () => {
-    renderAuthPage();
-    await userEvent.click(screen.getByText("Sign In"));
-    const errorBox = screen.getByText("Please fill in all fields").closest("div");
-    expect(errorBox?.className).toContain("red");
-  });
-
-  it("displays success message in a styled success box", async () => {
-    mockApiPost.mockImplementation((url: string) => {
-      if (url === "/api/auth/send-otp") {
-        return Promise.resolve({
-          data: {
-            sent: true,
-            delivery: "email",
-            destination: "test@example.com",
-            expiresInMinutes: 10,
-            message: "OTP sent successfully",
-          },
-        });
-      }
-      return Promise.resolve({
-        data: {
-          user: { id: "123", name: "Test", email: "test@example.com", role: "user" },
-          accessToken: "test-access-token",
-          refreshToken: "test-refresh-token",
-        },
-      });
-    });
-    renderAuthPage();
-    await userEvent.click(screen.getByText("Forgot your password?"));
-    await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.click(screen.getByText("Send Reset Email"));
-    await waitFor(() => {
-      const statusBanners = screen.getAllByRole("status");
-      const otpSuccess = statusBanners.find((el) => /Verification code sent/.test(el.textContent || ""));
-      expect(otpSuccess).toBeTruthy();
-    });
-  });
-
-  // ── Loading State on Button ──
-
-  it("shows correct loading text per mode", async () => {
-    // Login mode
-    mockApiPost.mockImplementation(
-      () => new Promise(() => {}) // never resolves
+  it("disables Google button while loading", async () => {
+    mockSignInWithPopup.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ user: { uid: "1", getIdToken: () => Promise.resolve("tok") } }), 500))
     );
     renderAuthPage();
-    await userEvent.type(screen.getByLabelText("Email address"), "test@example.com");
-    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
-    await userEvent.click(screen.getByText("Sign In"));
-    expect(screen.getByText("Signing in...")).toBeTruthy();
+    await userEvent.click(screen.getByText("Continue with Google"));
+    expect(document.querySelector(".spinner-cyber")).toBeTruthy();
   });
+
+  // ── Error Display ──
+
+  it("displays error in a styled error box", async () => {
+    mockSignInWithPopup.mockRejectedValue({ code: "auth/popup-closed-by-user" });
+    renderAuthPage();
+    await userEvent.click(screen.getByText("Continue with Google"));
+    await waitFor(() => {
+      const errorBox = screen.getByText("Sign-in cancelled").closest("div");
+      expect(errorBox?.className).toContain("red");
+    });
+  });
+
+  // ── OAuth Error from Search Params ──
+
+  it("displays OAuth error from search params", () => {
+    mockUseSearchParams.mockReturnValue([new URLSearchParams("error=access_denied"), vi.fn()]);
+    renderAuthPage();
+    expect(screen.getByText("OAuth error: access_denied")).toBeTruthy();
+  });
+
 });

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { DocumentData } from "firebase/firestore";
+import type { DocumentData, DocumentReference, DocumentSnapshot, FieldValue, Transaction } from "firebase/firestore";
 
 // Firestore APIs are dynamically imported to keep firebase-firestore
 // out of the main bundle (~433 KB). Each consumer awaits the import.
@@ -20,7 +20,7 @@ export type GamifiedMission = {
   cta: string;
   route: string;
   xp: number;
-  badgeId?: string;
+  badgeId?: string | null;
   completed: boolean;
   completedAt?: string | null;
 };
@@ -501,7 +501,7 @@ const normalizeMission = (item: Partial<GamifiedMission>, scope: MissionScope): 
   cta: String(item.cta || "Deploy"),
   route: String(item.route || "/dashboard"),
   xp: Number(item.xp || 0),
-  badgeId: item.badgeId ? String(item.badgeId) : undefined,
+  badgeId: item.badgeId ? String(item.badgeId) : null,
   completed: Boolean(item.completed),
   completedAt: item.completedAt ? asIso(item.completedAt) : null,
 });
@@ -850,10 +850,83 @@ const submitLocalGamifiedQuizAnswer = async (
   };
 };
 
-const syncPersistedState = async (userId: string, handle?: string): Promise<PersistedGamificationState> => {
+// ── Race-safe Firestore persistence ────────────────────────────────────────
+// Firestore's transaction API only auto-retries ABORTED (concurrent-modify)
+// failures. A transaction that READS a missing user document and then writes
+// it is treated as a "create" at Commit time; if a parallel transaction
+// created the same document in between, Commit fails with
+// `already-exists` (409 Conflict). To keep initialization idempotent we
+// always branch on `doc.exists()` — update when present, set-with-merge when
+// absent — and wrap the transaction in a small retry loop for the rare case
+// where two writers race to create the document at the exact same moment.
+
+const isAlreadyExistsError = (error: unknown) => {
+  const code =
+    typeof error === "object" && error !== null && "code" in error
+      ? String((error as { code?: string }).code || "")
+      : "";
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "";
+  return code === "already-exists" || code === "already_exists" || /already\s*exists/i.test(message);
+};
+
+/** Idempotent user-state write inside a transaction: update if present, merge-create if absent. */
+const writeUserState = (
+  transaction: Transaction,
+  ref: DocumentReference<DocumentData>,
+  snapshot: DocumentSnapshot<DocumentData>,
+  state: PersistedGamificationState,
+  serverTimestamp: () => FieldValue
+) => {
+  const data = {
+    ...state,
+    updatedAt: new Date().toISOString(),
+    syncedAt: serverTimestamp(),
+  };
+  if (snapshot.exists()) {
+    transaction.update(ref, data);
+  } else {
+    transaction.set(ref, data, { merge: true });
+  }
+};
+
+/**
+ * Runs a gamification transaction for a user document, retrying when a
+ * concurrent writer wins the create race (`already-exists` at Commit).
+ */
+const runUserTransaction = async <T>(
+  userId: string,
+  fn: (transaction: Transaction, ref: DocumentReference<DocumentData>, serverTimestamp: () => FieldValue) => Promise<T>
+): Promise<T> => {
   const { runTransaction, doc, serverTimestamp } = await loadFirestore();
-  return runTransaction(getDb(), async (transaction) => {
-    const ref = doc(getDb(), STORAGE_COLLECTION, userId);
+  const db = getDb();
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await runTransaction(db, async (transaction) => {
+        const ref = doc(db, STORAGE_COLLECTION, userId);
+        return fn(transaction, ref, serverTimestamp);
+      });
+    } catch (error) {
+      if (isAlreadyExistsError(error) && attempt < maxAttempts) {
+        // A concurrent transaction created the document between our read and
+        // commit. Re-run — the doc now exists, so the next attempt updates.
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw new Error("Gamification sync failed after retries.");
+};
+
+const syncPersistedState = async (userId: string, handle?: string): Promise<PersistedGamificationState> => {
+  return runUserTransaction(userId, async (transaction, ref, serverTimestamp) => {
     const snapshot = await transaction.get(ref);
     let state = normalizeState(userId, snapshot.exists() ? snapshot.data() : null);
     const today = localDayKey();
@@ -882,34 +955,42 @@ const syncPersistedState = async (userId: string, handle?: string): Promise<Pers
     state = persistableSnapshot(state);
 
     if (mutated) {
-      transaction.set(
-        ref,
-        {
-          ...state,
-          updatedAt: new Date().toISOString(),
-          syncedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
+      writeUserState(transaction, ref, snapshot, state, serverTimestamp);
     }
 
     return state;
   });
 };
 
+// In-flight load deduplication keyed by user id. Guards against duplicate
+// initialization when React StrictMode double-invokes effects or when several
+// components mount the hook for the same user at once — only one Firestore
+// transaction is fired per user, and every caller shares the same result.
+const inflightSnapshotLoads = new Map<string, Promise<GamificationSnapshot>>();
+
 export const loadGamificationSnapshot = async (userId: string, handle?: string): Promise<GamificationSnapshot> => {
   if (permissionDeniedUsers.has(userId) || !canUseFirestoreForUser(userId)) {
     return loadLocalGamificationSnapshot(userId, handle);
   }
 
-  try {
-    const state = await syncPersistedState(userId, handle);
-    return finalizeSnapshot(state, "ready", MOTTO_READY);
-  } catch (error) {
-    if (!isPermissionDeniedError(error)) throw error;
-    permissionDeniedUsers.add(userId);
-    return loadLocalGamificationSnapshot(userId, handle);
-  }
+  const inflight = inflightSnapshotLoads.get(userId);
+  if (inflight) return inflight;
+
+  const promise = (async () => {
+    try {
+      const state = await syncPersistedState(userId, handle);
+      return finalizeSnapshot(state, "ready", MOTTO_READY);
+    } catch (error) {
+      if (!isPermissionDeniedError(error)) throw error;
+      permissionDeniedUsers.add(userId);
+      return loadLocalGamificationSnapshot(userId, handle);
+    } finally {
+      inflightSnapshotLoads.delete(userId);
+    }
+  })();
+
+  inflightSnapshotLoads.set(userId, promise);
+  return promise;
 };
 
 export const completeGamifiedMission = async (
@@ -923,28 +1004,18 @@ export const completeGamifiedMission = async (
   }
 
   try {
-    const { runTransaction, doc, serverTimestamp } = await loadFirestore();
-    return await runTransaction(getDb(), async (transaction) => {
-    const ref = doc(getDb(), STORAGE_COLLECTION, userId);
-    const raw = await transaction.get(ref);
-    let state = syncStateToCurrentWindow(normalizeState(userId, raw.exists() ? raw.data() : null), handle);
-    const result = completeMissionInState(state, scope, missionId);
-    state = result.state;
+    return await runUserTransaction(userId, async (transaction, ref, serverTimestamp) => {
+      const raw = await transaction.get(ref);
+      let state = syncStateToCurrentWindow(normalizeState(userId, raw.exists() ? raw.data() : null), handle);
+      const result = completeMissionInState(state, scope, missionId);
+      state = result.state;
 
-    transaction.set(
-      ref,
-      {
-        ...state,
-        updatedAt: new Date().toISOString(),
-        syncedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+      writeUserState(transaction, ref, raw, state, serverTimestamp);
 
-    return {
-      snapshot: finalizeSnapshot(state, "ready", MOTTO_READY),
-      reward: result.reward,
-    };
+      return {
+        snapshot: finalizeSnapshot(state, "ready", MOTTO_READY),
+        reward: result.reward,
+      };
     });
   } catch (error) {
     if (!isPermissionDeniedError(error)) throw error;
@@ -964,29 +1035,19 @@ export const submitGamifiedQuizAnswer = async (
   }
 
   try {
-    const { runTransaction, doc, serverTimestamp } = await loadFirestore();
-    return await runTransaction(getDb(), async (transaction) => {
-    const ref = doc(getDb(), STORAGE_COLLECTION, userId);
-    const raw = await transaction.get(ref);
-    let state = syncStateToCurrentWindow(normalizeState(userId, raw.exists() ? raw.data() : null), handle);
-    const result = submitQuizAnswerInState(state, questionId, optionId);
-    state = result.state;
+    return await runUserTransaction(userId, async (transaction, ref, serverTimestamp) => {
+      const raw = await transaction.get(ref);
+      let state = syncStateToCurrentWindow(normalizeState(userId, raw.exists() ? raw.data() : null), handle);
+      const result = submitQuizAnswerInState(state, questionId, optionId);
+      state = result.state;
 
-    transaction.set(
-      ref,
-      {
-        ...state,
-        updatedAt: new Date().toISOString(),
-        syncedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+      writeUserState(transaction, ref, raw, state, serverTimestamp);
 
-    return {
-      snapshot: finalizeSnapshot(state, "ready", MOTTO_READY),
-      answer: result.answer,
-      reward: result.reward,
-    };
+      return {
+        snapshot: finalizeSnapshot(state, "ready", MOTTO_READY),
+        answer: result.answer,
+        reward: result.reward,
+      };
     });
   } catch (error) {
     if (!isPermissionDeniedError(error)) throw error;

@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
 import crypto from "node:crypto";
 import { ObjectId } from "mongodb";
 import { OAuth2Client } from "google-auth-library";
@@ -10,7 +9,6 @@ import { logInfo, logWarn } from "../../src/utils/logger.mjs";
 import { buildCookieOptions } from "../../src/utils/cookiePolicy.mjs";
 import { createBlindIndex, decryptSensitive, encryptSensitive, sanitizeText } from "../../src/utils/security.mjs";
 import { getAuthFallbackCollection } from "./authFallbackStore.mjs";
-import * as otpService from "../../src/services/otpService.mjs";
 
 const USERS = "users";
 let googleOauthClient = null;
@@ -33,11 +31,6 @@ const ACCESS_TTL = "7d";
 const REFRESH_TTL = "30d";
 const REFRESH_TTL_LONG = "30d";
 const BCRYPT_ROUNDS = 12;
-// OTP bcrypt uses fewer rounds — it's only a backup persistence hash.
-// Primary verification uses the in-memory OTP service (no bcrypt).
-// Render's 0.1 CPU: 12 rounds = ~6s, 8 rounds = ~0.4s, 6 rounds = ~0.1s.
-// 8 rounds balances speed with adequate protection for short-lived OTPs.
-const OTP_BCRYPT_ROUNDS = 8;
 const REFRESH_GRACE_WINDOW_MS = 30 * 1000;
 
 const toObjectId = (value) => (ObjectId.isValid(value) ? new ObjectId(value) : value);
@@ -127,15 +120,8 @@ const getGoogleOauthWebClient = () => {
   return googleOauthWebClient;
 };
 
-const hashPassword = async (password) => bcrypt.hash(String(password || ""), BCRYPT_ROUNDS);
 const createRefreshJti = () => crypto.randomUUID();
 const hashRefreshToken = async (token) => bcrypt.hash(String(token || ""), BCRYPT_ROUNDS);
-
-export const verifyPassword = async (plainPassword, hashedPassword) => {
-  const safeHash = String(hashedPassword || "");
-  if (!safeHash) return false;
-  return bcrypt.compare(String(plainPassword || ""), safeHash);
-};
 
 const verifyJwt = (token, { allowRefresh = false } = {}) => {
   if (!env.jwtSecret) {
@@ -161,7 +147,6 @@ const verifyJwt = (token, { allowRefresh = false } = {}) => {
   return payload;
 };
 
-const mailConfigured = () => Boolean(env.authEmailEnabled && env.authEmailUser && env.authEmailAppPassword && env.authEmailFrom);
 const maskEmail = (value = "") => {
   const [local, domain] = String(value || "").split("@");
   if (!local || !domain) return value;
@@ -198,86 +183,6 @@ const protectUserFields = (fields = {}) => {
 const emailLookupQuery = (email = "") => {
   const safeEmail = normalizeEmail(email);
   return { $or: [{ emailHash: buildEmailHash(safeEmail) }, { email: safeEmail }] };
-};
-
-const brandedFromField = () => {
-  const email = String(env.authEmailFrom || env.authEmailUser || "").trim();
-  const name = String(env.authEmailFromName || "ZeroDay Guardian Security").trim();
-  return name && email ? `"${name.replace(/"/g, "")}" <${email}>` : email;
-};
-
-let transporterPromise = null;
-
-/**
- * Get or create the nodemailer transporter.
- * Logs transport creation, SMTP verify result, and full error details on failure.
- */
-const getMailTransporter = async () => {
-  if (!mailConfigured()) {
-    logWarn("[MAIL] getMailTransporter called but mail is not configured", {
-      hasFrom: Boolean(env.authEmailFrom),
-      hasUser: Boolean(env.authEmailUser),
-      hasPassword: Boolean(env.authEmailAppPassword),
-      host: env.smtpHost,
-      port: env.smtpPort,
-    });
-    throw createError("Email service is not configured", 500, "mail_not_configured");
-  }
-  if (!transporterPromise) {
-    logInfo("[MAIL] Creating nodemailer transport", {
-      host: env.smtpHost,
-      port: env.smtpPort,
-      user: env.authEmailUser,
-      from: brandedFromField(),
-      secure: env.smtpSecure,
-      requireTLS: env.smtpRequireTls,
-    });
-    transporterPromise = (async () => {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: env.smtpHost,
-          port: env.smtpPort,
-          secure: env.smtpSecure,
-          auth: {
-            user: env.authEmailUser,
-            pass: env.authEmailAppPassword,
-          },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 10_000,
-          greetingTimeout: 10_000,
-          socketTimeout: 25_000,
-        });
-        try {
-          await Promise.race([
-            transporter.verify(),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('SMTP verify timed out after 5000ms')), 5000)
-            ),
-          ]);
-          logInfo("[MAIL] SMTP transport verified successfully", {
-            host: env.smtpHost,
-            port: env.smtpPort,
-            user: maskEmail(env.authEmailUser),
-          });
-        } catch (verifyError) {
-          logWarn("[MAIL] SMTP transport verification failed — sendMail will still be attempted", {
-            error: String(verifyError?.message || verifyError),
-            code: String(verifyError?.code || ""),
-            command: String(verifyError?.command || ""),
-          });
-        }
-        return transporter;
-      } catch (transportError) {
-        // If createTransport itself threw (extremely rare), reset promise so next call retries
-        transporterPromise = null;
-        logWarn("[MAIL] nodemailer.createTransport threw — resetting transporterPromise", {
-          error: String(transportError?.message || transportError),
-        });
-        throw transportError;
-      }
-    })();
-  }
-  return transporterPromise;
 };
 
 const AUTH_DB_MAX_TIME_MS = 8_000;
@@ -432,39 +337,220 @@ const sanitizeUser = (user) => {
   };
 };
 
-export const registerUser = async ({ email, password, name }) => {
+export const registerUser = async ({ name, email, password }) => {
   const users = getCollection(USERS);
   const safeEmail = normalizeEmail(email);
-  const safeName = normalizeName(name);
 
-  const existingUser = await findUserByEmailRecord(users, safeEmail);
-  if (existingUser) {
-    throw createError("User already exists", 409, "user_exists");
+  const existing = await findUserByEmailRecord(users, safeEmail);
+  if (existing) {
+    throw createError("An account with this email already exists", 409, "email_exists");
   }
 
-  const passwordHash = await hashPassword(password);
   const timestamp = now();
+  const passwordHash = await bcrypt.hash(String(password), BCRYPT_ROUNDS);
+  const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+  const otpExpiresDate = new Date(timestamp + 15 * 60_000);
+
   const document = {
     ...protectUserFields({
       email: safeEmail,
-      name: safeName,
-      avatarUrl: "",
+      name: normalizeName(name),
     }),
     password: passwordHash,
     role: "user",
-    authProvider: "local",
-    googleId: null,
-    emailVerified: true,
-    emailVerifiedAt: timestamp,
+    authProvider: "email",
+    emailVerified: false,
+    isVerified: false,
+    otp: otpCode,
+    otpExpires: otpExpiresDate,
     lastLoginAt: timestamp,
-    resetOtp: null,
-    resetOtpExpire: null,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
 
   const result = await users.insertOne(document);
-  return sanitizeUser({ ...document, _id: result.insertedId });
+  logInfo("User registered", { email: safeEmail, userId: result.insertedId?.toString?.() || "" });
+
+  return {
+    user: sanitizeUser({ ...document, _id: result.insertedId }),
+    otp: otpCode,
+  };
+};
+
+export const verifyUserOtp = async ({ email, otp }) => {
+  const users = getCollection(USERS);
+  const safeEmail = normalizeEmail(email);
+  const user = await findUserByEmailRecord(users, safeEmail);
+
+  if (!user) throw createError("User not found", 404, "user_not_found");
+  if (user.emailVerified) return { verified: true, user: sanitizeUser(user) };
+
+  if (!user.otp || !user.otpExpires) {
+    throw createError("No verification pending. Please sign up again.", 400, "no_otp_pending");
+  }
+
+  if (new Date(user.otpExpires).getTime() < Date.now()) {
+    throw createError("OTP has expired. Please sign up again.", 400, "otp_expired");
+  }
+
+  // ── Dev bypass: accept '123456' as universal OTP for testing (development only) ──
+  const isDevBypass = env.nodeEnv !== "production" && String(otp) === "123456";
+  if (isDevBypass) {
+    logInfo("[DEV] OTP bypass activated — accepting '123456' as valid OTP", { email: safeEmail, userId: user._id?.toString?.() || "" });
+  }
+  if (!isDevBypass && user.otp !== String(otp)) {
+    throw createError("Invalid verification code", 400, "otp_invalid");
+  }
+
+  const timestamp = now();
+  await users.updateOne(
+    { _id: toObjectId(user._id) },
+    {
+      $set: {
+        emailVerified: true,
+        isVerified: true,
+        otp: null,
+        otpExpires: null,
+        updatedAt: timestamp,
+      },
+    }
+  );
+
+  return { verified: true, user: sanitizeUser({ ...user, emailVerified: true, isVerified: true }) };
+};
+
+export const requestPasswordReset = async ({ email }) => {
+  const users = getCollection(USERS);
+  const safeEmail = normalizeEmail(email);
+  const user = await findUserByEmailRecord(users, safeEmail);
+
+  // Always return success to prevent user enumeration
+  if (!user) {
+    logInfo("Password reset requested for non-existent email", { email: safeEmail });
+    return { message: "If an account exists with this email, a reset code has been sent." };
+  }
+
+  // Block Google-only accounts from password reset
+  if (user.googleId && user.authProvider === "google") {
+    logInfo("Password reset requested for Google-only account", { email: safeEmail });
+    return { message: "If an account exists with this email, a reset code has been sent." };
+  }
+
+  // Block accounts without a password
+  if (!user.password) {
+    logInfo("Password reset requested for account without password", { email: safeEmail });
+    return { message: "If an account exists with this email, a reset code has been sent." };
+  }
+
+  const timestamp = now();
+  const resetOtpCode = String(Math.floor(100000 + Math.random() * 900000));
+  const resetOtpExpiresDate = new Date(timestamp + 15 * 60_000);
+
+  await users.updateOne(
+    { _id: toObjectId(user._id) },
+    {
+      $set: {
+        resetOtp: resetOtpCode,
+        resetOtpExpires: resetOtpExpiresDate,
+        updatedAt: timestamp,
+      },
+    }
+  );
+
+  logInfo("Password reset OTP generated", { email: safeEmail, userId: user._id?.toString?.() || "" });
+
+  return {
+    message: "If an account exists with this email, a reset code has been sent.",
+    resetOtp: resetOtpCode,
+    user: sanitizeUser(user),
+  };
+};
+
+export const resetPassword = async ({ email, otp, newPassword }) => {
+  const users = getCollection(USERS);
+  const safeEmail = normalizeEmail(email);
+  const user = await findUserByEmailRecord(users, safeEmail);
+
+  if (!user) throw createError("User not found", 404, "user_not_found");
+
+  if (user.googleId && user.authProvider === "google") {
+    throw createError(
+      "This account uses Google sign-in. Please sign in with Google.",
+      400,
+      "google_only_account"
+    );
+  }
+
+  if (!user.resetOtp || !user.resetOtpExpires) {
+    throw createError("No reset request pending. Please request a new code.", 400, "no_reset_pending");
+  }
+
+  if (new Date(user.resetOtpExpires).getTime() < Date.now()) {
+    throw createError("Reset code has expired. Please request a new one.", 400, "reset_otp_expired");
+  }
+
+  if (user.resetOtp !== String(otp)) {
+    throw createError("Invalid reset code", 400, "reset_otp_invalid");
+  }
+
+  const timestamp = now();
+  const passwordHash = await bcrypt.hash(String(newPassword), BCRYPT_ROUNDS);
+
+  await users.updateOne(
+    { _id: toObjectId(user._id) },
+    {
+      $set: {
+        password: passwordHash,
+        resetOtp: null,
+        resetOtpExpires: null,
+        refreshSession: null,
+        updatedAt: timestamp,
+      },
+    }
+  );
+
+  logInfo("Password reset successful", { email: safeEmail, userId: user._id?.toString?.() || "" });
+
+  return { message: "Password reset successful. Please sign in with your new password." };
+};
+
+export const loginUser = async ({ email, password }) => {
+  const users = getCollection(USERS);
+  const safeEmail = normalizeEmail(email);
+  const user = await findUserByEmailRecord(users, safeEmail);
+
+  if (!user) {
+    throw createError("Invalid email or password", 401, "invalid_credentials");
+  }
+
+  if (user.googleId && user.authProvider === "google") {
+    throw createError(
+      "This account uses Google sign-in. Please sign in with Google.",
+      400,
+      "google_only_account"
+    );
+  }
+
+  if (!user.password) {
+    throw createError("Invalid email or password", 401, "invalid_credentials");
+  }
+
+  const passwordMatch = await bcrypt.compare(String(password), user.password);
+  if (!passwordMatch) {
+    throw createError("Invalid email or password", 401, "invalid_credentials");
+  }
+
+  if (!user.emailVerified && !user.isVerified) {
+    throw createError("Please verify your account first", 403, "email_not_verified");
+  }
+
+  const timestamp = now();
+  await users.updateOne(
+    { _id: toObjectId(user._id) },
+    { $set: { lastLoginAt: timestamp, updatedAt: timestamp } }
+  );
+
+  return sanitizeUser(user);
 };
 
 export const getUserByEmail = async ({ email }) => {
@@ -511,7 +597,7 @@ export const authenticateGoogleUser = async ({ idToken }) => {
         avatarUrl: avatarUrl || String(user.avatarUrl || ""),
       }),
       googleId,
-      authProvider: user.password ? "hybrid" : "google",
+      authProvider: "google",
       emailVerified: true,
       emailVerifiedAt: user.emailVerifiedAt || timestamp,
       lastLoginAt: timestamp,
@@ -527,15 +613,12 @@ export const authenticateGoogleUser = async ({ idToken }) => {
       name: displayName,
       avatarUrl,
     }),
-    password: null,
     role: "user",
     authProvider: "google",
     googleId,
     emailVerified: true,
     emailVerifiedAt: timestamp,
     lastLoginAt: timestamp,
-    resetOtp: null,
-    resetOtpExpire: null,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -564,53 +647,6 @@ export const authenticateGoogleCode = async ({ code }) => {
   const idToken = String(tokens?.id_token || "").trim();
   if (!idToken) throw createError("Google did not return an ID token", 401, "google_identity_invalid");
   return authenticateGoogleUser({ idToken });
-};
-
-export const loginUser = async ({ email, password }) => {
-  const users = getCollection(USERS);
-  const safeEmail = normalizeEmail(email);
-  const user = await findUserByEmailRecord(users, safeEmail);
-
-  logInfo("User fetch", {
-    email: safeEmail,
-    found: Boolean(user),
-  });
-
-  if (!user) {
-    throw createError("User not found", 404, "user_not_found");
-  }
-
-  const storedPassword = String(user.password || user.passwordHash || "");
-  if (!storedPassword) {
-    throw createError("Password not set", 401, "password_not_set");
-  }
-
-  const passwordMatch = await verifyPassword(password, storedPassword);
-  logInfo("Password match", {
-    email: safeEmail,
-    matched: passwordMatch,
-  });
-
-  if (!passwordMatch) {
-    throw createError("Wrong password", 401, "wrong_password");
-  }
-
-  if (user.password !== storedPassword) {
-    await users.updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          password: storedPassword,
-          updatedAt: now(),
-        },
-        $unset: {
-          passwordHash: "",
-        },
-      }
-    );
-  }
-
-  return sanitizeUser({ ...user, password: storedPassword });
 };
 
 export const refreshAuth = async (refreshToken) => {
@@ -649,212 +685,6 @@ export const refreshAuth = async (refreshToken) => {
   };
 };
 
-export const sendResetOtp = async ({ email }) => {
-  const users = getCollection(USERS);
-  const safeEmail = normalizeEmail(email);
-
-  const user = await findUserByEmailRecord(users, safeEmail);
-
-  logInfo("User fetch", {
-    email: safeEmail,
-    found: Boolean(user),
-    purpose: "send_reset_otp",
-  });
-
-  if (!user) {
-    throw createError("User not found", 404, "user_not_found");
-  }
-
-  const { otp, expiresAt, expiresInMinutes } = otpService.createOtp(safeEmail);
-
-  logInfo("[AUTH] Hashing OTP for storage", {
-    email: maskEmail(safeEmail),
-    rounds: OTP_BCRYPT_ROUNDS,
-  });
-  const otpHash = await bcrypt.hash(otp, OTP_BCRYPT_ROUNDS);
-  logInfo("[AUTH] OTP hashed successfully", {
-    email: maskEmail(safeEmail),
-    rounds: OTP_BCRYPT_ROUNDS,
-  });
-
-  logInfo("[AUTH] Persisting OTP hash to MongoDB", {
-    email: maskEmail(safeEmail),
-    expiresAt: new Date(expiresAt).toISOString(),
-  });
-  await users.updateOne(
-    { _id: user._id },
-    {
-      $set: {
-        resetOtp: otpHash,
-        resetOtpExpire: expiresAt,
-        updatedAt: now(),
-      },
-    },
-    { maxTimeMS: AUTH_DB_MAX_TIME_MS }
-  );
-  logInfo("[AUTH] OTP hash persisted to MongoDB", {
-    email: maskEmail(safeEmail),
-    expiresAt: new Date(expiresAt).toISOString(),
-  });
-
-  if (!mailConfigured()) {
-    if (env.authOtpPreviewEnabled) {
-      logWarn("Password reset OTP email NOT sent — email service is not configured (preview mode)", {
-        email: safeEmail,
-        delivery: "preview",
-        hasFrom: Boolean(env.authEmailFrom),
-        hasUser: Boolean(env.authEmailUser),
-        hasPassword: Boolean(env.authEmailAppPassword),
-      });
-      return {
-        sent: false,
-        delivery: "preview",
-        destination: maskEmail(safeEmail),
-        expiresInMinutes,
-        message: "Email service is not configured. OTP would have been sent to " + maskEmail(safeEmail) + ".",
-      };
-    }
-    throw createError("Unable to send verification email. The email service is not configured. Please contact the administrator.", 503, "mail_not_configured");
-  }
-
-  // Send OTP via email using OTP service
-  // ── 20s hard timeout across getMailTransporter + sendMail ──
-  // Gmail SMTP can take 10-15s to deliver. 20s gives enough headroom
-  // while still preventing indefinite hangs.
-  // On failure, returns a preview fallback so the client never experiences a 35s+ freeze.
-  const EMAIL_TIMEOUT_MS = 20_000;
-  const emailPromise = otpService.sendOtpEmail(safeEmail, otp, expiresInMinutes);
-  try {
-    await Promise.race([
-      emailPromise,
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`Email dispatch timed out after ${EMAIL_TIMEOUT_MS}ms`)), EMAIL_TIMEOUT_MS)
-      ),
-    ]);
-    logInfo("[AUTH] OTP email sent successfully", {
-      email: maskEmail(safeEmail),
-      expiresInMinutes,
-    });
-    return {
-      sent: true,
-      delivery: "email",
-      destination: maskEmail(safeEmail),
-      expiresInMinutes,
-      message: "Password reset OTP sent successfully.",
-    };
-  } catch (error) {
-    // Log the full SMTP error details for debugging
-    const smtpError = {
-      message: String(error?.message || "unknown_error"),
-      code: String(error?.code || ""),
-      command: String(error?.command || ""),
-      response: String(error?.response || ""),
-      responseCode: String(error?.responseCode || ""),
-    };
-    logWarn("[AUTH] SMTP email delivery failed — returning error to client", {
-      email: maskEmail(safeEmail),
-      ...smtpError,
-    });
-    // Also log to console for Render dashboard visibility
-    console.error("[AUTH] SMTP delivery error:", JSON.stringify(smtpError));
-    console.error("[AUTH] Full error object:", error);
-
-    // Throw a proper error so the frontend shows the real failure
-    throw createError(
-      `Failed to send verification email. SMTP error: ${smtpError.message}`,
-      502,
-      "mail_delivery_failed"
-    );
-  } finally {
-    // Suppress any late rejection after the race is settled
-    emailPromise.catch(() => {});
-  }
-};
-
-export const resetPassword = async ({ email, otp, password }) => {
-  const users = getCollection(USERS);
-  const safeEmail = normalizeEmail(email);
-  const safeOtp = String(otp || "").trim();
-  const user = await findUserByEmailRecord(users, safeEmail);
-
-  logInfo("User fetch", {
-    email: safeEmail,
-    found: Boolean(user),
-    purpose: "reset_password",
-  });
-
-  if (!user) {
-    throw createError("User not found", 404, "user_not_found");
-  }
-
-  // Try in-memory OTP store first (fast path)
-  const inMemoryValid = otpService.verifyOtp(safeEmail, safeOtp);
-  logInfo("[AUTH] OTP verification (in-memory)", {
-    email: maskEmail(safeEmail),
-    valid: inMemoryValid,
-  });
-
-  if (!inMemoryValid) {
-    // Fall back to MongoDB bcrypt OTP hash
-    if (!user.resetOtp || !user.resetOtpExpire) {
-      throw createError("OTP not requested or expired", 400, "otp_not_requested");
-    }
-
-    if (Number(user.resetOtpExpire) < now()) {
-      throw createError("OTP expired", 400, "otp_expired");
-    }
-
-    logInfo("[AUTH] Comparing OTP against MongoDB bcrypt hash", {
-      email: maskEmail(safeEmail),
-    });
-    const otpMatches = await bcrypt.compare(safeOtp, String(user.resetOtp || ""));
-    logInfo("[AUTH] OTP bcrypt comparison result", {
-      email: maskEmail(safeEmail),
-      matched: otpMatches,
-    });
-    if (!otpMatches) {
-      throw createError("Invalid OTP", 400, "invalid_otp");
-    }
-  }
-
-  // Clean up OTP from in-memory store if still present
-  otpService.deleteOtp(safeEmail);
-  logInfo("[AUTH] OTP consumed from in-memory store", {
-    email: maskEmail(safeEmail),
-  });
-
-  logInfo("[AUTH] Hashing new password", {
-    email: maskEmail(safeEmail),
-  });
-  const passwordHash = await hashPassword(password);
-  logInfo("[AUTH] New password hashed successfully", {
-    email: maskEmail(safeEmail),
-  });
-
-  logInfo("[AUTH] Persisting new password hash to MongoDB", {
-    email: maskEmail(safeEmail),
-  });
-  await users.updateOne(
-    { _id: user._id },
-    {
-      $set: {
-        password: passwordHash,
-        updatedAt: now(),
-      },
-      $unset: {
-        passwordHash: "",
-        resetOtp: "",
-        resetOtpExpire: "",
-      },
-    }
-  );
-  logInfo("[AUTH] New password hash persisted to MongoDB", {
-    email: maskEmail(safeEmail),
-  });
-
-  return getUserById(user._id);
-};
-
 export const updateUserThemePreference = async ({ userId, theme }) => {
   const users = getCollection(USERS);
   await users.updateOne(
@@ -877,104 +707,33 @@ export const emailAvailableForUser = async ({ email, excludeUserId }) => {
 
 /**
  * Get email configuration status (for debug/diagnostic endpoints).
- * Never exposes the actual password — only flags and masked info.
+ * In Google-only mode this always reports mail as disabled.
  */
 export const getEmailConfigStatus = () => ({
-  emailEnabled: mailConfigured(),
-  authEmailEnabled: Boolean(env.authEmailEnabled),
-  hasFrom: Boolean(env.authEmailFrom),
-  hasUser: Boolean(env.authEmailUser),
-  hasPassword: Boolean(env.authEmailAppPassword),
-  smtpHost: env.smtpHost,
-  smtpPort: env.smtpPort,
-  smtpSecure: env.smtpSecure,
-  smtpRequireTls: env.smtpRequireTls,
-  authEmailFrom: env.authEmailFrom ? maskEmail(env.authEmailFrom) : "",
-  authEmailUser: env.authEmailUser ? maskEmail(env.authEmailUser) : "",
-  authEmailFromName: env.authEmailFromName,
-  previewMode: env.authOtpPreviewEnabled,
+  emailEnabled: false,
+  authEmailEnabled: false,
+  hasFrom: false,
+  hasUser: false,
+  hasPassword: false,
+  smtpHost: "",
+  smtpPort: 0,
+  smtpSecure: false,
+  smtpRequireTls: false,
+  authEmailFrom: "",
+  authEmailUser: "",
+  authEmailFromName: "",
+  previewMode: false,
 });
 
 /**
- * Send a test email to verify SMTP configuration.
- * Used by POST /api/debug/send-test-email.
+ * Send a test email — always fails in Google-only mode.
  */
 export const sendTestEmail = async ({ to }) => {
-  const safeTo = normalizeEmail(to);
-  let sendMailPromise;
-  try {
-    const transporter = await getMailTransporter();
-    // Do NOT attach .catch() immediately — that would silently swallow SMTP failures.
-    // Errors propagate through Promise.race to the catch block below.
-    // Late rejections are suppressed in the finally block.
-    sendMailPromise = transporter.sendMail({
-        from: brandedFromField(),
-        to: safeTo,
-        subject: "ZeroDay Guardian Security | Test Email",
-        text: [
-          "ZeroDay Guardian Security",
-          "",
-          "This is a test email to verify your SMTP configuration.",
-          "If you received this, SMTP is working correctly.",
-          "",
-          `Sent at: ${new Date().toISOString()}`,
-          "",
-          `${env.appBaseUrl}`,
-        ].join("\n"),
-        html: `
-        <div style="margin:0;padding:24px;background:#f3f6fb;font-family:Arial,sans-serif;color:#0f172a">
-          <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dbe4f0;border-radius:16px;overflow:hidden">
-            <div style="padding:20px 24px;background:linear-gradient(135deg,#0f172a,#0f766e);color:#ffffff">
-              <div style="font-size:12px;letter-spacing:1.2px;text-transform:uppercase;opacity:.82">ZeroDay Guardian Security</div>
-              <h2 style="margin:8px 0 0;font-size:22px;line-height:1.3">SMTP Test Email</h2>
-            </div>
-            <div style="padding:24px">
-              <p style="margin:0 0 14px;font-size:14px;line-height:1.6">This is a test email to verify your SMTP configuration.</p>
-              <p style="margin:0 0 10px;font-size:14px;line-height:1.6">If you received this, SMTP is working correctly.</p>
-              <p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#475569">Sent at: ${new Date().toISOString()}</p>
-            </div>
-          </div>
-        </div>`,
-      });
-
-    const result = await Promise.race([
-      sendMailPromise,
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('SMTP sendMail timed out after 20000ms')), 20000)
-      ),
-    ]);
-    logInfo("[MAIL] Test email sent successfully", {
-      to: maskEmail(safeTo),
-      messageId: String(result?.messageId || ""),
-      accepted: Array.isArray(result?.accepted) ? result.accepted.map(maskEmail) : [],
-    });
-    return {
-      success: true,
-      messageId: String(result?.messageId || ""),
-      accepted: Array.isArray(result?.accepted) ? result.accepted : [],
-      message: `Test email sent to ${maskEmail(safeTo)}`,
-    };
-  } catch (error) {
-    logWarn("[MAIL] Test email delivery failed", {
-      to: maskEmail(safeTo),
-      code: String(error?.code || ""),
-      message: String(error?.message || "unknown_error"),
-      command: String(error?.command || ""),
-      response: String(error?.response || ""),
-      responseCode: String(error?.responseCode || ""),
-    });
-    return {
-      success: false,
-      message: error?.message || "Failed to send test email",
-      code: String(error?.code || ""),
-      command: String(error?.command || ""),
-      response: String(error?.response || ""),
-      responseCode: String(error?.responseCode || ""),
-    };
-  } finally {
-    // Suppress any late rejection after Promise.race settles
-    if (sendMailPromise) sendMailPromise.catch(() => {});
-  }
+  return {
+    success: false,
+    message: "Email service is disabled. This application uses Google sign-in only.",
+    code: "email_disabled",
+  };
 };
 
 export const updateUserProfileSecure = async ({ userId, name, email }) => {

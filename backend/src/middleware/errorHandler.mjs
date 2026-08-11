@@ -188,7 +188,28 @@ const buildAiErrorState = (err) => {
   };
 };
 
+const SENSITIVE_BODY_FIELDS = ["password", "newPassword", "token", "otp", "credential", "secret", "refreshToken"];
+const redactBody = (body = {}) => {
+  const safe = { ...body };
+  for (const field of SENSITIVE_BODY_FIELDS) {
+    if (safe[field]) safe[field] = "[REDACTED]";
+  }
+  return JSON.stringify(safe).substring(0, 500);
+};
+
 export const errorHandler = (err, req, res, _next) => {
+  // Always log the full stack trace to console for debugging
+  console.error("\n[ERROR HANDLER] Unhandled error caught by global middleware:");
+  console.error("  Path:", req.method, req.originalUrl || req.path);
+  console.error("  RequestId:", req.requestId || "none");
+  console.error("  Status:", safeStatus);
+  console.error("  Code:", err?.code || "none");
+  console.error("  Message:", err?.message || "Unknown error");
+  console.error("  Stack:", err?.stack || "No stack trace");
+  console.error("  IP:", req.ip || "unknown");
+  console.error("  Body:", redactBody(req.body));
+  console.error("\n");
+
   if (res.headersSent) return;
   if (isZodError(err)) {
     res.status(400).json({

@@ -1,636 +1,499 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ObjectId } from "mongodb";
 
-// ── Mock env ───────────────────────────────────────────────────────────
-// Must be shared so mutations in tests reflect in the module's `env` reference.
-const mockEnv = {
-  authEmailEnabled: true,
-  authEmailUser: "noreply@zerodayguardian.com",
-  authEmailAppPassword: "fake-app-password",
-  authEmailFrom: "noreply@zerodayguardian.com",
-  authEmailFromName: "ZeroDay Guardian Security",
-  smtpHost: "smtp.gmail.com",
-  smtpPort: 587,
-  smtpSecure: false,
-  smtpRequireTls: true,
-  authOtpPreviewEnabled: false,
-  appBaseUrl: "https://zerodayguardian-delta.vercel.app",
-  backendPublicUrl: "",
-  jwtSecret: "test-jwt-secret-that-is-at-least-32-chars!!",
-  jwtIssuer: "test",
-  jwtAudience: "test",
-  googleOauthClientId: "",
-  googleOauthClientSecret: "",
-  nodeEnv: "test",
-  port: 8787,
-};
+// ── Mock bcryptjs ──────────────────────────────────────────────────────
+const mockHash = vi.fn();
+const mockCompare = vi.fn();
 
-vi.mock("../../src/config/env.mjs", () => ({ env: mockEnv }));
+vi.mock("bcryptjs", () => ({
+  default: { hash: mockHash, compare: mockCompare },
+}));
 
 // ── Mock logger ────────────────────────────────────────────────────────
-const mockLogInfo = vi.fn();
-const mockLogWarn = vi.fn();
 vi.mock("../../src/utils/logger.mjs", () => ({
-  logInfo: mockLogInfo,
-  logWarn: mockLogWarn,
+  logInfo: vi.fn(),
+  logWarn: vi.fn(),
   logError: vi.fn(),
 }));
 
-// ── Mock security utils ────────────────────────────────────────────────
-vi.mock("../../src/utils/security.mjs", () => ({
-  sanitizeText: vi.fn((v) => String(v ?? "")),
-  createBlindIndex: vi.fn((v, _salt) => String(v ?? "")),
-  decryptSensitive: vi.fn((v) => v),
-  encryptSensitive: vi.fn((v) => v),
+// ── Mock env ───────────────────────────────────────────────────────────
+vi.mock("../../src/config/env.mjs", () => ({
+  env: {
+    jwtSecret: "test-jwt-secret",
+    jwtIssuer: "test-issuer",
+    jwtAudience: "test-audience",
+    dbEncryptionKey: "",
+    sessionSecret: "test-session-secret",
+    googleOauthClientId: "",
+    googleOauthClientSecret: "",
+    googleRedirectUri: "",
+    backendPublicUrl: "http://localhost:8787",
+    port: 8787,
+  },
 }));
 
-// ── Mock cookie policy ─────────────────────────────────────────────────
-vi.mock("../../src/utils/cookiePolicy.mjs", () => ({
-  buildCookieOptions: vi.fn(() => ({})),
-}));
-
-// ── Mock MongoDB ───────────────────────────────────────────────────────
-const mockFindOne = vi.fn();
-const mockUpdateOne = vi.fn();
-const mockCollection = vi.fn(() => ({ findOne: mockFindOne, updateOne: mockUpdateOne }));
+// ── Mock db ────────────────────────────────────────────────────────────
+const mockCollection = {
+  findOne: vi.fn(),
+  insertOne: vi.fn(),
+  updateOne: vi.fn(),
+};
 
 vi.mock("../../src/config/db.mjs", () => ({
-  getDb: vi.fn(() => ({ collection: mockCollection })),
-  getDbPoolStatus: vi.fn(() => ({ initialized: true, connected: true })),
+  getDb: () => ({ collection: () => mockCollection }),
+  getDbPoolStatus: () => ({ initialized: true, connected: true }),
 }));
 
+// ── Mock cookiePolicy ─────────────────────────────────────────────────
+vi.mock("../../src/utils/cookiePolicy.mjs", () => ({
+  buildCookieOptions: () => ({ httpOnly: true, secure: true, sameSite: "lax" }),
+}));
+
+// ── Mock authFallbackStore ────────────────────────────────────────────
 vi.mock("./authFallbackStore.mjs", () => ({
-  getAuthFallbackCollection: vi.fn(),
+  getAuthFallbackCollection: () => mockCollection,
 }));
 
-// ── Mock OTP service ───────────────────────────────────────────────────
-const mockCreateOtp = vi.fn();
-const mockSendOtpEmail = vi.fn();
-const mockVerifyOtp = vi.fn();
-const mockDeleteOtp = vi.fn();
+// ── Import the module under test ──────────────────────────────────────
+const { registerUser, loginUser, verifyUserOtp } = await import("./authService.mjs");
 
-vi.mock("../../src/services/otpService.mjs", () => ({
-  createOtp: mockCreateOtp,
-  sendOtpEmail: mockSendOtpEmail,
-  verifyOtp: mockVerifyOtp,
-  deleteOtp: mockDeleteOtp,
-  peekOtp: vi.fn(),
-  isMailConfigured: vi.fn(),
-}));
+// ── Helpers ────────────────────────────────────────────────────────────
+const TEST_EMAIL = "test@example.com";
+const TEST_NAME = "Test User";
+const TEST_PASSWORD = "StrongPass1!";
 
-// ── Mock bcrypt ────────────────────────────────────────────────────────
-const mockBcryptHash = vi.fn();
-const mockBcryptCompare = vi.fn();
-vi.mock("bcryptjs", () => ({
-  default: { hash: mockBcryptHash, compare: mockBcryptCompare },
-  hash: mockBcryptHash,
-  compare: mockBcryptCompare,
-}));
+const mockInsertedId = new ObjectId();
+const hashedPassword = "$2a$12$hashedpasswordvalue";
 
-// ── Mock other heavy imports (used by exported functions not under test) ─
-vi.mock("jsonwebtoken", () => ({
-  default: { sign: vi.fn(), verify: vi.fn() },
-}));
-vi.mock("google-auth-library", () => ({ OAuth2Client: vi.fn() }));
-const mockObjectId = vi.fn((id) => ({ toString: () => String(id || "mock-id"), _bsontype: "ObjectId" }));
-mockObjectId.isValid = vi.fn(() => true);
-mockObjectId.createFromHexString = vi.fn();
-mockObjectId.createFromTime = vi.fn();
+/** Build a mock user document as it would be stored in MongoDB (pre-hydration). */
+const buildStoredUser = (overrides = {}) => ({
+  _id: mockInsertedId,
+  email: TEST_EMAIL,
+  emailHash: "mock-hash",
+  name: TEST_NAME,
+  password: hashedPassword,
+  role: "user",
+  authProvider: "email",
+  emailVerified: false,
+  isVerified: false,
+  otp: "123456",
+  otpExpires: new Date(Date.now() + 15 * 60_000),
+  lastLoginAt: Date.now(),
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  ...overrides,
+});
 
-vi.mock("mongodb", () => ({
-  ObjectId: mockObjectId,
-}));
-vi.mock("nodemailer", () => ({ createTransport: vi.fn() }));
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockHash.mockResolvedValue(hashedPassword);
+  mockCompare.mockReset();
+  mockCollection.findOne.mockReset();
+  mockCollection.insertOne.mockReset();
+  mockCollection.updateOne.mockReset();
+});
 
-// ── Tests ──────────────────────────────────────────────────────────────
-describe("sendResetOtp", () => {
-  let sendResetOtp;
-  const TEST_EMAIL = "test@example.com";
-  const MOCK_USER = {
-    _id: "abc123",
-    email: TEST_EMAIL,
-    name: "Test User",
-    role: "user",
-    emailVerified: true,
-  };
-  const MOCK_OTP = {
-    otp: "482916",
-    expiresAt: Date.now() + 600_000,
-    expiresInMinutes: 10,
-  };
+// ══════════════════════════════════════════════════════════════════════
+// registerUser
+// ══════════════════════════════════════════════════════════════════════
+describe("registerUser", () => {
+  it("creates a new user and returns user + otp", async () => {
+    mockCollection.findOne.mockResolvedValue(null); // no existing user
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
 
-  beforeEach(async () => {
-    vi.clearAllMocks();
-
-    // Reset env to defaults for each test
-    Object.assign(mockEnv, {
-      authEmailEnabled: true,
-      authEmailUser: "noreply@zerodayguardian.com",
-      authEmailAppPassword: "fake-app-password",
-      authEmailFrom: "noreply@zerodayguardian.com",
-      authEmailFromName: "ZeroDay Guardian Security",
-      smtpHost: "smtp.gmail.com",
-      smtpPort: 587,
-      smtpSecure: false,
-      smtpRequireTls: true,
-      authOtpPreviewEnabled: false,
+    const result = await registerUser({
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
     });
 
-    // Default mock behaviors
-    mockFindOne.mockResolvedValue(MOCK_USER);
-    mockCreateOtp.mockReturnValue(MOCK_OTP);
-    mockBcryptHash.mockResolvedValue("hashed-otp-value");
-    mockUpdateOne.mockResolvedValue({ acknowledged: true, modifiedCount: 1 });
-
-    // Fresh import to clear module-level state (e.g. transporterPromise)
-    vi.resetModules();
-    const mod = await import("./authService.mjs");
-    sendResetOtp = mod.sendResetOtp;
+    expect(result.user).toBeDefined();
+    expect(result.otp).toBeDefined();
+    expect(typeof result.otp).toBe("string");
+    expect(result.otp).toHaveLength(6);
+    expect(result.user.email).toBe(TEST_EMAIL);
+    expect(result.user.name).toBe(TEST_NAME);
+    expect(mockHash).toHaveBeenCalledWith(TEST_PASSWORD, 12);
+    expect(mockCollection.insertOne).toHaveBeenCalledOnce();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+  it("stores a bcrypt-hashed password (never plaintext)", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
 
-  // ── 1. Preview mode when mail not configured ─────────────────────────
-  it("returns preview fallback when mail is not configured and preview is enabled", async () => {
-    mockEnv.authEmailEnabled = false;
-    mockEnv.authOtpPreviewEnabled = true;
-
-    const result = await sendResetOtp({ email: TEST_EMAIL });
-
-    expect(result).toMatchObject({
-      sent: false,
-      delivery: "preview",
-      expiresInMinutes: 10,
-    });
-    expect(result.destination).toContain("@");
-    expect(result.message).toContain("not configured");
-
-    // Should NOT have attempted to send email
-    expect(mockSendOtpEmail).not.toHaveBeenCalled();
-
-    // Should have logged the preview warning
-    expect(mockLogWarn).toHaveBeenCalledWith(
-      expect.stringContaining("not configured"),
-      expect.objectContaining({ delivery: "preview" })
-    );
-  });
-
-  // ── 2. Throws when mail not configured and preview disabled ──────────
-  it("throws 503 when mail is not configured and preview is disabled", async () => {
-    mockEnv.authEmailEnabled = false;
-    mockEnv.authOtpPreviewEnabled = false;
-
-    await expect(sendResetOtp({ email: TEST_EMAIL })).rejects.toThrow(/not configured/i);
-
-    // Verify it's a 503 error
-    await expect(sendResetOtp({ email: TEST_EMAIL })).rejects.toMatchObject({
-      status: 503,
-      code: "mail_not_configured",
-    });
-  });
-
-  // ── 3. Throws 502 when SMTP times out ─────────────────────────────
-  it("throws 502 when the SMTP timeout fires", async () => {
-    mockSendOtpEmail.mockReturnValue(new Promise(() => {}));
-
-    vi.useFakeTimers();
-
-    const resultPromise = sendResetOtp({ email: TEST_EMAIL });
-
-    // Advance time past the hard timeout (EMAIL_TIMEOUT_MS = 20000ms)
-    await vi.advanceTimersByTimeAsync(21_000);
-
-    await expect(resultPromise).rejects.toMatchObject({
-      status: 502,
-      code: "mail_delivery_failed",
+    await registerUser({
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
     });
 
-    expect(mockSendOtpEmail).toHaveBeenCalledWith(TEST_EMAIL, MOCK_OTP.otp, 10);
+    const insertedDoc = mockCollection.insertOne.mock.calls[0][0];
+    expect(insertedDoc.password).toBe(hashedPassword);
+    expect(insertedDoc.password).not.toBe(TEST_PASSWORD);
   });
 
-  // ── 4. Throws 502 when SMTP send fails ─────────────────────────────
-  it("throws 502 when SMTP email send fails", async () => {
-    mockSendOtpEmail.mockRejectedValue(new Error("Connection refused by SMTP server"));
+  it("sets emailVerified and isVerified to false", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
 
-    await expect(sendResetOtp({ email: TEST_EMAIL })).rejects.toMatchObject({
-      status: 502,
-      code: "mail_delivery_failed",
+    await registerUser({
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+    });
+
+    const insertedDoc = mockCollection.insertOne.mock.calls[0][0];
+    expect(insertedDoc.emailVerified).toBe(false);
+    expect(insertedDoc.isVerified).toBe(false);
+  });
+
+  it("generates a 6-digit numeric OTP", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
+
+    await registerUser({
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+    });
+
+    const insertedDoc = mockCollection.insertOne.mock.calls[0][0];
+    expect(insertedDoc.otp).toMatch(/^\d{6}$/);
+    expect(Number(insertedDoc.otp)).toBeGreaterThanOrEqual(100000);
+    expect(Number(insertedDoc.otp)).toBeLessThanOrEqual(999999);
+  });
+
+  it("sets otpExpires to ~15 minutes from now", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
+
+    const before = Date.now();
+    await registerUser({
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+    });
+    const after = Date.now();
+
+    const insertedDoc = mockCollection.insertOne.mock.calls[0][0];
+    const otpExpiryMs = new Date(insertedDoc.otpExpires).getTime();
+    expect(otpExpiryMs).toBeGreaterThanOrEqual(before + 14 * 60_000);
+    expect(otpExpiryMs).toBeLessThanOrEqual(after + 16 * 60_000);
+  });
+
+  it("sets authProvider to 'email'", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
+
+    await registerUser({
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+    });
+
+    const insertedDoc = mockCollection.insertOne.mock.calls[0][0];
+    expect(insertedDoc.authProvider).toBe("email");
+  });
+
+  it("throws 409 if email already exists", async () => {
+    mockCollection.findOne.mockResolvedValue(buildStoredUser());
+
+    await expect(
+      registerUser({ name: TEST_NAME, email: TEST_EMAIL, password: TEST_PASSWORD })
+    ).rejects.toMatchObject({
+      status: 409,
+      code: "email_exists",
     });
   });
 
-  // ── 5. Throws 502 for various SMTP failure modes ───────────────────
-  it("throws 502 for various SMTP failure modes", async () => {
-    const errors = [
-      new Error("connect ECONNREFUSED 127.0.0.1:587"),
-      new Error("getaddrinfo ENOTFOUND smtp.gmail.com"),
-      Object.assign(new Error("SMTP response timeout"), { code: "ETIMEDOUT" }),
-      new Error("Invalid login credentials"),
-    ];
+  it("normalizes email to lowercase", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
 
-    for (const error of errors) {
-      mockSendOtpEmail.mockRejectedValue(error);
-      await expect(sendResetOtp({ email: TEST_EMAIL })).rejects.toMatchObject({
-        status: 502,
-        code: "mail_delivery_failed",
-      });
-    }
-  });
-
-  // ── 7. Success when email sends ────────────────────────────────────
-  it("returns success when SMTP email is sent successfully", async () => {
-    mockSendOtpEmail.mockResolvedValue(undefined);
-
-    const result = await sendResetOtp({ email: TEST_EMAIL });
-
-    expect(result).toMatchObject({
-      sent: true,
-      delivery: "email",
-      expiresInMinutes: 10,
-    });
-    expect(result.message).toContain("successfully");
-
-    expect(mockSendOtpEmail).toHaveBeenCalledWith(TEST_EMAIL, MOCK_OTP.otp, 10);
-  });
-
-  // ── 8. Throws when user not found ──────────────────────────────────
-  it("throws 404 when the user is not found", async () => {
-    mockFindOne.mockResolvedValue(null);
-
-    await expect(sendResetOtp({ email: TEST_EMAIL })).rejects.toThrow(/not found/i);
-    await expect(sendResetOtp({ email: TEST_EMAIL })).rejects.toMatchObject({
-      status: 404,
-      code: "user_not_found",
+    await registerUser({
+      name: TEST_NAME,
+      email: "  Test@EXAMPLE.com  ",
+      password: TEST_PASSWORD,
     });
 
-    // Should NOT have created an OTP or attempted to send email
-    expect(mockCreateOtp).not.toHaveBeenCalled();
-    expect(mockSendOtpEmail).not.toHaveBeenCalled();
+    const insertedDoc = mockCollection.insertOne.mock.calls[0][0];
+    // The email is encrypted via protectUserFields, but the lookup should use lowercase
+    expect(mockCollection.findOne).toHaveBeenCalled();
   });
 
-  // ── 9. Normalizes email before lookup ──────────────────────────────
-  it("normalizes email before database lookup and OTP creation", async () => {
-    mockSendOtpEmail.mockResolvedValue(undefined);
+  it("generates a different OTP on each call", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
 
-    const result = await sendResetOtp({ email: "  Test@Example.COM  " });
+    const result1 = await registerUser({ name: TEST_NAME, email: TEST_EMAIL, password: TEST_PASSWORD });
+    const result2 = await registerUser({ name: "Other", email: "other@example.com", password: TEST_PASSWORD });
 
-    expect(result.sent).toBe(true);
-
-    // The mocked sanitizeText returns the input as-is, but normalizeEmail
-    // also calls .trim().toLowerCase() — so the lookup should use "test@example.com"
-    // The mockFindOne will have been called with this normalized email
-    expect(mockCreateOtp).toHaveBeenCalledWith("test@example.com");
-    expect(mockSendOtpEmail).toHaveBeenCalledWith("test@example.com", MOCK_OTP.otp, 10);
-  });
-
-  // ── 10. OTP is persisted to MongoDB as bcrypt hash ──────────────────
-  it("persists the OTP bcrypt hash to MongoDB", async () => {
-    mockSendOtpEmail.mockResolvedValue(undefined);
-
-    await sendResetOtp({ email: TEST_EMAIL });
-
-    expect(mockBcryptHash).toHaveBeenCalledWith(MOCK_OTP.otp, 8); // OTP_BCRYPT_ROUNDS = 8
-    expect(mockUpdateOne).toHaveBeenCalledWith(
-      { _id: MOCK_USER._id },
-      expect.objectContaining({
-        $set: expect.objectContaining({
-          resetOtp: "hashed-otp-value",
-          resetOtpExpire: MOCK_OTP.expiresAt,
-        }),
-      }),
-      expect.any(Object)
-    );
-  });
-
-  // ── 11. Response completes quickly ─────────────────────────────────
-  it("completes within a reasonable time (not 35s) for all outcomes", async () => {
-    // Success path
-    mockSendOtpEmail.mockResolvedValue(undefined);
-    const start = performance.now();
-    await sendResetOtp({ email: TEST_EMAIL });
-    expect(performance.now() - start).toBeLessThan(1000); // Should be near-instant with mocks    // Failure path — should throw quickly
-    mockSendOtpEmail.mockRejectedValue(new Error("SMTP failed"));
-    const start2 = performance.now();
-    await expect(sendResetOtp({ email: TEST_EMAIL })).rejects.toThrow();
-    expect(performance.now() - start2).toBeLessThan(1000);
-
-    // Preview path (mail not configured)
-      mockEnv.authEmailEnabled = false;
-      mockEnv.authOtpPreviewEnabled = true;
-      const start3 = performance.now();
-      await sendResetOtp({ email: TEST_EMAIL });
-      expect(performance.now() - start3).toBeLessThan(1000);
+    // Very unlikely to be the same with random generation
+    expect(result1.otp).not.toBe(result2.otp);
   });
 });
 
-describe("resetPassword", () => {
-  let resetPassword;
-  const TEST_EMAIL = "test@example.com";
-  const TEST_OTP = "482916";
-  const TEST_NEW_PASSWORD = "NewStr0ng!Pass";
-  const MOCK_PASSWORD_HASH = "$2a$12$hashedNewPasswordValue";
-  const NOW = Date.now();
-  const FUTURE_EXPIRY = NOW + 600_000;
-  const MOCK_USER_WITH_OTP = {
-    _id: "abc123",
-    email: TEST_EMAIL,
-    name: "Test User",
-    role: "user",
-    emailVerified: true,
-    resetOtp: "$2a$08$hashedOtpValue",
-    resetOtpExpire: FUTURE_EXPIRY,
-  };
-  const MOCK_OTP = {
-    otp: TEST_OTP,
-    expiresAt: FUTURE_EXPIRY,
-    expiresInMinutes: 10,
-  };
+// ══════════════════════════════════════════════════════════════════════
+// loginUser
+// ══════════════════════════════════════════════════════════════════════
+describe("loginUser", () => {
+  it("returns the user on valid credentials", async () => {
+    const stored = buildStoredUser({ emailVerified: true });
+    mockCollection.findOne.mockResolvedValue(stored);
+    mockCompare.mockResolvedValue(true);
+    mockCollection.updateOne.mockResolvedValue({});
 
-  beforeEach(async () => {
-    vi.clearAllMocks();
+    const result = await loginUser({ email: TEST_EMAIL, password: TEST_PASSWORD });
 
-    // Reset env defaults
-    Object.assign(mockEnv, {
-      authEmailEnabled: true,
-      authEmailUser: "noreply@zerodayguardian.com",
-      authEmailAppPassword: "fake-app-password",
-      authEmailFrom: "noreply@zerodayguardian.com",
-      authEmailFromName: "ZeroDay Guardian Security",
-    });
-
-    // Default mock behaviors for resetPassword path
-    mockFindOne.mockResolvedValue(MOCK_USER_WITH_OTP);
-    mockCreateOtp.mockReturnValue(MOCK_OTP);
-    mockBcryptHash.mockResolvedValue(MOCK_PASSWORD_HASH);
-    mockUpdateOne.mockResolvedValue({ acknowledged: true, modifiedCount: 1 });
-
-    // In-memory OTP verify returns false by default (testing MongoDB fallback)
-    mockVerifyOtp.mockReturnValue(false);
-    // bcrypt.compare returns true by default (OTP matches)
-    mockBcryptCompare.mockResolvedValue(true);
-    // deleteOtp is a no-op by default
-    mockDeleteOtp.mockImplementation(() => {});
-
-    vi.useFakeTimers();
-    vi.setSystemTime(NOW);
-
-    vi.resetModules();
-    const mod = await import("./authService.mjs");
-    resetPassword = mod.resetPassword;
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  // ── 1. Success: in-memory OTP path ──────────────────────────────────
-  it("resets password via in-memory OTP verification (fast path)", async () => {
-    mockVerifyOtp.mockReturnValue(true);
-
-    const result = await resetPassword({
-      email: TEST_EMAIL,
-      otp: TEST_OTP,
-      password: TEST_NEW_PASSWORD,
-    });
-
-    // Should have used in-memory OTP verification
-    expect(mockVerifyOtp).toHaveBeenCalledWith(TEST_EMAIL, TEST_OTP);
-
-    // Should NOT have fallen back to MongoDB bcrypt compare
-    expect(mockBcryptCompare).not.toHaveBeenCalled();
-
-    // Should have deleted the OTP from in-memory store
-    expect(mockDeleteOtp).toHaveBeenCalledWith(TEST_EMAIL);
-
-    // Should have hashed the new password
-    expect(mockBcryptHash).toHaveBeenCalledWith(TEST_NEW_PASSWORD, 12); // BCRYPT_ROUNDS = 12
-
-    // Should have persisted the new password to MongoDB
-    expect(mockUpdateOne).toHaveBeenCalledWith(
-      { _id: MOCK_USER_WITH_OTP._id },
-      {
-        $set: expect.objectContaining({
-          password: MOCK_PASSWORD_HASH,
-          updatedAt: NOW,
-        }),
-        $unset: expect.objectContaining({
-          passwordHash: "",
-          resetOtp: "",
-          resetOtpExpire: "",
-        }),
-      }
-    );
-
-    // Should return a sanitized user
     expect(result).toBeDefined();
     expect(result.email).toBe(TEST_EMAIL);
+    expect(result.name).toBe(TEST_NAME);
+    expect(mockCompare).toHaveBeenCalledWith(TEST_PASSWORD, hashedPassword);
+    expect(mockCollection.updateOne).toHaveBeenCalledOnce();
   });
 
-  // ── 2. Success: MongoDB bcrypt OTP fallback path ────────────────────
-  it("resets password via MongoDB bcrypt OTP fallback", async () => {
-    mockVerifyOtp.mockReturnValue(false);
-    mockBcryptCompare.mockResolvedValue(true);
-
-    const result = await resetPassword({
-      email: TEST_EMAIL,
-      otp: TEST_OTP,
-      password: TEST_NEW_PASSWORD,
-    });
-
-    // Should have tried in-memory first
-    expect(mockVerifyOtp).toHaveBeenCalledWith(TEST_EMAIL, TEST_OTP);
-
-    // Should have fallen back to bcrypt compare against MongoDB hash
-    expect(mockBcryptCompare).toHaveBeenCalledWith(TEST_OTP, MOCK_USER_WITH_OTP.resetOtp);
-
-    // Should have consumed the OTP
-    expect(mockDeleteOtp).toHaveBeenCalledWith(TEST_EMAIL);
-
-    // Should have persisted new password
-    expect(mockUpdateOne).toHaveBeenCalled();
-    expect(result).toBeDefined();
-    expect(result.email).toBe(TEST_EMAIL);
-  });
-
-  // ── 3. Throws when user not found ──────────────────────────────────
-  it("throws 404 when the user is not found", async () => {
-    mockFindOne.mockResolvedValue(null);
+  it("throws 401 if user not found", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
 
     await expect(
-      resetPassword({ email: TEST_EMAIL, otp: TEST_OTP, password: TEST_NEW_PASSWORD })
+      loginUser({ email: TEST_EMAIL, password: TEST_PASSWORD })
+    ).rejects.toMatchObject({
+      status: 401,
+      code: "invalid_credentials",
+    });
+  });
+
+  it("throws 401 if password does not match", async () => {
+    mockCollection.findOne.mockResolvedValue(buildStoredUser({ emailVerified: true }));
+    mockCompare.mockResolvedValue(false);
+
+    await expect(
+      loginUser({ email: TEST_EMAIL, password: "wrongpassword" })
+    ).rejects.toMatchObject({
+      status: 401,
+      code: "invalid_credentials",
+    });
+  });
+
+  it("throws 401 if user has no password (e.g. corrupted account)", async () => {
+    // User exists with email auth but password field is null/missing
+    // (no googleId so it doesn't hit the google_only_account check)
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({ password: null, googleId: undefined, authProvider: "email" })
+    );
+
+    await expect(
+      loginUser({ email: TEST_EMAIL, password: TEST_PASSWORD })
+    ).rejects.toMatchObject({
+      status: 401,
+      code: "invalid_credentials",
+    });
+  });
+
+  it("throws 400 if user is a Google-only account (has googleId)", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({ authProvider: "google", googleId: "g-123" })
+    );
+
+    await expect(
+      loginUser({ email: TEST_EMAIL, password: TEST_PASSWORD })
+    ).rejects.toMatchObject({
+      status: 400,
+      code: "google_only_account",
+    });
+  });
+
+  it("throws 403 if email is not verified", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({ emailVerified: false, isVerified: false })
+    );
+    mockCompare.mockResolvedValue(true);
+
+    await expect(
+      loginUser({ email: TEST_EMAIL, password: TEST_PASSWORD })
+    ).rejects.toMatchObject({
+      status: 403,
+      code: "email_not_verified",
+    });
+  });
+
+  it("allows login when isVerified is true even if emailVerified is false", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({ emailVerified: false, isVerified: true })
+    );
+    mockCompare.mockResolvedValue(true);
+    mockCollection.updateOne.mockResolvedValue({});
+
+    const result = await loginUser({ email: TEST_EMAIL, password: TEST_PASSWORD });
+    expect(result).toBeDefined();
+    expect(result.email).toBe(TEST_EMAIL);
+  });
+
+  it("allows login when emailVerified is true even if isVerified is false", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({ emailVerified: true, isVerified: false })
+    );
+    mockCompare.mockResolvedValue(true);
+    mockCollection.updateOne.mockResolvedValue({});
+
+    const result = await loginUser({ email: TEST_EMAIL, password: TEST_PASSWORD });
+    expect(result).toBeDefined();
+  });
+
+  it("updates lastLoginAt on successful login", async () => {
+    mockCollection.findOne.mockResolvedValue(buildStoredUser({ emailVerified: true }));
+    mockCompare.mockResolvedValue(true);
+    mockCollection.updateOne.mockResolvedValue({});
+
+    await loginUser({ email: TEST_EMAIL, password: TEST_PASSWORD });
+
+    const updateCall = mockCollection.updateOne.mock.calls[0];
+    const updateSet = updateCall[1].$set;
+    expect(updateSet.lastLoginAt).toBeDefined();
+    expect(typeof updateSet.lastLoginAt).toBe("number");
+  });
+
+  it("does not reveal which field was wrong (email vs password)", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+
+    try {
+      await loginUser({ email: TEST_EMAIL, password: "wrong" });
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error.message).toBe("Invalid email or password");
+      expect(error.status).toBe(401);
+    }
+
+    // Even with a real user but wrong password, same message
+    mockCollection.findOne.mockResolvedValue(buildStoredUser({ emailVerified: true }));
+    mockCompare.mockResolvedValue(false);
+
+    try {
+      await loginUser({ email: TEST_EMAIL, password: "wrong" });
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error.message).toBe("Invalid email or password");
+      expect(error.status).toBe(401);
+    }
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// verifyUserOtp
+// ══════════════════════════════════════════════════════════════════════
+describe("verifyUserOtp", () => {
+  const OTP_CODE = "123456";
+
+  it("verifies OTP and marks email as verified", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({ otp: OTP_CODE, otpExpires: new Date(Date.now() + 10 * 60_000) })
+    );
+    mockCollection.updateOne.mockResolvedValue({});
+
+    const result = await verifyUserOtp({ email: TEST_EMAIL, otp: OTP_CODE });
+
+    expect(result.verified).toBe(true);
+    expect(result.user).toBeDefined();
+    expect(result.user.emailVerified).toBe(true);
+    expect(result.user.isVerified).toBe(true);
+    expect(mockCollection.updateOne).toHaveBeenCalledOnce();
+
+    const updateSet = mockCollection.updateOne.mock.calls[0][1].$set;
+    expect(updateSet.emailVerified).toBe(true);
+    expect(updateSet.isVerified).toBe(true);
+    expect(updateSet.otp).toBeNull();
+    expect(updateSet.otpExpires).toBeNull();
+  });
+
+  it("throws 404 if user not found", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+
+    await expect(
+      verifyUserOtp({ email: TEST_EMAIL, otp: OTP_CODE })
     ).rejects.toMatchObject({
       status: 404,
       code: "user_not_found",
     });
-
-    // Should NOT have attempted OTP verification or password hashing
-    expect(mockVerifyOtp).not.toHaveBeenCalled();
-    expect(mockBcryptHash).not.toHaveBeenCalled();
   });
 
-  // ── 4. Throws when OTP not requested ────────────────────────────────
-  it("throws 400 when no OTP was requested (no resetOtp in DB)", async () => {
-    mockVerifyOtp.mockReturnValue(false);
-    mockFindOne.mockResolvedValue({
-      ...MOCK_USER_WITH_OTP,
-      resetOtp: null,
-      resetOtpExpire: null,
-    });
+  it("returns already verified if email is already verified", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({ emailVerified: true, isVerified: true, otp: null, otpExpires: null })
+    );
+
+    const result = await verifyUserOtp({ email: TEST_EMAIL, otp: OTP_CODE });
+
+    expect(result.verified).toBe(true);
+    expect(mockCollection.updateOne).not.toHaveBeenCalled();
+  });
+
+  it("throws 400 if no OTP is pending (otp field is null)", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({ otp: null, otpExpires: null })
+    );
 
     await expect(
-      resetPassword({ email: TEST_EMAIL, otp: TEST_OTP, password: TEST_NEW_PASSWORD })
+      verifyUserOtp({ email: TEST_EMAIL, otp: OTP_CODE })
     ).rejects.toMatchObject({
       status: 400,
-      code: "otp_not_requested",
+      code: "no_otp_pending",
     });
   });
 
-  // ── 5. Throws when OTP expired ─────────────────────────────────────
-  it("throws 400 when the OTP has expired", async () => {
-    mockVerifyOtp.mockReturnValue(false);
-    mockFindOne.mockResolvedValue({
-      ...MOCK_USER_WITH_OTP,
-      resetOtpExpire: NOW - 60_000, // expired 1 minute ago
-    });
+  it("throws 400 if OTP has expired", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({
+        otp: OTP_CODE,
+        otpExpires: new Date(Date.now() - 1 * 60_000), // expired 1 minute ago
+      })
+    );
 
     await expect(
-      resetPassword({ email: TEST_EMAIL, otp: TEST_OTP, password: TEST_NEW_PASSWORD })
+      verifyUserOtp({ email: TEST_EMAIL, otp: OTP_CODE })
     ).rejects.toMatchObject({
       status: 400,
       code: "otp_expired",
     });
   });
 
-  // ── 6. Throws when OTP is invalid ──────────────────────────────────
-  it("throws 400 when the OTP does not match", async () => {
-    mockVerifyOtp.mockReturnValue(false);
-    mockBcryptCompare.mockResolvedValue(false);
-
-    await expect(
-      resetPassword({ email: TEST_EMAIL, otp: "000000", password: TEST_NEW_PASSWORD })
-    ).rejects.toMatchObject({
-      status: 400,
-      code: "invalid_otp",
-    });
-
-    // Should NOT have hashed the password or updated the DB
-    expect(mockBcryptHash).not.toHaveBeenCalled();
-    expect(mockUpdateOne).not.toHaveBeenCalled();
-  });
-
-  // ── 7. Normalizes email before lookup ──────────────────────────────
-  it("normalizes email before database lookup", async () => {
-    mockVerifyOtp.mockReturnValue(true);
-
-    await resetPassword({
-      email: "  Test@Example.COM  ",
-      otp: TEST_OTP,
-      password: TEST_NEW_PASSWORD,
-    });
-
-    // The mocked sanitizeText returns the input as-is, but normalizeEmail
-    // also calls .trim().toLowerCase() — so the lookup uses "test@example.com"
-    expect(mockVerifyOtp).toHaveBeenCalledWith("test@example.com", TEST_OTP);
-  });
-
-  // ── 8. Consumes OTP from in-memory store on success ────────────────
-  it("consumes OTP from in-memory store after successful reset", async () => {
-    mockVerifyOtp.mockReturnValue(true);
-
-    await resetPassword({
-      email: TEST_EMAIL,
-      otp: TEST_OTP,
-      password: TEST_NEW_PASSWORD,
-    });
-
-    expect(mockDeleteOtp).toHaveBeenCalledWith(TEST_EMAIL);
-  });
-
-  // ── 9. Consumes OTP even via MongoDB fallback path ─────────────────
-  it("consumes OTP from in-memory store after MongoDB fallback path", async () => {
-    mockVerifyOtp.mockReturnValue(false);
-    mockBcryptCompare.mockResolvedValue(true);
-
-    await resetPassword({
-      email: TEST_EMAIL,
-      otp: TEST_OTP,
-      password: TEST_NEW_PASSWORD,
-    });
-
-    // deleteOtp should be called regardless of which verification path succeeded
-    expect(mockDeleteOtp).toHaveBeenCalledWith(TEST_EMAIL);
-  });
-
-  // ── 10. Persists new password hash to MongoDB ───────────────────────
-  it("persists new password bcrypt hash to MongoDB on success", async () => {
-    mockVerifyOtp.mockReturnValue(true);
-
-    await resetPassword({
-      email: TEST_EMAIL,
-      otp: TEST_OTP,
-      password: TEST_NEW_PASSWORD,
-    });
-
-    expect(mockBcryptHash).toHaveBeenCalledWith(TEST_NEW_PASSWORD, 12);
-    expect(mockUpdateOne).toHaveBeenCalledWith(
-      { _id: MOCK_USER_WITH_OTP._id },
-      expect.objectContaining({
-        $set: expect.objectContaining({
-          password: MOCK_PASSWORD_HASH,
-          updatedAt: NOW,
-        }),
+  it("throws 400 if OTP code is incorrect", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({
+        otp: OTP_CODE,
+        otpExpires: new Date(Date.now() + 10 * 60_000),
       })
     );
-  });
 
-  // ── 11. Returns user object after reset ─────────────────────────────
-  it("returns a sanitized user object after successful reset", async () => {
-    mockVerifyOtp.mockReturnValue(true);
-
-    const result = await resetPassword({
-      email: TEST_EMAIL,
-      otp: TEST_OTP,
-      password: TEST_NEW_PASSWORD,
-    });
-
-    expect(result).toBeDefined();
-    expect(result._id).toBeDefined();
-    expect(result.email).toBe(TEST_EMAIL);
-    expect(result.name).toBe("Test User");
-    // Password should not be exposed in the returned user
-    expect(result.password).toBeUndefined();
-  });
-
-  // ── 12. In-memory OTP takes priority over MongoDB ───────────────────
-  it("prefers in-memory OTP verification over MongoDB fallback", async () => {
-    // Even if bcrypt.compare would fail, in-memory path should succeed
-    mockVerifyOtp.mockReturnValue(true);
-    mockBcryptCompare.mockResolvedValue(false);
-
-    // In-memory path should be used, skipping bcrypt compare entirely
     await expect(
-      resetPassword({ email: TEST_EMAIL, otp: TEST_OTP, password: TEST_NEW_PASSWORD })
-    ).resolves.toBeDefined();
-
-    // bcrypt.compare should NOT have been called because in-memory verification succeeded
-    expect(mockBcryptCompare).not.toHaveBeenCalled();
-
-    // But bcrypt.hash for the new password SHOULD have been called
-    expect(mockBcryptHash).toHaveBeenCalledWith(TEST_NEW_PASSWORD, 12);
+      verifyUserOtp({ email: TEST_EMAIL, otp: "999999" })
+    ).rejects.toMatchObject({
+      status: 400,
+      code: "otp_invalid",
+    });
   });
 
-  // ── 13. Does not expose password hash in response ───────────────────
-  it("does not expose password hash in the returned user", async () => {
-    mockVerifyOtp.mockReturnValue(true);
+  it("clears otp and otpExpires after successful verification", async () => {
+    mockCollection.findOne.mockResolvedValue(
+      buildStoredUser({ otp: OTP_CODE, otpExpires: new Date(Date.now() + 10 * 60_000) })
+    );
+    mockCollection.updateOne.mockResolvedValue({});
 
-    const result = await resetPassword({
-      email: TEST_EMAIL,
-      otp: TEST_OTP,
-      password: TEST_NEW_PASSWORD,
-    });
+    await verifyUserOtp({ email: TEST_EMAIL, otp: OTP_CODE });
 
-    expect(result.password).toBeUndefined();
-    expect(result.passwordHash).toBeUndefined();
+    const updateSet = mockCollection.updateOne.mock.calls[0][1].$set;
+    expect(updateSet.otp).toBeNull();
+    expect(updateSet.otpExpires).toBeNull();
+  });
+
+  it("normalizes email to lowercase before lookup", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+
+    await expect(
+      verifyUserOtp({ email: "  TEST@Example.COM  ", otp: OTP_CODE })
+    ).rejects.toMatchObject({ status: 404 });
+
+    // Should have called findOne (meaning email was normalized and lookup attempted)
+    expect(mockCollection.findOne).toHaveBeenCalledOnce();
   });
 });

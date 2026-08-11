@@ -1,22 +1,12 @@
 /**
  * seedDefaults.mjs
  *
- * Reusable module that seeds default admin + test users into MongoDB.
- * Used by:
- *   - backend/scripts/seed-users.mjs  (manual CLI)
- *   - backend/server/server.js         (auto-seed on startup)
- *
- * Env vars (all optional):
- *   SEED_ADMIN_EMAIL       default: admin@zerodayguardian.com
- *   SEED_ADMIN_PASSWORD    default: Admin@123456
- *   SEED_ADMIN_NAME        default: Admin
- *   SEED_TEST_EMAIL        default: test@zerodayguardian.com
- *   SEED_TEST_PASSWORD     default: Test@123456
- *   SEED_TEST_NAME         default: Test User
+ * Seeds default admin + test users into MongoDB.
+ * With Google-only auth, seed users are created with a googleId so they can
+ * authenticate via Google OAuth.
  */
 
 import { getDb } from "../config/db.mjs";
-import { registerUser, getUserByEmail } from "../../services/security-service/authService.mjs";
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -25,15 +15,15 @@ import { registerUser, getUserByEmail } from "../../services/security-service/au
 const CFG = {
   admin: {
     email:    process.env.SEED_ADMIN_EMAIL    || "admin@zerodayguardian.com",
-    password: process.env.SEED_ADMIN_PASSWORD || "Admin@123456",
     name:     process.env.SEED_ADMIN_NAME     || "Admin",
     role:     "admin",
+    googleId: process.env.SEED_ADMIN_GOOGLE_ID || "seed-admin-google-id",
   },
   test: {
     email:    process.env.SEED_TEST_EMAIL     || "test@zerodayguardian.com",
-    password: process.env.SEED_TEST_PASSWORD  || "Test@123456",
     name:     process.env.SEED_TEST_NAME      || "Test User",
     role:     "user",
+    googleId: process.env.SEED_TEST_GOOGLE_ID  || "seed-test-google-id",
   },
 };
 
@@ -47,60 +37,37 @@ const log = (msg, data) => {
 };
 
 /**
- * Create a single seed user.
- *
- * Uses `registerUser` from authService so the new user is 100 % compatible
- * with the login / OTP / reset flow (same bcrypt rounds, same encryption).
- *
- * After creation the user document is patched so that:
- *   - `role` is set to the desired role (admin / user)
- *   - `emailVerified` is set to `true` so OTP / password-reset works
- *     immediately without needing an email verification step.
+ * Create a single seed user directly in MongoDB.
+ * Users authenticate via Google OAuth, so we set googleId and authProvider.
  */
-const seedOne = async ({ email, password, name, role }) => {
-  let user;
+const seedOne = async ({ email, name, role, googleId }) => {
+  const users = getDb().collection("users");
 
-  try {
-    user = await registerUser({ email, password, name });
-    log("registerUser succeeded", { email, role });
-  } catch (err) {
-    if (err.code === "user_exists") {
-      log("Skipping — user already exists", { email });
-      return { created: false, email, skipped: true };
-    }
-    throw err;
+  const existing = await users.findOne({ email });
+  if (existing) {
+    log("Skipping — user already exists", { email });
+    return { created: false, email, skipped: true };
   }
 
-  // Upgrade role if needed & mark email as verified
-  const users = getDb().collection("users");
-  const updates = {
+  const timestamp = Date.now();
+  const document = {
+    email,
+    name,
+    role: role || "user",
+    authProvider: "google",
+    googleId,
+    avatarUrl: "",
     emailVerified: true,
-    emailVerifiedAt: Date.now(),
+    emailVerifiedAt: timestamp,
+    lastLoginAt: timestamp,
+    settings: { theme: "dark", favoriteTools: [] },
+    createdAt: timestamp,
+    updatedAt: timestamp,
   };
-  if (role) updates.role = role;
 
-  await users.updateOne({ _id: user._id }, { $set: updates });
-
+  await users.insertOne(document);
   log("Seed user created successfully", { email, role, emailVerified: true });
   return { created: true, email, role };
-};
-
-/**
- * Delete an existing user so a fresh one can be created (--force).
- */
-const removeExisting = async (email) => {
-  try {
-    const user = await getUserByEmail({ email });
-    if (!user) return false;
-
-    const users = getDb().collection("users");
-    await users.deleteOne({ _id: user._id });
-    log("Removed existing user for --force re-seed", { email });
-    return true;
-  } catch (err) {
-    log("Could not look up user for removal — skipping", { email, error: err.message });
-    return false;
-  }
 };
 
 // ---------------------------------------------------------------------------
@@ -121,22 +88,25 @@ const removeExisting = async (email) => {
 export const seedDefaults = async ({ force = false, adminOnly = false } = {}) => {
   log("Starting seed", { force, adminOnly, nodeEnv: process.env.NODE_ENV || "development" });
 
+  const users = getDb().collection("users");
+
   const seedTasks = [];
 
-  // Admin user
-  seedTasks.push(
-    force
-      ? removeExisting(CFG.admin.email).then(() => seedOne(CFG.admin))
-      : seedOne(CFG.admin)
-  );
+  const seedWithForce = async (cfg) => {
+    if (force) {
+      const existing = await users.findOne({ email: cfg.email });
+      if (existing) {
+        await users.deleteOne({ _id: existing._id });
+        log("Removed existing user for --force re-seed", { email: cfg.email });
+      }
+    }
+    return seedOne(cfg);
+  };
 
-  // Test user (unless --admin-only)
+  seedTasks.push(seedWithForce(CFG.admin));
+
   if (!adminOnly) {
-    seedTasks.push(
-      force
-        ? removeExisting(CFG.test.email).then(() => seedOne(CFG.test))
-        : seedOne(CFG.test)
-    );
+    seedTasks.push(seedWithForce(CFG.test));
   }
 
   const results = await Promise.allSettled(seedTasks);

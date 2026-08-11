@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { env } from "./env.mjs";
+import { mongooseConnectOptions, normalizeAtlasSeedListUri } from "./mongoConnection.mjs";
 import { logInfo, logWarn, logError } from "../utils/logger.mjs";
 
 let connected = false;
@@ -33,7 +34,15 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export const connectMongoose = async (options = {}) => {
   if (connected) return mongoose;
 
-  const uri = String(env.mongoUri || process.env.MONGODB_URI || "");
+  const rawUri = env.mongoUri || process.env.MONGODB_URI || "";
+  const uri = normalizeAtlasSeedListUri(rawUri);
+  // ── Debug: log the URI (credentials masked) to verify .env is loaded correctly ──
+  const maskedUri = uri.replace(/\/\/[^:]+:[^@]+@/, "//***:***@");
+  logInfo("[MongoDB] Mongoose URI (masked): " + maskedUri, {
+    hasDbName: /\/zeroday_guardian/.test(uri),
+    hasTls: /[?&]tls=true/.test(uri),
+    hasAuthMechanism: /[?&]authMechanism=/.test(uri),
+  });
   if (!uri) {
     logWarn("Mongoose connection skipped: MONGODB_URI not configured.");
     return null;
@@ -46,16 +55,10 @@ export const connectMongoose = async (options = {}) => {
 
   for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
     try {
-      await mongoose.connect(uri, {
-        dbName: process.env.MONGODB_DB_NAME || "neurobot",
-        maxPoolSize: 20,
-        serverSelectionTimeoutMS: 10000,
-        connectTimeoutMS: 10000,
-        socketTimeoutMS: 30000,
-      });
+      await mongoose.connect(uri, mongooseConnectOptions({ maxPoolSize: 20 }));
       connected = true;
       logInfo("MongoDB connected successfully", {
-        dbName: process.env.MONGODB_DB_NAME || "neurobot",
+        dbName: process.env.MONGODB_DB_NAME || "zeroday_guardian",
         attempt,
       });
       return mongoose;

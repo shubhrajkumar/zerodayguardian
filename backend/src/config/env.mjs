@@ -113,6 +113,13 @@ const normalizeOriginList = (value = "") =>
     .filter(Boolean);
 const isExplicitTrue = (value) => String(value || "").trim().toLowerCase() === "true";
 const isExplicitFalse = (value) => String(value || "").trim().toLowerCase() === "false";
+const smtpPort = Number(process.env.SMTP_PORT || 587);
+const smtpSecure = process.env.SMTP_SECURE == null
+  ? smtpPort === 465
+  : isExplicitTrue(process.env.SMTP_SECURE);
+const smtpRequireTls = process.env.SMTP_REQUIRE_TLS == null
+  ? smtpPort === 587
+  : !isExplicitFalse(process.env.SMTP_REQUIRE_TLS);
 
 const uniqueList = (items = []) => [...new Set(items)];
 const LOCALHOST_LIKE_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "0.0.0.0"]);
@@ -157,7 +164,7 @@ const defaultPort = (protocol) => (protocol === "mongodb+srv:" ? 27017 : 27017);
 const normalizeLlmProvider = (value = "") => {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw || ["auto", "dual", "both", "all"].includes(raw)) return "auto";
-  return ["openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup", "auto"].includes(raw) ? raw : raw;
+  return ["openrouter", "openai", "deepseek", "google", "ollama", "ollama_backup", "auto"].includes(raw) ? raw : "auto";
 };
 
 const buildMongoUriFromParts = () => {
@@ -313,7 +320,7 @@ export const OPTIONAL_GOOGLE_OAUTH_ENV_KEYS = [
 
 export const env = {
   nodeEnv: normalizedNodeEnv,
-  port: Number(process.env.PORT || process.env.NEUROBOT_PORT || 10000),
+  port: Number(process.env.PORT || process.env.NEUROBOT_PORT || 8787),
   corsOrigin: process.env.CORS_ORIGIN || (isProduction ? "" : "http://localhost:8080"),
   openaiBaseUrl: normalizeApiBaseUrl(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1", "OPENAI_BASE_URL"),
   openaiApiKey: firstSet("OPENAI_API_KEY", "LLM_API_KEY"),
@@ -473,9 +480,9 @@ export const env = {
   stripeTeamPriceId: process.env.STRIPE_TEAM_PRICE_ID || "",
   stripePortalReturnUrl: process.env.STRIPE_PORTAL_RETURN_URL || "",
   smtpHost: process.env.SMTP_HOST || "smtp.gmail.com",
-  smtpPort: Number(process.env.SMTP_PORT || 465),
-  smtpSecure: process.env.SMTP_SECURE === "false" ? false : true,
-  smtpRequireTls: process.env.SMTP_REQUIRE_TLS !== "false",
+  smtpPort,
+  smtpSecure,
+  smtpRequireTls,
   authOtpPreviewEnabled: false,
   labDockerImage: process.env.LAB_DOCKER_IMAGE || "zeroday-lab-sandbox:latest",
   labDockerNetwork: process.env.LAB_DOCKER_NETWORK || "bridge",
@@ -807,11 +814,15 @@ if (env.authEmailEnabled && env.authEmailUser && env.authEmailAppPassword && env
         host: env.smtpHost,
         port: env.smtpPort,
         secure: env.smtpSecure,
+        requireTLS: env.smtpRequireTls,
+        ignoreTLS: false,
         auth: {
           user: env.authEmailUser,
           pass: env.authEmailAppPassword,
         },
-        tls: { rejectUnauthorized: false },
+        tls: {
+          ciphers: "DEFAULT:@SECLEVEL=1",
+        },
         connectionTimeout: 5_000,
         greetingTimeout: 5_000,
         socketTimeout: 10_000,

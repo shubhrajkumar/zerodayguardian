@@ -5,12 +5,13 @@ import {
   getUserById,
   loginUser,
   refreshAuth,
-  revokeRefreshSession,
   registerUser,
+  requestPasswordReset,
   resetPassword,
-  sendResetOtp,
+  revokeRefreshSession,
   setAuthCookies,
   updateUserThemePreference,
+  verifyUserOtp,
 } from "../services/authService.mjs";
 
 export const authMiddleware = Object.freeze({
@@ -20,15 +21,16 @@ export const authMiddleware = Object.freeze({
 });
 
 export const authService = Object.freeze({
-  registerUser,
   authenticateGoogleUser,
   loginUser,
+  registerUser,
+  requestPasswordReset,
+  resetPassword,
+  verifyUserOtp,
   refreshAuth,
   setAuthCookies,
   clearAuthCookies,
   revokeRefreshSession,
   getUserById,
-  sendResetOtp,
-  resetPassword,
   updateUserThemePreference,
 });
