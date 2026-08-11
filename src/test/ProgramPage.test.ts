@@ -362,7 +362,7 @@ describe("safeArray integration (simulating ProgramPage useMemo)", () => {
   }
 
   it("safeArray returns [] for null overview", () => {
-    const overview = null;
+    const overview = null as { items?: unknown[] } | null;
     const items = safeArray(overview?.items);
     expect(items).toEqual([]);
     const selected = items.find((item: any) => item.day === 1) || items[0] || null;

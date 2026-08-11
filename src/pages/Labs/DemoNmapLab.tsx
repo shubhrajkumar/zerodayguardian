@@ -16,7 +16,6 @@ import {
   Cpu,
   Globe,
   Loader2,
-  Network,
   Search,
   Shield,
   Target,

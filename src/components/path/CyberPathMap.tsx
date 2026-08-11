@@ -74,7 +74,6 @@ export default function CyberPathMap({ nodes, onNodeClick, columns = 3 }: CyberP
     const gapX = 120; // horizontal gap between columns
     const gapY = 80; // vertical gap between rows
     const cols = Math.min(columns, nodes.length);
-    const rows = Math.ceil(nodes.length / cols);
 
     const points: { x: number; y: number }[] = [];
     nodes.forEach((_, i) => {

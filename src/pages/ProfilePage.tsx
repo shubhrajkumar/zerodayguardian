@@ -29,7 +29,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { progress } = useUserProgress();
-  const { snapshot, loading: gamificationLoading } = useGamificationSystem(user?.id, user?.name || undefined);
+  const { snapshot } = useGamificationSystem(user?.id, user?.name || undefined);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const displayName = profile?.name || user?.name || user?.email?.split("@")[0] || "Guardian";

@@ -80,13 +80,6 @@ const MISSIONS = [
 ];
 
 // ── Types ──
-type BootLineType = "info" | "success" | "warn" | "prompt";
-
-interface BootLine {
-  text: string;
-  delay: number;
-  type: BootLineType;
-}
 
 interface InteractiveTerminalProps {
   /** Additional CSS classes for the container */

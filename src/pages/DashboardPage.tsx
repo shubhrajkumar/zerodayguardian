@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useAuth } from "@/context/AuthContext";
 import { useZdg } from "@/context/ZdgContext";
-import { useGamificationSystem, getLevelLabel, getRankIcon, getRankByLevel, getNextRank } from "@/lib/gamificationSystem";
+import { useGamificationSystem, getLevelLabel, getRankIcon, getNextRank } from "@/lib/gamificationSystem";
 import AnimatedCyberBackground from "@/components/AnimatedCyberBackground";
 import ThreatRadar from "@/components/ThreatRadar";
 import LiveClock from "@/components/ui/LiveClock";
@@ -12,13 +12,12 @@ import XPBar from "@/components/gamification/XPBar";
 import StreakCounter from "@/components/gamification/StreakCounter";
 import BadgeDisplay from "@/components/gamification/BadgeDisplay";
 import LeaderboardCard from "@/components/gamification/LeaderboardCard";
-import { Bot, ChartLine, ChevronRight, Cpu, Radar, Shield, Swords, Terminal, TrendingUp, Users, Zap, Activity, Target } from "lucide-react";
+import { Bot, ChartLine, ChevronRight, Cpu, Radar, Shield, Terminal, TrendingUp, Zap, Activity, Target } from "lucide-react";
 import {
   staggerContainer,
   staggerItem,
   staggerContainerFast,
   listContainer,
-  listItem,
   tapScale,
   cardHover,
 } from "@/lib/animations";
@@ -44,14 +43,13 @@ export default function DashboardPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { globalXp, streakCount, completedLabs } = useZdg();
+  const { globalXp, streakCount } = useZdg();
   const { snapshot } = useGamificationSystem(user?.id, user?.name || undefined);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const displayName = user?.name || user?.email?.split("@")[0] || "Guardian";
   const xp = globalXp > 0 ? globalXp : snapshot.totalXp;
   const streak = streakCount > 0 ? streakCount : snapshot.streakDays;
   const badges = snapshot.badges.length;
-  const rank = getRankByLevel(snapshot.level);
   const nextRank = getNextRank(snapshot.level);
   const rankLabel = getLevelLabel(snapshot.level);
   const rankIcon = getRankIcon(snapshot.level);
@@ -80,13 +78,6 @@ export default function DashboardPage() {
     { label: "Network", status: "Checking...", color: "bg-slate-500", glow: "" },
     { label: "Threat Feed", status: "Checking...", color: "bg-slate-500", glow: "" },
   ] as const;
-
-  const activeMission = {
-    label: "Active Operation",
-    name: nextRank ? `Advance to ${nextRank.icon} ${nextRank.title}` : "All ranks achieved",
-    progress: nextRank ? Math.min(100, ((snapshot.level - rank.minLevel) / Math.max(1, nextRank.minLevel - rank.minLevel)) * 100) : 100,
-    xpReward: "1,200 XP",
-  };
 
   const colorMap: Record<string, string> = {
     cyan: "from-cyan-500/20 to-blue-600/10 border-cyan-500/30 group-hover:border-cyan-400/50",

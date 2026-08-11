@@ -318,7 +318,7 @@ const GoalsPanel = ({ goals, completedDays }: { goals: Goal[]; completedDays: nu
   );
 };
 
-const RoadmapPanel = ({ rank, nextRank, level, completedDays }: {
+const RoadmapPanel = ({ nextRank, level, completedDays }: {
   rank: { title: string; icon: string; description: string };
   nextRank: { title: string; icon: string; description: string } | null;
   level: number;
@@ -415,7 +415,6 @@ const MissionProgressGrid = ({ completedDays, onNavigate }: {
   onNavigate: (route: string) => void;
 }) => {
   const totalMissions = 60;
-  const cols = 10;
 
   return (
     <div className="space-y-3">

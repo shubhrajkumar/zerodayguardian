@@ -9,7 +9,7 @@
  * Backend URL: https://zerodayguardian-backend.onrender.com
  */
 
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 
 const BACKEND = "https://zerodayguardian-backend.onrender.com";
 const FETCH_TIMEOUT = 30_000; // Render cold starts can take 15-30s

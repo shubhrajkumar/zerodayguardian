@@ -176,7 +176,7 @@ const CareerPathsSection = () => {
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
         >
-          {careerPaths.map((path, i) => {
+          {careerPaths.map((path) => {
             const Icon = path.icon;
             const colors = colorMap[path.color] || colorMap.emerald;
             return (

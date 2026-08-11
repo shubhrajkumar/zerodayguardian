@@ -5,9 +5,6 @@ import { Swords, Terminal, Shield, Zap, ChevronRight, Cpu, Sparkles, Trophy } fr
 import { useOnboarding } from "@/context/OnboardingContext";
 import UnlockAnimation from "@/components/gamification/UnlockAnimation";
 import {
-  staggerContainer,
-  staggerItem,
-  fadeInUp,
   springSnap,
 } from "@/lib/animations";
 

@@ -3,7 +3,6 @@ import { getStoredAccessToken } from "@/lib/apiClient";
 import api from "@/lib/api";
 import { AxiosError } from "axios";
 import { useAuth } from "@/context/AuthContext";
-import { safeArray } from "@/utils/safeData";
 
 type DashboardPayload = {
   intelligence: {

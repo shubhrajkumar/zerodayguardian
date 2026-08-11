@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, useMotionValueEvent, useSpring, useTransform } from "framer-motion";
 
 export interface ProgressRingProps {

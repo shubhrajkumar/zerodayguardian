@@ -20,15 +20,13 @@ import {
   PlayCircle,
   Shield,
   TerminalSquare,
-  Globe,
   Network,
   AlertTriangle,
   ExternalLink,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 import { useUserProgress } from "@/context/UserProgressContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
-import { getMissionLabel, getMissionTitle } from "@/data/missionCatalog";
+import { getMissionTitle } from "@/data/missionCatalog";
 import { SYLLABUS_PHASES, TOTAL_DAYS, resolvePhase } from "@/lib/syllabusShared";
 import SEOManager from "@/components/SEOManager";
 
@@ -217,13 +215,9 @@ dev.target-perimeter.com.  3600  IN  A    198.51.100.40
   },
 ];
 
-// ── Progress bar segments ──
-const DAYS_PER_SEGMENT = 5;
-
 // ── Page Component ──
 export default function ProgramDay1Page() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
   const { trackAction } = useUserProgress();
   const { recordAction } = useMissionSystem();
 
@@ -595,7 +589,7 @@ export default function ProgramDay1Page() {
               </span>
             </div>
 
-            {tasks.map((task, taskIndex) => {
+            {tasks.map((task) => {
               const isComplete = task.status === "completed";
               const isActive = task.status === "active";
               const isLocked = task.status === "locked";

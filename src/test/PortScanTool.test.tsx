@@ -243,7 +243,7 @@ describe("PortScanTool", () => {
     // Avoid waitFor() because it uses setTimeout which is captured by fake timers
     vi.useFakeTimers();
 
-    let resolvePromise;
+    let resolvePromise!: (value: unknown) => void;
     mockApiFetch.mockReturnValueOnce(
       new Promise((resolve) => {
         resolvePromise = resolve;
@@ -440,7 +440,7 @@ describe("PortScanTool", () => {
   // ── Loading state ──
 
   it("disables the scan button while scanning", async () => {
-    let resolvePromise;
+    let resolvePromise!: (value: unknown) => void;
     mockApiFetch.mockReturnValueOnce(
       new Promise((resolve) => {
         resolvePromise = resolve;

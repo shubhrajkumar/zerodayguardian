@@ -77,7 +77,7 @@ const ProgramPage = () => {
   const navigate = useNavigate();
   const { authState, isAuthenticated, user } = useAuth();
   const [overview, setOverview] = useState<DayOverviewResponse | null>(null);
-  const [selectedDay, setSelectedDay] = useState(1);
+  const [, setSelectedDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedSectors, setExpandedSectors] = useState<Record<string, boolean>>(() => {

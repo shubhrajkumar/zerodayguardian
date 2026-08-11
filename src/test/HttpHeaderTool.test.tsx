@@ -504,7 +504,7 @@ describe("HttpHeaderTool", () => {
   // ── Loading state ──
 
   it("disables the inspect button while loading and shows FETCHING HEADERS", async () => {
-    let resolvePromise;
+    let resolvePromise!: (value: unknown) => void;
     mockApiFetch.mockReturnValueOnce(
       new Promise((resolve) => {
         resolvePromise = resolve;

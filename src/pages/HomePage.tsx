@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Bot, ChartLine, ChevronRight, Cpu, Radar, Shield, Swords, Terminal, TrendingUp, Zap } from "lucide-react";
+import { ArrowRight, Bot, ChevronRight, Cpu, Radar, Shield, Swords, Terminal, TrendingUp, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useMissionSystem } from "@/context/MissionSystemApiContext";
@@ -10,11 +10,8 @@ import CareerPathsSection from "@/components/landing/CareerPathsSection";
 import {
   staggerContainer,
   staggerItem,
-  fadeInUp,
   tapScale,
   cardHover,
-  springGentle,
-  hoverGlow,
   sectionHeader,
   sectionHeaderItem,
 } from "@/lib/animations";

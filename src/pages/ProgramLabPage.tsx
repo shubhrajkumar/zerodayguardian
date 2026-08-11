@@ -8,7 +8,7 @@ import { useMissionSystem } from "@/context/MissionSystemApiContext";
 import { useUserProgress } from "@/context/UserProgressContext";
 import { safeArray } from "@/utils/safeData";
 import UnlockAnimation from "@/components/gamification/UnlockAnimation";
-import { getMissionLabel, getMissionTitle, getMissionObjective, getMissionFocus } from "@/data/missionCatalog";
+import { getMissionLabel, getMissionTitle, getMissionObjective } from "@/data/missionCatalog";
 
 type LabTask = {
   id: string;

@@ -6,7 +6,7 @@
  *   Center: Live OSINT Workflows/Tools (existing 8 tool modes + workflow panels)
  *   Right:  Practical Resources & OSINT Hub
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertTriangle,
@@ -16,18 +16,16 @@ import {
   Search,
   Shield,
   Upload,
-  User,
   TerminalSquare,
   FileText,
   BookOpen,
   Target,
   Zap,
-  ChevronRight,
   Info,
 } from "lucide-react";
 import { getStoredAccessToken, apiGetJson } from "@/lib/apiClient";
 import api from "@/lib/api";
-import { getPyApiUserMessage, pyPostJson, resolvePublicPyApiUrl } from "@/lib/pyApiClient";
+import { getPyApiUserMessage } from "@/lib/pyApiClient";
 import IpGeolocationTool from "@/components/IpGeolocationTool";
 import CryptoEncoder from "@/components/CryptoEncoder";
 import WhoIsTool from "@/components/WhoIsTool";
@@ -181,7 +179,6 @@ const OsintPage = () => {
   const [breachInputType, setBreachInputType] = useState<"email" | "phone" | "domain">("email");
   const [breachInput, setBreachInput] = useState("");
   const [metadataFile, setMetadataFile] = useState<File | null>(null);
-  const [expandedThreats, setExpandedThreats] = useState<Set<string>>(new Set());
 
   // ── OSINT Investigation State (preserved) ──
   const [query, setQuery] = useState("");
@@ -197,8 +194,8 @@ const OsintPage = () => {
   };
 
   const [pyRecommendations, setPyRecommendations] = useState<PyRecommendationResponse | null>(null);
-  const [pyRecLoading, setPyRecLoading] = useState(false);
-  const [pyRecError, setPyRecError] = useState("");
+  const [, setPyRecLoading] = useState(false);
+  const [, setPyRecError] = useState("");
 
   const loadPyRecommendations = useCallback(async () => {
     if (!getStoredAccessToken()) {
@@ -229,21 +226,6 @@ const OsintPage = () => {
     } catch { /* ignore */ }
   }, []);
 
-  // ── Toggle threat expansion (reserved for live feed) ──
-  const toggleThreat = useCallback((id: string) => {
-    setExpandedThreats((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
-  // ── Collapse state (reserved for live feed) ──
-  const collapsedThreats = useMemo(
-    () => [] as { id: string }[],
-    [],
-  );
 
   // ── Risk score from result ──
   const riskScore = result?.insight?.score ?? null;
@@ -584,7 +566,7 @@ const OsintPage = () => {
                 </div>
 
                 {/* Recommendations strip */}
-                {pyRecommendations?.recommendations?.length > 0 && (
+                {pyRecommendations && pyRecommendations.recommendations.length > 0 && (
                   <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <Zap className="h-3.5 w-3.5 text-amber-400" />

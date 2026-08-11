@@ -3,9 +3,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import BadgeDisplay from "@/components/gamification/BadgeDisplay";
 
-// The default CYBERSECURITY_BADGES catalog has 10 badges
-const CATALOG_COUNT = 10;
-
 // ── Tests ──
 
 describe("BadgeDisplay", () => {

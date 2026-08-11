@@ -151,7 +151,7 @@ export default function AuthPage() {
       setSuccess(null);
 
       if (mode === "signup") {
-        const payload = await api.post<BackendAuthResponse>("/api/auth/signup", {
+        await api.post<BackendAuthResponse>("/api/auth/signup", {
           name: name.trim(),
           email: email.trim().toLowerCase(),
           password,

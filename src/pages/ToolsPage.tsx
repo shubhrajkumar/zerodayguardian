@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { BrainCircuit, ChevronDown, Grid2x2, Search, Shield, ShieldCheck, Sparkles } from "lucide-react";
-import LockedModule from "@/components/ui/LockedModule";
 import ToolCard from "@/components/ToolCard";
 import {
   TOOL_FILTERS,

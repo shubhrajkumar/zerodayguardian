@@ -742,18 +742,6 @@ const TelemetryBar = ({ telemetry, compact = false }: { telemetry: RuntimeTeleme
   );
 };
 
-const TypingBubble = () => (
-  <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-[var(--theme-surface)] px-4 py-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] fadeInUp">
-    {[0, 1, 2].map((dot) => (
-      <span
-        key={dot}
-        className="h-2 w-2 animate-bounce rounded-full bg-[var(--theme-accent-blue)]"
-        style={{ animationDelay: `${dot * 0.12}s`, animationDuration: "0.9s" }}
-      />
-    ))}                    <span className="text-xs font-medium text-[var(--theme-text-dim)]">{ZORVIX_NAME} is analyzing your question against mission context...</span>
-  </div>
-);
-
 interface ZorvixProps {
   /** Render as a full-screen page (no overlay, no portal, no launcher button) */
   fullScreen?: boolean;
@@ -766,37 +754,33 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
   const [messages, setMessages] = useState<NeuroMessage[]>([]);
   const [input, setInput] = useState("");
   const [activeTopic, setActiveTopic] = useState<NeuroTopicEvent | null>(null);
-  const [suggestions, setSuggestions] = useState<string[]>(DEFAULT_SUGGESTIONS);
-  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
-  const [isUtilityMenuOpen, setIsUtilityMenuOpen] = useState(false);
+  const [, setSuggestions] = useState<string[]>(DEFAULT_SUGGESTIONS);
+  const [, setIsSuggestionOpen] = useState(false);
+  const [, setIsUtilityMenuOpen] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isPreparingAttachment, setIsPreparingAttachment] = useState(false);
   const [statusHint, setStatusHint] = useState("ZORVIX Mentor ready. Share your current challenge or ask for guidance.");
   const [backendHealth, setBackendHealth] = useState<ChatbotHealthResponse | null>(null);
   const [attachment, setAttachment] = useState<ChatAttachmentPayload | null>(null);
-  const [attachmentPreview, setAttachmentPreview] = useState<AttachmentPreview | null>(null);
+  const [, setAttachmentPreview] = useState<AttachmentPreview | null>(null);
   const [lastFailure, setLastFailure] = useState<RetryState | null>(null);
   const [suggestionCycle, setSuggestionCycle] = useState(0);
   const [showSessionBanner, setShowSessionBanner] = useState(false);
   const [isSessionBannerHiding, setIsSessionBannerHiding] = useState(false);
-  const [previewText, setPreviewText] = useState<string>("");
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string>("");
   const [online, setOnline] = useState<boolean>(navigator.onLine);
-  const [assistantMode, setAssistantMode] = useState<"normal" | "cyber">("normal");
+  const [, setAssistantMode] = useState<"normal" | "cyber">("normal");
   const [assistantProfile, setAssistantProfile] = useState<AssistantProfile>(DEFAULT_PROFILE);
   const [, setMemorySummary] = useState<{
     snapshot?: { preferences?: { assistantProfile?: AssistantProfile } };
     stats?: Record<string, number>;
   } | null>(null);
-  const [memoryLoading, setMemoryLoading] = useState(false);
+  const [, setMemoryLoading] = useState(false);
   const hasLocalToken = Boolean(getStoredAccessToken());
   const canUseSyncedSession = isAuthenticated || hasLocalToken;
   const authStillLoading = authState === "loading";
 
   const deferredPrompt = useDeferredValue(input);
-  const deferredSuggestions = useDeferredValue(suggestions);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -842,49 +826,6 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
     if (backendHealth?.status === "degraded" && !backendHealth?.fallback_ready) return "Degraded";
     return "Ready";
   }, [backendHealth?.fallback_ready, backendHealth?.status, isStreaming, online]);
-
-  const sessionBannerLabel = useMemo(() => {
-    if (!online) return "Offline mode ready";
-    if (backendHealth?.mode === "fallback_active") return "Stable mode active";
-    if (backendHealth?.mode === "local_fallback") return "Local stable mode active";
-    if (backendHealth?.status === "degraded") return "Stable replies active";
-    return "Connection stable - chat ready";
-  }, [backendHealth?.mode, backendHealth?.status, online]);
-
-  const buildProfileForMode = useCallback(
-    (mode: "normal" | "cyber"): AssistantProfile => {
-      if (mode === "cyber") {
-        return {
-          ...DEFAULT_PROFILE,
-          tone: "professional",
-          style: "deep-dive",
-          audience: "security_analyst",
-        };
-      }
-      return {
-        ...DEFAULT_PROFILE,
-        tone: "friendly",
-        style: "balanced",
-        audience: "general",
-      };
-    },
-    []
-  );
-
-  const applyAssistantMode = useCallback(
-    async (mode: "normal" | "cyber") => {
-      const nextProfile = buildProfileForMode(mode);
-      setAssistantMode(mode);
-      setAssistantProfile(nextProfile);
-      if (!canUseSyncedSession) return;
-      try {
-        await api.post("/api/neurobot/preferences", { assistantProfile: nextProfile });
-      } catch {
-        // ignore preference save failures
-      }
-    },
-    [buildProfileForMode, canUseSyncedSession]
-  );
 
   const refreshMemorySummary = useCallback(async () => {
     if (!canUseSyncedSession) {
@@ -1454,37 +1395,6 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
     ]
   );
 
-  const runPreview = useCallback(async () => {
-    const composerAttachment = attachment;
-    const prompt = String(input).trim() || (composerAttachment ? DEFAULT_ATTACHMENT_PROMPT : "");
-    if (!prompt || isStreaming || isPreparingAttachment) return;
-    setPreviewLoading(true);
-    setPreviewError("");
-    setPreviewText("");
-    try {
-      const previewResponse = await api.post<{ response?: string }>("/api/neurobot/preview", {
-        message: prompt,
-        assistantProfile: assistantProfile || DEFAULT_PROFILE,
-        attachments: composerAttachment ? [composerAttachment] : [],
-        topic: activeTopic
-          ? {
-              id: activeTopic.id,
-              title: activeTopic.title,
-              query: activeTopic.query || "",
-              tags: activeTopic.tags || [],
-              roadmapDay: activeTopic.roadmapDay,
-            }
-          : null,
-      });
-      setPreviewText(String(previewResponse.data?.response || "").trim());
-    } catch (error) {
-      const detail = error instanceof ApiError ? error.message : "Preview failed.";
-      setPreviewError(detail);
-    } finally {
-      setPreviewLoading(false);
-    }
-  }, [activeTopic, assistantProfile, attachment, input, isPreparingAttachment, isStreaming]);
-
   useEffect(() => {
     runAssistantRef.current = async (
       prompt?: string,
@@ -1732,40 +1642,6 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
       });
     } finally {
       setIsPreparingAttachment(false);
-    }
-  };
-
-  const handleNewChat = async () => {
-    if (isStreaming) abortStream("Generation stopped. Starting a fresh chat.");
-    if (!canUseSyncedSession) {
-      setMessages([]);
-      setActiveTopic(null);
-      setInput("");
-      setLastFailure(null);
-      resetAttachment();
-      setSuggestionCycle((current) => current + 1);
-      setIsSuggestionOpen(false);
-      setIsUtilityMenuOpen(false);
-      showFreshSessionBanner("ZORVIX is ready.");
-      setStatusHint("Sign in karo to chat history sync aur reset ho sake.");
-      scrollToBottom("auto");
-      return;
-    }
-    try {
-      const clearResponse = await api.post<SessionResponse>("/api/neurobot/history/clear", { scope: "session" });
-      const clearPayload = clearResponse.data;
-      setMessages(normalizeMessages(clearPayload.messages || []));
-      setActiveTopic(null);
-      setInput("");
-      setLastFailure(null);
-      resetAttachment();
-      setSuggestionCycle((current) => current + 1);
-      setIsSuggestionOpen(false);
-      setIsUtilityMenuOpen(false);
-      showFreshSessionBanner("ZORVIX is ready.");
-      scrollToBottom("auto");
-    } catch {
-      setStatusHint("Session abhi clear nahi ho paya. Ek sec baad retry karo.");
     }
   };
 

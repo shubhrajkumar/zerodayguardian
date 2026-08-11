@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { ArrowRight, Swords, Terminal, Shield, Zap, Radar, Activity, Cpu, Globe, Network, Wifi } from "lucide-react";
+import { ArrowRight, Swords, Terminal, Shield, Zap, Radar, Cpu } from "lucide-react";
 import { motion, useAnimation } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { staggerContainer, staggerItem, tapScale } from "@/lib/animations";

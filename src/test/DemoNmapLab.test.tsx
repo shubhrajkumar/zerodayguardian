@@ -277,7 +277,6 @@ describe("DemoNmapLab", () => {
 
   // ── Scan flow (mocked fetch) ──
   // Phase delays total ~3s, so use generous test timeout
-  const SCAN_TEST_TIMEOUT = 15_000;
 
   it("completes a scan and shows result cards", async () => {
     mockFetchSuccess();

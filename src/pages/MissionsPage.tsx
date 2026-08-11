@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PlayCircle, CheckCircle, Lock, Clock, Zap, Trophy } from "lucide-react";
+import { PlayCircle, CheckCircle, Clock, Zap, Trophy } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import { useAuth } from "@/context/AuthContext";
 import { useGamificationSystem, type GamifiedMission, type MissionScope } from "@/lib/gamificationSystem";

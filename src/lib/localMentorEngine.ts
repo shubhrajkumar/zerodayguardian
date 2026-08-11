@@ -71,7 +71,7 @@ Run controlled experiments in isolation. Change one variable at a time and obser
 Every analyst's most valuable asset is their notes. Record commands, outputs, and your reasoning at each step.
 
 **Mentor Tip:** The difference between a good operator and a great one is patience. Rushing through steps causes missed findings.`,
-  (ctx: MentorContext) => `**Tactical Breakdown**
+  (_ctx: MentorContext) => `**Tactical Breakdown**
 
 Let me break this down into actionable steps:
 

@@ -5,7 +5,7 @@
  * visitors into signups by showing them a personalized learning path.
  * No backend required — all scoring logic is client-side.
  */
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
