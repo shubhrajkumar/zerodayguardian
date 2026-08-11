@@ -31,39 +31,22 @@ import { ToastContainer } from "./components/ui/toast";
 
 // ── Deferred imports: loaded after initial paint ──
 const LazyToasters = lazy(() =>
-  Promise.all([
-    import("react-hot-toast"),
-    import("sonner"),
-  ]).then(([hotMod, sonnerMod]) => {
-    const HotToaster = hotMod.Toaster;
+  import("sonner").then((sonnerMod) => {
     const SonnerToaster = sonnerMod.Toaster;
     return {
       default: () => (
-        <>
-          <HotToaster
-            position="top-right"
-            toastOptions={{
-              duration: 4200,
-              style: {
-                background: "var(--theme-card)",
-                color: "var(--theme-text)",
-                border: "1px solid var(--theme-border)",
-              },
-            }}
-          />
-          <SonnerToaster
-            position="top-right"
-            richColors
-            closeButton
-            toastOptions={{
-              style: {
-                background: "var(--theme-card)",
-                color: "var(--theme-text)",
-                border: "1px solid var(--theme-border)",
-              },
-            }}
-          />
-        </>
+        <SonnerToaster
+          position="top-right"
+          richColors
+          closeButton
+          toastOptions={{
+            style: {
+              background: "var(--theme-card)",
+              color: "var(--theme-text)",
+              border: "1px solid var(--theme-border)",
+            },
+          }}
+        />
       ),
     };
   })
