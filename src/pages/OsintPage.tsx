@@ -23,7 +23,8 @@ import {
   Zap,
   Info,
 } from "lucide-react";
-import { getStoredAccessToken, apiGetJson } from "@/lib/apiClient";
+import { apiGetJson } from "@/lib/apiClient";
+import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { getPyApiUserMessage } from "@/lib/pyApiClient";
 import IpGeolocationTool from "@/components/IpGeolocationTool";
@@ -173,6 +174,7 @@ const RESOURCE_ICONS: Record<string, React.ReactNode> = {
 
 // ── OsintPage Component ──
 const OsintPage = () => {
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [toolMode, setToolMode] = useState<ToolMode>("osint");
   const [dorkCopiedIdx, setDorkCopiedIdx] = useState<number | null>(null);
@@ -198,7 +200,7 @@ const OsintPage = () => {
   const [, setPyRecError] = useState("");
 
   const loadPyRecommendations = useCallback(async () => {
-    if (!getStoredAccessToken()) {
+    if (!isAuthenticated) {
       setPyRecommendations(null); setPyRecError(""); return;
     }
     setPyRecLoading(true); setPyRecError("");

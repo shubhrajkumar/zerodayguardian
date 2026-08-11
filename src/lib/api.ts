@@ -40,10 +40,7 @@ const getCsrfToken = () => getCsrfTokenFromSession() || getCsrfTokenFromCookie()
 
 // REQUEST INTERCEPTOR
 api.interceptors.request.use(async (config) => {
-  const token = localStorage.getItem('zdg_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  // Session auth is cookie-based — the browser sends httpOnly cookies automatically.
 
   // Attach CSRF token for state-changing requests (required by backend)
   const method = (config.method || 'get').toLowerCase();
@@ -149,43 +146,23 @@ api.interceptors.response.use(
       
       originalRequest._retry = true;
       isRefreshing = true;
-      
-      const storedRefresh = localStorage.getItem('zdg_refresh');
 
-      if (storedRefresh) {
-        try {
-          const refreshUrl = resolvedBaseUrl ? `${resolvedBaseUrl}/api/auth/refresh` : '/api/auth/refresh';
-          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-          // Send refresh token as Authorization Bearer header as fallback
-          // when cookies are unavailable (third-party context, cross-origin, etc.)
-          headers.Authorization = `Bearer ${storedRefresh}`;
-          const response = await axios.post(
-            refreshUrl,
-            { refreshToken: storedRefresh },
-            { withCredentials: true, headers }
-          );
-          
-          const newToken = response.data.accessToken;
-          localStorage.setItem('zdg_token', newToken);
-          
-          failedQueue.forEach(p => p.resolve(newToken));
-          failedQueue = [];
-          
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return api(originalRequest);
-          
-        } catch (refreshError) {
-          failedQueue.forEach(p => p.reject(refreshError));
-          failedQueue = [];
-          localStorage.clear();
-          window.location.href = '/auth';
-          return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
-        }
-      } else {
-        localStorage.clear();
-        window.location.href = '/auth';
+      try {
+        const refreshUrl = resolvedBaseUrl ? `${resolvedBaseUrl}/api/auth/refresh` : '/api/auth/refresh';
+        // Cookie-based refresh — the httpOnly refresh cookie is sent automatically
+        await axios.post(refreshUrl, {}, { withCredentials: true });
+
+        failedQueue.forEach(p => p.resolve(undefined));
+        failedQueue = [];
+
+        return api(originalRequest);
+      } catch (refreshError) {
+        failedQueue.forEach(p => p.reject(refreshError));
+        failedQueue = [];
+        window.location.assign('/auth');
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
     

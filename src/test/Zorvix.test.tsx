@@ -10,7 +10,6 @@ const mockUseMissionSystem = vi.fn();
 const mockApiGet = vi.fn();
 const mockApiPost = vi.fn();
 const mockApiFetch = vi.fn();
-const mockGetStoredAccessToken = vi.fn();
 const mockToast = vi.fn();
 
 vi.mock("@/context/AuthContext", () => ({
@@ -42,7 +41,6 @@ vi.mock("@/lib/apiClient", () => ({
     }
   },
   apiFetch: (...args: unknown[]) => mockApiFetch(...args),
-  getStoredAccessToken: () => mockGetStoredAccessToken(),
 }));
 
 vi.mock("@/lib/groqDirect", () => ({
@@ -99,7 +97,6 @@ describe("Zorvix", () => {
     vi.clearAllMocks();
     mockUseAuth.mockReturnValue(defaultAuthState);
     mockUseMissionSystem.mockReturnValue(defaultMissionState);
-    mockGetStoredAccessToken.mockReturnValue("mock-token-abc123");
     mockApiGet.mockImplementation((url: string) => {
       if (url === "/api/health/chatbot") return Promise.resolve(mockHealthResponse);
       if (url === "/api/neurobot/session") return Promise.resolve(mockSessionResponse);
@@ -430,7 +427,6 @@ describe("Zorvix", () => {
       isAuthenticated: false,
       user: null,
     });
-    mockGetStoredAccessToken.mockReturnValue("");
 
     await act(async () => {
       renderZorvix(true);

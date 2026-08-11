@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getPyApiUserMessage } from "@/lib/pyApiClient";
-import { apiGetJson, apiPostJson, getStoredAccessToken } from "@/lib/apiClient";
+import { apiGetJson, apiPostJson } from "@/lib/apiClient";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { safeArray } from "@/utils/safeData";
@@ -421,7 +421,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
 
   const refreshMissionData = useCallback(async () => {
     if (authState === "loading") return;
-    if (!isAuthenticated || !user || !getStoredAccessToken()) {
+    if (!isAuthenticated || !user) {
       setMissionData(emptyPayload);
       setError("");
       return;
@@ -462,7 +462,7 @@ export const MissionSystemProvider = ({ children }: { children: ReactNode }) => 
 
   const recordAction = useCallback(
     async (actionType: MissionActionType, options?: { target?: string; metadata?: Record<string, unknown> }) => {
-      if (!isAuthenticated || !user || !getStoredAccessToken()) return;
+      if (!isAuthenticated || !user) return;
       try {
         const response = await apiPostJson<MissionActionResponse>("/api/mission-control/actions", {
           action_type: actionType,

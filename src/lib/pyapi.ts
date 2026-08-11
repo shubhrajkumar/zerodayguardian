@@ -24,10 +24,7 @@ const pyapi = axios.create({
 
 // REQUEST INTERCEPTOR
 pyapi.interceptors.request.use(async (config) => {
-  const token = localStorage.getItem("zdg_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  // Session auth is cookie-based — the browser sends httpOnly cookies automatically.
   // Attach CSRF token for state-changing requests
   const method = (config.method || 'get').toLowerCase();
   if (!['get', 'head', 'options'].includes(method)) {
@@ -65,40 +62,25 @@ pyapi.interceptors.response.use(
       
       originalRequest._retry = true;
       isRefreshing = true;
-      
-      const refreshToken = localStorage.getItem('zdg_refresh');
-      
-      if (refreshToken) {
-        try {
-          const response = await axios.post(
-            `${API_BASE_URL || ''}/api/auth/refresh`,
-            { refreshToken },
-            { withCredentials: true }
-          );
-          
-          const newToken = response.data.accessToken;
-          localStorage.setItem('zdg_token', newToken);
-          
-          failedQueue.forEach(p => p.resolve(newToken));
-          failedQueue = [];
-          
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          }
-          return pyapi(originalRequest);
-          
-        } catch (refreshError) {
-          failedQueue.forEach(p => p.reject(refreshError));
-          failedQueue = [];
-          localStorage.clear();
-          window.location.href = '/auth';
-          return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
-        }
-      } else {
-        localStorage.clear();
-        window.location.href = '/auth';
+
+      try {
+        await axios.post(
+          `${API_BASE_URL || ''}/api/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+
+        failedQueue.forEach(p => p.resolve(undefined));
+        failedQueue = [];
+
+        return pyapi(originalRequest);
+      } catch (refreshError) {
+        failedQueue.forEach(p => p.reject(refreshError));
+        failedQueue = [];
+        window.location.assign('/auth');
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
     

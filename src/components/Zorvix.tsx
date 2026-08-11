@@ -21,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { ApiError, apiFetch, getStoredAccessToken } from "@/lib/apiClient";
+import { ApiError, apiFetch } from "@/lib/apiClient";
 import api from "@/lib/api";
 import { NeuroMessage, NeuroTopicContext } from "@/lib/neurobotEngine";
 import { useAuth } from "@/context/AuthContext";
@@ -776,8 +776,7 @@ const Zorvix = ({ fullScreen = false }: ZorvixProps) => {
     stats?: Record<string, number>;
   } | null>(null);
   const [, setMemoryLoading] = useState(false);
-  const hasLocalToken = Boolean(getStoredAccessToken());
-  const canUseSyncedSession = isAuthenticated || hasLocalToken;
+  const canUseSyncedSession = isAuthenticated;
   const authStillLoading = authState === "loading";
 
   const deferredPrompt = useDeferredValue(input);

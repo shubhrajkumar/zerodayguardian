@@ -1,12 +1,5 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { User as FirebaseUser } from "firebase/auth";
-import {
-  clearAuthState,
-  getStoredAccessToken,
-  setStoredAuthState,
-  getStoredAuthState,
-  bootstrapAuthSession,
-} from "@/lib/apiClient";
+import { clearAuthState } from "@/lib/apiClient";
 import api from "@/lib/api";
 import { firebaseAuth, initFirebase } from "@/lib/firebase";
 
@@ -26,7 +19,6 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isVerified: boolean;
   user: AuthUser | null;
-  token: string;
   login: (payload: { accessToken: string; refreshToken: string; user: AuthUser }) => void;
   refreshAuth: (force?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -34,147 +26,66 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const toFirebaseAuthUser = (firebaseUser: FirebaseUser): AuthUser => ({
-  id: firebaseUser.uid,
-  name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Guardian",
-  email: firebaseUser.email || "",
-  role: "user",
-});
-
 /**
- * Restore user from cached auth state (written by apiClient on successful API auth).
+ * Fetch the authenticated user from the backend. The session lives in httpOnly
+ * cookies — this is the single source of truth for auth state.
  */
-const restoreCachedUser = (): AuthUser | null => {
+const fetchMe = async (): Promise<AuthUser | null> => {
   try {
-    const cachedAuth = getStoredAuthState();
-    if (cachedAuth?.isAuthenticated && cachedAuth?.user) {
-      const u = cachedAuth.user;
+    const response = await api.get<{ authenticated?: boolean; user?: AuthUser; success?: boolean }>("/api/auth/me", {
+      timeout: 8000,
+    });
+    if ((response.data.authenticated || response.data.success) && response.data.user) {
+      const u = response.data.user;
       return {
-        id: String(u.id || u._id || ""),
-        name: String(u.name || u.displayName || "Guardian"),
+        id: String(u.id || ""),
+        name: String(u.name || "Guardian"),
         email: String(u.email || ""),
         role: String(u.role || "user"),
       };
     }
+    return null;
   } catch {
-    // ignore
+    return null;
   }
-  return null;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState("");
   const initAuthRef = useRef(false);
 
   const syncAuthState = useCallback((nextUser: AuthUser | null) => {
     setUser(nextUser);
-    const storedToken = getStoredAccessToken();
-    setToken(nextUser ? storedToken : "");
     if (!nextUser) {
       clearAuthState();
-    } else {
-      setStoredAuthState({
-        isAuthenticated: true,
-        user: nextUser as unknown as Record<string, unknown>,
-        timestamp: Date.now(),
-        accessToken: storedToken,
-      });
     }
     setAuthState(nextUser ? "authenticated" : "unauthenticated");
     return Boolean(nextUser);
   }, []);
 
   const login = useCallback((payload: { accessToken: string; refreshToken: string; user: AuthUser }) => {
-    try {
-      if (payload.accessToken) localStorage.setItem("zdg_token", payload.accessToken);
-      if (payload.refreshToken) localStorage.setItem("zdg_refresh", payload.refreshToken);
-    } catch {
-      // storage unavailable
-    }
-    setStoredAuthState({
-      isAuthenticated: true,
-      user: payload.user as unknown as Record<string, unknown>,
-      timestamp: Date.now(),
-      accessToken: payload.accessToken,
-    });
-    setToken(payload.accessToken);
+    // The backend sets the httpOnly session cookies on login — the tokens in the
+    // response body are never persisted to localStorage.
     setUser(payload.user);
     setAuthState("authenticated");
   }, []);
 
-  const refreshAuth = useCallback(async (_force?: boolean): Promise<boolean> => {
-    // 1. Try token verify first (silent — no toast, no redirect)
-    const storedToken = localStorage.getItem("zdg_token");
-    if (storedToken && storedToken.length > 10) {
-      try {
-        const response = await api.get<{ authenticated?: boolean; user?: AuthUser; success?: boolean }>("/api/auth/verify", {
-          timeout: 8000,
-        });
-        if ((response.data.authenticated || response.data.success) && response.data.user) {
-          return syncAuthState(response.data.user);
-        }
-      } catch {
-        // token verify failed, try refresh silently
-      }
-    }
+  const refreshAuth = useCallback(async (): Promise<boolean> => {
+    // 1. Single source of truth: verify the httpOnly cookie session
+    const me = await fetchMe();
+    if (me) return syncAuthState(me);
 
-    // 2. Try silent refresh
-    const storedRefreshToken = localStorage.getItem("zdg_refresh");
-    if (storedRefreshToken) {
-      try {
-        const response = await api.post<{ accessToken?: string; user?: AuthUser; status?: string }>(
-          "/api/auth/refresh",
-          { refreshToken: storedRefreshToken },
-          { timeout: 10000 }
-        );
-        if (response.data.accessToken) {
-          localStorage.setItem("zdg_token", response.data.accessToken);
-        }
-        if (response.data.user) {
-          return syncAuthState(response.data.user);
-        }
-        // If no user but got token, try getting user profile
-        if (response.data.accessToken) {
-          try {
-            const userRes = await api.get<{ user?: AuthUser }>("/api/auth/me");
-            if (userRes.data.user) {
-              return syncAuthState(userRes.data.user);
-            }
-          } catch {
-            // user fetch failed
-          }
-        }
-      } catch {
-        // refresh failed — only clear if BOTH verify AND refresh fail
-      }
-    }
-
-    // 3. Try bootstrapAuthSession from apiClient
+    // 2. Silent cookie-based refresh, then re-check
     try {
-      const result = await bootstrapAuthSession();
-      if (result.ok) {
-        const cachedUser = restoreCachedUser();
-        if (cachedUser) return syncAuthState(cachedUser);
-      }
+      await api.post<{ status?: string }>("/api/auth/refresh", {}, { timeout: 10000 });
+      const refreshedMe = await fetchMe();
+      if (refreshedMe) return syncAuthState(refreshedMe);
     } catch {
-      // bootstrap failed
+      // refresh failed — session is genuinely expired
     }
 
-    // 4. Try Firebase currentUser (fast path)
-    await initFirebase();
-    if (firebaseAuth?.currentUser) {
-      return syncAuthState(toFirebaseAuthUser(firebaseAuth.currentUser));
-    }
-
-    // 5. Restore from cached auth state as last resort
-    const cachedUser = restoreCachedUser();
-    if (cachedUser) return syncAuthState(cachedUser);
-
-    // 6. Clear only if ALL methods fail
-    localStorage.removeItem("zdg_token");
-    localStorage.removeItem("zdg_refresh");
+    // 3. No valid session
     return syncAuthState(null);
   }, [syncAuthState]);
 
@@ -188,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (cancelled) return;
 
       if (!firebaseAuth) {
-        // Try silent auth refresh first — no loading gate
+        // No Firebase — verify the backend cookie session directly
         if (!initAuthRef.current) {
           initAuthRef.current = true;
           refreshAuth().catch(() => { /* silent fail */ });
@@ -199,17 +110,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Dynamic import of firebase/auth — keeps Firebase out of the main bundle
       const { onAuthStateChanged } = await import("firebase/auth");
 
-      unsub = onAuthStateChanged(firebaseAuth, (fbUser) => {
-        if (fbUser) {
-          initAuthRef.current = true;
-          syncAuthState(toFirebaseAuthUser(fbUser as FirebaseUser));
-          return;
-        }
-        // Silent refresh: only run if we haven't already done initial auth check
-        if (!initAuthRef.current) {
-          initAuthRef.current = true;
-          refreshAuth().catch(() => { /* silent fail */ });
-        }
+      unsub = onAuthStateChanged(firebaseAuth, () => {
+        if (initAuthRef.current) return;
+        initAuthRef.current = true;
+        // Firebase reflects Google sign-in/sign-out, but the session truth is
+        // the backend cookie — re-verify via /api/auth/me
+        refreshAuth().catch(() => { /* silent fail */ });
       });
     })();
 
@@ -218,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       cancelled = true;
       unsub?.();
     };
-  }, [refreshAuth, syncAuthState]);
+  }, [refreshAuth]);
 
   const logout = useCallback(async () => {
     // Dynamic import of firebase/auth for signOut — keeps Firebase out of main bundle
@@ -236,13 +142,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch {
       // Backend may reject with 403 CSRF if session expired — proceed with local cleanup
     }
-    try {
-      localStorage.removeItem("zdg_token");
-      localStorage.removeItem("zdg_refresh");
-    } catch {
-      // storage unavailable
-    }
-    clearAuthState();
     syncAuthState(null);
   }, [syncAuthState]);
 
@@ -254,12 +153,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAuthenticated: authState === "authenticated",
       isVerified: Boolean(user),
       user,
-      token,
       login,
       refreshAuth,
       logout,
     }),
-    [authState, login, logout, refreshAuth, token, user]
+    [authState, login, logout, refreshAuth, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

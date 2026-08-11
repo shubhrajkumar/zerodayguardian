@@ -18,11 +18,15 @@ const collectConsole = (page: Page, type: "error" | "warning" = "error") => {
  * before ANY JavaScript executes on the page.
  */
 const enableMockAuth = (page: Page) => {
-  return page.addInitScript(() => {
-    const mockUser = { id: "test-user-1", name: "Test Guardian", email: "test@zerodayguardian.com", role: "user" };
-    localStorage.setItem("auth_state", JSON.stringify({ isAuthenticated: true, user: mockUser, timestamp: Date.now(), accessToken: "test-access-token-e2e" }));
-    localStorage.setItem("zdg_token", "test-access-token-e2e");
-  });
+  // Session auth is cookie-based now — mock the /api/auth/me endpoint instead of seeding localStorage
+  const mockUser = { id: "test-user-1", name: "Test Guardian", email: "test@zerodayguardian.com", role: "user" };
+  return page.route("**/api/auth/me", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, status: "ok", authenticated: true, user: mockUser }),
+    })
+  );
 };
 
 /** Filter out expected backend errors that occur without a real backend */

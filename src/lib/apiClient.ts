@@ -1,12 +1,12 @@
 import { toast } from "@/hooks/use-toast";
 import { resolveApiUrl, resolveBackendUrl } from "@/lib/apiConfig";
 import { recordClientDiagnostic, recordRuntimeDebugEvent } from "@/lib/runtimeDiagnostics";
-export const ACCESS_TOKEN_KEY = "neurobot_access_token";
-export const ZDG_ACCESS_TOKEN_KEY = "zdg_token";
-export const ZDG_USER_KEY = "zdg_user";
+
+// Session auth lives in httpOnly cookies set by the backend — the client never
+// persists tokens to localStorage. CSRF tokens are stored in sessionStorage only.
+
 const REFRESH_BLOCK_KEY = "neurobot_refresh_block_until";
 const CSRF_TOKEN_KEY = "neurobot_csrf_token";
-export const ZDG_REFRESH_TOKEN_KEY = "zdg_refresh";
 
 const verboseApiLogging =
   String(import.meta.env.VITE_ENABLE_FIREBASE_DIAGNOSTICS || "").trim().toLowerCase() === "true";
@@ -57,9 +57,9 @@ export const ensureCsrf = async () => {
     logDebug(`[CSRF] Using existing token: ${existingToken.substring(0, 8)}...`);
     return existingToken;
   }
-  
+
   logDebug("[CSRF] No existing token found, fetching new CSRF token");
-  
+
   try {
     const response = await fetch(resolveApiUrl("/api/auth/csrf"), {
       credentials: "include",
@@ -68,17 +68,17 @@ export const ensureCsrf = async () => {
         Accept: "application/json",
       },
     });
-    
+
     if (!response.ok) {
       throw new Error(`CSRF endpoint failed: ${response.status}`);
     }
-    
+
     const payload = (await response.json().catch(() => ({}))) as { csrfToken?: string };
     const token = setStoredCsrfToken(String(payload?.csrfToken || "").trim() || getCookie("neurobot_csrf"));
     if (!token) {
       throw new Error("CSRF token was not returned by the backend");
     }
-    
+
     logDebug(`[CSRF] Successfully fetched new token: ${token.substring(0, 8)}...`);
     return token;
   } catch (error) {
@@ -87,76 +87,9 @@ export const ensureCsrf = async () => {
   }
 };
 
-export const getStoredAccessToken = () => {
-  try {
-    return localStorage.getItem(ZDG_ACCESS_TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY) || "";
-  } catch {
-    return "";
-  }
-};
-
-export const getStoredRefreshToken = () => {
-  try {
-    return localStorage.getItem(ZDG_REFRESH_TOKEN_KEY) || "";
-  } catch {
-    return "";
-  }
-};
-
-const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
-  try {
-    const [, payload = ""] = String(token || "").split(".");
-    if (!payload) return null;
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
-    return JSON.parse(atob(padded)) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-};
-
-const isStoredAccessTokenExpired = (token: string, skewSeconds = 30) => {
-  const payload = decodeJwtPayload(token);
-  const exp = Number(payload?.exp || 0);
-  if (!exp) return false;
-  return exp <= Math.floor(Date.now() / 1000) + skewSeconds;
-};
-
-export const setStoredAccessToken = (token: string) => {
-  try {
-    if (token) {
-      localStorage.setItem(ZDG_ACCESS_TOKEN_KEY, token);
-      localStorage.setItem(ACCESS_TOKEN_KEY, token);
-      localStorage.removeItem(REFRESH_BLOCK_KEY);
-    }
-  } catch {
-    // ignore storage failures
-  }
-};
-
-export const setStoredRefreshToken = (token: string) => {
-  try {
-    if (token) {
-      localStorage.setItem(ZDG_REFRESH_TOKEN_KEY, token);
-    }
-  } catch {
-    // ignore storage failures
-  }
-};
-
-export const clearStoredAccessToken = () => {
-  try {
-    localStorage.removeItem(ZDG_ACCESS_TOKEN_KEY);
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(ZDG_REFRESH_TOKEN_KEY);
-  } catch {
-    // ignore storage failures
-  }
-};
-
 export const clearAnonymousClientState = () => {
   try {
-    const keep = new Set(["theme", "theme:mode", "app:theme", "auth_state"]);
+    const keep = new Set(["theme", "theme:mode", "app:theme"]);
     const prefixes = ["neurobot:", "lab:", "tools:", "zdg:"];
     for (let i = localStorage.length - 1; i >= 0; i -= 1) {
       const key = localStorage.key(i);
@@ -173,85 +106,34 @@ export const clearAnonymousClientState = () => {
   }
 };
 
-// Enhanced authentication state management
-export type StoredAuthState = {
-  isAuthenticated: boolean;
-  user?: Record<string, unknown>;
-  timestamp?: number;
-  accessToken?: string; 
-};
-
-export const getStoredAuthState = (): StoredAuthState | null => {
-  try {
-    const cachedAuth = localStorage.getItem("auth_state");
-    if (cachedAuth) {
-      const authData = JSON.parse(cachedAuth);
-      if (authData.isAuthenticated && authData.user) {
-        return authData;
-      }
-    }
-    return null;
-  } catch (error) {
-    logDebugError("[API] Error reading stored auth state:", error);
-    return null;
-  }
-};
-
-export const setStoredAuthState = (authData: StoredAuthState): void => {
-  try {
-    localStorage.setItem("auth_state", JSON.stringify(authData));
-    if (authData.user) localStorage.setItem(ZDG_USER_KEY, JSON.stringify(authData.user));
-  } catch (error) {
-    logDebugError("[API] Error storing auth state:", error);
-  }
-};
-
+/**
+ * Purge any legacy token keys that may remain from older sessions, plus CSRF
+ * state. The actual auth session is revoked server-side via /api/auth/logout
+ * which clears the httpOnly cookies.
+ */
 export const clearAuthState = (): void => {
   try {
+    localStorage.removeItem("zdg_token");
+    localStorage.removeItem("zdg_refresh");
     localStorage.removeItem("auth_state");
-    localStorage.removeItem(ZDG_USER_KEY);
+    localStorage.removeItem("zdg_user");
+    localStorage.removeItem("neurobot_access_token");
     localStorage.removeItem(REFRESH_BLOCK_KEY);
-    clearStoredAccessToken();
     setStoredCsrfToken("");
+    // Expire the session cookies in the browser (best-effort — the server also
+    // clears them via /api/auth/logout)
+    document.cookie = "zdg_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "zdg_refresh=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "neurobot_at=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "neurobot_rt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   } catch (error) {
     logDebugError("[API] Error clearing auth state:", error);
   }
 };
 
-export const checkAuthPersistence = async (): Promise<boolean> => {
-  // First check cached auth state
-  const cachedAuth = getStoredAuthState();
-  if (cachedAuth && cachedAuth.isAuthenticated && cachedAuth.user) {
-    logDebug("[API] Using cached authentication state");
-    return true;
-  }
-  
-  // If no cached data, check with server
-  try {
-    const response = await apiFetch("/api/auth/status", { method: "GET" });
-    if (response.ok) {
-      const data = await response.json();
-      if (data.authenticated && data.user) {
-        setStoredAuthState({
-          isAuthenticated: true,
-          user: data.user,
-          timestamp: Date.now()
-        });
-        return true;
-      }
-    }
-    return false;
-  } catch (error) {
-    logDebugError("[API] Auth persistence check failed:", error);
-    return false;
-  }
-};
-
 let refreshInFlight: Promise<boolean> | null = null;
 let redirectingToAuth = false;
-let meRequestInFlight: Promise<Response> | null = null;
-const meAbortController = new AbortController();
 const AUTO_RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 const AUTH_ROUTE_PATTERN = /^\/api\/auth\//i;
 const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -356,16 +238,10 @@ const triggerAuthRedirect = () => {
 
 const runRefreshRequest = async (url: string) => {
   const csrf = getCsrfToken();
-  const storedRefresh = getStoredRefreshToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(csrf ? { "X-CSRF-Token": csrf } : {}),
   };
-  // Pass stored refresh token as Authorization Bearer header as fallback
-  // when cookies are unavailable (third-party context, cross-origin, etc.)
-  if (storedRefresh) {
-    headers.Authorization = `Bearer ${storedRefresh}`;
-  }
   return fetch(url, {
     method: "POST",
     credentials: "include",
@@ -411,22 +287,17 @@ const tryRefreshSession = async () => {
         }
         if (response.status === 404) continue;
         if (response.ok) {
-     const payload = (await response.json()) as { accessToken?: string; refreshToken?: string };
-           if (payload?.accessToken && payload?.refreshToken) {
-             setStoredAccessToken(payload.accessToken);
-             setStoredRefreshToken(payload.refreshToken);
-           } else {
-             setRefreshBlockFor(30_000);
-           }
-         } else if (response.status === 401 || response.status === 403) {
-           clearAuthState();
-           setRefreshBlockFor(5 * 60_000);
-         } else if (response.status >= 500) {
-           setRefreshBlockFor(30_000);
-         }
-         return response.ok;
-       }
-       clearAuthState();
+          return true;
+        }
+        if (response.status === 401 || response.status === 403) {
+          clearAuthState();
+          setRefreshBlockFor(5 * 60_000);
+        } else if (response.status >= 500) {
+          setRefreshBlockFor(30_000);
+        }
+        return response.ok;
+      }
+      clearAuthState();
       setRefreshBlockFor(5 * 60_000);
       return false;
     } catch {
@@ -443,91 +314,39 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   const requestUrl = resolveApiUrl(url);
   const method = String(init.method || "GET").toUpperCase();
   const startTime = Date.now();
-  const isAuthMe = url === "/api/users/profile" && method === "GET";
-  const cachedAuth = getStoredAuthState();
   const requestId = makeRequestId();
   const isAuthRoute = AUTH_ROUTE_PATTERN.test(url);
   const maxAttempts =
     method === "GET" ? 2 : isAuthRoute ? 3 : requestUrl.includes("/pyapi/mission-control") ? 2 : 1;
   const maxNetworkAttempts = isAuthRoute ? 3 : method === "GET" ? 2 : 1;
-  
+
   // Reset server wake-up flag on each new request
   if (!isAuthRoute) {
     serverWakeUpShown = false;
   }
-  
-  logDebug(`[API] ${method} ${requestUrl} - Starting request`);
 
-  if (isAuthMe) {
-    let token = getStoredAccessToken();
-    const cachedAuth = getStoredAuthState();
-    if (!token) {
-      if (!cachedAuth?.isAuthenticated) {
-        logDebug(`[API] ${method} ${url} - No cached auth state, returning 401 without refresh`);
-        return new Response(null, { status: 401, statusText: "signed_out" });
-      }
-      logDebug(`[API] ${method} ${url} - No access token, attempting refresh before profile request`);
-      const refreshed = await tryRefreshSession();
-      if (!refreshed) {
-        logDebug(`[API] ${method} ${url} - No refresh session available, returning 401`);
-        return new Response(null, { status: 401, statusText: "missing_token" });
-      }
-      token = getStoredAccessToken();
-      if (!token) {
-        logDebug(`[API] ${method} ${url} - Refresh succeeded without access token, returning 401`);
-        return new Response(null, { status: 401, statusText: "missing_token" });
-      }
-    }
-    if (isStoredAccessTokenExpired(token)) {
-      logDebug(`[API] ${method} ${url} - Access token expired, attempting refresh before profile request`);
-      const refreshed = await tryRefreshSession();
-      if (!refreshed) {
-        clearStoredAccessToken();
-        return new Response(null, { status: 401, statusText: "expired_token" });
-      }
-      token = getStoredAccessToken();
-      if (!token) {
-        return new Response(null, { status: 401, statusText: "missing_token" });
-      }
-    }
-    if (meRequestInFlight) {
-      logDebug(`[API] ${method} ${url} - Reusing in-flight request`);
-      return meRequestInFlight;
-    }
-  }
+  logDebug(`[API] ${method} ${requestUrl} - Starting request`);
 
   // Ensure CSRF token for state-changing requests
   if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
-    logDebug(`[API] ${method} ${url} - Ensuring CSRF token`);
+    logDebug(`[API] ${method} ${requestUrl} - Ensuring CSRF token`);
     await ensureCsrf();
   }
-  
+
   const csrf = getCsrfToken();
-  let bearer = getStoredAccessToken();
-  if (!bearer && cachedAuth?.isAuthenticated && !url.startsWith("/api/auth/")) {
-    logDebug(`[API] ${method} ${url} - Missing bearer with authenticated session, attempting refresh`);
-    const refreshed = await tryRefreshSession();
-    if (refreshed) {
-      bearer = getStoredAccessToken();
-    }
-  }
-  
-  logDebug(`[API] ${method} ${url} - Headers:`, {
+
+  logDebug(`[API] ${method} ${requestUrl} - Headers:`, {
     hasCsrf: !!csrf,
-    hasBearer: !!bearer,
     csrfPreview: csrf ? csrf.substring(0, 8) + "..." : "none",
-    bearerPreview: bearer ? "Bearer " + bearer.substring(0, 8) + "..." : "none"
   });
 
   const headers = {
     ...(init.headers || {}),
     "X-Request-Id": requestId,
     ...(csrf && !["GET", "HEAD", "OPTIONS"].includes(method) ? { "X-CSRF-Token": csrf } : {}),
-    ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
   };
 
-  const request = () =>
-    fetch(requestUrl, { ...init, headers, credentials: "include", signal: isAuthMe ? meAbortController.signal : init.signal });
+  const request = () => fetch(requestUrl, { ...init, headers, credentials: "include" });
   const execute = async () => {
     let lastNetworkError: unknown = null;
     for (let networkAttempt = 1; networkAttempt <= maxNetworkAttempts; networkAttempt += 1) {
@@ -561,14 +380,7 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
     throw toNetworkApiError(lastNetworkError, url, method);
   };
 
-  let response = isAuthMe
-    ? await (() => {
-      meRequestInFlight = execute().finally(() => {
-        meRequestInFlight = null;
-      });
-      return meRequestInFlight;
-    })()
-    : await execute();
+  let response = await execute();
 
   let attempt = 1;
   while (attempt < maxAttempts && AUTO_RETRY_STATUS.has(response.status)) {
@@ -600,42 +412,12 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
     return response;
   }
 
-  if (isAuthMe && response.status === 401) {
-    logDebug(`[API] ${method} ${requestUrl} - Auth/me failed, clearing token`);
-    clearStoredAccessToken();
-    return response;
-  }
-
-  if (response.status === 401 && !bearer && !url.startsWith("/api/auth/")) {
-    logDebug(`[API] ${method} ${requestUrl} - No bearer token, attempting refresh before returning 401`);
-    const refreshed = await tryRefreshSession();
-    if (!refreshed) {
-      logDebug(`[API] ${method} ${requestUrl} - Refresh unavailable, returning 401`);
-      return response;
-    }
-    const refreshedBearer = getStoredAccessToken();
-    if (!refreshedBearer) {
-      logDebug(`[API] ${method} ${requestUrl} - Refresh succeeded without stored bearer, returning 401`);
-      return response;
-    }
-    response = await fetch(requestUrl, {
-      ...init,
-      headers: {
-        ...headers,
-        Authorization: `Bearer ${refreshedBearer}`,
-      },
-      credentials: "include",
-      signal: isAuthMe ? meAbortController.signal : init.signal,
-    });
-  }
-
-  if (response.status !== 401 || url.startsWith("/api/auth/")) return response;
+  if (response.status !== 401 || isAuthRoute) return response;
 
   logDebug(`[API] ${method} ${requestUrl} - Got 401, attempting session refresh`);
   const refreshed = await tryRefreshSession();
   if (!refreshed) {
     logDebug(`[API] ${method} ${requestUrl} - Session refresh failed, redirecting to auth`);
-    clearStoredAccessToken();
     triggerAuthRedirect();
     return response;
   }
@@ -644,10 +426,9 @@ export const apiFetch = async (url: string, init: RequestInit = {}) => {
   response = await request();
   if (response.status === 401) {
     logDebug(`[API] ${method} ${requestUrl} - Still 401 after refresh, redirecting to auth`);
-    clearStoredAccessToken();
     triggerAuthRedirect();
   }
-  
+
   const finalDuration = Date.now() - startTime;
   logDebug(`[API] ${method} ${requestUrl} - Completed: ${response.status} (${finalDuration}ms)`);
   return response;
@@ -901,38 +682,6 @@ export const apiDeleteJson = async <T,>(url: string): Promise<T> => {
   return response.json() as Promise<T>;
 };
 
-export const bootstrapAuthSession = async () => {
-  let token = getStoredAccessToken();
-  const cachedAuth = getStoredAuthState();
-  const oauthRedirectActive =
-    typeof window !== "undefined" &&
-    (window.location.search.includes("oauth=google") || window.location.search.includes("oauth=success"));
-  if (!token) {
-    if (!cachedAuth?.isAuthenticated && !oauthRedirectActive) return { ok: false, reason: "signed_out" as const };
-    const refreshed = await tryRefreshSession();
-    if (!refreshed) return { ok: false, reason: "missing_token" as const };
-    token = getStoredAccessToken();
-    if (!token) return { ok: false, reason: "missing_token" as const };
-  }
-  try {
-    const response = await apiFetch("/api/auth/verify", { method: "GET" });
-    if (!response.ok) {
-      clearStoredAccessToken();
-      return { ok: false, reason: "invalid_token" as const };
-    }
-    const payload = (await response.clone().json().catch(() => null)) as { authenticated?: boolean; user?: Record<string, unknown> } | null;
-    if (payload?.authenticated && payload.user) {
-      setStoredAuthState({ isAuthenticated: true, user: payload.user, timestamp: Date.now() });
-      return { ok: true as const };
-    }
-    clearStoredAccessToken();
-    return { ok: false, reason: "signed_out" as const };
-  } catch {
-    clearStoredAccessToken();
-    return { ok: false, reason: "network_error" as const };
-  }
-};
-
 // Optional helper for code paths that still use axios.
 export const installAxiosAuthInterceptor = (axiosInstance: {
   defaults?: { withCredentials?: boolean };
@@ -942,13 +691,10 @@ export const installAxiosAuthInterceptor = (axiosInstance: {
   };
 }) => {
   if (!axiosInstance) return;
+  // Auth is cookie-based — the browser sends httpOnly cookies automatically.
   if (axiosInstance.defaults) axiosInstance.defaults.withCredentials = true;
   axiosInstance.interceptors?.request?.use?.((config) => {
     const next = { ...config };
-    const headers = { ...(next.headers as Record<string, unknown>) };
-    const token = getStoredAccessToken();
-    if (token && !headers.Authorization) headers.Authorization = `Bearer ${token}`;
-    next.headers = headers;
     next.withCredentials = true;
     return next;
   });
@@ -957,8 +703,8 @@ export const installAxiosAuthInterceptor = (axiosInstance: {
     async (error) => {
       const status = Number(error?.response?.status || 0);
       if (status === 401) {
-        clearStoredAccessToken();
-        triggerAuthRedirect();
+        const refreshed = await tryRefreshSession();
+        if (!refreshed) triggerAuthRedirect();
       }
       if (status === 429) {
         toast({ title: "You are sending requests too fast. Please retry shortly." });

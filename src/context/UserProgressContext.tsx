@@ -1,5 +1,4 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getStoredAccessToken } from "@/lib/apiClient";
 import api from "@/lib/api";
 import { AxiosError } from "axios";
 import { useAuth } from "@/context/AuthContext";
@@ -163,11 +162,10 @@ const flushTelemetryBatch = async () => {
   telemetry403ReceivedUntil = 0;
   const batch = telemetryBatch.splice(0, TELEMETRY_MAX_BATCH);
   try {
-    const token = localStorage.getItem('zdg_token');
-    if (!token) return;
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/intelligence/telemetry/event`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ batch, events: batch.length, timestamp: Date.now() }),
     });
     if (response.status === 403) {
@@ -199,7 +197,7 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshProgress = useCallback(async () => {
     if (authState === "loading") return;
-    if (!isAuthenticated || !getStoredAccessToken()) {
+    if (!isAuthenticated) {
       setProgress(defaultProgress);
       setLoading(false);
       return;
@@ -278,7 +276,7 @@ export const UserProgressProvider = ({ children }: { children: ReactNode }) => {
     success?: boolean;
     metadata?: Record<string, unknown>;
   }) => {
-    if (!getStoredAccessToken()) return;
+    if (!isAuthenticated) return;
     
     // Queue into batch instead of sending immediately
     telemetryBatch.push(payload);
