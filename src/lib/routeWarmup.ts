@@ -1,22 +1,16 @@
 type RouteKey =
   | "dashboard"
-  | "learn"
   | "lab"
   | "tools"
-  | "resources"
-  | "community"
   | "osint"
-  | "program";
+  | "scan";
 
 const routeLoaders: Record<RouteKey, () => Promise<unknown>> = {
   dashboard: () => import("@/pages/DashboardPage"),
-  learn: () => import("@/pages/LearnPage"),
   lab: () => import("@/pages/LabPage"),
   tools: () => import("@/pages/ToolsPage"),
-  resources: () => import("@/pages/ResourcesPage"),
-  community: () => import("@/pages/CommunityPage"),
   osint: () => import("@/pages/OsintPage"),
-  program: () => import("@/pages/ProgramPage"),
+  scan: () => import("@/pages/ScanPage"),
 };
 
 const loadedRoutes = new Set<RouteKey>();
@@ -34,7 +28,7 @@ export const preloadRoutes = (routes: RouteKey[]) => {
 };
 
 export const warmHighIntentRoutes = () => {
-  const run = () => preloadRoutes(["dashboard", "learn", "lab", "tools"]);
+  const run = () => preloadRoutes(["dashboard", "lab", "tools", "scan"]);
   if (typeof window === "undefined") return;
 
   const idleScheduler = window.requestIdleCallback

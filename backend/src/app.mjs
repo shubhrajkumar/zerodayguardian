@@ -27,6 +27,7 @@ import notificationRoutes from "../api/notifications/notificationRoutes.mjs";
 import scanRoutes from "../api/scans/scanRoutes.mjs";
 import fileRoutes from "../api/files/fileRoutes.mjs";
 import osintRoutes from "./routes/osintRoutes.js";
+import scanHistoryRoutes from "./routes/scanHistoryRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import labsRoutes from "./routes/labsRoutes.js";
@@ -682,6 +683,8 @@ export const createApp = () => {
   app.use("/api/mission-control", requireAuth, apiReadRateLimit, missionControlRoutes);
   // Compliance / GDPR routes
   app.use("/api/compliance", requireAuth, complianceRoutes);
+  // Port scan with persisted history — requires cookie auth
+  app.use("/api/scan", requireCsrf, requireAuth, intelligenceRateLimit, scanHistoryRoutes);
   // Tool routes — require authentication to prevent abuse
   app.use("/api/tools/portscan", requireAuth, portScanRoutes);
   app.use("/api/tools/subdomains", requireAuth, subdomainRoutes);

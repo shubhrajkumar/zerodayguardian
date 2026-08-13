@@ -1,6 +1,6 @@
 import express from "express";
 import { z } from "zod";
-import { validateBody } from "../middleware/validate.mjs";
+import { validateBody, validateParams } from "../middleware/validate.mjs";
 import { requireRole } from "../middleware/auth.mjs";
 import { platformArchitecture } from "../config/platform.mjs";
 import { cacheMiddleware } from "../middleware/cache.middleware.mjs";

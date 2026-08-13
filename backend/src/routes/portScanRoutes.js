@@ -6,7 +6,7 @@ import rateLimit from "express-rate-limit";
 const router = Router();
 
 // Block private/internal hosts (SSRF protection)
-const isBlockedHost = (hostname) => {
+export const isBlockedHost = (hostname) => {
   const h = hostname.toLowerCase();
   if (
     h === 'localhost' ||
@@ -23,7 +23,7 @@ const isBlockedHost = (hostname) => {
 };
 
 // Check if a resolved IP address is in a private range
-const isPrivateIp = (ip) => {
+export const isPrivateIp = (ip) => {
   if (/^(127\.|10\.|0\.0\.0\.0$)/.test(ip)) return true;
   if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(ip)) return true;
   if (/^192\.168\./.test(ip)) return true;
@@ -48,7 +48,7 @@ const portScanRateLimit = rateLimit({
   },
 });
 
-const DEFAULT_PORTS = [
+export const DEFAULT_PORTS = [
   { port: 21, service: "FTP" },
   { port: 22, service: "SSH" },
   { port: 23, service: "Telnet" },
@@ -74,7 +74,7 @@ const DEFAULT_PORTS = [
   { port: 27017, service: "MongoDB" },
 ];
 
-const PORT_GROUPS = {
+export const PORT_GROUPS = {
   web: [80, 443, 8080, 8443],
   mail: [25, 110, 143, 993, 995],
   database: [1433, 1521, 3306, 5432, 6379, 27017],
@@ -107,7 +107,7 @@ const scanPort = (target, port, timeoutMs = 1500) =>
     socket.connect(port, target);
   });
 
-const scanWithConcurrency = async (target, ports, concurrency = 5) => {
+export const scanWithConcurrency = async (target, ports, concurrency = 5) => {
   const results = [];
   const queue = [...ports];
 
@@ -129,7 +129,7 @@ const scanWithConcurrency = async (target, ports, concurrency = 5) => {
   return results.sort((a, b) => a.port - b.port);
 };
 
-const resolveHost = (hostname) =>
+export const resolveHost = (hostname) =>
   new Promise((resolve, reject) => {
     // Try IPv4 first, fall back to IPv6 on ENOTFOUND
     dns.lookup(hostname, { family: 4, hints: dns.ADDRCONFIG }, (err4, address4) => {

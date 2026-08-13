@@ -62,14 +62,19 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFound"));
 const ToolsPage = lazy(() => import("./pages/ToolsPage"));
 const ToolDetail = lazy(() => import("./pages/ToolDetail"));
-const LearnPage = lazy(() => import("./pages/LearnPage"));
-const ProgramPage = lazy(() => import("./pages/ProgramPage"));
-const ProgramLabPage = lazy(() => import("./pages/ProgramLabPage"));
+// v0.1 — static-content pages (Learn/Program/Blogs/Missions/Roadmap/Resources/Community)
+// are hidden from the UI. They remain in the codebase for later re-enablement.
+// const LearnPage = lazy(() => import("./pages/LearnPage"));
+// const ProgramPage = lazy(() => import("./pages/ProgramPage"));
+// const ProgramLabPage = lazy(() => import("./pages/ProgramLabPage"));
+// const ProgramDay1Page = lazy(() => import("./pages/ProgramDay1Page"));
+// const BlogPage = lazy(() => import("./pages/BlogPage"));
+// const BlogDetail = lazy(() => import("./pages/BlogDetail"));
+// const ResourcesPage = lazy(() => import("./pages/ResourcesPage"));
+// const CommunityPage = lazy(() => import("./pages/CommunityPage"));
+// const MissionsPage = lazy(() => import("./pages/MissionsPage"));
+// const RoadmapPage = lazy(() => import("./pages/RoadmapPage"));
 const LabPage = lazy(() => import("./pages/LabPage"));
-const BlogPage = lazy(() => import("./pages/BlogPage"));
-const BlogDetail = lazy(() => import("./pages/BlogDetail"));
-const ResourcesPage = lazy(() => import("./pages/ResourcesPage"));
-const CommunityPage = lazy(() => import("./pages/CommunityPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const OsintPage = lazy(() => import("./pages/OsintPage"));
@@ -82,13 +87,11 @@ const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const MissionsPage = lazy(() => import("./pages/MissionsPage"));
 const ComingSoonLabsPage = lazy(() => import("./components/ComingSoonLabs"));
-const RoadmapPage = lazy(() => import("./pages/RoadmapPage"));
 const DemoNmapLab = lazy(() => import("./pages/Labs/DemoNmapLab"));
 const DemoAssessmentPage = lazy(() => import("./pages/Labs/DemoAssessmentPage"));
 const DemoRoadmapPage = lazy(() => import("./pages/Labs/DemoRoadmapPage"));
-const ProgramDay1Page = lazy(() => import("./pages/ProgramDay1Page"));
+const ScanPage = lazy(() => import("./pages/ScanPage"));
 
 // ── Site config ──
 const SITE_ORIGIN = String(import.meta.env.VITE_SITE_URL || __SITE_URL__ || "").replace(/\/+$/, "");
@@ -407,21 +410,24 @@ const appRoutes: AppRouteDefinition[] = [
   { path: "/", component: IndexPage },
   { path: "/tools", component: ToolsPage, requiresAuth: true },
   { path: "/tools/:id", component: ToolDetail, requiresAuth: true },
-  { path: "/learn", component: LearnPage, requiresAuth: true },
-  { path: "/program", component: ProgramPage, requiresAuth: true },
+  // v0.1 — static-content pages hidden from the UI
+  // { path: "/learn", component: LearnPage, requiresAuth: true },
+  // { path: "/program", component: ProgramPage, requiresAuth: true },
+  // { path: "/program/day/1", component: ProgramDay1Page, requiresAuth: true },
+  // { path: "/program/day/:day", component: ProgramLabPage, requiresAuth: true },
+  // { path: "/roadmap", component: RoadmapPage },
+  // { path: "/blog", component: BlogPage, requiresAuth: true },
+  // { path: "/blog/:slug", component: BlogDetail, requiresAuth: true },
+  // { path: "/resources", component: ResourcesPage, requiresAuth: true },
+  // { path: "/community", component: CommunityPage, requiresAuth: true },
+  // { path: "/missions", component: MissionsPage, requiresAuth: true },
   { path: "/assistant", component: AssistantPage, requiresAuth: true },
-  { path: "/program/day/1", component: ProgramDay1Page, requiresAuth: true },
-  { path: "/program/day/:day", component: ProgramLabPage, requiresAuth: true },
+  { path: "/scan", component: ScanPage, requiresAuth: true },
   { path: "/lab", component: LabPage, requiresAuth: true },
   { path: "/labs", component: ComingSoonLabsPage },
   { path: "/labs/demo-nmap", component: DemoNmapLab },
   { path: "/demo/assessment", component: DemoAssessmentPage },
   { path: "/demo/roadmap", component: DemoRoadmapPage },
-  { path: "/roadmap", component: RoadmapPage },
-  { path: "/blog", component: BlogPage, requiresAuth: true },
-  { path: "/blog/:slug", component: BlogDetail, requiresAuth: true },
-  { path: "/resources", component: ResourcesPage, requiresAuth: true },
-  { path: "/community", component: CommunityPage, requiresAuth: true },
   { path: "/osint", component: OsintPage, requiresAuth: true },
   { path: "/osint/share/:shareId", component: OsintSharePage, requiresAuth: true },
   { path: "/about", component: AboutPage, requiresAuth: true },
@@ -434,7 +440,6 @@ const appRoutes: AppRouteDefinition[] = [
   { path: "/security", component: SecuritySettingsPage, requiresAuth: true },
   { path: "/dashboard", component: DashboardPage, requiresAuth: true },
   { path: "/profile", component: ProfilePage, requiresAuth: true },
-  { path: "/missions", component: MissionsPage, requiresAuth: true },
 ];
 
 const renderRouteElement = (PageComponent: AppPageComponent, requiresAuth = false) => {
