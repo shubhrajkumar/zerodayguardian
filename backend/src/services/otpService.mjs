@@ -89,9 +89,8 @@ export const sendOtpEmail = async (email, otp, expiresInMinutes = 10) => {
   const transporter = nodemailer.createTransport({
     host: env.smtpHost || "smtp.gmail.com",
     port: Number(env.smtpPort) || 587,
-    secure: Boolean(env.smtpSecure),
-    requireTLS: Boolean(env.smtpRequireTls),
-    ignoreTLS: false,
+    secure: false,
+    requireTLS: true,
     auth: {
       user: env.authEmailUser,
       pass: env.authEmailAppPassword,
@@ -99,9 +98,9 @@ export const sendOtpEmail = async (email, otp, expiresInMinutes = 10) => {
     tls: {
       ciphers: "DEFAULT:@SECLEVEL=1",
     },
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 25_000,
+    connectionTimeout: 30_000,
+    greetingTimeout: 30_000,
+    socketTimeout: 60_000,
   });
 
   const fromName = env.authEmailFromName || "ZeroDay Guardian Security";
