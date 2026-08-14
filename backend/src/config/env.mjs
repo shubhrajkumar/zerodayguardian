@@ -466,6 +466,8 @@ export const env = {
   authEmailFrom: firstSet(...AUTH_EMAIL_FROM_KEYS),
   authEmailUser: firstSet(...AUTH_EMAIL_USER_KEYS),
   authEmailAppPassword: firstSet(...AUTH_EMAIL_PASSWORD_KEYS),
+    resendApiKey: firstSet("RESEND_API_KEY"),
+  resendFromEmail: firstSet("RESEND_FROM_EMAIL"),
   digestEmailEnabled: (process.env.DIGEST_EMAIL_ENABLED || process.env.AUTH_EMAIL_ENABLED || "false") === "true",
   digestEmailFromName: process.env.DIGEST_EMAIL_FROM_NAME || "ZeroDay Guardian Digest",
   digestEmailFrom: firstSet("DIGEST_EMAIL_FROM", "AUTH_EMAIL_FROM", "GMAIL_USER"),

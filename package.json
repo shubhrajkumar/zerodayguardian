@@ -37,7 +37,6 @@
     "validate-ui": "bash scripts/validate-ui.sh"
   },
   "dependencies": {
-
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.70.1",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.213.0",
@@ -114,6 +113,7 @@
     "react-window": "^2.2.7",
     "recharts": "^2.15.4",
     "redis": "^5.11.0",
+    "resend": "^3.0.0",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
     "vaul": "^0.9.9",

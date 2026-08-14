@@ -1,187 +1,339 @@
 /**
- * Shared OTP Service — functional implementation
+ * Shared OTP Service
  *
- * In-memory OTP store with optional Nodemailer email delivery.
- * Used for email verification (signup) and password reset flows.
+ * Provides OTP generation, in-memory storage, and Resend API email delivery.
+ *
+ * Used by:
+ *  - authService.mjs (sendResetOtp / resetPassword)
+ *  - scripts/otp-server.mjs (standalone OTP server)
+ *  - OTP route handlers (mounted in app.mjs)
  */
-import { logInfo, logWarn } from "../utils/logger.mjs";
+import { Resend } from "resend";
 import { env } from "../config/env.mjs";
+import { logInfo, logWarn } from "../utils/logger.mjs";
 
-// ── In-memory OTP store ──────────────────────────────────────────────
+// ── In-memory OTP store ──
 const otpStore = new Map();
-const OTP_EXPIRY_MS = 10 * 60_000; // 10 minutes
-const CLEANUP_INTERVAL_MS = 60_000;
+const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+const CLEANUP_INTERVAL_MS = 30_000;
 
-const cleanupExpired = () => {
+// Start cleanup timer (non-blocking, allows process to exit)
+setInterval(() => {
   const now = Date.now();
-  for (const [email, record] of otpStore) {
-    if (record.expiresAt < now) otpStore.delete(email);
+  for (const [email, entry] of otpStore.entries()) {
+    if (!entry || Number(entry.expiresAt || 0) <= now) {
+      otpStore.delete(email);
+    }
   }
-};
-setInterval(cleanupExpired, CLEANUP_INTERVAL_MS).unref?.();
+}, CLEANUP_INTERVAL_MS).unref();
 
-// ── Public API ───────────────────────────────────────────────────────
+// ── Helpers ──
+
+const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
+
+const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
+
+const isValidEmail = (value = "") => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+const maskEmail = (value = "") => {
+  const [local, domain] = String(value || "").split("@");
+  if (!local || !domain) return value;
+  const visibleLocal =
+    local.length <= 2
+      ? `${local[0] || "*"}*`
+      : `${local.slice(0, 2)}${"*".repeat(Math.max(1, local.length - 2))}`;
+  return `${visibleLocal}@${domain}`;
+};
+
+const mailConfigured = () =>
+  Boolean(env.authEmailEnabled && env.authEmailUser && env.resendApiKey && env.authEmailFrom);
+
+// ── Public API ──
 
 /**
- * Generate a 6-digit OTP and store it for the given email.
+ * Generate and store an OTP for the given email.
+ * Stores in both in-memory Map and (if available) the user's MongoDB document.
+ *
+ * @param {string} email
  * @returns {{ otp: string, expiresAt: number, expiresInMinutes: number }}
  */
 export const createOtp = (email) => {
-  const normalised = String(email || "").trim().toLowerCase();
-  const expiresInMinutes = Math.round(OTP_EXPIRY_MS / 60_000);
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const safeEmail = normalizeEmail(email);
+  const otp = generateOtp();
   const expiresAt = Date.now() + OTP_EXPIRY_MS;
-  otpStore.set(normalised, { otp, expiresAt, createdAt: Date.now() });
-  logInfo("[OTP] Created OTP", { email: normalised, expiresInMinutes });
+  const expiresInMinutes = Math.round(OTP_EXPIRY_MS / 60000);
+
+  otpStore.set(safeEmail, { otp, expiresAt });
+
+  logInfo("[OTP] Created OTP", {
+    email: maskEmail(safeEmail),
+    expiresInMinutes,
+  });
+
   return { otp, expiresAt, expiresInMinutes };
 };
 
 /**
- * Verify an OTP for the given email. Returns true if valid and not expired.
- * On success the OTP is deleted (single-use).
+ * Verify an OTP for the given email.
+ * Checks in-memory store first. On success, deletes the OTP from memory.
+ *
+ * @param {string} email
+ * @param {string} otp
+ * @returns {boolean} true if valid
  */
 export const verifyOtp = (email, otp) => {
-  const normalised = String(email || "").trim().toLowerCase();
-  const record = otpStore.get(normalised);
-  if (!record) return false;
-  if (record.expiresAt < Date.now()) {
-    otpStore.delete(normalised);
+  const safeEmail = normalizeEmail(email);
+  const safeOtp = String(otp || "").trim();
+
+  const entry = otpStore.get(safeEmail);
+  if (!entry) return false;
+
+  if (Number(entry.expiresAt) <= Date.now()) {
+    otpStore.delete(safeEmail);
     return false;
   }
-  if (record.otp !== String(otp)) return false;
-  otpStore.delete(normalised);
+
+  if (entry.otp !== safeOtp) return false;
+
+  // Valid — consume the OTP
+  otpStore.delete(safeEmail);
   return true;
 };
 
-/** Get OTP expiry timestamp for an email (or null). */
+/**
+ * Get OTP expiry timestamp for an email (from in-memory store).
+ * @param {string} email
+ * @returns {number|null}
+ */
 export const getOtpExpiry = (email) => {
-  const normalised = String(email || "").trim().toLowerCase();
-  const record = otpStore.get(normalised);
-  if (!record || record.expiresAt < Date.now()) return null;
-  return record.expiresAt;
-};
-
-/** Peek at the OTP without consuming it (debug only). */
-export const peekOtp = (email) => {
-  const normalised = String(email || "").trim().toLowerCase();
-  return otpStore.get(normalised)?.otp ?? null;
-};
-
-/** Delete the OTP for an email. */
-export const deleteOtp = (email) => {
-  const normalised = String(email || "").trim().toLowerCase();
-  otpStore.delete(normalised);
+  const safeEmail = normalizeEmail(email);
+  const entry = otpStore.get(safeEmail);
+  return entry ? Number(entry.expiresAt) : null;
 };
 
 /**
- * Send an OTP email via Nodemailer. Throws if SMTP is not configured.
+ * Peek at the stored OTP (for development preview mode).
+ * @param {string} email
+ * @returns {string|null}
  */
-export const sendOtpEmail = async (email, otp, expiresInMinutes = 10) => {
-  if (!isMailConfigured()) {
+export const peekOtp = (email) => {
+  const safeEmail = normalizeEmail(email);
+  const entry = otpStore.get(safeEmail);
+  return entry ? entry.otp : null;
+};
+
+/**
+ * Delete an OTP from memory (e.g., after reset completes via MongoDB path).
+ * @param {string} email
+ */
+export const deleteOtp = (email) => {
+  const safeEmail = normalizeEmail(email);
+  otpStore.delete(safeEmail);
+};
+
+/**
+ * Send an OTP email via Resend API.
+ *
+ * @param {string} email
+ * @param {string} otp
+ * @param {number} expiresInMinutes
+ * @returns {Promise<void>}
+ */
+export const sendOtpEmail = async (email, otp, expiresInMinutes) => {
+  const safeEmail = normalizeEmail(email);
+
+  if (!mailConfigured()) {
     throw Object.assign(
-      new Error("Email service is not configured. Cannot send OTP."),
-      { status: 503, code: "otp_email_disabled" }
+      new Error("Email service is not configured"),
+      { status: 500, code: "mail_not_configured" }
     );
   }
 
-  const { default: nodemailer } = await import("nodemailer");
+  const resend = new Resend(env.resendApiKey);
+  const safeOtp = String(otp || "").trim();
+  const fromName = env.authEmailFromName || "ZeroDay Guardian Security";
+  const fromAddress = env.resendFromEmail || "onboarding@resend.dev";
 
-  const transporter = nodemailer.createTransport({
-    host: env.smtpHost || "smtp.gmail.com",
-    port: Number(env.smtpPort) || 587,
-    secure: false,
-    requireTLS: true,
-    auth: {
-      user: env.authEmailUser,
-      pass: env.authEmailAppPassword,
-    },
-    tls: {
-      ciphers: "DEFAULT:@SECLEVEL=1",
-    },
-    connectionTimeout: 30_000,
-    greetingTimeout: 30_000,
-    socketTimeout: 60_000,
+  logInfo("[OTP] Sending OTP email via Resend", {
+    email: maskEmail(safeEmail),
+    expiresInMinutes,
   });
 
-  const fromName = env.authEmailFromName || "ZeroDay Guardian Security";
-  const fromAddress = env.authEmailFrom || env.authEmailUser;
-
-  const htmlBody = `
-    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <div style="display: inline-block; width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #00d4ff, #7b2ff7); line-height: 48px; font-size: 24px; font-weight: bold; color: #0a0a0f;">Z</div>
-      </div>
-      <h2 style="text-align: center; color: #1a1a2e; margin-bottom: 16px;">Your Verification Code</h2>
-      <p style="color: #555; font-size: 15px; line-height: 1.6;">Use the code below to verify your email address. This code expires in <strong>${expiresInMinutes} minutes</strong>.</p>
-      <div style="text-align: center; margin: 32px 0;">
-        <span style="display: inline-block; font-size: 36px; font-weight: bold; letter-spacing: 12px; color: #7b2ff7; font-family: 'Courier New', monospace; padding: 16px 32px; background: #f8f7ff; border-radius: 12px; border: 2px dashed #7b2ff7;">${otp}</span>
-      </div>
-      <p style="color: #888; font-size: 13px; text-align: center;">If you did not request this code, you can safely ignore this email.</p>
-      <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
-      <p style="color: #aaa; font-size: 12px; text-align: center;">© ${new Date().getFullYear()} ZeroDay Guardian Security</p>
-    </div>
-  `;
-
-  const textBody = `Your ZeroDay Guardian verification code is: ${otp}\nThis code expires in ${expiresInMinutes} minutes.\nIf you did not request this code, you can safely ignore this email.`;
-
   try {
-    const info = await transporter.sendMail({
-      from: `"${fromName}" <${fromAddress}>`,
-      to: email,
-      subject: `Your ZeroDay Guardian Verification Code: ${otp}`,
-      text: textBody,
-      html: htmlBody,
+    const { data, error } = await resend.emails.send({
+      from: `${fromName} <${fromAddress}>`,
+      to: [safeEmail],
+      subject: "ZeroDay Guardian Security | Password Reset Verification Code",
+      text: [
+        "ZeroDay Guardian Security",
+        "",
+        `Your password reset verification code is: ${safeOtp}`,
+        `This code expires in ${expiresInMinutes} minutes.`,
+        "",
+        "If you requested this reset, enter the code in the app to continue.",
+        "If you did not request a password reset, you can safely ignore this email.",
+        "",
+        `${env.appBaseUrl}`,
+      ].join("\n"),
+      html: `
+      <div style="margin:0;padding:24px;background:#f3f6fb;font-family:Arial,sans-serif;color:#0f172a">
+        <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dbe4f0;border-radius:16px;overflow:hidden">
+          <div style="padding:20px 24px;background:linear-gradient(135deg,#0f172a,#0f766e);color:#ffffff">
+            <div style="font-size:12px;letter-spacing:1.2px;text-transform:uppercase;opacity:.82">ZeroDay Guardian Security</div>
+            <h2 style="margin:8px 0 0;font-size:22px;line-height:1.3">Password Reset Verification</h2>
+          </div>
+          <div style="padding:24px">
+            <p style="margin:0 0 14px;font-size:14px;line-height:1.6">Use the verification code below to continue your password reset request.</p>
+            <div style="margin:18px 0;padding:18px;border:1px dashed #94a3b8;border-radius:14px;background:#f8fafc;text-align:center">
+              <div style="font-size:30px;font-weight:700;letter-spacing:8px;color:#0f172a">${safeOtp}</div>
+            </div>
+            <p style="margin:0 0 10px;font-size:14px;line-height:1.6">This code expires in <strong>${expiresInMinutes} minutes</strong>.</p>
+            <p style="margin:0 0 10px;font-size:14px;line-height:1.6">If you did not request a password reset, you can safely ignore this email and your account will remain unchanged.</p>
+            <p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#475569">Requested from ZeroDay Guardian Security</p>
+          </div>
+        </div>
+      </div>`.trim(),
     });
-    logInfo("[OTP] Email sent", { email, messageId: info.messageId });
-    transporter.close();
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    logWarn("[OTP] Email send failed", { email, error: error.message });
-    transporter.close();
-    throw Object.assign(
-      new Error("Failed to send verification email. Please try again."),
-      { status: 502, code: "otp_email_send_failed" }
-    );
-  }
-};
 
-/** Check if the mail transport is configured. */
-export const isMailConfigured = () =>
-  Boolean(env.authEmailEnabled && env.authEmailUser && env.authEmailAppPassword && env.authEmailFrom);
-
-/** Express handler — send OTP. */
-export const sendOtpHandler = async (req, res) => {
-  try {
-    const { email } = req.body || {};
-    if (!email) {
-      return res.status(400).json({ status: "error", code: "missing_email", message: "Email is required." });
+    if (error) {
+      throw Object.assign(new Error(error.message), {
+        code: error.name || "resend_error",
+      });
     }
-    const { otp, expiresInMinutes } = createOtp(email);
-    await sendOtpEmail(email, otp, expiresInMinutes);
-    res.json({ status: "ok", message: "Verification code sent.", expiresInMinutes });
-  } catch (error) {
-    const status = error.status || 500;
-    res.status(status).json({ status: "error", code: error.code || "otp_send_failed", message: error.message });
+
+    logInfo("[OTP] Email sent successfully via Resend", {
+      email: maskEmail(safeEmail),
+      messageId: data?.id,
+    });
+  } catch (sendError) {
+    logWarn("[OTP] Resend email delivery failed", {
+      email: maskEmail(safeEmail),
+      message: String(sendError?.message || "unknown_error"),
+      code: String(sendError?.code || ""),
+    });
+    console.error("[OTP] Resend delivery error:", JSON.stringify({
+      message: String(sendError?.message || "unknown_error"),
+      code: String(sendError?.code || ""),
+    }));
+    throw sendError;
   }
 };
 
-/** Express handler — verify OTP. */
-export const verifyOtpHandler = (req, res) => {
-  const { email, otp } = req.body || {};
-  if (!email || !otp) {
-    return res.status(400).json({ status: "error", code: "missing_fields", message: "Email and OTP are required." });
+/**
+ * Check if email service is configured for sending emails.
+ * @returns {boolean}
+ */
+export const isMailConfigured = () => mailConfigured();
+
+/**
+ * Express route handler: POST /send
+ * Generates OTP, stores in memory, sends via email.
+ */
+export const sendOtpHandler = async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  if (!isValidEmail(email)) {
+    res.status(400).json({ status: "error", message: "Valid email is required." });
+    return;
   }
+
+  // ── Crash-safe env var guard ──
+  if (!env.authEmailUser || !env.resendApiKey || !env.authEmailFrom) {
+    const missing = [
+      !env.authEmailUser ? "AUTH_EMAIL_USER" : null,
+      !env.resendApiKey ? "RESEND_API_KEY" : null,
+      !env.authEmailFrom ? "AUTH_EMAIL_FROM" : null,
+    ].filter(Boolean).join(", ");
+    console.error("[OTP] ❌ [CRITICAL] Missing Email Environment Variables: " + missing);
+    if (env.authOtpPreviewEnabled) {
+      const { otp, expiresInMinutes } = createOtp(email);
+      logWarn("[OTP] Email not configured — returning OTP in preview mode", {
+        email: maskEmail(email),
+        delivery: "preview",
+      });
+      res.json({
+        status: "ok",
+        sent: false,
+        delivery: "preview",
+        destination: maskEmail(email),
+        expiresInMinutes,
+        message: `Email service is not configured. OTP would have been sent to ${maskEmail(email)}.`,
+        otp,
+      });
+      return;
+    }
+    res.status(503).json({
+      status: "error",
+      code: "mail_not_configured",
+      message: "Email service is temporarily unavailable due to misconfiguration.",
+    });
+    return;
+  }
+
+  const { otp, expiresInMinutes } = createOtp(email);
+
+  try {
+    await sendOtpEmail(email, otp, expiresInMinutes);
+    res.json({
+      status: "ok",
+      sent: true,
+      delivery: "email",
+      destination: maskEmail(email),
+      expiresInMinutes,
+      message: "Verification code sent successfully.",
+    });
+  } catch (error) {
+    const resendError = {
+      message: String(error?.message || "unknown_error"),
+      code: String(error?.code || ""),
+    };
+    logWarn("[OTP] Resend email delivery failed — returning error to client", {
+      email: maskEmail(email),
+      ...resendError,
+    });
+    console.error("[OTP] Resend delivery error:", JSON.stringify(resendError));
+    console.error("[OTP] Full error object:", error);
+
+    deleteOtp(email);
+    res.status(502).json({
+      status: "error",
+      message: "Failed to send verification email.",
+      code: "mail_delivery_failed",
+      error: resendError.message,
+    });
+  }
+};
+
+/**
+ * Express route handler: POST /verify
+ * Validates OTP against in-memory store.
+ */
+export const verifyOtpHandler = (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  const otp = String(req.body?.otp || "").trim();
+
+  if (!isValidEmail(email) || !/^\d{6}$/.test(otp)) {
+    res.status(400).json({ status: "error", message: "Valid email and 6-digit OTP are required." });
+    return;
+  }
+
   const valid = verifyOtp(email, otp);
   if (!valid) {
-    return res.status(400).json({ status: "error", code: "otp_invalid", message: "Invalid or expired verification code." });
+    res.status(400).json({ status: "error", message: "Invalid or expired OTP." });
+    return;
   }
-  res.json({ status: "ok", verified: true });
+
+  res.json({ status: "ok", message: "OTP verified successfully." });
 };
 
-/** Express handler — OTP health check. */
+/**
+ * Express route handler: GET /health
+ */
 export const otpHealthHandler = (_req, res) => {
   res.json({ status: "ok", activeOtps: otpStore.size, mailConfigured: isMailConfigured() });
 };
 
-/** Get count of active OTPs. */
+/**
+ * Get the number of active OTPs in memory.
+ * @returns {number}
+ */
 export const getActiveOtpCount = () => otpStore.size;
