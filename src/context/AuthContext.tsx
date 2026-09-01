@@ -26,6 +26,12 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// ── Refresh backoff state ──
+let lastRefreshAttempt = 0;
+let refreshCooldownMs = 0;
+const REFRESH_COOLDOWN_BASE = 2000;
+const REFRESH_COOLDOWN_MAX = 30000;
+
 /**
  * Fetch the authenticated user from the backend. The session lives in httpOnly
  * cookies — this is the single source of truth for auth state.
@@ -72,17 +78,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refreshAuth = useCallback(async (): Promise<boolean> => {
+    // Backoff: skip if we recently failed (exponential cooldown)
+    const now = Date.now();
+    if (now - lastRefreshAttempt < refreshCooldownMs) {
+      return false;
+    }
+    lastRefreshAttempt = now;
+
     // 1. Single source of truth: verify the httpOnly cookie session
     const me = await fetchMe();
-    if (me) return syncAuthState(me);
+    if (me) {
+      refreshCooldownMs = 0;
+      return syncAuthState(me);
+    }
 
     // 2. Silent cookie-based refresh, then re-check
     try {
       await api.post<{ status?: string }>("/api/auth/refresh", {}, { timeout: 10000 });
       const refreshedMe = await fetchMe();
-      if (refreshedMe) return syncAuthState(refreshedMe);
+      if (refreshedMe) {
+        refreshCooldownMs = 0;
+        return syncAuthState(refreshedMe);
+      }
     } catch {
-      // refresh failed — session is genuinely expired
+      // refresh failed — apply exponential backoff
+      refreshCooldownMs = Math.min(
+        refreshCooldownMs ? refreshCooldownMs * 2 : REFRESH_COOLDOWN_BASE,
+        REFRESH_COOLDOWN_MAX,
+      );
     }
 
     // 3. No valid session

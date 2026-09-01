@@ -134,7 +134,7 @@ export const clearAuthState = (): void => {
 
 let refreshInFlight: Promise<boolean> | null = null;
 let redirectingToAuth = false;
-const AUTO_RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+const AUTO_RETRY_STATUS = new Set([408, 425, 500, 502, 503, 504]);
 const AUTH_ROUTE_PATTERN = /^\/api\/auth\//i;
 const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 const isNetworkFetchError = (error: unknown) => {

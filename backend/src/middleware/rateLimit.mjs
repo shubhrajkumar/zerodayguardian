@@ -32,7 +32,7 @@ export const neurobotRateLimit = createLimiter({
 
 export const authRateLimit = createLimiter({
   windowMs: 60 * 1000,
-  max: env.nodeEnv === "production" ? 10 : 40,
+  max: env.nodeEnv === "production" ? 20 : 40,
   message: "Too many authentication attempts. Please wait and retry.",
   code: "auth_rate_limited",
 });
