@@ -801,4 +801,3 @@ if (ollamaBackupEnabled || env.hasOllamaBackup) {
 }
 
 // Email delivery is via Resend API (see otpService.mjs).
-}
