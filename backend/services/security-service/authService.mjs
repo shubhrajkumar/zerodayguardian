@@ -9,6 +9,7 @@ import { logInfo, logWarn } from "../../src/utils/logger.mjs";
 import { buildCookieOptions } from "../../src/utils/cookiePolicy.mjs";
 import { createBlindIndex, decryptSensitive, encryptSensitive, sanitizeText } from "../../src/utils/security.mjs";
 import { getAuthFallbackCollection } from "./authFallbackStore.mjs";
+import { sendOtpEmail } from "../../src/services/otpService.mjs";
 
 const USERS = "users";
 let googleOauthClient = null;
@@ -371,9 +372,20 @@ export const registerUser = async ({ name, email, password }) => {
   const result = await users.insertOne(document);
   logInfo("User registered", { email: safeEmail, userId: result.insertedId?.toString?.() || "" });
 
+  // Send verification email via Resend
+  try {
+    await sendOtpEmail(safeEmail, otpCode, 15);
+    logInfo("Verification email sent", { email: safeEmail });
+  } catch (emailError) {
+    logWarn("Failed to send verification email", {
+      email: safeEmail,
+      error: String(emailError?.message || "unknown"),
+    });
+    // Account is created but email failed — user can retry verification later
+  }
+
   return {
     user: sanitizeUser({ ...document, _id: result.insertedId }),
-    otp: otpCode,
   };
 };
 
@@ -459,10 +471,19 @@ export const requestPasswordReset = async ({ email }) => {
 
   logInfo("Password reset OTP generated", { email: safeEmail, userId: user._id?.toString?.() || "" });
 
+  // Send reset code email via Resend
+  try {
+    await sendOtpEmail(safeEmail, resetOtpCode, 15);
+    logInfo("Password reset email sent", { email: safeEmail });
+  } catch (emailError) {
+    logWarn("Failed to send password reset email", {
+      email: safeEmail,
+      error: String(emailError?.message || "unknown"),
+    });
+  }
+
   return {
     message: "If an account exists with this email, a reset code has been sent.",
-    resetOtp: resetOtpCode,
-    user: sanitizeUser(user),
   };
 };
 

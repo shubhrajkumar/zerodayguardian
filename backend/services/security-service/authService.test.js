@@ -55,6 +55,12 @@ vi.mock("./authFallbackStore.mjs", () => ({
   getAuthFallbackCollection: () => mockCollection,
 }));
 
+// ── Mock otpService (sendOtpEmail) ────────────────────────────────────
+const mockSendOtpEmail = vi.fn();
+vi.mock("../../src/services/otpService.mjs", () => ({
+  sendOtpEmail: mockSendOtpEmail,
+}));
+
 // ── Import the module under test ──────────────────────────────────────
 const { registerUser, loginUser, verifyUserOtp } = await import("./authService.mjs");
 
@@ -98,7 +104,7 @@ beforeEach(() => {
 // registerUser
 // ══════════════════════════════════════════════════════════════════════
 describe("registerUser", () => {
-  it("creates a new user and returns user + otp", async () => {
+  it("creates a new user and returns user (otp is no longer exposed in response)", async () => {
     mockCollection.findOne.mockResolvedValue(null); // no existing user
     mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
 
@@ -109,9 +115,7 @@ describe("registerUser", () => {
     });
 
     expect(result.user).toBeDefined();
-    expect(result.otp).toBeDefined();
-    expect(typeof result.otp).toBe("string");
-    expect(result.otp).toHaveLength(6);
+    expect(result.otp).toBeUndefined();
     expect(result.user.email).toBe(TEST_EMAIL);
     expect(result.user.name).toBe(TEST_NAME);
     expect(mockHash).toHaveBeenCalledWith(TEST_PASSWORD, 12);
@@ -222,15 +226,55 @@ describe("registerUser", () => {
     expect(mockCollection.findOne).toHaveBeenCalled();
   });
 
-  it("generates a different OTP on each call", async () => {
+  it("stores a unique OTP in MongoDB for each registration", async () => {
     mockCollection.findOne.mockResolvedValue(null);
     mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
 
-    const result1 = await registerUser({ name: TEST_NAME, email: TEST_EMAIL, password: TEST_PASSWORD });
-    const result2 = await registerUser({ name: "Other", email: "other@example.com", password: TEST_PASSWORD });
+    await registerUser({ name: TEST_NAME, email: TEST_EMAIL, password: TEST_PASSWORD });
+    const doc1 = mockCollection.insertOne.mock.calls[0][0];
 
-    // Very unlikely to be the same with random generation
-    expect(result1.otp).not.toBe(result2.otp);
+    await registerUser({ name: "Other", email: "other@example.com", password: TEST_PASSWORD });
+    const doc2 = mockCollection.insertOne.mock.calls[1][0];
+
+    // OTPs are stored in MongoDB, not returned — verify they are unique
+    expect(doc1.otp).toBeDefined();
+    expect(doc2.otp).toBeDefined();
+    expect(doc1.otp).not.toBe(doc2.otp);
+  });
+
+  it("sends verification email after registration", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
+    mockSendOtpEmail.mockResolvedValue(undefined);
+
+    await registerUser({ name: TEST_NAME, email: TEST_EMAIL, password: TEST_PASSWORD });
+
+    expect(mockSendOtpEmail).toHaveBeenCalledOnce();
+    expect(mockSendOtpEmail).toHaveBeenCalledWith(
+      TEST_EMAIL,
+      expect.stringMatching(/^\d{6}$/),
+      15,
+    );
+  });
+
+  it("does not throw if email sending fails", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
+    mockSendOtpEmail.mockRejectedValue(new Error("Resend timeout"));
+
+    // Should NOT throw — account is still created
+    const result = await registerUser({ name: TEST_NAME, email: TEST_EMAIL, password: TEST_PASSWORD });
+    expect(result.user).toBeDefined();
+  });
+
+  it("never returns otp in the response", async () => {
+    mockCollection.findOne.mockResolvedValue(null);
+    mockCollection.insertOne.mockResolvedValue({ insertedId: mockInsertedId });
+    mockSendOtpEmail.mockResolvedValue(undefined);
+
+    const result = await registerUser({ name: TEST_NAME, email: TEST_EMAIL, password: TEST_PASSWORD });
+    expect(result.otp).toBeUndefined();
+    expect(Object.keys(result)).not.toContain("otp");
   });
 });
 

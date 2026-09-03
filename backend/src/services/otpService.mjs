@@ -46,7 +46,7 @@ const maskEmail = (value = "") => {
 };
 
 const mailConfigured = () =>
-  Boolean(env.authEmailEnabled && env.authEmailUser && env.resendApiKey && env.authEmailFrom);
+  Boolean(env.authEmailEnabled && env.resendApiKey && env.authEmailFrom);
 
 // ── Public API ──
 

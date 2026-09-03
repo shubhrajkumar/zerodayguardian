@@ -157,7 +157,7 @@ export const signup = async (req, res) => {
   try {
     await assertAuthAttemptAllowed({ req, identifier: req.validatedBody?.email || "signup" });
     logInfo("Auth signup request", { requestId: req.requestId || "", email: req.validatedBody?.email || "" });
-    const { user, otp } = await registerUser(req.validatedBody);
+    const { user } = await registerUser(req.validatedBody);
     const { accessToken, refreshToken } = await setAuthCookies(res, user, { rememberMe: true });
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
     res.json({
@@ -166,7 +166,6 @@ export const signup = async (req, res) => {
       user: toPublicUser(user),
       accessToken,
       refreshToken,
-      otp,
     });
   } catch (error) {
     await safeRecordAuthFailure({ req, identifier: req.validatedBody?.email || "signup", reason: error?.code || "signup_failed" });
