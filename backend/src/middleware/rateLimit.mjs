@@ -38,8 +38,8 @@ export const authRateLimit = createLimiter({
 });
 
 export const authSessionRateLimit = createLimiter({
-  windowMs: 60 * 1000,
-  max: 30,
+  windowMs: 15 * 60 * 1000,
+  max: env.nodeEnv === "production" ? 120 : 240,
   message: "Too many session checks. Please wait and retry.",
   code: "auth_session_rate_limited",
 });
@@ -58,8 +58,8 @@ export const chatRateLimit = createLimiter({
 });
 
 export const apiReadRateLimit = createLimiter({
-  windowMs: 60 * 1000,
-  max: env.nodeEnv === "production" ? 180 : 360,
+  windowMs: 15 * 60 * 1000,
+  max: env.nodeEnv === "production" ? 200 : 400,
   message: "Read request limit reached. Retry shortly.",
 });
 

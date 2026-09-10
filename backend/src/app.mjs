@@ -273,7 +273,12 @@ export const createApp = () => {
   const app = express();
   app.disable("x-powered-by");
 
-  if (env.trustProxy) app.set("trust proxy", 1);
+  // Always trust proxy in production (Render, Vercel, etc. use reverse proxies)
+  if (env.nodeEnv === "production") {
+    app.set("trust proxy", 1);
+  } else if (env.trustProxy) {
+    app.set("trust proxy", 1);
+  }
   if (env.nodeEnv === "production") {
     app.use((req, res, next) => {
       const proto = String(req.headers["x-forwarded-proto"] || req.protocol || "");
