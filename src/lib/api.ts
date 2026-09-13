@@ -137,7 +137,13 @@ api.interceptors.response.use(
       }
     }
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Never run the refresh-and-retry cascade for auth-lifecycle calls. Retrying
+    // a failed /api/auth/refresh with another refresh — and bouncing a passive
+    // session probe to /auth — multiplies requests against the 120/15min
+    // session bucket that /me, /status, /verify and /refresh all share.
+    const requestPath = String(originalRequest?.url || '');
+    const isAuthLifecycleRequest = /\/api\/auth\/(me|status|session|verify|refresh|logout)\b/.test(requestPath);
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthLifecycleRequest) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

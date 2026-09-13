@@ -20,7 +20,7 @@ type AuthContextValue = {
   isVerified: boolean;
   user: AuthUser | null;
   login: (payload: { accessToken: string; refreshToken: string; user: AuthUser }) => void;
-  refreshAuth: (force?: boolean) => Promise<boolean>;
+  refreshAuth: () => Promise<boolean>;
   logout: () => Promise<void>;
 };
 
@@ -30,18 +30,23 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 let lastRefreshAttempt = 0;
 let refreshCooldownMs = 0;
 const REFRESH_COOLDOWN_BASE = 2000;
-const REFRESH_COOLDOWN_MAX = 30000;
+const REFRESH_COOLDOWN_MAX = 60000;
+// Shared across the app so concurrent triggers cost one probe, not N.
+let refreshInFlight: Promise<boolean> | null = null;
 
 /**
- * Fetch the authenticated user from the backend. The session lives in httpOnly
- * cookies — this is the single source of truth for auth state.
+ * Probe the current session. Uses /api/auth/status, which answers 200 with
+ * `authenticated: false` for anonymous visitors, rather than /api/auth/me which
+ * answers 401 for the same case. Every 401 used to trigger the axios
+ * interceptor's refresh-and-retry cascade, so one anonymous page load became
+ * several session-bucket requests plus a spurious redirect to /auth.
  */
-const fetchMe = async (): Promise<AuthUser | null> => {
+const fetchSession = async (): Promise<AuthUser | null> => {
   try {
-    const response = await api.get<{ authenticated?: boolean; user?: AuthUser; success?: boolean }>("/api/auth/me", {
+    const response = await api.get<{ authenticated?: boolean; user?: AuthUser | null }>("/api/auth/status", {
       timeout: 8000,
     });
-    if ((response.data.authenticated || response.data.success) && response.data.user) {
+    if (response.data?.authenticated && response.data.user) {
       const u = response.data.user;
       return {
         id: String(u.id || ""),
@@ -78,6 +83,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refreshAuth = useCallback(async (): Promise<boolean> => {
+    // Reuse an in-flight probe so simultaneous callers share one round trip.
+    if (refreshInFlight) return refreshInFlight;
+
     // Backoff: skip if we recently failed (exponential cooldown)
     const now = Date.now();
     if (now - lastRefreshAttempt < refreshCooldownMs) {
@@ -85,31 +93,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     lastRefreshAttempt = now;
 
-    // 1. Single source of truth: verify the httpOnly cookie session
-    const me = await fetchMe();
-    if (me) {
-      refreshCooldownMs = 0;
-      return syncAuthState(me);
-    }
+    refreshInFlight = (async () => {
+      try {
+        // 1. Single source of truth: the httpOnly cookie session
+        const session = await fetchSession();
+        if (session) {
+          refreshCooldownMs = 0;
+          return syncAuthState(session);
+        }
 
-    // 2. Silent cookie-based refresh, then re-check
-    try {
-      await api.post<{ status?: string }>("/api/auth/refresh", {}, { timeout: 10000 });
-      const refreshedMe = await fetchMe();
-      if (refreshedMe) {
-        refreshCooldownMs = 0;
-        return syncAuthState(refreshedMe);
+        // 2. Silent cookie-based refresh, then re-check
+        let refreshed: AuthUser | null = null;
+        try {
+          await api.post<{ status?: string }>("/api/auth/refresh", {}, { timeout: 10000 });
+          refreshed = await fetchSession();
+        } catch {
+          // refresh request failed — fall through to the cooldown below
+        }
+        if (refreshed) {
+          refreshCooldownMs = 0;
+          return syncAuthState(refreshed);
+        }
+
+        // 3. No session established — back off so repeat probes cannot stack.
+        //    This previously only advanced on a thrown /refresh, so an anonymous
+        //    visitor whose /refresh returned a clean error could re-probe forever.
+        refreshCooldownMs = Math.min(
+          refreshCooldownMs ? refreshCooldownMs * 2 : REFRESH_COOLDOWN_BASE,
+          REFRESH_COOLDOWN_MAX,
+        );
+        return syncAuthState(null);
+      } finally {
+        refreshInFlight = null;
       }
-    } catch {
-      // refresh failed — apply exponential backoff
-      refreshCooldownMs = Math.min(
-        refreshCooldownMs ? refreshCooldownMs * 2 : REFRESH_COOLDOWN_BASE,
-        REFRESH_COOLDOWN_MAX,
-      );
-    }
+    })();
 
-    // 3. No valid session
-    return syncAuthState(null);
+    return refreshInFlight;
   }, [syncAuthState]);
 
   useEffect(() => {
@@ -137,7 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (initAuthRef.current) return;
         initAuthRef.current = true;
         // Firebase reflects Google sign-in/sign-out, but the session truth is
-        // the backend cookie — re-verify via /api/auth/me
+        // the backend cookie — re-probe via /api/auth/status
         refreshAuth().catch(() => { /* silent fail */ });
       });
     })();
