@@ -36,7 +36,9 @@ const AdaptiveSaaSCommandCenter = () => {
               ? ("tools" as const)
               : action.route.includes("/dashboard")
                 ? ("dashboard" as const)
-                : ("learn" as const),
+                // "learn" is not a preloadable route key (LearnPage is unrouted
+                // in v0.1) — preloading it crashed, so skip warmup instead.
+                : undefined,
       })),
     [mindset, quickActions]
   );
@@ -113,8 +115,8 @@ const AdaptiveSaaSCommandCenter = () => {
               <button
                 key={action.id}
                 type="button"
-                onMouseEnter={() => preloadRoute(action.warmup)}
-                onFocus={() => preloadRoute(action.warmup)}
+                onMouseEnter={() => action.warmup && preloadRoute(action.warmup)}
+                onFocus={() => action.warmup && preloadRoute(action.warmup)}
                 onClick={() => {
                   if (action.actionType === "mentor_open" || action.actionType === "recommendation_reviewed") {
                     recordAction(action.actionType, { target: action.actionType }).catch(() => undefined);

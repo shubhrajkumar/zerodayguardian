@@ -11,7 +11,11 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "composite": true,
-    "noEmit": true,
+    // A referenced project may not disable emit (TS6310). Emit declarations to
+    // a temp dir so nothing lands in src/ or dist/ and `tsc --noEmit` stays clean.
+    "emitDeclarationOnly": true,
+    "outDir": "./node_modules/.tmp/tsconfig.node",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
 
     /* Linting */
     "strict": true,

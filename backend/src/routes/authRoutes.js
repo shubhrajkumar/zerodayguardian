@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateBody } from "../middleware/validate.mjs";
-import { authProvidersRateLimit, authRateLimit, authSessionRateLimit } from "../middleware/rateLimit.mjs";
+import { authProvidersRateLimit, authRateLimit, authSessionRateLimit, csrfRateLimit } from "../middleware/rateLimit.mjs";
 import { requireCsrf } from "../middleware/csrf.mjs";
 import { forgotPasswordSchema, googleLoginSchema, loginSchema, refreshSchema, resetPasswordSchema, signupSchema, verifyOtpSchema } from "../validators/authSchemas.mjs";
 import { forgotPassword, getAuthProviders, getAuthStatus, getCsrf, googleLogin, googleOauthCallback, login, logout, refreshSession, resetPasswordHandler, signup, startGoogleOauth, verifyAuth, verifyOtp } from "../controllers/authController.js";
@@ -8,7 +8,7 @@ import { requireAuth } from "../middleware/auth.mjs";
 
 const router = Router();
 
-router.get("/csrf", authSessionRateLimit, getCsrf);
+router.get("/csrf", csrfRateLimit, getCsrf);
 router.get("/status", authSessionRateLimit, getAuthStatus);
 router.get("/session", authSessionRateLimit, getAuthStatus);
 router.get("/verify", authSessionRateLimit, requireAuth, verifyAuth);

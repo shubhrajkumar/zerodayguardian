@@ -44,6 +44,19 @@ export const authSessionRateLimit = createLimiter({
   code: "auth_session_rate_limited",
 });
 
+// CSRF issuance gets its own bucket: the SPA session-refresh chain fetches
+// /csrf alongside /status + /verify + /me polling, and a shared bucket let
+// routine polling exhaust the budget, 429-ing the token fetch that every
+// mutation depends on. High-capacity by design (2 req/s in production): every
+// page load and hard refresh needs a CSRF token, so throttling it at
+// session-polling rates is exactly what produced the spurious 429s.
+export const csrfRateLimit = createLimiter({
+  windowMs: 60 * 1000,
+  max: env.nodeEnv === "production" ? 120 : 240,
+  message: "Too many CSRF token requests. Please retry shortly.",
+  code: "csrf_rate_limited",
+});
+
 export const authProvidersRateLimit = createLimiter({
   windowMs: 60 * 1000,
   max: 60,
