@@ -18,9 +18,10 @@ const collectConsole = (page: Page, type: "error" | "warning" = "error") => {
  * before ANY JavaScript executes on the page.
  */
 const enableMockAuth = (page: Page) => {
-  // Session auth is cookie-based now — mock the /api/auth/me endpoint instead of seeding localStorage
+  // Session auth is cookie-based; AuthContext probes /api/auth/status (which
+  // answers 200 for anonymous visitors) rather than the 401-returning /api/auth/me.
   const mockUser = { id: "test-user-1", name: "Test Guardian", email: "test@zerodayguardian.com", role: "user" };
-  return page.route("**/api/auth/me", (route) =>
+  return page.route("**/api/auth/status", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",

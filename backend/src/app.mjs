@@ -332,7 +332,11 @@ export const createApp = () => {
     helmet({
       contentSecurityPolicy: false,
       crossOriginResourcePolicy: { policy: "cross-origin" },
-      crossOriginOpenerPolicy: { policy: "same-origin" },
+      // OAuth popups (Firebase Google sign-in) need the opener relationship to survive
+      // so the popup can post its result back and close cleanly. "same-origin" severs
+      // that link and produces COOP warnings; "same-origin-allow-popups" keeps popups
+      // working while still isolating cross-origin documents. Matches vercel.json.
+      crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
       crossOriginEmbedderPolicy: false,
       referrerPolicy: { policy: "no-referrer" },
       frameguard: { action: "deny" },

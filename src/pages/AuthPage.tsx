@@ -231,28 +231,42 @@ export default function AuthPage() {
       showToast("Signed in with Google successfully", "success");
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
-      const error = err as { code?: string } | undefined;
-      const fbCode = error?.code || "";
-      const googleError = error as { code?: string; message?: string; error?: { code?: number; message?: string } } | undefined;
+      // Check for backend error response first (503/401/etc from /api/auth/google)
+      const axiosErr = err as { response?: { status?: number; data?: { code?: string; message?: string } } };
+      const backendCode = axiosErr?.response?.data?.code || "";
+      const backendStatus = axiosErr?.response?.status;
 
-      const message = fbCode === "auth/popup-closed-by-user"
-        ? "Sign-in cancelled"
-        : fbCode === "auth/popup-blocked"
-          ? "Pop-up was blocked by your browser. Please allow pop-ups and try again."
-          : fbCode === "auth/unauthorized-domain"
-            ? `This domain (${window.location.origin}) is not authorized for Google sign-in. Add it to the Authorized JavaScript Origins in Google Cloud Console > APIs & Services > Credentials.`
-            : fbCode === "auth/operation-not-supported-in-this-environment"
-              ? "Google sign-in is not supported in this browser environment. Try a different browser."
-              : fbCode === "auth/cancelled-popup-request"
-                ? "Another sign-in request is already open. Please close all pop-ups and try again."
-                : fbCode === "auth/credential-already-in-use"
-                  ? "This Google account is already linked to another account."
-                  : fbCode === "auth/account-exists-with-different-credential"
-                    ? "An account with this email already exists using a different sign-in method."
-                    : fbCode === "auth/access-denied" || fbCode === "Access blocked" || (googleError?.message || "").includes("Access blocked")
-                      ? "Access Blocked: Your Google account or this app is not authorized. Ensure the OAuth consent screen is published or your email is added as a test user in Google Cloud Console > APIs & Services > OAuth consent screen."
-                      : "Google sign-in failed. Please try again.";
-      setError(message);
+      if (backendStatus === 503 || backendCode === "google_auth_not_configured") {
+        setError("Google sign-in is not configured on the server. Please try again later.");
+      } else if (backendStatus === 401 || backendCode === "google_token_invalid") {
+        setError("Google sign-in failed: the credential was rejected or expired. Please try again.");
+      } else if (backendCode === "google_token_required") {
+        setError("Google sign-in failed: no credential received. Please try again.");
+      } else {
+        // Fall back to Firebase client-side error codes
+        const error = err as { code?: string } | undefined;
+        const fbCode = error?.code || "";
+        const googleError = error as { code?: string; message?: string; error?: { code?: number; message?: string } } | undefined;
+
+        const message = fbCode === "auth/popup-closed-by-user"
+          ? "Sign-in cancelled"
+          : fbCode === "auth/popup-blocked"
+            ? "Pop-up was blocked by your browser. Please allow pop-ups and try again."
+            : fbCode === "auth/unauthorized-domain"
+              ? `This domain (${window.location.origin}) is not authorized for Google sign-in. Add it to the Authorized JavaScript Origins in Google Cloud Console > APIs & Services > Credentials.`
+              : fbCode === "auth/operation-not-supported-in-this-environment"
+                ? "Google sign-in is not supported in this browser environment. Try a different browser."
+                : fbCode === "auth/cancelled-popup-request"
+                  ? "Another sign-in request is already open. Please close all pop-ups and try again."
+                  : fbCode === "auth/credential-already-in-use"
+                    ? "This Google account is already linked to another account."
+                    : fbCode === "auth/account-exists-with-different-credential"
+                      ? "An account with this email already exists using a different sign-in method."
+                      : fbCode === "auth/access-denied" || fbCode === "Access blocked" || (googleError?.message || "").includes("Access blocked")
+                        ? "Access Blocked: Your Google account or this app is not authorized. Ensure the OAuth consent screen is published or your email is added as a test user in Google Cloud Console > APIs & Services > OAuth consent screen."
+                        : "Google sign-in failed. Please try again.";
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
     }

@@ -151,6 +151,36 @@ const normalizeRefreshError = (error) => {
   return current;
 };
 
+/**
+ * google-auth-library's verifyIdToken() rejects bad, expired or audience-mismatched
+ * credentials with plain Errors that carry no HTTP status. sendAuthError() defaults
+ * any statusless error to 500, so a client-side credential failure surfaced as a
+ * server error — which the client then retried via /api/auth/refresh, contributing
+ * to the downstream 429s. Map credential rejections to a clean 401 and leave real
+ * faults (network/upstream 5xx) untouched so they stay honest 5xx responses.
+ */
+const normalizeGoogleAuthError = (error) => {
+  const current = error || {};
+  // Errors already carrying a meaningful status (config 503, our own 400/401/403).
+  if (current.status || current.statusCode) return current;
+
+  const upstreamStatus = Number(current.response?.status || 0);
+  const message = String(current.message || "").toLowerCase();
+  const looksLikeCredentialRejection =
+    ["token", "jwt", "signature", "audience", "issuer", "recipient"].some((needle) =>
+      message.includes(needle),
+    ) || (upstreamStatus >= 400 && upstreamStatus < 500);
+
+  if (!looksLikeCredentialRejection) return current;
+
+  const normalized = new Error(
+    "Google sign-in failed: the Google credential was rejected or has expired. Please try again.",
+  );
+  normalized.status = 401;
+  normalized.code = "google_token_invalid";
+  return normalized;
+};
+
 // ── Traditional Email/Password Auth ──
 
 export const signup = async (req, res) => {
@@ -249,14 +279,15 @@ export const googleLogin = async (req, res) => {
     await safeRecordAuthSuccess({ req, identifier: user.email, userId: user._id?.toString?.() || "" });
     res.json({ status: "ok", user: toPublicUser(user), accessToken, refreshToken });
   } catch (error) {
-    await safeRecordAuthFailure({ req, identifier: "google-oauth", reason: error?.code || "google_login_failed" });
-    logError("Auth Google login failed", error, {
+    const normalizedError = normalizeGoogleAuthError(error);
+    await safeRecordAuthFailure({ req, identifier: "google-oauth", reason: normalizedError?.code || "google_login_failed" });
+    logError("Auth Google login failed", normalizedError, {
       requestId: req.requestId || "",
-      code: String(error?.code || ""),
-      message: String(error?.message || ""),
-      missingKeys: Array.isArray(error?.missingKeys) ? error.missingKeys : undefined,
+      code: String(normalizedError?.code || ""),
+      message: String(normalizedError?.message || ""),
+      missingKeys: Array.isArray(normalizedError?.missingKeys) ? normalizedError.missingKeys : undefined,
     });
-    sendAuthError(req, res, error);
+    sendAuthError(req, res, normalizedError);
   }
 };
 
